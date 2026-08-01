@@ -105,7 +105,9 @@ export default function AgentPage() {
     if (!isOnboarded()) { router.replace("/onboarding"); return; }
     getMyProfile().then((p) => {
       setProfile(p);
-      const aboutJobId = new URLSearchParams(window.location.search).get("about");
+      const params = new URLSearchParams(window.location.search);
+      const aboutJobId = params.get("about");
+      const askQuery = params.get("ask");
       const aboutJob = aboutJobId ? getJobById(aboutJobId) : undefined;
       const welcome: ChatMessage = {
         id: "welcome",
@@ -124,6 +126,16 @@ export default function AgentPage() {
             timestamp: new Date().toISOString(),
             intentCard: { id: "about-intent", type: "apply", status: "pending", summary: `Apply to ${aboutJob.title} at ${aboutJob.company}`, payload: { jobId: aboutJob.id, title: aboutJob.title, company: aboutJob.company } },
           },
+        ]);
+      } else if (askQuery) {
+        // From the ⌘K command palette's "Ask agent: ..." action — build the reply against the
+        // freshly-loaded profile directly rather than reusing send(), which would read stale
+        // (still-null) profile state from this same render's closure.
+        const { content, intent } = buildReply(askQuery, p);
+        setMessages([
+          welcome,
+          { id: "ask-user", role: "user", content: askQuery, timestamp: new Date().toISOString() },
+          { id: "ask-agent", role: "agent", content, timestamp: new Date().toISOString(), intentCard: intent ? { ...intent, id: "ask-intent", status: "pending" } : undefined },
         ]);
       } else {
         setMessages([welcome]);
