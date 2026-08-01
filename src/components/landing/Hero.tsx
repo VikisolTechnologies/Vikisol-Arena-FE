@@ -63,7 +63,7 @@ export function Hero() {
         </p>
 
         <div {...revealProps("mt-6.5 mb-6.5 flex flex-wrap gap-3.5")}>
-          <Button variant="primary-gradient" size="cta" render={<Link href="/auth" />}>
+          <Button variant="primary-gradient" size="cta" render={<Link href="/auth" />} nativeButton={false}>
             Wake your agent
           </Button>
           <Button variant="ghost-glass" size="cta">

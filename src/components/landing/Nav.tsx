@@ -46,10 +46,10 @@ export function Nav() {
       </div>
 
       <div className="flex gap-2.5">
-        <Button variant="ghost-glass" size="cta-sm" render={<Link href="/auth" />}>
+        <Button variant="ghost-glass" size="cta-sm" render={<Link href="/auth" />} nativeButton={false}>
           Sign in
         </Button>
-        <Button variant="primary-gradient" size="cta-sm" render={<Link href="/auth" />}>
+        <Button variant="primary-gradient" size="cta-sm" render={<Link href="/auth" />} nativeButton={false}>
           Get started
         </Button>
       </div>

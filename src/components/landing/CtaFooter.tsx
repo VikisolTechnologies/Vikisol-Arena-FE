@@ -20,7 +20,7 @@ export function CtaFooter() {
           Free for talent. Enterprise plans for teams that hire.
         </Reveal>
         <Reveal delay={0.1}>
-          <Button variant="primary-gradient" size="cta-lg" render={<Link href="/auth" />}>
+          <Button variant="primary-gradient" size="cta-lg" render={<Link href="/auth" />} nativeButton={false}>
             Enter Arena
           </Button>
         </Reveal>
