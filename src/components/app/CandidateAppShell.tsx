@@ -14,6 +14,7 @@ import {
   Menu,
   Bell,
   LogOut,
+  Mail,
 } from "lucide-react";
 import { AuraBackground } from "@/components/landing/AuraBackground";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { href: "/identity", label: "Identity", icon: Fingerprint },
   { href: "/applications", label: "Applications", icon: ClipboardList },
   { href: "/marketplace", label: "Marketplace", icon: Store },
+  { href: "/messages", label: "Messages", icon: Mail },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

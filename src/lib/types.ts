@@ -215,3 +215,21 @@ export interface Applicant {
   appliedAt: string;
 }
 
+export interface Conversation {
+  id: string;
+  participantId: string;
+  participantName: string;
+  participantEmoji: string;
+  context?: string;
+  lastMessageAt: string;
+  unread: boolean;
+}
+
+export interface ThreadMessage {
+  id: string;
+  conversationId: string;
+  fromMe: boolean;
+  content: string;
+  timestamp: string;
+}
+

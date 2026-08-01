@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Search, Briefcase, LogOut, Bell } from "lucide-react";
+import { LayoutDashboard, Search, Briefcase, LogOut, Bell, Mail } from "lucide-react";
 import { AuraBackground } from "@/components/landing/AuraBackground";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: "/enterprise/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/enterprise/talent", label: "Talent Universe", icon: Search },
   { href: "/enterprise/postings", label: "Postings", icon: Briefcase },
+  { href: "/enterprise/messages", label: "Messages", icon: Mail },
 ];
 
 export function EnterpriseAppShell({
