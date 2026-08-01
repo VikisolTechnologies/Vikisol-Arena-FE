@@ -1,4 +1,4 @@
-import type { Session } from "@/lib/types";
+import type { ConsentSettings, Industry, OpenTo, Session } from "@/lib/types";
 
 const KEY = "arena_session";
 
@@ -29,4 +29,31 @@ export function isOnboarded() {
 
 export function setOnboarded() {
   localStorage.setItem(ONBOARDED_KEY, "true");
+}
+
+export interface OnboardingProfile {
+  name: string;
+  title: string;
+  industry: Industry;
+  skills: string[];
+  experienceYears: number;
+  rateFloor: number;
+  openTo: OpenTo[];
+  consent: ConsentSettings;
+}
+
+const PROFILE_KEY = "arena_onboarding_profile";
+
+export function saveOnboardingProfile(profile: OnboardingProfile) {
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+}
+
+export function getOnboardingProfile(): OnboardingProfile | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    return raw ? (JSON.parse(raw) as OnboardingProfile) : null;
+  } catch {
+    return null;
+  }
 }
