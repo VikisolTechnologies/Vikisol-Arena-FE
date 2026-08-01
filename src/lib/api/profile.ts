@@ -1,5 +1,5 @@
 import { CURRENT_CANDIDATE_ID, getCandidateById } from "@/lib/mock/candidates";
-import { getOnboardingProfile } from "@/lib/session";
+import { getOnboardingProfile, saveOnboardingProfile } from "@/lib/session";
 import type { CandidateProfile } from "@/lib/types";
 import { delay } from "./shared";
 
@@ -23,4 +23,21 @@ export async function getMyProfile(): Promise<CandidateProfile> {
       }
     : base;
   return delay(merged, 300);
+}
+
+/** Persists edited skills back into the same onboarding-profile store getMyProfile reads from. */
+export async function updateMySkills(skills: string[]): Promise<CandidateProfile> {
+  const current = await getMyProfile();
+  const onboarding = getOnboardingProfile();
+  saveOnboardingProfile({
+    name: onboarding?.name ?? current.name,
+    title: onboarding?.title ?? current.title,
+    industry: onboarding?.industry ?? current.industry,
+    skills,
+    experienceYears: onboarding?.experienceYears ?? current.experienceYears,
+    rateFloor: onboarding?.rateFloor ?? current.rateFloor,
+    openTo: onboarding?.openTo ?? current.openTo,
+    consent: onboarding?.consent ?? current.consent,
+  });
+  return getMyProfile();
 }
