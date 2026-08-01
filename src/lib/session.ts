@@ -1,4 +1,4 @@
-import type { ConsentSettings, EnterpriseProfile, Industry, OpenTo, Session } from "@/lib/types";
+import type { AutonomyLevel, ConsentSettings, EnterpriseProfile, Industry, OpenTo, Session } from "@/lib/types";
 
 const KEY = "arena_session";
 
@@ -40,6 +40,7 @@ export interface OnboardingProfile {
   rateFloor: number;
   openTo: OpenTo[];
   consent: ConsentSettings;
+  autonomy?: AutonomyLevel;
 }
 
 const PROFILE_KEY = "arena_onboarding_profile";

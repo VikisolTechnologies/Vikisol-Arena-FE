@@ -1,6 +1,6 @@
 import { CURRENT_CANDIDATE_ID, getCandidateById } from "@/lib/mock/candidates";
 import { getOnboardingProfile, saveOnboardingProfile } from "@/lib/session";
-import type { CandidateProfile } from "@/lib/types";
+import type { AutonomyLevel, CandidateProfile, ConsentSettings } from "@/lib/types";
 import { delay } from "./shared";
 
 /** Merges the static seed candidate with whatever the user entered during onboarding. */
@@ -20,24 +20,38 @@ export async function getMyProfile(): Promise<CandidateProfile> {
         rateFloor: onboarding.rateFloor,
         openTo: onboarding.openTo.length ? onboarding.openTo : base.openTo,
         consent: onboarding.consent,
+        autonomy: onboarding.autonomy ?? base.autonomy,
       }
     : base;
   return delay(merged, 300);
 }
 
-/** Persists edited skills back into the same onboarding-profile store getMyProfile reads from. */
-export async function updateMySkills(skills: string[]): Promise<CandidateProfile> {
+async function patchOnboardingProfile(patch: Partial<{ skills: string[]; consent: ConsentSettings; autonomy: AutonomyLevel }>) {
   const current = await getMyProfile();
   const onboarding = getOnboardingProfile();
   saveOnboardingProfile({
     name: onboarding?.name ?? current.name,
     title: onboarding?.title ?? current.title,
     industry: onboarding?.industry ?? current.industry,
-    skills,
+    skills: patch.skills ?? onboarding?.skills ?? current.skills.map((s) => s.name),
     experienceYears: onboarding?.experienceYears ?? current.experienceYears,
     rateFloor: onboarding?.rateFloor ?? current.rateFloor,
     openTo: onboarding?.openTo ?? current.openTo,
-    consent: onboarding?.consent ?? current.consent,
+    consent: patch.consent ?? onboarding?.consent ?? current.consent,
+    autonomy: patch.autonomy ?? onboarding?.autonomy ?? current.autonomy,
   });
   return getMyProfile();
+}
+
+/** Persists edited skills back into the same onboarding-profile store getMyProfile reads from. */
+export async function updateMySkills(skills: string[]): Promise<CandidateProfile> {
+  return patchOnboardingProfile({ skills });
+}
+
+export async function updateMyConsent(consent: ConsentSettings): Promise<CandidateProfile> {
+  return patchOnboardingProfile({ consent });
+}
+
+export async function updateMyAutonomy(autonomy: AutonomyLevel): Promise<CandidateProfile> {
+  return patchOnboardingProfile({ autonomy });
 }

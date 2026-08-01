@@ -196,6 +196,17 @@ export default function AgentPage() {
     setOrbState("idle");
   };
 
+  // Autonomy setting from /settings changes how approval cards behave: on autopilot, the
+  // agent approves its own pending intents instead of waiting on a tap.
+  useEffect(() => {
+    if (profile?.autonomy !== "autopilot") return;
+    const pending = messages.find((m) => m.intentCard?.status === "pending")?.intentCard;
+    if (!pending) return;
+    const id = setTimeout(() => handleApprove(pending), 1200);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, profile?.autonomy]);
+
   if (!profile) {
     return (
       <CandidateAppShell title="Agent">
