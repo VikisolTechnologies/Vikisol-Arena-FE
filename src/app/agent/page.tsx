@@ -16,7 +16,7 @@ import { applyToJob } from "@/lib/api/applications";
 import { placeBid } from "@/lib/api/market";
 import { agentRealtime } from "@/lib/realtime";
 import { getSession, isOnboarded } from "@/lib/session";
-import { MOCK_JOBS } from "@/lib/mock/jobs";
+import { MOCK_JOBS, getJobById } from "@/lib/mock/jobs";
 import { MOCK_PROJECTS } from "@/lib/mock/projects";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import type { CandidateProfile, ChatMessage, AgentActivityEvent, IntentCard } from "@/lib/types";
@@ -105,14 +105,29 @@ export default function AgentPage() {
     if (!isOnboarded()) { router.replace("/onboarding"); return; }
     getMyProfile().then((p) => {
       setProfile(p);
-      setMessages([
-        {
-          id: "welcome",
-          role: "agent",
-          content: `Hi ${p.name.split(" ")[0]} — I'm your agent. Ask me anything, or approve what I find and I'll take it from there.`,
-          timestamp: new Date().toISOString(),
-        },
-      ]);
+      const aboutJobId = new URLSearchParams(window.location.search).get("about");
+      const aboutJob = aboutJobId ? getJobById(aboutJobId) : undefined;
+      const welcome: ChatMessage = {
+        id: "welcome",
+        role: "agent",
+        content: `Hi ${p.name.split(" ")[0]} — I'm your agent. Ask me anything, or approve what I find and I'll take it from there.`,
+        timestamp: new Date().toISOString(),
+      };
+      if (aboutJob) {
+        setMessages([
+          welcome,
+          { id: "about-user", role: "user", content: `Tell me more about ${aboutJob.title} at ${aboutJob.company}`, timestamp: new Date().toISOString() },
+          {
+            id: "about-agent",
+            role: "agent",
+            content: `${aboutJob.title} at ${aboutJob.company} is a ${aboutJob.matchPercentage}% match — ${aboutJob.location}${aboutJob.remote ? " (remote)" : ""}, ₹${aboutJob.salaryMin}–${aboutJob.salaryMax} LPA. They're looking for ${aboutJob.skills.slice(0, 3).join(", ")}. Want me to apply?`,
+            timestamp: new Date().toISOString(),
+            intentCard: { id: "about-intent", type: "apply", status: "pending", summary: `Apply to ${aboutJob.title} at ${aboutJob.company}`, payload: { jobId: aboutJob.id, title: aboutJob.title, company: aboutJob.company } },
+          },
+        ]);
+      } else {
+        setMessages([welcome]);
+      }
     });
     getActivityFeed().then(setActivity);
   }, [router]);
