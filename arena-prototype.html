@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Arena — It works while you sleep</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --background:#09090B; --foreground:#F5F5F6; --muted:#A1A1AA; --faint:#5c5c64;
+    --primary:#FF6B35; --primary-soft:#FF8A5B; --primary-fg:#160a05;
+    --glass:rgba(255,255,255,.05); --glass-strong:rgba(255,255,255,.09);
+    --border:rgba(255,255,255,.12); --radius:24px;
+    --display:'Space Grotesk',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{background:var(--background);color:var(--foreground);font-family:var(--body);overflow-x:hidden}
+  ::selection{background:var(--primary);color:var(--primary-fg)}
+
+  .aura{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0}
+  .aura-1{width:60vw;height:60vw;max-width:760px;max-height:760px;right:-18vw;top:-8vw;background:radial-gradient(circle,rgba(255,107,53,.20),transparent 65%)}
+  .aura-2{width:50vw;height:50vw;max-width:640px;max-height:640px;left:-20vw;top:60vh;background:radial-gradient(circle,rgba(255,138,91,.10),transparent 65%)}
+
+  /* ---------- shadcn-style primitives ---------- */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;height:48px;padding:0 26px;
+    border-radius:999px;font:600 15px var(--body);cursor:pointer;border:1px solid transparent;
+    transition:transform .18s ease, box-shadow .18s ease, background .18s ease;white-space:nowrap}
+  .btn:active{transform:scale(.97)}
+  .btn-primary{background:linear-gradient(120deg,var(--primary-soft),var(--primary));color:var(--primary-fg);
+    box-shadow:0 8px 30px rgba(255,107,53,.35)}
+  .btn-primary:hover{box-shadow:0 10px 40px rgba(255,107,53,.55);transform:translateY(-2px)}
+  .btn-ghost{background:var(--glass);border-color:var(--border);color:#d4d4d8;backdrop-filter:blur(14px)}
+  .btn-ghost:hover{background:var(--glass-strong)}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;
+    font:500 13px var(--body);color:var(--muted);background:var(--glass);border:1px solid rgba(255,107,53,.35);
+    backdrop-filter:blur(14px)}
+  .card{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+  .input{display:flex;align-items:center;gap:12px;height:60px;padding:0 8px 0 22px;border-radius:999px;
+    background:var(--glass);border:1px solid var(--border);backdrop-filter:blur(18px)}
+  .input span{flex:1;font:400 15px var(--body);color:#8b8b93;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* ---------- nav ---------- */
+  nav{position:fixed;inset:16px 16px auto;z-index:50;display:flex;align-items:center;justify-content:space-between;
+    padding:12px 22px;border-radius:999px;background:rgba(9,9,11,.55);border:1px solid var(--border);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);max-width:1240px;margin:0 auto;
+    transition:box-shadow .3s}
+  nav.scrolled{box-shadow:0 12px 40px rgba(0,0,0,.6)}
+  .logo{font:700 21px var(--display);letter-spacing:.5px}
+  .logo em{color:var(--primary);font-style:normal}
+  .nav-links{display:flex;gap:30px}
+  .nav-links a{color:#8b8b93;text-decoration:none;font:500 14px var(--body);transition:color .2s}
+  .nav-links a:hover{color:var(--foreground)}
+  .nav-cta{display:flex;gap:10px}
+  .nav-cta .btn{height:40px;padding:0 20px;font-size:14px}
+
+  section{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:0 22px}
+
+  /* ---------- hero ---------- */
+  .hero{min-height:100svh;display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:24px;padding-top:110px}
+  .hero h1{font:700 clamp(44px,6.4vw,88px)/1.02 var(--display);letter-spacing:-1px}
+  .hero h1 .grad{background:linear-gradient(100deg,var(--primary-soft),var(--primary));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p.sub{margin:22px 0 30px;max-width:480px;font:400 17px/1.6 var(--body);color:var(--muted)}
+  .hero-ctas{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:26px}
+  .askbar{max-width:520px;cursor:text}
+  .askbar .send{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;
+    background:linear-gradient(120deg,var(--primary-soft),var(--primary));color:var(--primary-fg);font-weight:700}
+
+  /* agent orb */
+  .orb-stage{position:relative;height:min(620px,70vw);display:grid;place-items:center}
+  .orb-wrap{position:relative;width:min(420px,78vw);aspect-ratio:1}
+  .orb-glow{position:absolute;inset:-22%;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,107,53,.5),transparent 62%);filter:blur(30px)}
+  .orb{position:absolute;inset:0;border-radius:50%;
+    background:radial-gradient(circle at 36% 30%, #4a2c1a 0%, #241108 46%, #6e2f12 78%, #FF6B35 100%);
+    box-shadow:inset -30px -40px 80px rgba(0,0,0,.55), inset 20px 30px 60px rgba(255,138,91,.15)}
+  .orb::before{content:"";position:absolute;left:16%;top:12%;width:42%;height:26%;border-radius:50%;
+    background:rgba(255,255,255,.12);filter:blur(16px)}
+  .eyes{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);display:flex;gap:20%;width:52%}
+  .eye{width:38px;height:56px;background:#FFF6EF;border-radius:50%;position:relative;
+    box-shadow:0 0 22px rgba(255,246,239,.65)}
+  .eye::after{content:"";position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);
+    width:15px;height:22px;background:#160a05;border-radius:50%}
+  .smile{position:absolute;left:50%;top:60%;transform:translateX(-50%);width:76px;height:34px;
+    border:5px solid #FFD9C4;border-top:none;border-left:none;border-right:none;border-radius:0 0 60px 60px}
+  .ring{position:absolute;left:50%;top:50%;border:1px solid rgba(255,255,255,.14);border-radius:50%}
+  .ring i{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--primary-soft);
+    box-shadow:0 0 12px var(--primary)}
+  .ring-1{width:150%;height:48%;transform:translate(-50%,-50%) rotate(-16deg)}
+  .ring-2{width:168%;height:60%;transform:translate(-50%,-50%) rotate(22deg);border-color:rgba(255,255,255,.08)}
+  .chip{position:absolute;padding:12px 18px;font:500 14px var(--body);color:var(--foreground);
+    background:var(--glass-strong);border:1px solid var(--border);border-radius:999px;
+    backdrop-filter:blur(16px);white-space:nowrap;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  .chip b{color:var(--primary-soft);font-weight:600}
+  .chip-1{top:6%;left:-4%;rotate:-5deg}
+  .chip-2{top:26%;right:-6%;rotate:5deg}
+  .chip-3{bottom:8%;left:12%;rotate:3deg}
+
+  /* ---------- section shells ---------- */
+  .sec-head{padding:110px 0 40px;max-width:720px}
+  .eyebrow{font:700 12px var(--display);letter-spacing:5px;color:var(--primary-soft);margin-bottom:16px}
+  .sec-head h2{font:700 clamp(32px,4.6vw,56px)/1.08 var(--display);letter-spacing:-.5px}
+  .sec-head p{margin-top:16px;color:var(--muted);font-size:16.5px;line-height:1.6}
+
+  /* while you slept */
+  .feed{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;padding-bottom:40px}
+  .feed .card{padding:26px}
+  .feed .k{font:700 clamp(34px,3.6vw,46px) var(--display);color:var(--foreground)}
+  .feed .k em{color:var(--primary-soft);font-style:normal}
+  .feed h3{font:700 17px var(--display);margin:6px 0 8px}
+  .feed p{color:var(--muted);font-size:14.5px;line-height:1.55}
+  .feed .tagline{display:inline-block;margin-top:14px;font:600 12px var(--body);letter-spacing:1px;
+    color:var(--primary-soft)}
+
+  /* universe */
+  .universe{position:relative;border-radius:32px;overflow:hidden;border:1px solid var(--border);
+    margin:20px 0 0;min-height:560px;display:grid;place-items:center;text-align:center;
+    background:radial-gradient(120% 120% at 50% 0%, #121017 0%, #09090B 60%)}
+  #stars{position:absolute;inset:0;width:100%;height:100%}
+  .universe-inner{position:relative;z-index:2;padding:70px 22px;width:100%}
+  .universe h2{font:700 clamp(30px,4.4vw,52px) var(--display)}
+  .universe h2 .grad{background:linear-gradient(100deg,var(--primary-soft),var(--primary));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .universe p{color:var(--muted);margin:14px auto 30px;max-width:560px;font-size:16px}
+  .universe .input{max-width:640px;margin:0 auto 22px}
+  .cats{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .cat{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;
+    background:var(--glass);border:1px solid var(--border);backdrop-filter:blur(12px);
+    font:500 13.5px var(--body);color:#d4d4d8}
+  .dot{width:9px;height:9px;border-radius:50%}
+
+  /* bidding */
+  .bid-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;padding-bottom:40px}
+  .bid-copy h2{font:700 clamp(30px,4.4vw,52px)/1.1 var(--display);letter-spacing:-.5px}
+  .bid-copy p{color:var(--muted);margin:18px 0 26px;font-size:16.5px;line-height:1.6;max-width:440px}
+  .bid-card{padding:28px}
+  .bid-card .live{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;
+    background:rgba(255,107,53,.14);border:1px solid rgba(255,107,53,.5);color:var(--primary-soft);
+    font:600 12px var(--body);letter-spacing:1px}
+  .live .pulse{width:8px;height:8px;border-radius:50%;background:var(--primary)}
+  .bid-card h3{font:700 22px var(--display);margin:16px 0 6px}
+  .bid-card .meta{color:#8b8b93;font-size:13.5px;margin-bottom:20px}
+  .bid-row{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;margin-bottom:12px;
+    border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--border)}
+  .bid-row.top{background:rgba(255,255,255,.09)}
+  .bid-row .amt{font:700 19px var(--display)}
+  .bid-row.top .amt{color:var(--primary-soft)}
+  .bid-row .who{color:#8b8b93;font-size:13.5px;margin-top:3px}
+  .bid-row .pick{color:var(--primary-soft);font:600 12.5px var(--body)}
+  .bid-card .btn{width:100%;margin-top:10px}
+
+  /* CTA + footer */
+  .cta{display:grid;place-items:center;text-align:center;padding:130px 22px 60px}
+  .cta h2{font:700 clamp(36px,6vw,72px)/1.05 var(--display);letter-spacing:-1px;max-width:820px}
+  .cta h2 .grad{background:linear-gradient(100deg,var(--primary-soft),var(--primary));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .cta p{color:var(--muted);margin:20px 0 32px;font-size:17px}
+  footer{border-top:1px solid var(--border);padding:34px 22px 44px;color:var(--faint);font-size:13.5px;
+    display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;max-width:1240px;margin:0 auto}
+
+  .reveal{opacity:0;transform:translateY(36px)}
+
+  @media (max-width:900px){
+    .nav-links{display:none}
+    .hero{grid-template-columns:1fr;padding-top:120px;text-align:left;gap:0}
+    .orb-stage{order:-1;height:auto;margin:10px 0 6px}
+    .orb-wrap{width:min(300px,72vw)}
+    .eye{width:26px;height:40px}.eye::after{width:11px;height:16px}
+    .smile{width:54px;height:24px;border-width:4px}
+    .chip{font-size:12.5px;padding:9px 14px}
+    .chip-1{left:-6%}.chip-2{right:-4%}
+    .feed{grid-template-columns:1fr}
+    .bid-grid{grid-template-columns:1fr}
+    .sec-head{padding-top:90px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .reveal{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="aura aura-1"></div>
+<div class="aura aura-2"></div>
+
+<nav id="nav">
+  <div class="logo">ARENA<em>.</em></div>
+  <div class="nav-links">
+    <a href="#agent">Agent</a><a href="#universe">Talent Universe</a><a href="#market">Projects</a><a href="#cta">Enterprise</a>
+  </div>
+  <div class="nav-cta">
+    <button class="btn btn-ghost">Sign in</button>
+    <button class="btn btn-primary">Get started</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="agent">
+  <div class="hero-copy">
+    <span class="badge reveal" data-hero><span class="dot" style="background:#3DDC84"></span>Your agent is awake · 02:41 AM</span>
+    <h1 class="reveal" data-hero style="margin-top:20px">It works while <span class="grad">you sleep.</span></h1>
+    <p class="sub reveal" data-hero>Arena's agent hunts openings across every industry, applies with a tailored resume, and books your interviews — day and night.</p>
+    <div class="hero-ctas reveal" data-hero>
+      <button class="btn btn-primary">Wake your agent</button>
+      <button class="btn btn-ghost">Watch it work ▷</button>
+    </div>
+    <div class="input askbar reveal" data-hero>
+      <span>Ask anything — "find me remote design contracts"</span>
+      <div class="send">→</div>
+    </div>
+  </div>
+
+  <div class="orb-stage">
+    <div class="orb-wrap" id="orb">
+      <div class="orb-glow"></div>
+      <div class="ring ring-1"><i style="left:-4px;top:50%"></i></div>
+      <div class="ring ring-2"><i style="right:-4px;top:40%"></i></div>
+      <div class="orb"></div>
+      <div class="eyes"><div class="eye"></div><div class="eye"></div></div>
+      <div class="smile"></div>
+      <div class="chip chip-1">✓ Applied · <b>3 jobs tonight</b></div>
+      <div class="chip chip-2">🔍 Found · <b>12 new matches</b></div>
+      <div class="chip chip-3">📅 Interview · <b>Tue 3:00 PM</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- WHILE YOU SLEPT -->
+<section>
+  <div class="sec-head">
+    <div class="eyebrow reveal">OVERNIGHT REPORT</div>
+    <h2 class="reveal">While you slept, it didn't.</h2>
+    <p class="reveal">Every morning opens with a report of what your agent already finished — not a to-do list of what you should start.</p>
+  </div>
+  <div class="feed">
+    <div class="card reveal"><div class="k" data-count="47">0</div>
+      <h3>Openings scanned</h3><p>Matched against your identity graph — skills, proof of work, salary floor and the roles you swiped away.</p>
+      <span class="tagline">QUALITY-GATED ›</span></div>
+    <div class="card reveal"><div class="k"><em data-count="3">0</em></div>
+      <h3>Applications sent</h3><p>Only above a 90% match. Each one carries a resume tailored to that exact role, ready for your review.</p>
+      <span class="tagline">SEE WHAT IT WROTE ›</span></div>
+    <div class="card reveal"><div class="k" data-count="1">0</div>
+      <h3>Interview booked</h3><p>It read both calendars, proposed slots, and locked Tuesday 3:00 PM. You just have to show up.</p>
+      <span class="tagline">ADD TO CALENDAR ›</span></div>
+  </div>
+</section>
+
+<!-- UNIVERSE -->
+<section id="universe">
+  <div class="universe">
+    <canvas id="stars"></canvas>
+    <div class="universe-inner">
+      <div class="eyebrow reveal">FOR ENTERPRISES</div>
+      <h2 class="reveal">Every talent. <span class="grad">One universe.</span></h2>
+      <p class="reveal">2,40,000 people open to work — every industry, contract or full-time. Search them from your own enterprise login.</p>
+      <div class="input reveal"><span>Try "senior React developer · contract · Hyderabad"</span>
+        <button class="btn btn-primary" style="height:46px">Search</button></div>
+      <div class="cats reveal">
+        <span class="cat"><span class="dot" style="background:#FF6B35"></span>Engineering · 82k</span>
+        <span class="cat"><span class="dot" style="background:#FF8A5B"></span>Design · 41k</span>
+        <span class="cat"><span class="dot" style="background:#FFB38A"></span>Sales · 37k</span>
+        <span class="cat"><span class="dot" style="background:#fff"></span>Healthcare · 24k</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BIDDING -->
+<section id="market">
+  <div class="sec-head"><div class="eyebrow reveal">OPEN MARKET</div></div>
+  <div class="bid-grid">
+    <div class="bid-copy">
+      <h2 class="reveal">Every skill has a <span style="color:var(--primary-soft)">market.</span></h2>
+      <p class="reveal">Post a project and take bids in the open. Hire on proof, not resumes — from developers to designers to doctors. Your agent shortlists the bids worth your time.</p>
+      <div class="hero-ctas reveal">
+        <button class="btn btn-primary">Post a project</button>
+        <button class="btn btn-ghost">Browse open bids →</button>
+      </div>
+    </div>
+    <div class="card bid-card reveal">
+      <span class="live"><span class="pulse"></span>LIVE BID</span>
+      <h3>Food delivery app — full product design</h3>
+      <div class="meta">Budget open · 6 weeks · ends in <b id="timer" style="color:#d4d4d8">04:12:36</b></div>
+      <div class="bid-row top"><div><div class="amt">₹ 3,80,000</div><div class="who">Ravi K. · 96% match</div></div><span class="pick">agent pick ★</span></div>
+      <div class="bid-row"><div><div class="amt">₹ 4,20,000</div><div class="who">Studio Nava · 91% match</div></div></div>
+      <div class="bid-row"><div><div class="amt">₹ 3,45,000</div><div class="who">Meera D. · 88% match</div></div></div>
+      <button class="btn btn-primary">Place a bid</button>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" id="cta">
+  <h2 class="reveal">Stop searching for work.<br/><span class="grad">Let work find you.</span></h2>
+  <p class="reveal">Free for talent. Enterprise plans for teams that hire.</p>
+  <div class="hero-ctas reveal" style="justify-content:center">
+    <button class="btn btn-primary" style="height:56px;padding:0 34px;font-size:16px">Enter Arena</button>
+  </div>
+</section>
+
+<footer>
+  <span>ARENA<em style="color:var(--primary);font-style:normal">.</em> — a Vikisol Technologies product</span>
+  <span>Identity · Agent · Marketplace · Enterprise</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* nav shadow */
+addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',scrollY>10),{passive:true});
+
+if(!reduced){
+  /* hero intro */
+  gsap.to('[data-hero]',{opacity:1,y:0,duration:.9,ease:'power3.out',stagger:.12,delay:.15});
+  gsap.from('#orb',{scale:.6,opacity:0,duration:1.2,ease:'back.out(1.4)',delay:.2});
+
+  /* orb life */
+  gsap.to('#orb',{y:-18,duration:2.6,yoyo:true,repeat:-1,ease:'sine.inOut'});
+  gsap.to('.ring-1',{rotate:344,duration:26,repeat:-1,ease:'none',transformOrigin:'center'});
+  gsap.to('.ring-2',{rotate:-338,duration:34,repeat:-1,ease:'none',transformOrigin:'center'});
+  gsap.utils.toArray('.chip').forEach((c,i)=>gsap.to(c,{y:i%2? -12:12,duration:2.2+i*.4,yoyo:true,repeat:-1,ease:'sine.inOut'}));
+  /* blink */
+  const blink=()=>{gsap.to('.eye',{scaleY:.08,duration:.07,yoyo:true,repeat:1,transformOrigin:'center',
+    onComplete:()=>gsap.delayedCall(1.6+Math.random()*3,blink)})};
+  gsap.delayedCall(1.8,blink);
+  /* cursor / tilt parallax */
+  addEventListener('mousemove',e=>{
+    const x=(e.clientX/innerWidth-.5), y=(e.clientY/innerHeight-.5);
+    gsap.to('#orb',{rotateY:x*10,rotateX:-y*8,duration:.6,overwrite:'auto'});
+    gsap.to('.eyes',{x:x*16,y:y*10,duration:.5});
+  });
+
+  /* scroll reveals */
+  gsap.utils.toArray('.reveal:not([data-hero])').forEach(el=>{
+    gsap.to(el,{opacity:1,y:0,duration:.9,ease:'power3.out',
+      scrollTrigger:{trigger:el,start:'top 86%'}});
+  });
+
+  /* counters */
+  gsap.utils.toArray('[data-count]').forEach(el=>{
+    const end=+el.dataset.count;
+    ScrollTrigger.create({trigger:el,start:'top 88%',once:true,
+      onEnter:()=>gsap.to(el,{innerText:end,duration:1.4,snap:{innerText:1},ease:'power2.out'})});
+  });
+
+  /* bid rows slide in */
+  gsap.utils.toArray('.bid-row').forEach((r,i)=>{
+    gsap.from(r,{x:40,opacity:0,duration:.7,delay:i*.12,ease:'power3.out',
+      scrollTrigger:{trigger:'.bid-card',start:'top 80%'}});
+  });
+  gsap.to('.pulse',{opacity:.2,duration:.7,yoyo:true,repeat:-1});
+}else{
+  document.querySelectorAll('[data-count]').forEach(el=>el.innerText=el.dataset.count);
+}
+
+/* countdown */
+let t=4*3600+12*60+36;
+setInterval(()=>{t--;const h=String(t/3600|0).padStart(2,'0'),m=String((t%3600)/60|0).padStart(2,'0'),s=String(t%60).padStart(2,'0');
+  document.getElementById('timer').textContent=`${h}:${m}:${s}`;},1000);
+
+/* starfield */
+const cv=document.getElementById('stars'),ctx=cv.getContext('2d');
+let stars=[],Wc,Hc;
+function resize(){const r=cv.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);
+  Wc=cv.width=r.width*d;Hc=cv.height=r.height*d;
+  const n=innerWidth<700?70:130;
+  stars=Array.from({length:n},()=>({x:Math.random()*Wc,y:Math.random()*Hc,
+    r:(Math.random()*1.6+.5)*d,o:Math.random()*.7+.25,
+    vx:(Math.random()-.5)*.12*d,vy:(Math.random()-.5)*.12*d,
+    orange:Math.random()<.3}));}
+resize();addEventListener('resize',resize);
+(function draw(){
+  ctx.clearRect(0,0,Wc,Hc);
+  for(let i=0;i<stars.length;i++){const a=stars[i];
+    if(!reduced){a.x+=a.vx;a.y+=a.vy;
+      if(a.x<0||a.x>Wc)a.vx*=-1; if(a.y<0||a.y>Hc)a.vy*=-1;}
+    for(let j=i+1;j<stars.length;j++){const b=stars[j],dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy;
+      if(d2<9000*(devicePixelRatio||1)){ctx.strokeStyle=`rgba(255,138,91,${(1-d2/9000)* .12})`;
+        ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}}
+    ctx.beginPath();ctx.arc(a.x,a.y,a.r,0,7);
+    ctx.fillStyle=a.orange?`rgba(255,107,53,${a.o})`:`rgba(255,255,255,${a.o})`;ctx.fill();}
+  requestAnimationFrame(draw);})();
+</script>
+</body>
+</html>
