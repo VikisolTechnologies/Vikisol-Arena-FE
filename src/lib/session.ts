@@ -1,4 +1,4 @@
-import type { ConsentSettings, Industry, OpenTo, Session } from "@/lib/types";
+import type { ConsentSettings, EnterpriseProfile, Industry, OpenTo, Session } from "@/lib/types";
 
 const KEY = "arena_session";
 
@@ -56,4 +56,30 @@ export function getOnboardingProfile(): OnboardingProfile | null {
   } catch {
     return null;
   }
+}
+
+const ENTERPRISE_ONBOARDED_KEY = "arena_enterprise_onboarded";
+const ENTERPRISE_PROFILE_KEY = "arena_enterprise_profile";
+
+export function isEnterpriseOnboarded() {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(ENTERPRISE_ONBOARDED_KEY) === "true";
+}
+
+export function setEnterpriseOnboarded() {
+  localStorage.setItem(ENTERPRISE_ONBOARDED_KEY, "true");
+}
+
+export function getEnterpriseProfile(): EnterpriseProfile | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(ENTERPRISE_PROFILE_KEY);
+    return raw ? (JSON.parse(raw) as EnterpriseProfile) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveEnterpriseProfile(profile: EnterpriseProfile) {
+  localStorage.setItem(ENTERPRISE_PROFILE_KEY, JSON.stringify(profile));
 }

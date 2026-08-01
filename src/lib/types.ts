@@ -174,3 +174,44 @@ export interface Session {
   name: string;
   email: string;
 }
+
+export type CompanySize = "1-10" | "11-50" | "51-200" | "201-1000" | "1000+";
+
+export interface EnterpriseProfile {
+  companyName: string;
+  logoEmoji: string;
+  industry: Industry;
+  size: CompanySize;
+  hiringFor: string[];
+  plan: "free" | "pro" | "enterprise";
+  seatsUsed: number;
+  seatsTotal: number;
+  unlockCreditsUsed: number;
+  unlockCreditsTotal: number;
+}
+
+export type PostingStatus = "open" | "paused" | "closed";
+
+export interface JobPosting {
+  id: string;
+  title: string;
+  industry: Industry;
+  location: string;
+  remote: boolean;
+  employmentType: EmploymentType;
+  salaryMin: number;
+  salaryMax: number;
+  skills: string[];
+  description: string;
+  status: PostingStatus;
+  createdAt: string;
+}
+
+export interface Applicant {
+  id: string;
+  postingId: string;
+  candidateId: string;
+  stage: ApplicationStage;
+  appliedAt: string;
+}
+
