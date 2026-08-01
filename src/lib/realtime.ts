@@ -31,6 +31,11 @@ class AgentRealtimeChannel {
       }
     };
   }
+
+  /** Pushes a real event (e.g. an approved chat intent) into every subscribed feed immediately. */
+  emit(event: AgentActivityEvent) {
+    this.listeners.forEach((l) => l(event));
+  }
 }
 
 export const agentRealtime = new AgentRealtimeChannel();
