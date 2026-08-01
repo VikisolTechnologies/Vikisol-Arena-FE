@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "./Reveal";
 
@@ -19,7 +20,7 @@ export function CtaFooter() {
           Free for talent. Enterprise plans for teams that hire.
         </Reveal>
         <Reveal delay={0.1}>
-          <Button variant="primary-gradient" size="cta-lg">
+          <Button variant="primary-gradient" size="cta-lg" render={<Link href="/auth" />}>
             Enter Arena
           </Button>
         </Reveal>

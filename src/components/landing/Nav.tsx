@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -45,10 +46,10 @@ export function Nav() {
       </div>
 
       <div className="flex gap-2.5">
-        <Button variant="ghost-glass" size="cta-sm">
+        <Button variant="ghost-glass" size="cta-sm" render={<Link href="/auth" />}>
           Sign in
         </Button>
-        <Button variant="primary-gradient" size="cta-sm">
+        <Button variant="primary-gradient" size="cta-sm" render={<Link href="/auth" />}>
           Get started
         </Button>
       </div>

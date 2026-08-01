@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import Link from "next/link";
 import { useGSAP } from "@gsap/react";
 import { useGsap } from "@/lib/gsap";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -62,7 +63,7 @@ export function Hero() {
         </p>
 
         <div {...revealProps("mt-6.5 mb-6.5 flex flex-wrap gap-3.5")}>
-          <Button variant="primary-gradient" size="cta">
+          <Button variant="primary-gradient" size="cta" render={<Link href="/auth" />}>
             Wake your agent
           </Button>
           <Button variant="ghost-glass" size="cta">
