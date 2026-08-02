@@ -106,12 +106,27 @@ export interface InterviewSlotOption {
   durationMinutes: number;
 }
 
+export type InterviewRecommendation = "advance" | "hold" | "reject";
+
+export interface InterviewFeedback {
+  rating: number; // 1-5
+  strengths: string;
+  concerns: string;
+  recommendation: InterviewRecommendation;
+  submittedAt: string;
+}
+
 export interface Interview {
   id: string;
   applicationId: string;
   proposedSlots: InterviewSlotOption[];
   confirmedSlotId?: string;
   status: "proposed" | "confirmed" | "completed" | "cancelled";
+  // Plain link field today (mock) - the join screen renders it as-is; swapping in a real
+  // WebRTC/Daily.co/Zoom embed later only touches MeetingEmbed's rendering, not this contract.
+  meetingLink?: string;
+  notes?: string;
+  feedback?: InterviewFeedback;
 }
 
 export interface Bid {

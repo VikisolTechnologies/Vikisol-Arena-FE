@@ -16,6 +16,12 @@ export async function getMyApplications(): Promise<Application[]> {
   return delay(mine(), 250);
 }
 
+/** Any application by id, regardless of whose it is — used by the interview room, which both
+ * a candidate and an enterprise viewer reach for the same underlying record. */
+export async function getApplicationById(id: string): Promise<Application | null> {
+  return delay(readApplications().find((a) => a.id === id) ?? null, 150);
+}
+
 export async function hasAppliedTo(jobId: string): Promise<boolean> {
   return delay(mine().some((a) => a.jobId === jobId), 50);
 }

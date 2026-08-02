@@ -86,7 +86,14 @@ export default function ApplicationDetailPage() {
             <p className="text-sm text-muted-foreground">{job.company} · {job.location}</p>
           </div>
         </div>
-        <Badge variant="secondary" className="bg-primary/12 text-primary-soft capitalize">{app.stage}</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="bg-primary/12 text-primary-soft capitalize">{app.stage}</Badge>
+          {app.stage === "interview" && (
+            <Button variant="primary-gradient" size="sm" onClick={() => router.push(`/interviews/${app.id}`)}>
+              Interview room
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="mb-5 rounded-[24px] border border-border bg-white/[0.03] p-5">

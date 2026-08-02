@@ -150,9 +150,16 @@ export default function ApplicationsPage() {
                     interview.proposedSlots.find((s) => s.id === interview.confirmedSlotId)?.start ?? "",
                   ).toLocaleString([], { weekday: "long", hour: "2-digit", minute: "2-digit", month: "short", day: "numeric" })}
               </p>
-              <Button variant="primary-gradient" size="sm" onClick={() => setSchedulingApp(null)}>
-                Done
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="ghost-glass" size="sm" onClick={() => setSchedulingApp(null)}>
+                  Done
+                </Button>
+                {schedulingApp && (
+                  <Button variant="primary-gradient" size="sm" onClick={() => router.push(`/interviews/${schedulingApp.id}`)}>
+                    Go to interview room
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             <div className="space-y-2">

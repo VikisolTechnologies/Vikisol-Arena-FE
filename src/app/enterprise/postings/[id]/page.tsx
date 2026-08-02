@@ -90,6 +90,16 @@ export default function ApplicantPipelinePage() {
                         <p className="truncate text-xs text-muted-foreground">{applicant.candidate?.title}</p>
                       </div>
                     </button>
+                    {stage === "interview" && (
+                      <Button
+                        variant="primary-gradient"
+                        size="sm"
+                        className="mt-2.5 w-full"
+                        onClick={() => router.push(`/enterprise/interviews/${applicant.id}`)}
+                      >
+                        Join interview
+                      </Button>
+                    )}
                     {stage !== "rejected" && stage !== "offer" && (
                       <div className="mt-2.5 flex gap-1.5">
                         <Button variant="ghost-glass" size="sm" className="flex-1 gap-1" onClick={() => advance(applicant)}>
