@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SlidersHorizontal, X, MessageCircleQuestion, Check, RotateCcw } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { SwipeCard, type SwipeCardHandle, type SwipeDirection } from "@/components/discovery/SwipeCard";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -88,7 +89,7 @@ export default function DiscoverPage() {
   if (!profile) {
     return (
       <CandidateAppShell title="Discover">
-        <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-96" />
       </CandidateAppShell>
     );
   }

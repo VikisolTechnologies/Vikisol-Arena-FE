@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Sparkles } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { AgentOrbAvatar } from "@/components/agent/AgentOrbAvatar";
 import { IntentCardView } from "@/components/agent/IntentCardView";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
@@ -223,7 +224,7 @@ export default function AgentPage() {
   if (!profile) {
     return (
       <CandidateAppShell title="Agent">
-        <div className="h-64 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-64" />
       </CandidateAppShell>
     );
   }

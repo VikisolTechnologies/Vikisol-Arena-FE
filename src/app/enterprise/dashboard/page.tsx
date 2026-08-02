@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Briefcase, Users, Bookmark, Search, ArrowRight, Sparkles } from "lucide-react";
 import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMyEnterpriseProfile, getMyPostings, getAllApplicantCounts } from "@/lib/api/enterprise";
@@ -46,7 +47,7 @@ export default function EnterpriseDashboardPage() {
   if (!profile) {
     return (
       <EnterpriseAppShell title="Dashboard">
-        <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-96" />
       </EnterpriseAppShell>
     );
   }

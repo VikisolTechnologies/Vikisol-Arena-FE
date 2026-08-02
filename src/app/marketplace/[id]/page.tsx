@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Clock3, Sparkles, Settings2 } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,7 +69,7 @@ export default function ProjectDetailPage() {
   if (project === undefined || !profile) {
     return (
       <CandidateAppShell title="Project">
-        <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-96" />
       </CandidateAppShell>
     );
   }

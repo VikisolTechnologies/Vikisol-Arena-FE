@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { MessagesInbox } from "@/components/messages/MessagesInbox";
 import { getMyProfile } from "@/lib/api/profile";
 import { getSession, isOnboarded } from "@/lib/session";
@@ -21,14 +22,14 @@ export default function MessagesPage() {
   if (!profile) {
     return (
       <CandidateAppShell title="Messages">
-        <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-96" />
       </CandidateAppShell>
     );
   }
 
   return (
     <CandidateAppShell title="Messages" profile={profile}>
-      <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-white/5" />}>
+      <Suspense fallback={<OrbLoader className="h-96" />}>
         <MessagesInbox />
       </Suspense>
     </CandidateAppShell>

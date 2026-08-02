@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bot, ShieldCheck, Sparkles, Eye, Waves, Bell, CalendarClock, DollarSign, Cog } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { Switch } from "@/components/ui/switch";
 import { getMyProfile, updateMyConsent, updateMyAutonomy } from "@/lib/api/profile";
 import { getNotifications } from "@/lib/api/notifications";
@@ -45,7 +46,7 @@ export default function SettingsPage() {
   if (!profile) {
     return (
       <CandidateAppShell title="Settings">
-        <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-96" />
       </CandidateAppShell>
     );
   }

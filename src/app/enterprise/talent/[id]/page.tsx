@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Lock, MessageCircle, ShieldCheck, Unlock, Bookmark } from "lucide-react";
 import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMyEnterpriseProfile, getCandidateDetail, unlockCandidate, saveMyEnterpriseProfile, getUnlockedCandidateIds } from "@/lib/api/enterprise";
@@ -35,7 +36,7 @@ export default function CandidateDetailPage() {
   if (candidate === undefined || !profile) {
     return (
       <EnterpriseAppShell title="Candidate">
-        <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-96" />
       </EnterpriseAppShell>
     );
   }

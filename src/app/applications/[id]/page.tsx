@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Search, Send, Eye, CalendarCheck2, Trash2 } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { TailoredResume } from "@/components/applications/TailoredResume";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ export default function ApplicationDetailPage() {
   if (app === undefined || !profile) {
     return (
       <CandidateAppShell title="Application">
-        <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-96" />
       </CandidateAppShell>
     );
   }

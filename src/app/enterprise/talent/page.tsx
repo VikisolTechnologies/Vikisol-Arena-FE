@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search as SearchIcon, MapPin, Sparkles, Bookmark } from "lucide-react";
 import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { Starfield } from "@/components/landing/Starfield";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -42,7 +43,7 @@ export default function TalentUniversePage() {
   if (!profile) {
     return (
       <EnterpriseAppShell title="Talent Universe">
-        <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-96" />
       </EnterpriseAppShell>
     );
   }

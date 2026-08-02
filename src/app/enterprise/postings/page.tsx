@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Sparkles, Users, MapPin } from "lucide-react";
 import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,7 +72,7 @@ export default function PostingsPage() {
   if (!profile) {
     return (
       <EnterpriseAppShell title="Postings">
-        <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-96" />
       </EnterpriseAppShell>
     );
   }

@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { MessagesInbox } from "@/components/messages/MessagesInbox";
 import { getMyEnterpriseProfile } from "@/lib/api/enterprise";
 import { getSession, isEnterpriseOnboarded } from "@/lib/session";
@@ -21,14 +22,14 @@ export default function EnterpriseMessagesPage() {
   if (!profile) {
     return (
       <EnterpriseAppShell title="Messages">
-        <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-96" />
       </EnterpriseAppShell>
     );
   }
 
   return (
     <EnterpriseAppShell title="Messages" profile={profile}>
-      <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-white/5" />}>
+      <Suspense fallback={<OrbLoader className="h-96" />}>
         <MessagesInbox />
       </Suspense>
     </EnterpriseAppShell>

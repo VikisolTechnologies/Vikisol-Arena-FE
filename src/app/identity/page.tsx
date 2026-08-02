@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Eye, ShieldCheck, Briefcase, GraduationCap, X } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { ForceGraph } from "@/components/identity/ForceGraph";
 import { SkillPicker } from "@/components/onboarding/SkillPicker";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -34,7 +35,7 @@ export default function IdentityPage() {
   if (!profile) {
     return (
       <CandidateAppShell title="Identity">
-        <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-96" />
       </CandidateAppShell>
     );
   }

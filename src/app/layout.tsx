@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { CommandPalette } from "@/components/command-palette/CommandPalette";
 import { RouteTransition } from "@/components/RouteTransition";
+import { PageTransition } from "@/components/PageTransition";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -46,7 +47,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
         <RouteTransition />
-        {children}
+        <PageTransition>{children}</PageTransition>
         <CommandPalette />
       </body>
     </html>

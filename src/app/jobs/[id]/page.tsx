@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { MapPin, CheckCircle2, XCircle, MessageCircle, ArrowLeft } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMyProfile } from "@/lib/api/profile";
@@ -32,7 +33,7 @@ export default function JobDetailPage() {
   if (job === undefined || !profile) {
     return (
       <CandidateAppShell title="Opportunity">
-        <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-96" />
       </CandidateAppShell>
     );
   }

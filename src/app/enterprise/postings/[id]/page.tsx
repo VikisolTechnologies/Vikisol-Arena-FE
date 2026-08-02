@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, User } from "lucide-react";
 import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMyEnterpriseProfile, getPosting, getApplicantsForPosting, moveApplicantStage } from "@/lib/api/enterprise";
@@ -35,7 +36,7 @@ export default function ApplicantPipelinePage() {
   if (posting === undefined || !profile) {
     return (
       <EnterpriseAppShell title="Applicants">
-        <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-96" />
       </EnterpriseAppShell>
     );
   }

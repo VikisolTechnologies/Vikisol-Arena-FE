@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CalendarClock, Check, Lock } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -70,7 +71,7 @@ export default function ApplicationsPage() {
   if (!profile) {
     return (
       <CandidateAppShell title="Applications">
-        <div className="h-96 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-96" />
       </CandidateAppShell>
     );
   }

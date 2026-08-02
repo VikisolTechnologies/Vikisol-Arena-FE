@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { getMyProfile } from "@/lib/api/profile";
 import { getMyBids, type MyBidRecord, type MyBidStatus } from "@/lib/api/myBids";
@@ -41,7 +42,7 @@ export default function MyBidsPage() {
   if (!profile) {
     return (
       <CandidateAppShell title="My Bids">
-        <div className="h-64 animate-pulse rounded-2xl bg-white/5" />
+        <OrbLoader className="h-64" />
       </CandidateAppShell>
     );
   }
