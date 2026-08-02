@@ -50,7 +50,7 @@ export default function ApplicationDetailPage() {
       </CandidateAppShell>
     );
   }
-  const job = getJobById(app.jobId);
+  const job = app.jobId ? getJobById(app.jobId) : undefined;
   if (!job) {
     return (
       <CandidateAppShell title="Application">

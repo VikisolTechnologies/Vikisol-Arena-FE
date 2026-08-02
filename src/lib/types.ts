@@ -83,9 +83,16 @@ export type ApplicationStage =
   | "offer"
   | "rejected";
 
+// One record, two views: `jobId` when sourced from the open market (candidate discovered/
+// applied via Discover, Agent, or a direct job link), `postingId` when sourced from an
+// enterprise's own JobPosting. Exactly one of the two is set. Candidate screens filter by
+// `candidateId === "me"`; enterprise screens filter by `postingId` — same store, no more
+// parallel Applicant/Application models drifting out of sync with each other.
 export interface Application {
   id: string;
-  jobId: string;
+  candidateId: string;
+  jobId?: string;
+  postingId?: string;
   stage: ApplicationStage;
   appliedAt: string;
   updatedAt: string;
@@ -205,14 +212,6 @@ export interface JobPosting {
   description: string;
   status: PostingStatus;
   createdAt: string;
-}
-
-export interface Applicant {
-  id: string;
-  postingId: string;
-  candidateId: string;
-  stage: ApplicationStage;
-  appliedAt: string;
 }
 
 export interface Conversation {

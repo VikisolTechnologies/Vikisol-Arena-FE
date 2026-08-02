@@ -89,6 +89,7 @@ export default function ApplicationsPage() {
               </div>
               <div className="space-y-2.5">
                 {items.map((app) => {
+                  if (!app.jobId) return null;
                   const job = getJobById(app.jobId);
                   if (!job) return null;
                   return (

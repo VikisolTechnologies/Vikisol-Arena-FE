@@ -1,7 +1,8 @@
-import type { Applicant, ApplicationStage, EnterpriseProfile, JobPosting } from "@/lib/types";
+import type { Application, ApplicationStage, EnterpriseProfile, JobPosting } from "@/lib/types";
 import { getEnterpriseProfile, saveEnterpriseProfile } from "@/lib/session";
 import { MOCK_CANDIDATES, getCandidateById } from "@/lib/mock/candidates";
 import { pick, pickN } from "@/lib/mock/seed";
+import { readApplications, writeApplications } from "./applicationsStore";
 import { delay } from "./shared";
 
 // ---- Enterprise profile ----
@@ -18,7 +19,6 @@ export async function saveMyEnterpriseProfile(profile: EnterpriseProfile): Promi
 // ---- Job postings ----
 
 const POSTINGS_KEY = "arena_enterprise_postings";
-const APPLICANTS_KEY = "arena_enterprise_applicants";
 
 function readPostings(): JobPosting[] {
   if (typeof window === "undefined") return [];
@@ -32,18 +32,6 @@ function writePostings(postings: JobPosting[]) {
   localStorage.setItem(POSTINGS_KEY, JSON.stringify(postings));
 }
 
-function readApplicants(): Applicant[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem(APPLICANTS_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-function writeApplicants(applicants: Applicant[]) {
-  localStorage.setItem(APPLICANTS_KEY, JSON.stringify(applicants));
-}
-
 export async function getMyPostings(): Promise<JobPosting[]> {
   return delay(readPostings(), 250);
 }
@@ -52,19 +40,22 @@ export async function getPosting(id: string): Promise<JobPosting | undefined> {
   return delay(readPostings().find((p) => p.id === id), 150);
 }
 
-/** Seeds 3-6 realistic applicants from the candidate pool so a fresh posting isn't empty. */
+/** Seeds 3-6 realistic applicants from the candidate pool so a fresh posting isn't empty —
+ * written into the same unified applications store the candidate side reads, just with
+ * postingId set instead of jobId. */
 function seedApplicants(postingId: string, industry: JobPosting["industry"]) {
   const pool = MOCK_CANDIDATES.filter((c) => c.industry === industry);
   const chosen = pickN(pool.length >= 3 ? pool : MOCK_CANDIDATES, Math.min(6, Math.max(3, pool.length)));
   const stages: ApplicationStage[] = ["applied", "applied", "screening", "screening", "interview", "offer"];
-  const applicants: Applicant[] = chosen.map((c, i) => ({
+  const applications: Application[] = chosen.map((c, i) => ({
     id: `applicant-${postingId}-${i}`,
-    postingId,
     candidateId: c.id,
+    postingId,
     stage: pick(stages),
     appliedAt: new Date(Date.now() - (i + 1) * 6 * 3600 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - (i + 1) * 6 * 3600 * 1000).toISOString(),
   }));
-  writeApplicants([...applicants, ...readApplicants()]);
+  writeApplications([...applications, ...readApplications()]);
 }
 
 export async function createPosting(input: Omit<JobPosting, "id" | "status" | "createdAt">): Promise<JobPosting> {
@@ -79,18 +70,20 @@ export async function setPostingStatus(id: string, status: JobPosting["status"])
   return delay(undefined, 200);
 }
 
-export async function getApplicantsForPosting(postingId: string): Promise<(Applicant & { candidate: ReturnType<typeof getCandidateById> })[]> {
-  const applicants = readApplicants().filter((a) => a.postingId === postingId);
+export async function getApplicantsForPosting(postingId: string): Promise<(Application & { candidate: ReturnType<typeof getCandidateById> })[]> {
+  const applicants = readApplications().filter((a) => a.postingId === postingId);
   return delay(applicants.map((a) => ({ ...a, candidate: getCandidateById(a.candidateId) })), 250);
 }
 
-export async function moveApplicantStage(applicantId: string, stage: ApplicationStage): Promise<void> {
-  writeApplicants(readApplicants().map((a) => (a.id === applicantId ? { ...a, stage } : a)));
+export async function moveApplicantStage(applicationId: string, stage: ApplicationStage): Promise<void> {
+  writeApplications(
+    readApplications().map((a) => (a.id === applicationId ? { ...a, stage, updatedAt: new Date().toISOString() } : a)),
+  );
   return delay(undefined, 200);
 }
 
 export async function getAllApplicantCounts(): Promise<number> {
-  return delay(readApplicants().length, 100);
+  return delay(readApplications().filter((a) => a.postingId).length, 100);
 }
 
 // ---- Talent Universe search ----

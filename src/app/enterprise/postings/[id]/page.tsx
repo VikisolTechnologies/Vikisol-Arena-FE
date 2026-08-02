@@ -9,11 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMyEnterpriseProfile, getPosting, getApplicantsForPosting, moveApplicantStage } from "@/lib/api/enterprise";
 import { getSession, isEnterpriseOnboarded } from "@/lib/session";
-import type { EnterpriseProfile, JobPosting, Applicant, ApplicationStage, CandidateProfile } from "@/lib/types";
+import type { EnterpriseProfile, JobPosting, Application, ApplicationStage, CandidateProfile } from "@/lib/types";
 
 const STAGES: ApplicationStage[] = ["applied", "screening", "interview", "offer", "rejected"];
 
-type ApplicantWithCandidate = Applicant & { candidate: CandidateProfile | undefined };
+type ApplicantWithCandidate = Application & { candidate: CandidateProfile | undefined };
 
 export default function ApplicantPipelinePage() {
   const params = useParams<{ id: string }>();
