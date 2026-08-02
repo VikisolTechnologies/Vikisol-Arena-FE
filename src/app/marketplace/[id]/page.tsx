@@ -121,7 +121,13 @@ export default function ProjectDetailPage() {
           <div className="mt-4 flex flex-wrap gap-1.5">
             {project.skills.map((s) => <Badge key={s} variant="secondary" className="bg-white/5 text-muted-foreground">{s}</Badge>)}
           </div>
-          <div className="mt-5 flex items-center gap-2 rounded-xl border border-border bg-white/[0.02] px-4 py-2.5 text-sm">
+          <div
+            className={`mt-5 flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm transition-colors ${
+              msLeft !== null && msLeft > 0 && msLeft < 3_600_000
+                ? "border-amber-500/40 bg-amber-500/[0.07] animate-pulse"
+                : "border-border bg-white/[0.02]"
+            }`}
+          >
             <Clock3 className="size-4 text-primary-soft" />
             {msLeft === null ? "—" : msLeft > 0 ? <>Ends in <b>{formatTimer(msLeft)}</b></> : "Bidding closed"}
           </div>
@@ -137,7 +143,14 @@ export default function ProjectDetailPage() {
           <p className="mb-3 font-display text-sm font-bold">Live bids ({project.bids.length})</p>
           <div ref={bidsListRef} className="space-y-2.5">
             {project.bids.map((bid, i) => (
-              <div key={bid.id} className={`rounded-xl border px-3.5 py-3 ${i === 0 ? "border-primary/40 bg-primary/[0.06]" : "border-border bg-white/[0.02]"}`}>
+              <div
+                key={bid.id}
+                className={`rounded-xl border px-3.5 py-3 transition-transform ${
+                  i === 0
+                    ? "border-primary/40 bg-primary/[0.06] scale-[1.02] shadow-[0_10px_28px_rgba(255,107,53,0.22)]"
+                    : "border-border bg-white/[0.02]"
+                }`}
+              >
                 <div className="flex items-center justify-between">
                   <span className="font-display text-base font-bold">₹{bid.amount.toLocaleString("en-IN")}</span>
                   {i === 0 && (
