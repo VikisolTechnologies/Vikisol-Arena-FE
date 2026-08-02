@@ -129,6 +129,26 @@ export interface Interview {
   feedback?: InterviewFeedback;
 }
 
+export interface Deliverable {
+  note: string;
+  submittedAt: string;
+}
+
+export interface Milestone {
+  id: string;
+  label: string;
+  amount: number; // this tranche's share of the awarded bid
+  done: boolean; // true once the deliverable is accepted
+  deliverable?: Deliverable;
+}
+
+export interface ProjectRating {
+  fromRole: "poster" | "bidder";
+  rating: number; // 1-5
+  comment: string;
+  submittedAt: string;
+}
+
 export interface Bid {
   id: string;
   projectId: string;

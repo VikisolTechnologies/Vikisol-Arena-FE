@@ -2,18 +2,75 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Award, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, Award, Check, Sparkles, Star } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { getMyProfile } from "@/lib/api/profile";
-import { getMyProject, awardProject, toggleMilestone, type MyProject } from "@/lib/api/myProjects";
+import {
+  getMyProject, awardProject, submitMilestoneDeliverable, acceptMilestone, submitProjectRating, type MyProject,
+} from "@/lib/api/myProjects";
 import { getSession, isOnboarded } from "@/lib/session";
 import { cn } from "@/lib/utils";
-import type { CandidateProfile, Bid } from "@/lib/types";
+import type { CandidateProfile, Bid, Milestone } from "@/lib/types";
+
+function MilestoneCard({ milestone, onSubmitDeliverable, onAccept }: {
+  milestone: Milestone;
+  onSubmitDeliverable: (id: string, note: string) => void;
+  onAccept: (id: string) => void;
+}) {
+  const [note, setNote] = useState(milestone.deliverable?.note ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    await onSubmitDeliverable(milestone.id, note);
+    setSaving(false);
+  };
+
+  return (
+    <div className="rounded-xl border border-border bg-white/[0.02] px-4 py-3.5">
+      <div className="flex items-center justify-between">
+        <p className={cn("text-sm font-medium", milestone.done && "text-muted-foreground line-through")}>{milestone.label}</p>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-muted-foreground">₹{milestone.amount.toLocaleString("en-IN")}</span>
+          {milestone.done && <Check className="size-4 text-emerald-400" />}
+        </div>
+      </div>
+      {!milestone.done && (
+        <div className="mt-2.5 space-y-2">
+          <Textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Deliverable notes (filled in on the bidder's behalf in this preview)…"
+            className="min-h-16 border-border bg-white/[0.02] text-xs"
+          />
+          <div className="flex gap-1.5">
+            <Button variant="ghost-glass" size="sm" disabled={saving} onClick={save}>
+              {saving ? "Saving…" : "Save note"}
+            </Button>
+            <Button
+              variant="primary-gradient"
+              size="sm"
+              className="flex-1"
+              disabled={!milestone.deliverable && !note.trim()}
+              onClick={async () => {
+                if (note !== (milestone.deliverable?.note ?? "")) await onSubmitDeliverable(milestone.id, note);
+                onAccept(milestone.id);
+              }}
+            >
+              Accept &amp; release ₹{milestone.amount.toLocaleString("en-IN")}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ProjectManagePage() {
   const params = useParams<{ id: string }>();
@@ -21,6 +78,9 @@ export default function ProjectManagePage() {
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [project, setProject] = useState<MyProject | null | undefined>(undefined);
   const [confirmBid, setConfirmBid] = useState<Bid | null>(null);
+  const [ratingValue, setRatingValue] = useState(5);
+  const [ratingComment, setRatingComment] = useState("");
+  const [submittingRating, setSubmittingRating] = useState(false);
 
   const load = () => getMyProject(params.id).then((p) => setProject(p ?? null));
 
@@ -47,19 +107,32 @@ export default function ProjectManagePage() {
     );
   }
 
-  const doAward = () => {
+  const doAward = async () => {
     if (!confirmBid) return;
-    awardProject(project.id, confirmBid.id);
+    await awardProject(project.id, confirmBid.id);
     setConfirmBid(null);
     load();
   };
 
-  const doToggleMilestone = (milestoneId: string) => {
-    toggleMilestone(project.id, milestoneId);
+  const doSubmitDeliverable = async (milestoneId: string, note: string) => {
+    await submitMilestoneDeliverable(project.id, milestoneId, note);
+    load();
+  };
+
+  const doAccept = async (milestoneId: string) => {
+    await acceptMilestone(project.id, milestoneId);
+    load();
+  };
+
+  const doSubmitRating = async () => {
+    setSubmittingRating(true);
+    await submitProjectRating(project.id, { fromRole: "poster", rating: ratingValue, comment: ratingComment });
+    setSubmittingRating(false);
     load();
   };
 
   const awardedBid = project.bids.find((b) => b.id === project.awardedBidId);
+  const posterRating = project.ratings?.find((r) => r.fromRole === "poster");
 
   return (
     <CandidateAppShell profile={profile}>
@@ -107,16 +180,46 @@ export default function ProjectManagePage() {
               {project.status === "closed" ? "Complete" : "In progress"}
             </Badge>
           </div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Milestones</p>
-          <div className="space-y-2">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Milestones — deliverable per tranche</p>
+          <div className="space-y-2.5">
             {project.milestones.map((m) => (
-              <label key={m.id} className="flex items-center gap-3 rounded-xl border border-border bg-white/[0.02] px-3.5 py-2.5 text-sm">
-                <Checkbox checked={m.done} onCheckedChange={() => doToggleMilestone(m.id)} />
-                <span className={cn(m.done && "text-muted-foreground line-through")}>{m.label}</span>
-                {m.done && <Check className="ml-auto size-4 text-emerald-400" />}
-              </label>
+              <MilestoneCard key={m.id} milestone={m} onSubmitDeliverable={doSubmitDeliverable} onAccept={doAccept} />
             ))}
           </div>
+
+          {project.status === "closed" && (
+            <div className="mt-5 border-t border-border pt-5">
+              <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Star className="size-3.5" /> Rate {awardedBid?.bidderName}
+              </p>
+              {posterRating ? (
+                <div className="rounded-xl border border-border bg-white/[0.02] px-4 py-3 text-sm">
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <Star key={i} className={cn("size-3.5", i < posterRating.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
+                    ))}
+                  </div>
+                  {posterRating.comment && <p className="mt-1.5 text-muted-foreground">{posterRating.comment}</p>}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-border bg-white/[0.02] p-4">
+                  <p className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+                    Rating <span className="text-foreground">{ratingValue}/5</span>
+                  </p>
+                  <Slider value={ratingValue} onValueChange={(v) => setRatingValue(v as number)} min={1} max={5} step={1} className="mb-3" />
+                  <Textarea
+                    value={ratingComment}
+                    onChange={(e) => setRatingComment(e.target.value)}
+                    placeholder="How was working with them?"
+                    className="mb-3 border-border bg-white/[0.03] text-sm"
+                  />
+                  <Button variant="primary-gradient" size="sm" className="w-full" disabled={submittingRating} onClick={doSubmitRating}>
+                    {submittingRating ? "Submitting…" : "Submit rating"}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

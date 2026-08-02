@@ -23,13 +23,21 @@ export async function getMyProfile(): Promise<CandidateProfile> {
         autonomy: onboarding.autonomy ?? base.autonomy,
         resumeFileName: onboarding.resumeFileName,
         resumeUploadedAt: onboarding.resumeUploadedAt,
+        careerHealth: onboarding.careerHealth ?? base.careerHealth,
       }
     : base;
   return delay(merged, 300);
 }
 
 async function patchOnboardingProfile(
-  patch: Partial<{ skills: string[]; consent: ConsentSettings; autonomy: AutonomyLevel; resumeFileName: string; resumeUploadedAt: string }>,
+  patch: Partial<{
+    skills: string[];
+    consent: ConsentSettings;
+    autonomy: AutonomyLevel;
+    resumeFileName: string;
+    resumeUploadedAt: string;
+    careerHealth: number;
+  }>,
 ) {
   const current = await getMyProfile();
   const onboarding = getOnboardingProfile();
@@ -45,6 +53,7 @@ async function patchOnboardingProfile(
     autonomy: patch.autonomy ?? onboarding?.autonomy ?? current.autonomy,
     resumeFileName: patch.resumeFileName ?? onboarding?.resumeFileName ?? current.resumeFileName,
     resumeUploadedAt: patch.resumeUploadedAt ?? onboarding?.resumeUploadedAt ?? current.resumeUploadedAt,
+    careerHealth: patch.careerHealth ?? onboarding?.careerHealth ?? current.careerHealth,
   });
   return getMyProfile();
 }
@@ -69,4 +78,12 @@ export async function updateMyResume(input: { fileName: string; skills?: string[
     resumeUploadedAt: new Date().toISOString(),
     skills: input.skills,
   });
+}
+
+/** Small, capped nudge to Career Health when verified work completes — a won bid, an accepted
+ * milestone. This is the mock's stand-in for "reputation" actually feeding back into the
+ * profile, per the marketplace lifecycle's two-way-ratings requirement. */
+export async function bumpMyCareerHealth(delta: number): Promise<CandidateProfile> {
+  const current = await getMyProfile();
+  return patchOnboardingProfile({ careerHealth: Math.max(0, Math.min(100, current.careerHealth + delta)) });
 }

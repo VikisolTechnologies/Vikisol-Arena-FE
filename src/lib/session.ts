@@ -43,6 +43,7 @@ export interface OnboardingProfile {
   autonomy?: AutonomyLevel;
   resumeFileName?: string;
   resumeUploadedAt?: string;
+  careerHealth?: number;
 }
 
 const PROFILE_KEY = "arena_onboarding_profile";

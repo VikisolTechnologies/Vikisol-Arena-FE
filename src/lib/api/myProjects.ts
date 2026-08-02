@@ -1,16 +1,12 @@
-import type { Project } from "@/lib/types";
+import type { Milestone, Project, ProjectRating } from "@/lib/types";
 import { delay } from "./shared";
-
-export interface Milestone {
-  id: string;
-  label: string;
-  done: boolean;
-}
+import { bumpMyCareerHealth } from "./profile";
 
 export interface MyProject extends Project {
   mine: true;
   awardedBidId?: string;
   milestones: Milestone[];
+  ratings?: ProjectRating[];
 }
 
 const KEY = "arena_my_projects";
@@ -61,29 +57,70 @@ export function addBidToMyProject(projectId: string, bid: Project["bids"][number
   writeAll(readAll().map((p) => (p.id === projectId ? { ...p, bids: [bid, ...p.bids].sort((a, b) => b.amount - a.amount) } : p)));
 }
 
-const DEFAULT_MILESTONES = ["Kickoff call scheduled", "First milestone delivered", "Final review", "Project complete"];
+const MILESTONE_LABELS = ["Kickoff & plan", "Midpoint delivery", "Final delivery"];
+const MILESTONE_SPLIT = [0.3, 0.4, 0.3]; // proportions of the awarded bid, one payment tranche each
 
-export function awardProject(projectId: string, bidId: string): MyProject | null {
+export async function awardProject(projectId: string, bidId: string): Promise<MyProject | null> {
   const all = readAll();
   const idx = all.findIndex((p) => p.id === projectId);
-  if (idx === -1) return null;
+  if (idx === -1) return delay(null, 100);
+  const bid = all[idx].bids.find((b) => b.id === bidId);
+  const total = bid?.amount ?? 0;
   all[idx] = {
     ...all[idx],
     status: "awarded",
     awardedBidId: bidId,
-    milestones: DEFAULT_MILESTONES.map((label, i) => ({ id: `m-${i}`, label, done: false })),
+    milestones: MILESTONE_LABELS.map((label, i) => ({
+      id: `m-${i}`,
+      label,
+      amount: Math.round(total * MILESTONE_SPLIT[i]),
+      done: false,
+    })),
   };
   writeAll(all);
-  return all[idx];
+  return delay(all[idx], 300);
 }
 
-export function toggleMilestone(projectId: string, milestoneId: string): MyProject | null {
+/** Records the deliverable note for a milestone — in this single-user mock, the poster fills
+ * this in on the bidder's behalf (there's no separate bidder session to submit it themselves),
+ * framed honestly in the UI as such rather than pretending it's a real two-party handoff. */
+export async function submitMilestoneDeliverable(projectId: string, milestoneId: string, note: string): Promise<MyProject | null> {
   const all = readAll();
   const idx = all.findIndex((p) => p.id === projectId);
-  if (idx === -1) return null;
-  const milestones = all[idx].milestones.map((m) => (m.id === milestoneId ? { ...m, done: !m.done } : m));
-  const allDone = milestones.every((m) => m.done);
+  if (idx === -1) return delay(null, 100);
+  const milestones = all[idx].milestones.map((m) =>
+    m.id === milestoneId ? { ...m, deliverable: { note, submittedAt: new Date().toISOString() } } : m,
+  );
+  all[idx] = { ...all[idx], milestones };
+  writeAll(all);
+  return delay(all[idx], 200);
+}
+
+/** Accepting a deliverable marks its milestone done and releases that tranche. Once every
+ * milestone is accepted the project closes — completion is a real state, not a checkbox that
+ * happens to be all-true. */
+export async function acceptMilestone(projectId: string, milestoneId: string): Promise<MyProject | null> {
+  const all = readAll();
+  const idx = all.findIndex((p) => p.id === projectId);
+  if (idx === -1) return delay(null, 100);
+  const milestones = all[idx].milestones.map((m) => (m.id === milestoneId ? { ...m, done: true } : m));
+  const allDone = milestones.length > 0 && milestones.every((m) => m.done);
   all[idx] = { ...all[idx], milestones, status: allDone ? "closed" : "awarded" };
   writeAll(all);
-  return all[idx];
+  if (allDone) bumpMyCareerHealth(1);
+  return delay(all[idx], 250);
+}
+
+export async function submitProjectRating(
+  projectId: string,
+  rating: Omit<ProjectRating, "submittedAt">,
+): Promise<MyProject | null> {
+  const all = readAll();
+  const idx = all.findIndex((p) => p.id === projectId);
+  if (idx === -1) return delay(null, 100);
+  const full: ProjectRating = { ...rating, submittedAt: new Date().toISOString() };
+  const ratings = [...(all[idx].ratings ?? []), full];
+  all[idx] = { ...all[idx], ratings };
+  writeAll(all);
+  return delay(all[idx], 250);
 }
