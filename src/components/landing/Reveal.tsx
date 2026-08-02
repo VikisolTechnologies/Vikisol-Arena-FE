@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type ElementType, type ReactNode } from "react";
+import { createElement, useRef, type ElementType, type ReactNode } from "react";
 import { useGSAP } from "@gsap/react";
 import { useGsap } from "@/lib/gsap";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -37,9 +37,5 @@ export function Reveal({
     });
   }, [reduced]);
 
-  return (
-    <Tag ref={ref} className={cn(!reduced && "reveal", className)}>
-      {children}
-    </Tag>
-  );
+  return createElement(Tag, { ref, className: cn(!reduced && "reveal", className) }, children);
 }

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Sparkles } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
-import { AgentOrbAvatar, type OrbState } from "@/components/agent/AgentOrbAvatar";
+import { AgentOrbAvatar } from "@/components/agent/AgentOrbAvatar";
 import { IntentCardView } from "@/components/agent/IntentCardView";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { getActivityFeed } from "@/lib/api/activity";
 import { applyToJob } from "@/lib/api/applications";
 import { placeBid } from "@/lib/api/market";
 import { agentRealtime } from "@/lib/realtime";
+import { useAgentState, setAgentState } from "@/lib/agentState";
 import { getSession, isOnboarded } from "@/lib/session";
 import { MOCK_JOBS, getJobById } from "@/lib/mock/jobs";
 import { MOCK_PROJECTS } from "@/lib/mock/projects";
@@ -95,7 +96,7 @@ export default function AgentPage() {
   const [activity, setActivity] = useState<AgentActivityEvent[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
-  const [orbState, setOrbState] = useState<OrbState>("idle");
+  const orbState = useAgentState();
   const scrollRef = useRef<HTMLDivElement>(null);
   const idCounter = useRef(0);
   const nextId = (prefix: string) => `${prefix}-${++idCounter.current}`;
@@ -153,7 +154,7 @@ export default function AgentPage() {
     const userMsg: ChatMessage = { id: nextId("u"), role: "user", content: text, timestamp: new Date().toISOString() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    setOrbState("thinking");
+    setAgentState("thinking");
 
     setTimeout(() => {
       const { content, intent } = buildReply(text, profile);
@@ -165,7 +166,7 @@ export default function AgentPage() {
         intentCard: intent ? { ...intent, id: nextId("intent"), status: "pending" } : undefined,
       };
       setMessages((prev) => [...prev, agentMsg]);
-      setOrbState(intent ? "needs-approval" : "idle");
+      setAgentState(intent ? "needs-approval" : "idle");
     }, 700);
   };
 
@@ -177,7 +178,7 @@ export default function AgentPage() {
   };
 
   const handleApprove = async (card: IntentCard) => {
-    setOrbState("acting");
+    setAgentState("acting");
     if (card.type === "apply") {
       await applyToJob(String(card.payload.jobId));
       agentRealtime.emit({
@@ -200,12 +201,12 @@ export default function AgentPage() {
       });
     }
     updateIntent(card.id, { ...card, status: "approved" });
-    setOrbState("idle");
+    setAgentState("idle");
   };
 
   const handleReject = (card: IntentCard) => {
     updateIntent(card.id, { ...card, status: "rejected" });
-    setOrbState("idle");
+    setAgentState("idle");
   };
 
   // Autonomy setting from /settings changes how approval cards behave: on autopilot, the
@@ -242,7 +243,7 @@ export default function AgentPage() {
         <TabsContent value="chat">
           <div className="flex h-[min(70vh,640px)] flex-col rounded-2xl border border-border bg-white/[0.02]">
             <div className="flex items-center gap-2.5 border-b border-border px-4 py-3">
-              <AgentOrbAvatar state={orbState} />
+              <AgentOrbAvatar state={orbState} size="lg" />
               <div>
                 <p className="text-sm font-semibold">Arena Agent</p>
                 <p className="text-xs capitalize text-muted-foreground">{orbState.replace("-", " ")}</p>

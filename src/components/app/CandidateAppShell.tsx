@@ -17,6 +17,7 @@ import {
   Mail,
 } from "lucide-react";
 import { AuraBackground } from "@/components/landing/AuraBackground";
+import { PersistentOrb } from "@/components/orb/PersistentOrb";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import type { CandidateProfile } from "@/lib/types";
@@ -148,6 +149,7 @@ export function CandidateAppShell({
           <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
         </div>
       </div>
+      <PersistentOrb />
     </div>
   );
 }
