@@ -107,3 +107,24 @@ body {
     @apply font-sans;
   }
 }
+
+/* "Download PDF" on a CV is a real, working export via the browser's own print pipeline
+   (window.print -> Save as PDF) rather than a new client-side PDF-generation dependency.
+   Scopes the printed page down to just the CV element carrying this class. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .arena-print-cv,
+  .arena-print-cv * {
+    visibility: visible;
+  }
+  .arena-print-cv {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}

@@ -21,12 +21,16 @@ export async function getMyProfile(): Promise<CandidateProfile> {
         openTo: onboarding.openTo.length ? onboarding.openTo : base.openTo,
         consent: onboarding.consent,
         autonomy: onboarding.autonomy ?? base.autonomy,
+        resumeFileName: onboarding.resumeFileName,
+        resumeUploadedAt: onboarding.resumeUploadedAt,
       }
     : base;
   return delay(merged, 300);
 }
 
-async function patchOnboardingProfile(patch: Partial<{ skills: string[]; consent: ConsentSettings; autonomy: AutonomyLevel }>) {
+async function patchOnboardingProfile(
+  patch: Partial<{ skills: string[]; consent: ConsentSettings; autonomy: AutonomyLevel; resumeFileName: string; resumeUploadedAt: string }>,
+) {
   const current = await getMyProfile();
   const onboarding = getOnboardingProfile();
   saveOnboardingProfile({
@@ -39,6 +43,8 @@ async function patchOnboardingProfile(patch: Partial<{ skills: string[]; consent
     openTo: onboarding?.openTo ?? current.openTo,
     consent: patch.consent ?? onboarding?.consent ?? current.consent,
     autonomy: patch.autonomy ?? onboarding?.autonomy ?? current.autonomy,
+    resumeFileName: patch.resumeFileName ?? onboarding?.resumeFileName ?? current.resumeFileName,
+    resumeUploadedAt: patch.resumeUploadedAt ?? onboarding?.resumeUploadedAt ?? current.resumeUploadedAt,
   });
   return getMyProfile();
 }
@@ -54,4 +60,13 @@ export async function updateMyConsent(consent: ConsentSettings): Promise<Candida
 
 export async function updateMyAutonomy(autonomy: AutonomyLevel): Promise<CandidateProfile> {
   return patchOnboardingProfile({ autonomy });
+}
+
+/** Records a resume upload + whatever structured fields the (simulated) parse confirmed. */
+export async function updateMyResume(input: { fileName: string; skills?: string[] }): Promise<CandidateProfile> {
+  return patchOnboardingProfile({
+    resumeFileName: input.fileName,
+    resumeUploadedAt: new Date().toISOString(),
+    skills: input.skills,
+  });
 }

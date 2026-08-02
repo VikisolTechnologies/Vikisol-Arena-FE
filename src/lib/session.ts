@@ -41,6 +41,8 @@ export interface OnboardingProfile {
   openTo: OpenTo[];
   consent: ConsentSettings;
   autonomy?: AutonomyLevel;
+  resumeFileName?: string;
+  resumeUploadedAt?: string;
 }
 
 const PROFILE_KEY = "arena_onboarding_profile";

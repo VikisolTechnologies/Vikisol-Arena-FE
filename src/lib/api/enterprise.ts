@@ -124,6 +124,16 @@ export async function getCandidateDetail(id: string) {
   return delay(getCandidateById(id) ?? null, 200);
 }
 
+/** True when this candidate directly applied to one of *my* postings — direct applicants are
+ * visible for free (they reached out first), unlike a cold Talent Universe search result,
+ * which still costs an unlock credit. Mirrors how real recruiter tools distinguish inbound
+ * applicants from outbound-sourced candidates. */
+export async function hasDirectlyApplied(candidateId: string): Promise<boolean> {
+  const myPostingIds = new Set(readPostings().map((p) => p.id));
+  const applied = readApplications().some((a) => a.candidateId === candidateId && a.postingId && myPostingIds.has(a.postingId));
+  return delay(applied, 100);
+}
+
 const UNLOCKED_KEY = "arena_unlocked_candidates";
 export function getUnlockedCandidateIds(): string[] {
   if (typeof window === "undefined") return [];

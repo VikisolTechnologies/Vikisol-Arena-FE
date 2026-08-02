@@ -38,6 +38,8 @@ export interface CandidateProfile {
   consent: ConsentSettings;
   autonomy: AutonomyLevel;
   bio?: string;
+  resumeFileName?: string;
+  resumeUploadedAt?: string;
 }
 
 export interface Job {

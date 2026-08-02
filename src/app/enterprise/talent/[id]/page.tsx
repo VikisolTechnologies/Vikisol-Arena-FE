@@ -7,7 +7,7 @@ import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getMyEnterpriseProfile, getCandidateDetail, unlockCandidate, saveMyEnterpriseProfile, getUnlockedCandidateIds } from "@/lib/api/enterprise";
+import { getMyEnterpriseProfile, getCandidateDetail, unlockCandidate, saveMyEnterpriseProfile, getUnlockedCandidateIds, hasDirectlyApplied } from "@/lib/api/enterprise";
 import { getShortlistIds, toggleShortlist } from "@/lib/api/shortlist";
 import { getSession, isEnterpriseOnboarded } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ export default function CandidateDetailPage() {
   const [profile, setProfile] = useState<EnterpriseProfile | null>(null);
   const [candidate, setCandidate] = useState<CandidateProfile | null | undefined>(undefined);
   const [unlocked, setUnlocked] = useState(false);
+  const [freeUnlock, setFreeUnlock] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -26,9 +27,11 @@ export default function CandidateDetailPage() {
     if (!getSession()) { router.replace("/auth"); return; }
     if (!isEnterpriseOnboarded()) { router.replace("/enterprise/onboarding"); return; }
     getMyEnterpriseProfile().then(setProfile);
-    getCandidateDetail(params.id).then((c) => {
+    getCandidateDetail(params.id).then(async (c) => {
       setCandidate(c ?? null);
-      setUnlocked(getUnlockedCandidateIds().includes(params.id));
+      const appliedDirectly = await hasDirectlyApplied(params.id);
+      setFreeUnlock(appliedDirectly);
+      setUnlocked(appliedDirectly || getUnlockedCandidateIds().includes(params.id));
       setSaved(getShortlistIds().includes(params.id));
     });
   }, [params.id, router]);
@@ -111,6 +114,12 @@ export default function CandidateDetailPage() {
               <p className="mb-3 flex items-center gap-1.5 font-display text-sm font-bold text-emerald-400">
                 <Unlock className="size-4" /> Contact unlocked
               </p>
+              {freeUnlock && (
+                <p className="mb-3 text-xs text-muted-foreground">
+                  They applied directly to one of your postings, so contact is visible at no cost — unlock credits are only
+                  for candidates you find via Talent Universe search.
+                </p>
+              )}
               <p className="mb-1 text-xs text-muted-foreground">Email</p>
               <p className="mb-3 text-sm">{candidate.name.toLowerCase().replace(" ", ".")}@example.com</p>
               <Button variant="primary-gradient" size="sm" className="w-full gap-1.5" onClick={() => router.push(`/messages?with=${candidate.id}`)}>

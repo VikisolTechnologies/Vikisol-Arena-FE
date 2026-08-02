@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Eye, ShieldCheck, Briefcase, GraduationCap, X } from "lucide-react";
+import { Pencil, Eye, ShieldCheck, Briefcase, GraduationCap, X, FileText } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { ForceGraph } from "@/components/identity/ForceGraph";
 import { SkillPicker } from "@/components/onboarding/SkillPicker";
+import { ArenaCV } from "@/components/applications/ArenaCV";
+import { ResumeUpload } from "@/components/applications/ResumeUpload";
+import { DownloadPdfButton } from "@/components/applications/DownloadPdfButton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +20,7 @@ import type { CandidateProfile } from "@/lib/types";
 export default function IdentityPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
-  const [mode, setMode] = useState<"public" | "edit">("public");
+  const [mode, setMode] = useState<"public" | "edit" | "resume">("public");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftSkills, setDraftSkills] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -87,9 +90,26 @@ export default function IdentityPage() {
           >
             <Pencil className="size-3.5" /> Edit
           </Button>
+          <Button
+            variant={mode === "resume" ? "primary-gradient" : "ghost-glass"}
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setMode("resume")}
+          >
+            <FileText className="size-3.5" /> Resume
+          </Button>
         </div>
       </div>
 
+      {mode === "resume" ? (
+        <div className="mx-auto max-w-2xl space-y-4">
+          <ResumeUpload profile={profile} onDone={setProfile} />
+          <ArenaCV profile={profile} printable />
+          <div className="flex justify-end">
+            <DownloadPdfButton />
+          </div>
+        </div>
+      ) : (
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <div className="rounded-[24px] border border-border bg-white/[0.03] p-4">
           <ForceGraph nodes={nodes} selectedId={selectedId} onSelect={setSelectedId} />
@@ -152,6 +172,7 @@ export default function IdentityPage() {
           )}
         </div>
       </div>
+      )}
     </CandidateAppShell>
   );
 }
