@@ -92,7 +92,7 @@ export default function IdentityPage() {
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <div className="rounded-[24px] border border-border bg-white/[0.03] p-4">
           <ForceGraph nodes={nodes} selectedId={selectedId} onSelect={setSelectedId} />
-          <p className="mt-2 text-center text-xs text-muted-foreground">Click any node to focus it</p>
+          <p className="mt-2 text-center text-xs text-muted-foreground">Drag a node to reposition it, or click to focus and zoom</p>
         </div>
 
         <div className="space-y-4">

@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Gauge, Zap, ClipboardCheck, Award, ArrowRight } from "lucide-react";
+import { Zap, ClipboardCheck, Award, ArrowRight, type LucideIcon } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
 import { SkillRadar } from "@/components/dashboard/SkillRadar";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
+import { CareerHealthGauge } from "@/components/dashboard/CareerHealthGauge";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getMyProfile } from "@/lib/api/profile";
@@ -15,7 +16,7 @@ import { MOCK_JOBS } from "@/lib/mock/jobs";
 import { getSession, isOnboarded } from "@/lib/session";
 import type { CandidateProfile, AgentActivityEvent } from "@/lib/types";
 
-function StatCard({ icon: Icon, value, label }: { icon: typeof Gauge; value: string | number; label: string }) {
+function StatCard({ icon: Icon, value, label }: { icon: LucideIcon; value: string | number; label: string }) {
   return (
     <div className="rounded-2xl border border-border bg-white/[0.03] p-4">
       <div className="flex size-9 items-center justify-center rounded-lg bg-primary/12 text-primary-soft">
@@ -75,7 +76,7 @@ export default function DashboardPage() {
   return (
     <CandidateAppShell title={`Welcome back, ${profile.name.split(" ")[0]} 👋`} profile={profile}>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard icon={Gauge} value={`${profile.careerHealth}%`} label="Career Health" />
+        <CareerHealthGauge value={profile.careerHealth} />
         <StatCard icon={Zap} value={highMatchCount} label="Strong matches" />
         <StatCard icon={ClipboardCheck} value={appliedCount} label="Applications sent" />
         <StatCard icon={Award} value={verifiedCount} label="Verified skills" />

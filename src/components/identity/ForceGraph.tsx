@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 export type GraphNode = {
@@ -14,7 +14,14 @@ export type GraphNode = {
   vy: number;
 };
 
-/** Small hand-rolled force simulation (spring-to-center + mutual repulsion) — no d3 dependency needed for a graph this size. */
+const ZOOM_SCALE = 1.45;
+const EASE = 0.09;
+const DRAG_CLICK_THRESHOLD = 5; // px moved — below this, a pointerup is treated as a click
+
+/** Hand-rolled force simulation (spring-to-center + mutual repulsion) — no d3 dependency
+ * needed for a graph this size. Adds drag-to-reposition, an eased focus-zoom on the
+ * selected node, and additive cluster-glow halos (brighter where nodes sit close together,
+ * tinted by verified status) on top of the original spring/link/node rendering. */
 export function ForceGraph({
   nodes: initialNodes,
   selectedId,
@@ -27,7 +34,8 @@ export function ForceGraph({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodesRef = useRef<GraphNode[]>([]);
   const reduced = useReducedMotion();
-  const [, forceRender] = useState(0);
+  const viewRef = useRef({ scale: 1, fx: 0, fy: 0 });
+  const dragRef = useRef<{ id: string; lastX: number; lastY: number; moved: boolean } | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -44,6 +52,20 @@ export function ForceGraph({
       return { ...n, x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, vx: 0, vy: 0 };
     });
   }, [initialNodes]);
+
+  // World-space coords under the current pan/zoom, from a canvas-local pointer position.
+  const toWorld = (localX: number, localY: number, w: number, h: number) => {
+    const { scale, fx, fy } = viewRef.current;
+    return { x: (localX - w / 2) / scale + fx, y: (localY - h / 2) / scale + fy };
+  };
+
+  const hitTest = (worldX: number, worldY: number) => {
+    for (const n of nodesRef.current) {
+      const radius = n.type === "center" ? 34 : 24;
+      if (Math.hypot(n.x - worldX, n.y - worldY) <= radius) return n;
+    }
+    return null;
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -67,10 +89,11 @@ export function ForceGraph({
       const cx = w / 2;
       const cy = h / 2;
       const nodes = nodesRef.current;
+      const draggedId = dragRef.current?.id;
 
       if (!reduced) {
         for (const n of nodes) {
-          if (n.type === "center") continue;
+          if (n.type === "center" || n.id === draggedId) continue;
           const restLen = 130;
           const dx = n.x - cx;
           const dy = n.y - cy;
@@ -97,9 +120,44 @@ export function ForceGraph({
         }
       }
 
+      // Eased focus-zoom: center + scale up on the selected node, ease back to the
+      // whole-graph view when nothing's selected. Reduced-motion snaps instantly.
+      const focus = nodes.find((n) => n.id === selectedId);
+      const targetScale = focus ? ZOOM_SCALE : 1;
+      const targetFx = focus ? focus.x : cx;
+      const targetFy = focus ? focus.y : cy;
+      const view = viewRef.current;
+      if (reduced) {
+        view.scale = targetScale;
+        view.fx = targetFx;
+        view.fy = targetFy;
+      } else {
+        view.scale += (targetScale - view.scale) * EASE;
+        view.fx += (targetFx - view.fx) * EASE;
+        view.fy += (targetFy - view.fy) * EASE;
+      }
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.save();
       ctx.scale(d, d);
+      ctx.translate(cx, cy);
+      ctx.scale(view.scale, view.scale);
+      ctx.translate(-view.fx, -view.fy);
+
+      // Cluster glow — soft additive halos, brighter wherever nodes sit close together.
+      ctx.globalCompositeOperation = "lighter";
+      for (const n of nodes) {
+        const glowColor = n.type === "center" ? "255,107,53" : n.verified ? "52,211,153" : "255,138,91";
+        const glowR = n.type === "center" ? 60 : 42;
+        const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, glowR);
+        grad.addColorStop(0, `rgba(${glowColor},0.16)`);
+        grad.addColorStop(1, `rgba(${glowColor},0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, glowR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalCompositeOperation = "source-over";
 
       const center = nodes.find((n) => n.type === "center");
       if (center) {
@@ -150,29 +208,55 @@ export function ForceGraph({
     };
   }, [reduced, selectedId]);
 
-  const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    for (const n of nodesRef.current) {
-      const radius = n.type === "center" ? 34 : 24;
-      if (Math.hypot(n.x - x, n.y - y) <= radius) {
-        onSelect(n.id);
-        forceRender((v) => v + 1);
-        return;
-      }
-    }
+  const localPoint = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const rect = canvasRef.current!.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top, w: rect.width, h: rect.height };
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const { x, y, w, h } = localPoint(e);
+    const world = toWorld(x, y, w, h);
+    const hit = hitTest(world.x, world.y);
+    if (!hit) return;
+    canvasRef.current?.setPointerCapture(e.pointerId);
+    dragRef.current = { id: hit.id, lastX: world.x, lastY: world.y, moved: false };
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const { x, y, w, h } = localPoint(e);
+    const world = toWorld(x, y, w, h);
+    const node = nodesRef.current.find((n) => n.id === drag.id);
+    if (!node || node.type === "center") return;
+    const dx = world.x - drag.lastX;
+    const dy = world.y - drag.lastY;
+    if (Math.hypot(dx, dy) > DRAG_CLICK_THRESHOLD / (viewRef.current.scale || 1)) drag.moved = true;
+    node.x = world.x;
+    node.y = world.y;
+    node.vx = dx;
+    node.vy = dy;
+    drag.lastX = world.x;
+    drag.lastY = world.y;
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const drag = dragRef.current;
+    dragRef.current = null;
+    canvasRef.current?.releasePointerCapture(e.pointerId);
+    if (!drag) return;
+    if (!drag.moved) onSelect(drag.id); // treat as a click — no real drag happened
   };
 
   return (
     <canvas
       ref={canvasRef}
-      onClick={handleClick}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
       role="img"
-      aria-label="Interactive identity graph — click a node to focus it"
-      className="h-[360px] w-full cursor-pointer rounded-2xl"
+      aria-label="Interactive identity graph — drag nodes to reposition, click a node to focus and zoom"
+      className="h-[360px] w-full cursor-grab touch-none rounded-2xl active:cursor-grabbing"
     />
   );
 }

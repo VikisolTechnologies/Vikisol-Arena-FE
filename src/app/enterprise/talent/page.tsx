@@ -53,7 +53,11 @@ export default function TalentUniversePage() {
         className="relative mb-6 overflow-hidden rounded-[32px] border border-border p-6 sm:p-8"
         style={{ background: "radial-gradient(120% 120% at 50% 0%, #121017 0%, #09090B 60%)" }}
       >
-        <Starfield />
+        <Starfield
+          active={Boolean(query.trim()) || industry !== "All" || remoteOnly}
+          resultCount={results.length}
+          seed={`${query}|${industry}|${remoteOnly}`}
+        />
         <div className="relative z-[2]">
           <p className="mb-1 font-display text-xs font-bold uppercase tracking-[3px] text-primary-soft">Talent Universe</p>
           <h1 className="font-display text-2xl font-bold tracking-tight">Every talent. One search.</h1>

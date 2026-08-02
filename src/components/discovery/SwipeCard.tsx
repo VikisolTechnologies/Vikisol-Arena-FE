@@ -57,14 +57,55 @@ export const SwipeCard = forwardRef<SwipeCardHandle, {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTop, reduced]);
 
+  // Real 3D tilt toward the cursor (desktop) or device orientation (mobile) — a separate
+  // rotateX/rotateY layered on top of Draggable's z-axis `rotation`, so both compose in the
+  // final transform without fighting each other.
+  useEffect(() => {
+    if (!isTop || reduced || !cardRef.current) return;
+    const card = cardRef.current;
+    gsap.set(card, { transformPerspective: 900 });
+
+    const onMove = (e: PointerEvent) => {
+      const rect = card.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width - 0.5;
+      const py = (e.clientY - rect.top) / rect.height - 0.5;
+      gsap.to(card, { rotateY: px * 14, rotateX: -py * 10, duration: 0.4, ease: "power2.out", overwrite: "auto" });
+    };
+    const onLeave = () => {
+      gsap.to(card, { rotateY: 0, rotateX: 0, duration: 0.5, ease: "power2.out" });
+    };
+    card.addEventListener("pointermove", onMove);
+    card.addEventListener("pointerleave", onLeave);
+
+    // Mobile fallback: device tilt, where the browser exposes it without a permission
+    // prompt. iOS gates this behind a user-gesture permission request, which is out of
+    // scope for a background flourish — this listener simply no-ops there.
+    const onOrientation = (e: DeviceOrientationEvent) => {
+      if (e.beta == null || e.gamma == null) return;
+      const gx = Math.max(-20, Math.min(20, e.gamma));
+      const gy = Math.max(-20, Math.min(20, e.beta - 40));
+      gsap.to(card, { rotateY: gx * 0.6, rotateX: -gy * 0.4, duration: 0.6, ease: "power2.out", overwrite: "auto" });
+    };
+    window.addEventListener("deviceorientation", onOrientation);
+
+    return () => {
+      card.removeEventListener("pointermove", onMove);
+      card.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("deviceorientation", onOrientation);
+    };
+  }, [isTop, reduced, gsap]);
+
   return (
     <div
       ref={cardRef}
       className="absolute inset-0 touch-none select-none rounded-[24px] border border-border bg-white/[0.04] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.5)] backdrop-blur-xl"
       style={{
-        transform: isTop ? undefined : `translateY(${stackDepth * 10}px) scale(${1 - stackDepth * 0.035})`,
+        transform: isTop
+          ? undefined
+          : `perspective(1000px) translateY(${stackDepth * 14}px) translateZ(${-stackDepth * 38}px) rotateZ(${stackDepth % 2 === 0 ? 1.5 : -1.5}deg)`,
         zIndex: 10 - stackDepth,
-        opacity: stackDepth > 2 ? 0 : 1,
+        opacity: stackDepth > 2 ? 0 : 1 - stackDepth * 0.12,
+        filter: stackDepth > 0 ? `brightness(${1 - stackDepth * 0.12})` : undefined,
       }}
     >
       <div className="flex items-start justify-between gap-3">
