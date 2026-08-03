@@ -25,7 +25,7 @@ arena-api git log for both.
 
 | # | Step | Mock | Real | Notes |
 |---|------|------|------|-------|
-| B1 | Onboarding end-to-end, resumable if abandoned | ✅ | 🟡 | Real endpoints (skills/consent/autonomy) wired + used elsewhere; wizard itself not re-clicked against a brand-new real signup this pass |
+| B1 | Onboarding end-to-end, resumable if abandoned | ✅ | ✅ | Real: walked live with a brand-new signup. Found + fixed two real bugs: (1) the wizard's handleFinish() had no real-mode branch at all - it only ever wrote to localStorage, so a real signup finished onboarding but the server-side profile stayed blank forever; added PUT /profile/me/details + wired it. (2) that new endpoint 500'd with UnsupportedOperationException - Hibernate's @ElementCollection needs a mutable backing list and the service was assigning Stream.toList()'s immutable one. Both fixed; confirmed via a direct GET /profile/me after signup that name/title/industry/skills/experience/rate/openTo/consent all persisted correctly. |
 | B2 | Dashboard: numbers agree, feed streams, Career Health orb, top matches | ✅ | ✅ | Real: live screenshot, real name/health/matches confirmed |
 | B3 | Resume: upload → parse → review → confirm → CV → PDF export | ✅ | ✅ | Real: live multipart upload verified end-to-end, file persisted, CV re-rendered with it |
 | B4 | Discover: swipe right/left/up, filters, 3D tilt, empty state | ✅ | 🟡 | Real: page loads clean, real job returned; the actual swipe-to-apply gesture tested via Agent chat's apply path instead, not Discover directly |
