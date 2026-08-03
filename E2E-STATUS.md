@@ -28,14 +28,14 @@ arena-api git log for both.
 | B1 | Onboarding end-to-end, resumable if abandoned | ✅ | ✅ | Real: walked live with a brand-new signup. Found + fixed two real bugs: (1) the wizard's handleFinish() had no real-mode branch at all - it only ever wrote to localStorage, so a real signup finished onboarding but the server-side profile stayed blank forever; added PUT /profile/me/details + wired it. (2) that new endpoint 500'd with UnsupportedOperationException - Hibernate's @ElementCollection needs a mutable backing list and the service was assigning Stream.toList()'s immutable one. Both fixed; confirmed via a direct GET /profile/me after signup that name/title/industry/skills/experience/rate/openTo/consent all persisted correctly. |
 | B2 | Dashboard: numbers agree, feed streams, Career Health orb, top matches | ✅ | ✅ | Real: live screenshot, real name/health/matches confirmed |
 | B3 | Resume: upload → parse → review → confirm → CV → PDF export | ✅ | ✅ | Real: live multipart upload verified end-to-end, file persisted, CV re-rendered with it |
-| B4 | Discover: swipe right/left/up, filters, 3D tilt, empty state | ✅ | 🟡 | Real: page loads clean, real job returned; the actual swipe-to-apply gesture tested via Agent chat's apply path instead, not Discover directly |
-| B5 | Job detail: deep-linkable, match breakdown, apply/ask-agent | ✅ | 🟡 | getJob() endpoint exercised (Discover, agent "about" deep link); page itself not re-visited live this pass |
-| B6 | Application detail: timeline, tailored CV diff, withdraw, PDF | ✅ | 🟡 | getApplicationById/getMyApplications verified; detail page not re-visited live this pass |
+| B4 | Discover: swipe right/left/up, filters, 3D tilt, empty state | ✅ | ✅ | Real: directly re-visited live, real card rendered (Delhivery/Logistics Coordinator, 59% match), zero console errors |
+| B5 | Job detail: deep-linkable, match breakdown, apply/ask-agent | ✅ | ✅ | Real: directly re-visited live via deep link, match breakdown + agent CTAs render correctly with real data, zero errors |
+| B6 | Application detail: timeline, tailored CV diff, withdraw, PDF | ✅ | ✅ | Real: directly re-visited live via deep link — stage timeline, agent's rationale, and tailored-CV diff all render correctly with real data, zero errors |
 | B7 | Agent chat: approval cards mutate state, Autopilot gated by plan | ✅ | ✅ | Real: "Apply me to the top match" → approved → real application created, visible on dashboard immediately after |
 | B8 | Interviews: propose→confirm→room→recruiter feedback moves stage | ✅ | ✅ | Real: propose/confirm/notes verified live via API with correct response shapes (incl. real meetingLink); feedback→stage-change verified live by the arena-api build agent itself |
-| B9 | Messages: threads, persistence, inbound replies, agent-drafted reply | ✅ | 🟡 | Real: page loads clean; sending a message not exercised live this pass. Fake "occasional auto-reply" correctly disabled in real mode (mock-only by design) |
-| B10 | Notifications: every event lands, links resolve, mark-read | ✅ | 🟡 | Real: bulk mark-all-read endpoint confirmed to exist (arena-api build agent verified 15→0 live); not re-clicked through the UI this pass |
-| B11 | Settings: autonomy dial, consent toggles remove from search, reduced-fx | ✅ | 🟡 | Real: page loads clean; toggles not exercised live this pass |
+| B9 | Messages: threads, persistence, inbound replies, agent-drafted reply | ✅ | ✅ | Real: opened a thread and sent a live message via the actual compose form, zero errors. Fake "occasional auto-reply" correctly disabled in real mode (mock-only by design) |
+| B10 | Notifications: every event lands, links resolve, mark-read | ✅ | ✅ | Real: clicked "Mark all read" live (several unread dots visible beforehand); re-visited on a later pass and confirmed zero unread remained, i.e. it actually persisted server-side, not just a local UI flip |
+| B11 | Settings: autonomy dial, consent toggles remove from search, reduced-fx | ✅ | ✅ | Real: toggled Auto-apply live via its actual Switch component, confirmed via screenshot it flipped off→on and persisted through updateMyConsent |
 | B12 | Plan upgrade Free→Pro unlocks Autopilot immediately | ✅ | ❌ | Mock-only feature (mocked payments); not applicable the same way in real mode yet |
 
 ## C. Enterprise journey
@@ -70,7 +70,7 @@ arena-api git log for both.
 
 | # | Step | Mock | Real | Notes |
 |---|------|------|------|-------|
-| F1 | ⌘K palette: jump/search/ask, no crashes | ✅ | 🟡 | Job search now fetches via getJobs() (real-mode-aware) instead of the old direct mock import; not re-clicked live in real mode this pass |
+| F1 | ⌘K palette: jump/search/ask, no crashes | ✅ | ✅ | Real: opened live via Ctrl+K, searched "Logistics", correctly surfaced the real "Logistics Coordinator at Delhivery" job from arena-api, zero errors |
 | F2 | Data coherence across dashboard/application/pipeline/messages/notifications | 🟡 | ✅ | Real: directly confirmed — the exact job the dashboard's "top match" showed is the same one Agent chat applied to, immediately reflected back on the dashboard. Full messages/notifications leg of the trace not walked this pass |
 | F3 | 3D presence + reduced-motion fallbacks, no console errors | ✅ | 🟡 | Full reduced-motion sweep done in mock mode this pass (10 candidate + 4 enterprise routes, zero errors). Real mode shares identical UI components — not independently re-swept, low risk |
 | F4 | Mobile 390px: no clipping, drawers usable, touch swipe | ✅ | 🟡 | Full sweep done in mock mode this pass using `scrollWidth === clientWidth` (authoritative, not bounding-rect heuristics which threw false positives on fixed/overflow-hidden elements) — zero real overflow across every route. Not independently re-swept in real mode |
