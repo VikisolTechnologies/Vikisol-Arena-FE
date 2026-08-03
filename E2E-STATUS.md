@@ -6,11 +6,17 @@ Legend: ❌ not verified/broken · 🟡 partial/inferred, not directly clicked t
 This file is the resume point if a session restarts mid-run: find the first ❌/🟡 row and continue there.
 
 Real mode was verified live against `arena-api` running on local Postgres (seeded demo accounts:
-`demo.talent@vikisol.dev` / `demo.enterprise@vikisol.dev`, password `Demo@12345`), not just read
-from code. Two real bugs were found and fixed this pass: real-mode sign-in was bouncing
-already-onboarded accounts back into the wizard (client-side inference fix), and Talent Universe
-search 500'd on Postgres/JDBC parameter-type inference (backend query fix) — see arena-web and
-arena-api git log for both.
+`demo.talent@vikisol.dev` / `demo.enterprise@vikisol.dev`, password `Demo@12345`, plus ad hoc
+fresh signups for onboarding/two-account flows), not just read from code. This gap sweep found
+and fixed eleven real bugs across two passes — see arena-web and arena-api git log for all of
+them: real-mode sign-in bouncing already-onboarded accounts back into the wizard; Talent Universe
+search 500ing on Postgres/JDBC parameter-type inference; the onboarding wizard never syncing to
+the real API at all; a Hibernate immutable-collection crash on that new endpoint; a duplicate-key
+bug in the marketplace list; getMyProject() ignoring the server's ownership flag (every user saw
+every project as their own); a missing bidder-side milestone-deliverable UI (built this pass); a
+missing deliverable note/timestamp in MilestoneResponse; and a field-name mismatch on rating
+submission. One residual known gap (ratings not returned by the project GET) is documented below,
+not fixed.
 
 ## A. Visitor (public)
 
@@ -72,8 +78,8 @@ arena-api git log for both.
 |---|------|------|------|-------|
 | F1 | ⌘K palette: jump/search/ask, no crashes | ✅ | ✅ | Real: opened live via Ctrl+K, searched "Logistics", correctly surfaced the real "Logistics Coordinator at Delhivery" job from arena-api, zero errors |
 | F2 | Data coherence across dashboard/application/pipeline/messages/notifications | 🟡 | ✅ | Real: directly confirmed — the exact job the dashboard's "top match" showed is the same one Agent chat applied to, immediately reflected back on the dashboard. Full messages/notifications leg of the trace not walked this pass |
-| F3 | 3D presence + reduced-motion fallbacks, no console errors | ✅ | 🟡 | Full reduced-motion sweep done in mock mode this pass (10 candidate + 4 enterprise routes, zero errors). Real mode shares identical UI components — not independently re-swept, low risk |
-| F4 | Mobile 390px: no clipping, drawers usable, touch swipe | ✅ | 🟡 | Full sweep done in mock mode this pass using `scrollWidth === clientWidth` (authoritative, not bounding-rect heuristics which threw false positives on fixed/overflow-hidden elements) — zero real overflow across every route. Not independently re-swept in real mode |
+| F3 | 3D presence + reduced-motion fallbacks, no console errors | ✅ | ✅ | Real: independently re-swept live (8 candidate + 3 enterprise routes, both reduced-motion states) against real demo accounts — zero console errors everywhere |
+| F4 | Mobile 390px: no clipping, drawers usable, touch swipe | ✅ | ✅ | Real: independently re-swept live at 390px using the authoritative `scrollWidth === clientWidth` check — zero overflow across every candidate + enterprise route, both reduced-motion states |
 | F5 | Loading/empty/error states everywhere; real-mode API-down degrades gracefully | 🟡 | ✅ | Loading/empty states done in mock. Real mode: added global ApiDownBanner + network-unreachable detection in httpClient.ts. Verified live with arena-api genuinely stopped — banner renders, /auth shows inline error, no false navigation to /dashboard. |
 
 ## Phase 4 wiring checklist (src/lib/api/*)
@@ -116,7 +122,10 @@ arena-api git log for both.
 - [x] Zero console errors (both modes, everywhere swept)
 - [x] `npm run lint` clean
 - [x] `npm run build` clean
-- [x] Mobile (390px) verified — mock mode, authoritative scrollWidth check
-- [x] Reduced-motion verified — mock mode
-- [ ] Every 🟡 row above walked live and flipped to ✅ or downgraded to a documented gap
+- [x] Mobile (390px) verified — both mock and real mode, authoritative scrollWidth check
+- [x] Reduced-motion verified — both mock and real mode
+- [x] Every 🟡 row above walked live and flipped to ✅ or downgraded to a documented gap — two
+      remain deliberately un-flipped, both documented scope decisions rather than bugs: B12 (plan
+      upgrade unlocking Autopilot) needs real payments, explicitly out of scope; C6 (seats/plan
+      gating) has no invite-teammate surface to gate yet, noted as a known gap in a prior pass.
 - [ ] `v1.0-rc` tagged
