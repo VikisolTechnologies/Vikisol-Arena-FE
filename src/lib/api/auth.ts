@@ -35,10 +35,12 @@ async function syncOnboardedFromProfile(role: Role) {
     if (role === "talent") {
       const profile = await getMyProfile();
       if (profile.skills.length > 0) setOnboarded();
-    } else {
+    } else if (role === "company_admin" || role === "recruiter") {
       const profile = await getMyEnterpriseProfile();
       if (profile?.companyName) setEnterpriseOnboarded();
     }
+    // hiring_manager has no company profile to manage (its /admin dashboard isn't behind the
+    // enterprise-onboarding gate) and platform_admin has no tenant at all - nothing to sync.
   } catch {
     // Leave onboarded state as-is - the relevant page's own guard will route correctly either way.
   }
@@ -53,10 +55,19 @@ export async function signIn(email: string, password: string, role: Role): Promi
     await syncOnboardedFromProfile(session.role);
     return session;
   }
-  const name = role === "talent" ? getCandidateById(CURRENT_CANDIDATE_ID)?.name ?? "You" : "Enterprise Admin";
-  const session: Session = { role, name, email, candidateId: role === "talent" ? CURRENT_CANDIDATE_ID : undefined };
+  const session: Session = { role, name: mockNameFor(role), email, candidateId: role === "talent" ? CURRENT_CANDIDATE_ID : undefined };
   setSession(session);
   return delay(session, 600);
+}
+
+function mockNameFor(role: Role): string {
+  switch (role) {
+    case "talent": return getCandidateById(CURRENT_CANDIDATE_ID)?.name ?? "You";
+    case "company_admin": return "Enterprise Admin";
+    case "recruiter": return "Priyanka Rao";
+    case "hiring_manager": return "Karthik Iyer";
+    case "platform_admin": return "Vikisol Platform Admin";
+  }
 }
 
 export async function signUp(name: string, email: string, password: string, role: Role): Promise<Session> {

@@ -26,7 +26,9 @@ const TALENT_TIERS: { key: "free" | "pro"; name: string; price: string; period: 
 
 export default function PricingPage() {
   const [talentPlan, setTalentPlanState] = useState(() => getTalentPlan());
-  const [enterpriseOnboarded] = useState(() => getSession()?.role === "enterprise" && isEnterpriseOnboarded());
+  // Plan changes are a company_admin action (CA4: Billing & plan) - recruiters share the
+  // workspace but don't manage billing.
+  const [enterpriseOnboarded] = useState(() => getSession()?.role === "company_admin" && isEnterpriseOnboarded());
   const [seats, setSeats] = useState(3);
 
   const chooseTalentPlan = (plan: "free" | "pro") => {

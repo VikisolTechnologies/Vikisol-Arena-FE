@@ -2,7 +2,10 @@
 // shapes from mock data today; a real backend swap later just replaces the function
 // bodies; call sites and these types don't change.
 
-export type Role = "talent" | "enterprise";
+// "enterprise" retired in favor of explicit roles (see DECISIONS.md) - recruiter/company_admin
+// share the existing enterprise workspace, company_admin additionally gets /enterprise/admin,
+// hiring_manager gets a lite "my interviews" view, platform_admin gets /admin (no tenant).
+export type Role = "talent" | "recruiter" | "company_admin" | "hiring_manager" | "platform_admin";
 
 export type OpenTo = "full-time" | "contract" | "projects";
 
@@ -228,6 +231,8 @@ export interface Session {
 
 export type CompanySize = "1-10" | "11-50" | "51-200" | "201-1000" | "1000+";
 
+export type TenantStatus = "active" | "suspended";
+
 export interface EnterpriseProfile {
   companyName: string;
   logoEmoji: string;
@@ -239,6 +244,51 @@ export interface EnterpriseProfile {
   seatsTotal: number;
   unlockCreditsUsed: number;
   unlockCreditsTotal: number;
+  status: TenantStatus;
+}
+
+export type MembershipStatus = "invited" | "active" | "suspended";
+
+export interface Membership {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  role: Role;
+  status: MembershipStatus;
+  invitedBy?: string;
+  joinedAt: string;
+}
+
+export type InvitationStatus = "pending" | "accepted" | "expired" | "revoked";
+
+export interface Invitation {
+  id: string;
+  email: string;
+  role: Role;
+  token: string;
+  expiresAt: string;
+  invitedBy: string;
+  status: InvitationStatus;
+  createdAt: string;
+}
+
+export interface CreditLedgerEntry {
+  id: string;
+  actorName?: string;
+  delta: number;
+  reason: string;
+  balanceAfter: number;
+  createdAt: string;
+}
+
+export interface AuditEvent {
+  id: string;
+  actorName: string;
+  action: string;
+  target?: string;
+  metadata?: string;
+  createdAt: string;
 }
 
 export type PostingStatus = "open" | "paused" | "closed";

@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Home, Compass, MessageSquare, Fingerprint, ClipboardList, Store, Mail, Settings,
-  LayoutDashboard, Search as SearchIcon, Briefcase, Sparkles,
+  LayoutDashboard, Search as SearchIcon, Briefcase, Sparkles, Users, ScrollText,
+  CreditCard, Building2, CalendarClock, Building, ShieldAlert, BarChart3, Flag,
 } from "lucide-react";
 import {
   Command, CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem,
@@ -31,6 +32,26 @@ const ENTERPRISE_NAV = [
   { href: "/enterprise/messages", label: "Messages", icon: Mail },
 ];
 
+const COMPANY_ADMIN_NAV = [
+  { href: "/enterprise/admin", label: "Admin dashboard", icon: LayoutDashboard },
+  { href: "/enterprise/admin/team", label: "Team", icon: Users },
+  { href: "/enterprise/admin/audit", label: "Audit log", icon: ScrollText },
+  { href: "/enterprise/admin/billing", label: "Billing & plan", icon: CreditCard },
+  { href: "/enterprise/admin/company", label: "Company profile", icon: Building2 },
+  ...ENTERPRISE_NAV,
+];
+
+const HIRING_MANAGER_NAV = [
+  { href: "/enterprise/interviews/mine", label: "My interviews", icon: CalendarClock },
+];
+
+const PLATFORM_ADMIN_NAV = [
+  { href: "/admin", label: "Tenants", icon: Building },
+  { href: "/admin/moderation", label: "Moderation", icon: ShieldAlert },
+  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/flags", label: "Feature flags", icon: Flag },
+];
+
 /** Global ⌘K palette — jump to any screen, search jobs, or ask the agent. Mounted once in the root layout. */
 export function CommandPalette() {
   const router = useRouter();
@@ -50,7 +71,12 @@ export function CommandPalette() {
   }, []);
 
   const role = useMemo(() => (open ? getSession()?.role : undefined), [open]);
-  const navItems = role === "enterprise" ? ENTERPRISE_NAV : CANDIDATE_NAV;
+  const navItems =
+    role === "company_admin" ? COMPANY_ADMIN_NAV
+    : role === "recruiter" ? ENTERPRISE_NAV
+    : role === "hiring_manager" ? HIRING_MANAGER_NAV
+    : role === "platform_admin" ? PLATFORM_ADMIN_NAV
+    : CANDIDATE_NAV;
 
   useEffect(() => {
     if (open && role === "talent" && jobs.length === 0) getJobs().then(setJobs);

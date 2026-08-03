@@ -50,6 +50,7 @@ export default function EnterpriseOnboardingPage() {
       seatsTotal: 3,
       unlockCreditsUsed: 0,
       unlockCreditsTotal: 25,
+      status: "active",
     });
     setEnterpriseOnboarded();
     router.push("/enterprise/dashboard");

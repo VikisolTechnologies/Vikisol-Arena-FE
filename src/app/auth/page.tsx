@@ -17,9 +17,11 @@ import { isRealMode } from "@/lib/api/mode";
 import { isOnboarded } from "@/lib/session";
 import type { Role } from "@/lib/types";
 
+// Public signup only ever creates "talent" or a brand-new tenant's "company_admin" (see
+// DECISIONS.md) - recruiter/hiring_manager accounts only ever come from accepting an invite.
 const ROLES: { key: Role; label: string; desc: string; icon: typeof User }[] = [
   { key: "talent", label: "Talent", desc: "Find opportunities", icon: User },
-  { key: "enterprise", label: "Enterprise", desc: "Find candidates", icon: Building2 },
+  { key: "company_admin", label: "Enterprise", desc: "Find candidates", icon: Building2 },
 ];
 
 export default function AuthPage() {
@@ -43,11 +45,30 @@ export default function AuthPage() {
     }
     setSubmitting(true);
     try {
-      if (mode === "signin") await signIn(form.email, form.password, role);
-      else await signUp(form.name, form.email, form.password, role);
+      // Redirect off the session's *actual* role, not the tab the user clicked - real mode's
+      // sign-in ignores the selected role entirely (any account can sign in from either tab) and
+      // returns whichever role the account really has, which matters now that "company_admin"
+      // is one of several distinct enterprise-side landings (see DECISIONS.md role-based landing).
+      const session = mode === "signin"
+        ? await signIn(form.email, form.password, role)
+        : await signUp(form.name, form.email, form.password, role);
 
-      if (role === "enterprise") router.push("/enterprise");
-      else router.push(isOnboarded() ? "/dashboard" : "/onboarding");
+      switch (session.role) {
+        case "company_admin":
+          router.push("/enterprise/admin");
+          break;
+        case "recruiter":
+          router.push("/enterprise");
+          break;
+        case "hiring_manager":
+          router.push("/enterprise/interviews/mine");
+          break;
+        case "platform_admin":
+          router.push("/admin");
+          break;
+        default:
+          router.push(isOnboarded() ? "/dashboard" : "/onboarding");
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong — please try again.");
     } finally {
@@ -110,6 +131,30 @@ export default function AuthPage() {
                 </button>
               ))}
             </div>
+
+            {/* Recruiter/hiring_manager/platform_admin only ever exist via invite or internal
+                seeding (see ROLES above / DECISIONS.md) - never a signup choice, but still need
+                a way to sign in as one. Keeps the primary talent/enterprise cards as the two
+                on-brand choices rather than diluting them into a 5-way grid. */}
+            {mode === "signin" && (
+              <div className="mb-6 flex flex-wrap gap-2">
+                {(["recruiter", "hiring_manager", "platform_admin"] as const).map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setRole(key)}
+                    className={cn(
+                      "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                      role === key
+                        ? "border-primary/60 bg-primary/10 text-primary-soft"
+                        : "border-border bg-white/[0.03] text-muted-foreground hover:border-white/20",
+                    )}
+                  >
+                    {key === "recruiter" ? "Recruiter" : key === "hiring_manager" ? "Hiring manager" : "Platform admin"}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === "signup" && (
