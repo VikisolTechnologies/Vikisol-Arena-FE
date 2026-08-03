@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { getConversations, getThreadMessages, sendThreadMessage, getOrCreateConversation, receiveThreadReply } from "@/lib/api/messages";
+import { isRealMode } from "@/lib/api/mode";
 import { getCandidateById } from "@/lib/mock/candidates";
 import type { Conversation, ThreadMessage } from "@/lib/types";
 
@@ -67,9 +68,11 @@ export function MessagesInbox() {
     getThreadMessages(activeId).then(setThread);
   }, [activeId]);
 
-  // Occasionally deliver a reply in the open thread so it feels alive.
+  // Occasionally deliver a reply in the open thread so it feels alive. Mock-mode only - real
+  // conversations should only ever show genuine server-pushed content, and this is exactly the
+  // kind of polling loop the mission's cost-discipline rules single out to avoid.
   useEffect(() => {
-    if (!activeId) return;
+    if (!activeId || isRealMode()) return;
     const id = setInterval(() => {
       if (Math.random() < 0.4) {
         receiveThreadReply(activeId, AUTO_REPLIES[Math.floor(Math.random() * AUTO_REPLIES.length)]);

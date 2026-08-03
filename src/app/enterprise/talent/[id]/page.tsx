@@ -32,7 +32,7 @@ export default function CandidateDetailPage() {
       const appliedDirectly = await hasDirectlyApplied(params.id);
       setFreeUnlock(appliedDirectly);
       setUnlocked(appliedDirectly || getUnlockedCandidateIds().includes(params.id));
-      setSaved(getShortlistIds().includes(params.id));
+      setSaved((await getShortlistIds()).includes(params.id));
     });
   }, [params.id, router]);
 
@@ -77,7 +77,7 @@ export default function CandidateDetailPage() {
               <h1 className="font-display text-xl font-bold tracking-tight">{unlocked ? candidate.name : "Candidate profile"}</h1>
               <p className="text-sm text-muted-foreground">{candidate.title} · {candidate.location}</p>
             </div>
-            <button type="button" onClick={() => setSaved(toggleShortlist(candidate.id).includes(candidate.id))} aria-label="Save">
+            <button type="button" onClick={() => toggleShortlist(candidate.id).then((ids) => setSaved(ids.includes(candidate.id)))} aria-label="Save">
               <Bookmark className={cn("size-5", saved ? "fill-primary-soft text-primary-soft" : "text-muted-foreground")} />
             </button>
           </div>

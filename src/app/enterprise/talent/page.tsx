@@ -32,8 +32,8 @@ export default function TalentUniversePage() {
     if (!isEnterpriseOnboarded()) { router.replace("/enterprise/onboarding"); return; }
     getMyEnterpriseProfile().then((p) => {
       setProfile(p);
-      setShortlist(getShortlistIds());
     });
+    getShortlistIds().then(setShortlist);
   }, [router]);
 
   useEffect(() => {
@@ -111,7 +111,7 @@ export default function TalentUniversePage() {
                 <button
                   type="button"
                   aria-label={saved ? "Remove from shortlist" : "Save to shortlist"}
-                  onClick={() => setShortlist(toggleShortlist(candidate.id))}
+                  onClick={() => toggleShortlist(candidate.id).then(setShortlist)}
                 >
                   <Bookmark className={cn("size-4", saved ? "fill-primary-soft text-primary-soft" : "text-muted-foreground")} />
                 </button>

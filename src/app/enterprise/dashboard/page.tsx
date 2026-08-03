@@ -36,8 +36,8 @@ export default function EnterpriseDashboardPage() {
     if (!isEnterpriseOnboarded()) { router.replace("/enterprise/onboarding"); return; }
     getMyEnterpriseProfile().then((p) => {
       setProfile(p);
-      setShortlistIds(getShortlistIds());
     });
+    getShortlistIds().then(setShortlistIds);
     Promise.all([getMyPostings(), getAllApplicantCounts()]).then(([p, count]) => {
       setPostings(p);
       setApplicantCount(count);

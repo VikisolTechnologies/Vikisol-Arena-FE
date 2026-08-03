@@ -1,6 +1,10 @@
+import { delay } from "./shared";
+import { isRealMode } from "./mode";
+import { apiFetch } from "./httpClient";
+
 const KEY = "arena_shortlist";
 
-export function getShortlistIds(): string[] {
+function readLocal(): string[] {
   if (typeof window === "undefined") return [];
   try {
     return JSON.parse(localStorage.getItem(KEY) || "[]");
@@ -9,9 +13,15 @@ export function getShortlistIds(): string[] {
   }
 }
 
-export function toggleShortlist(candidateId: string): string[] {
-  const current = getShortlistIds();
+export async function getShortlistIds(): Promise<string[]> {
+  if (isRealMode()) return apiFetch<string[]>("/enterprise/shortlist");
+  return delay(readLocal(), 100);
+}
+
+export async function toggleShortlist(candidateId: string): Promise<string[]> {
+  if (isRealMode()) return apiFetch<string[]>(`/enterprise/shortlist/${candidateId}/toggle`, { method: "POST" });
+  const current = readLocal();
   const next = current.includes(candidateId) ? current.filter((id) => id !== candidateId) : [...current, candidateId];
   localStorage.setItem(KEY, JSON.stringify(next));
-  return next;
+  return delay(next, 150);
 }
