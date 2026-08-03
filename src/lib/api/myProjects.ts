@@ -113,11 +113,12 @@ export async function awardProject(projectId: string, bidId: string): Promise<My
   return delay(all[idx], 300);
 }
 
-/** Records the deliverable note for a milestone — in this single-user mock, the poster fills
- * this in on the bidder's behalf (there's no separate bidder session to submit it themselves),
- * framed honestly in the UI as such rather than pretending it's a real two-party handoff. Real
- * mode has the same constraint (one authenticated user acting on both sides of the demo) so
- * this call still comes from the poster's session there too. */
+/** Records the deliverable note for a milestone. Mock mode has the poster fill this in on the
+ * bidder's behalf, since there's no separate bidder session to submit it themselves - framed
+ * honestly in the UI as such. Real mode is a genuine two-party flow: arena-api requires the
+ * deliverable to come from the awarded bidder's own session (see submitMyDeliverable in
+ * market.ts, used from the project detail page's winner view), so this poster-invoked path is
+ * only ever hit here in mock mode or if the poster edits an already-submitted note. */
 export async function submitMilestoneDeliverable(projectId: string, milestoneId: string, note: string): Promise<MyProject | null> {
   if (isRealMode()) {
     await apiFetch(`/marketplace/milestones/${milestoneId}/deliverables`, { method: "POST", body: { note } });
@@ -158,7 +159,9 @@ export async function submitProjectRating(
   rating: Omit<ProjectRating, "submittedAt">,
 ): Promise<MyProject | null> {
   if (isRealMode()) {
-    await apiFetch(`/marketplace/projects/${projectId}/ratings`, { method: "POST", body: rating });
+    // arena-api's RateRequest is {score, comment} - it derives who's rating whom from the
+    // authenticated session/award record server-side, so fromRole never gets sent.
+    await apiFetch(`/marketplace/projects/${projectId}/ratings`, { method: "POST", body: { score: rating.rating, comment: rating.comment } });
     return (await getMyProject(projectId)) ?? null;
   }
   const all = readAll();
