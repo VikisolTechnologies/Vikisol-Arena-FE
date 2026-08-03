@@ -105,6 +105,23 @@ async function patchOnboardingProfile(
   return getMyProfile();
 }
 
+/** Real mode only: syncs the onboarding wizard's name/title/industry/experience/rate/openTo to
+ * arena-api. Mock mode's onboarding page already writes this straight to localStorage via
+ * saveOnboardingProfile(), so this is a no-op there. */
+export async function updateMyProfileDetails(details: {
+  name: string;
+  title: string;
+  industry: Industry;
+  experienceYears: number;
+  rateFloor: number;
+  openTo: OpenTo[];
+}): Promise<CandidateProfile> {
+  if (isRealMode()) {
+    return apiFetch<CandidateProfileResponse>("/profile/me/details", { method: "PUT", body: details }).then(toCandidateProfile);
+  }
+  return getMyProfile();
+}
+
 export async function updateMySkills(skills: string[]): Promise<CandidateProfile> {
   if (isRealMode()) {
     return apiFetch<CandidateProfileResponse>("/profile/me/skills", { method: "PUT", body: { skills } }).then(toCandidateProfile);

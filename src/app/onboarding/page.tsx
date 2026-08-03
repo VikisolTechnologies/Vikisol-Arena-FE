@@ -22,6 +22,8 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { saveOnboardingProfile, setOnboarded } from "@/lib/session";
+import { isRealMode } from "@/lib/api/mode";
+import { updateMyProfileDetails, updateMySkills, updateMyConsent } from "@/lib/api/profile";
 import type { Industry, OpenTo } from "@/lib/types";
 
 const STEPS = ["name", "role", "skills", "experience", "rate", "openTo", "finale"] as const;
@@ -76,18 +78,35 @@ export default function OnboardingPage() {
     setStep((s) => s + 1);
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     setSubmitting(true);
-    saveOnboardingProfile({
-      name,
-      title,
-      industry: industry ?? "Engineering",
-      skills,
-      experienceYears,
-      rateFloor,
-      openTo,
-      consent: { autoApply, searchableByEnterprises: searchable },
-    });
+    const consent = { autoApply, searchableByEnterprises: searchable };
+    if (isRealMode()) {
+      // Real mode has no single "finish onboarding" endpoint - sync each piece the wizard
+      // collected to its matching profile endpoint before landing on the dashboard, so a fresh
+      // real signup isn't left with an empty server-side profile.
+      await updateMyProfileDetails({
+        name,
+        title,
+        industry: industry ?? "Engineering",
+        experienceYears,
+        rateFloor,
+        openTo,
+      });
+      await updateMySkills(skills);
+      await updateMyConsent(consent);
+    } else {
+      saveOnboardingProfile({
+        name,
+        title,
+        industry: industry ?? "Engineering",
+        skills,
+        experienceYears,
+        rateFloor,
+        openTo,
+        consent,
+      });
+    }
     setOnboarded();
     setTimeout(() => router.push("/dashboard"), 600);
   };
