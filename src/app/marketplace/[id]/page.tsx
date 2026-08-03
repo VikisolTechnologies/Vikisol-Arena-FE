@@ -9,13 +9,16 @@ import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Check } from "lucide-react";
 import { getMyProfile } from "@/lib/api/profile";
-import { getProject, placeBid } from "@/lib/api/market";
+import { getProject, placeBid, submitMyDeliverable } from "@/lib/api/market";
 import { getMyProject, addBidToMyProject } from "@/lib/api/myProjects";
-import { recordMyBid } from "@/lib/api/myBids";
+import { recordMyBid, getMyBids } from "@/lib/api/myBids";
 import { useGsap } from "@/lib/gsap";
 import { getSession, isOnboarded } from "@/lib/session";
+import { cn } from "@/lib/utils";
 import type { CandidateProfile, Project, Bid } from "@/lib/types";
 
 function formatTimer(ms: number) {
@@ -32,28 +35,36 @@ export default function ProjectDetailPage() {
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [project, setProject] = useState<Project | null | undefined>(undefined);
   const [isMine, setIsMine] = useState(false);
+  const [isWinner, setIsWinner] = useState(false);
+  const [deliverableNotes, setDeliverableNotes] = useState<Record<string, string>>({});
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [now, setNow] = useState<number | null>(null);
   const [bidding, setBidding] = useState(false);
   const [amount, setAmount] = useState("");
   const bidsListRef = useRef<HTMLDivElement>(null);
   const gsap = useGsap();
 
-  const load = async () => {
-    const mine = await getMyProject(params.id);
-    if (mine) { setProject(mine); setIsMine(true); return; }
-    const p = await getProject(params.id);
-    setProject(p ?? null);
-    setIsMine(false);
+  const load = () => {
+    getMyProject(params.id).then((mine) => {
+      if (mine) { setProject(mine); setIsMine(true); return; }
+      getProject(params.id).then((p) => {
+        setProject(p ?? null);
+        setIsMine(false);
+        if (p) {
+          getMyBids().then((myBids) => {
+            setIsWinner(myBids.some((b) => b.projectId === p.id && b.status === "won"));
+          });
+        }
+      });
+    });
   };
 
   useEffect(() => {
     if (!getSession()) { router.replace("/auth"); return; }
     if (!isOnboarded()) { router.replace("/onboarding"); return; }
     getMyProfile().then(setProfile);
-    getMyProject(params.id).then((mine) => {
-      if (mine) { setProject(mine); setIsMine(true); return; }
-      getProject(params.id).then((p) => { setProject(p ?? null); setIsMine(false); });
-    });
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id, router]);
 
   useEffect(() => {
@@ -94,6 +105,13 @@ export default function ProjectDetailPage() {
     }
     setBidding(false);
     setAmount("");
+    load();
+  };
+
+  const submitDeliverable = async (milestoneId: string) => {
+    setSubmittingId(milestoneId);
+    await submitMyDeliverable(milestoneId, deliverableNotes[milestoneId] ?? "");
+    setSubmittingId(null);
     load();
   };
 
@@ -167,6 +185,50 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       </div>
+
+      {isWinner && project.milestones && project.milestones.length > 0 && (
+        <div className="mt-4 rounded-[24px] border border-border bg-white/[0.03] p-6">
+          <p className="mb-1 font-display text-sm font-bold">You won this project 🎉</p>
+          <p className="mb-4 text-xs text-muted-foreground">Submit each milestone&apos;s deliverable — the poster reviews and releases payment per tranche.</p>
+          <div className="space-y-2.5">
+            {project.milestones.map((m) => (
+              <div key={m.id} className="rounded-xl border border-border bg-white/[0.02] px-4 py-3.5">
+                <div className="flex items-center justify-between">
+                  <p className={cn("text-sm font-medium", m.done && "text-muted-foreground line-through")}>{m.label}</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground">₹{m.amount.toLocaleString("en-IN")}</span>
+                    {m.done && <Check className="size-4 text-emerald-400" />}
+                  </div>
+                </div>
+                {!m.done && (
+                  <div className="mt-2.5 space-y-2">
+                    {m.deliverable ? (
+                      <p className="text-xs text-muted-foreground">Submitted — awaiting review: &ldquo;{m.deliverable.note}&rdquo;</p>
+                    ) : (
+                      <>
+                        <Textarea
+                          value={deliverableNotes[m.id] ?? ""}
+                          onChange={(e) => setDeliverableNotes((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                          placeholder="Describe what you're delivering for this milestone…"
+                          className="min-h-16 border-border bg-white/[0.02] text-xs"
+                        />
+                        <Button
+                          variant="primary-gradient"
+                          size="sm"
+                          disabled={submittingId === m.id || !(deliverableNotes[m.id] ?? "").trim()}
+                          onClick={() => submitDeliverable(m.id)}
+                        >
+                          {submittingId === m.id ? "Submitting…" : "Submit deliverable"}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Dialog open={bidding} onOpenChange={setBidding}>
         <DialogContent className="border-border bg-popover">

@@ -174,6 +174,10 @@ export interface Project {
   status: "open" | "awarded" | "closed";
   endsAt: string; // ISO
   bids: Bid[];
+  // Only populated once awarded - lets a non-owner (the winning bidder) see and act on their own
+  // milestones without needing the poster-only "mine"/MyProject view.
+  awardedBidId?: string;
+  milestones?: Milestone[];
 }
 
 export type ChatRole = "user" | "agent";

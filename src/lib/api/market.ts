@@ -49,3 +49,12 @@ export async function placeBid(projectId: string, amount: number, bidderName = "
   project.bids = [bid, ...project.bids].sort((a, b) => b.amount - a.amount);
   return delay(bid, 400);
 }
+
+/** Real mode only: lets the winning bidder submit their own milestone deliverable, since
+ * arena-api requires the deliverable to come from the awarded bidder's own session (the poster
+ * can't submit on their behalf there, unlike the single-user mock). Mock mode has no separate
+ * bidder session to model this from - documented as a known gap, see E2E-STATUS.md. */
+export async function submitMyDeliverable(milestoneId: string, note: string): Promise<void> {
+  if (!isRealMode()) return;
+  await apiFetch(`/marketplace/milestones/${milestoneId}/deliverables`, { method: "POST", body: { note } });
+}
