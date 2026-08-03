@@ -1,10 +1,57 @@
 import { CURRENT_CANDIDATE_ID, getCandidateById } from "@/lib/mock/candidates";
 import { getOnboardingProfile, saveOnboardingProfile } from "@/lib/session";
-import type { AutonomyLevel, CandidateProfile, ConsentSettings } from "@/lib/types";
+import type { AutonomyLevel, CandidateProfile, ConsentSettings, Industry, OpenTo } from "@/lib/types";
 import { delay } from "./shared";
+import { isRealMode } from "./mode";
+import { apiFetch } from "./httpClient";
+
+interface CandidateProfileResponse {
+  id: string;
+  name: string;
+  avatarEmoji: string;
+  title: string;
+  industry: string;
+  location: string;
+  remote: boolean;
+  skills: { name: string; verified?: boolean }[];
+  experienceYears: number;
+  rateFloor: number;
+  openTo: string[];
+  careerHealth: number;
+  consent: ConsentSettings;
+  autonomy: string;
+  bio?: string;
+  cvUrl?: string;
+  cvFileName?: string;
+}
+
+function toCandidateProfile(res: CandidateProfileResponse): CandidateProfile {
+  return {
+    id: res.id,
+    name: res.name,
+    avatarEmoji: res.avatarEmoji,
+    title: res.title,
+    industry: res.industry as Industry,
+    location: res.location,
+    remote: res.remote,
+    skills: res.skills,
+    experienceYears: res.experienceYears,
+    rateFloor: res.rateFloor,
+    openTo: res.openTo as OpenTo[],
+    careerHealth: res.careerHealth,
+    consent: res.consent,
+    autonomy: res.autonomy.toLowerCase() as AutonomyLevel,
+    bio: res.bio,
+    cvUrl: res.cvUrl,
+    resumeFileName: res.cvFileName,
+  };
+}
 
 /** Merges the static seed candidate with whatever the user entered during onboarding. */
 export async function getMyProfile(): Promise<CandidateProfile> {
+  if (isRealMode()) {
+    return apiFetch<CandidateProfileResponse>("/profile/me").then(toCandidateProfile);
+  }
   const base = getCandidateById(CURRENT_CANDIDATE_ID)!;
   const onboarding = getOnboardingProfile();
   const merged: CandidateProfile = onboarding
@@ -58,32 +105,46 @@ async function patchOnboardingProfile(
   return getMyProfile();
 }
 
-/** Persists edited skills back into the same onboarding-profile store getMyProfile reads from. */
 export async function updateMySkills(skills: string[]): Promise<CandidateProfile> {
+  if (isRealMode()) {
+    return apiFetch<CandidateProfileResponse>("/profile/me/skills", { method: "PUT", body: { skills } }).then(toCandidateProfile);
+  }
   return patchOnboardingProfile({ skills });
 }
 
 export async function updateMyConsent(consent: ConsentSettings): Promise<CandidateProfile> {
+  if (isRealMode()) {
+    return apiFetch<CandidateProfileResponse>("/profile/me/consent", { method: "PUT", body: consent }).then(toCandidateProfile);
+  }
   return patchOnboardingProfile({ consent });
 }
 
 export async function updateMyAutonomy(autonomy: AutonomyLevel): Promise<CandidateProfile> {
+  if (isRealMode()) {
+    return apiFetch<CandidateProfileResponse>("/profile/me/autonomy", { method: "PUT", body: { autonomy } }).then(toCandidateProfile);
+  }
   return patchOnboardingProfile({ autonomy });
 }
 
-/** Records a resume upload + whatever structured fields the (simulated) parse confirmed. */
-export async function updateMyResume(input: { fileName: string; skills?: string[] }): Promise<CandidateProfile> {
+/** Records a resume upload + whatever structured fields the (simulated, mock-only) parse
+ * confirmed. Real mode actually uploads the file; mock mode only ever needed its name. */
+export async function updateMyResume(input: { file: File; skills?: string[] }): Promise<CandidateProfile> {
+  if (isRealMode()) {
+    const formData = new FormData();
+    formData.append("file", input.file);
+    return apiFetch<CandidateProfileResponse>("/profile/me/cv", { method: "POST", formData }).then(toCandidateProfile);
+  }
   return patchOnboardingProfile({
-    resumeFileName: input.fileName,
+    resumeFileName: input.file.name,
     resumeUploadedAt: new Date().toISOString(),
     skills: input.skills,
   });
 }
 
 /** Small, capped nudge to Career Health when verified work completes — a won bid, an accepted
- * milestone. This is the mock's stand-in for "reputation" actually feeding back into the
- * profile, per the marketplace lifecycle's two-way-ratings requirement. */
+ * milestone. Mock-only: real mode's careerHealth is computed server-side from actual activity. */
 export async function bumpMyCareerHealth(delta: number): Promise<CandidateProfile> {
+  if (isRealMode()) return getMyProfile();
   const current = await getMyProfile();
   return patchOnboardingProfile({ careerHealth: Math.max(0, Math.min(100, current.careerHealth + delta)) });
 }

@@ -18,10 +18,10 @@ import { placeBid } from "@/lib/api/market";
 import { agentRealtime } from "@/lib/realtime";
 import { useAgentState, setAgentState } from "@/lib/agentState";
 import { getSession, isOnboarded } from "@/lib/session";
-import { MOCK_JOBS, getJobById } from "@/lib/mock/jobs";
+import { getJobs, getJob } from "@/lib/api/jobs";
 import { MOCK_PROJECTS } from "@/lib/mock/projects";
 import { useTypewriter } from "@/hooks/use-typewriter";
-import type { CandidateProfile, ChatMessage, AgentActivityEvent, IntentCard } from "@/lib/types";
+import type { CandidateProfile, ChatMessage, AgentActivityEvent, IntentCard, Job } from "@/lib/types";
 
 const SUGGESTIONS = [
   "What's my best match right now?",
@@ -51,10 +51,11 @@ function AgentBubble({ message, onApprove, onReject }: {
   );
 }
 
-function buildReply(text: string, profile: CandidateProfile): { content: string; intent?: Omit<IntentCard, "id" | "status"> } {
+function buildReply(text: string, profile: CandidateProfile, jobs: Job[]): { content: string; intent?: Omit<IntentCard, "id" | "status"> } {
   const t = text.toLowerCase();
-  const topJob = [...MOCK_JOBS].sort((a, b) => b.matchPercentage - a.matchPercentage)[0];
+  const topJob = [...jobs].sort((a, b) => b.matchPercentage - a.matchPercentage)[0];
   const topProject = MOCK_PROJECTS[0];
+  if (!topJob) return { content: "I don't have any open roles loaded yet — check back in a moment." };
 
   if (t.includes("apply") || t.includes("best match") || t.includes("top match")) {
     return {
@@ -80,8 +81,8 @@ function buildReply(text: string, profile: CandidateProfile): { content: string;
     return { content: "I tailor a fresh resume for every application, highlighting whichever of your skills actually match that role. If you turn off auto-apply in Settings, I'll show you each one before it goes out." };
   }
   if (t.includes("match") || t.includes("job") || t.includes("opportun")) {
-    const strong = MOCK_JOBS.filter((j) => j.matchPercentage >= 85).length;
-    return { content: `I'm tracking ${MOCK_JOBS.length} open roles right now, ${strong} of them above 85% match for you. Want me to open Discover, or should I just apply to the best one?` };
+    const strong = jobs.filter((j) => j.matchPercentage >= 85).length;
+    return { content: `I'm tracking ${jobs.length} open roles right now, ${strong} of them above 85% match for you. Want me to open Discover, or should I just apply to the best one?` };
   }
   if (t.includes("journal") || t.includes("overnight") || t.includes("what have you done") || t.includes("slept")) {
     return { content: "Check the Agent Journal tab above — everything I've done autonomously is logged there in order, nothing hidden or summarized away." };
@@ -97,6 +98,7 @@ export default function AgentPage() {
   const [activity, setActivity] = useState<AgentActivityEvent[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [jobs, setJobs] = useState<Job[]>([]);
   const orbState = useAgentState();
   const scrollRef = useRef<HTMLDivElement>(null);
   const idCounter = useRef(0);
@@ -105,12 +107,13 @@ export default function AgentPage() {
   useEffect(() => {
     if (!getSession()) { router.replace("/auth"); return; }
     if (!isOnboarded()) { router.replace("/onboarding"); return; }
-    getMyProfile().then((p) => {
+    Promise.all([getMyProfile(), getJobs()]).then(async ([p, jobList]) => {
       setProfile(p);
+      setJobs(jobList);
       const params = new URLSearchParams(window.location.search);
       const aboutJobId = params.get("about");
       const askQuery = params.get("ask");
-      const aboutJob = aboutJobId ? getJobById(aboutJobId) : undefined;
+      const aboutJob = aboutJobId ? await getJob(aboutJobId) : undefined;
       const welcome: ChatMessage = {
         id: "welcome",
         role: "agent",
@@ -133,7 +136,7 @@ export default function AgentPage() {
         // From the ⌘K command palette's "Ask agent: ..." action — build the reply against the
         // freshly-loaded profile directly rather than reusing send(), which would read stale
         // (still-null) profile state from this same render's closure.
-        const { content, intent } = buildReply(askQuery, p);
+        const { content, intent } = buildReply(askQuery, p, jobList);
         setMessages([
           welcome,
           { id: "ask-user", role: "user", content: askQuery, timestamp: new Date().toISOString() },
@@ -158,7 +161,7 @@ export default function AgentPage() {
     setAgentState("thinking");
 
     setTimeout(() => {
-      const { content, intent } = buildReply(text, profile);
+      const { content, intent } = buildReply(text, profile, jobs);
       const agentMsg: ChatMessage = {
         id: nextId("a"),
         role: "agent",

@@ -12,9 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getMyProfile } from "@/lib/api/profile";
 import { getActivityFeed } from "@/lib/api/activity";
-import { MOCK_JOBS } from "@/lib/mock/jobs";
+import { getJobs } from "@/lib/api/jobs";
 import { getSession, isOnboarded } from "@/lib/session";
-import type { CandidateProfile, AgentActivityEvent } from "@/lib/types";
+import type { CandidateProfile, AgentActivityEvent, Job } from "@/lib/types";
 
 function StatCard({ icon: Icon, value, label }: { icon: LucideIcon; value: string | number; label: string }) {
   return (
@@ -32,6 +32,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [activity, setActivity] = useState<AgentActivityEvent[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
 
   useEffect(() => {
     if (!getSession()) {
@@ -44,6 +45,7 @@ export default function DashboardPage() {
     }
     getMyProfile().then(setProfile);
     getActivityFeed().then(setActivity);
+    getJobs().then(setJobs);
   }, [router]);
 
   if (!profile) {
@@ -59,9 +61,9 @@ export default function DashboardPage() {
   }
 
   const verifiedCount = profile.skills.filter((s) => s.verified).length;
-  const topMatches = [...MOCK_JOBS].sort((a, b) => b.matchPercentage - a.matchPercentage).slice(0, 4);
-  const avgMatch = Math.round(topMatches.reduce((sum, j) => sum + j.matchPercentage, 0) / topMatches.length);
-  const highMatchCount = MOCK_JOBS.filter((j) => j.matchPercentage >= 85).length;
+  const topMatches = [...jobs].sort((a, b) => b.matchPercentage - a.matchPercentage).slice(0, 4);
+  const avgMatch = topMatches.length ? Math.round(topMatches.reduce((sum, j) => sum + j.matchPercentage, 0) / topMatches.length) : 0;
+  const highMatchCount = jobs.filter((j) => j.matchPercentage >= 85).length;
   const appliedCount = activity.filter((e) => e.type === "applied").length;
 
   const radarAxes = [

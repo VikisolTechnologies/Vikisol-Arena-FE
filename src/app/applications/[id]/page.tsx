@@ -10,10 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMyProfile } from "@/lib/api/profile";
 import { getMyApplications, withdrawApplication } from "@/lib/api/applications";
-import { getJobById } from "@/lib/mock/jobs";
+import { getJob } from "@/lib/api/jobs";
 import { getSession, isOnboarded } from "@/lib/session";
 import { cn } from "@/lib/utils";
-import type { CandidateProfile, Application } from "@/lib/types";
+import type { CandidateProfile, Application, Job } from "@/lib/types";
 
 const TIMELINE = [
   { key: "found", label: "Found", icon: Search },
@@ -27,16 +27,22 @@ export default function ApplicationDetailPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [app, setApp] = useState<Application | null | undefined>(undefined);
+  const [job, setJob] = useState<Job | null | undefined>(undefined);
   const [withdrawing, setWithdrawing] = useState(false);
 
   useEffect(() => {
     if (!getSession()) { router.replace("/auth"); return; }
     if (!isOnboarded()) { router.replace("/onboarding"); return; }
     getMyProfile().then(setProfile);
-    getMyApplications().then((apps) => setApp(apps.find((a) => a.id === params.id) ?? null));
+    getMyApplications().then(async (apps) => {
+      const found = apps.find((a) => a.id === params.id) ?? null;
+      setApp(found);
+      if (found?.jobId) setJob((await getJob(found.jobId)) ?? null);
+      else setJob(null);
+    });
   }, [params.id, router]);
 
-  if (app === undefined || !profile) {
+  if (app === undefined || !profile || (app && job === undefined)) {
     return (
       <CandidateAppShell title="Application">
         <OrbLoader className="h-96" />
@@ -50,7 +56,6 @@ export default function ApplicationDetailPage() {
       </CandidateAppShell>
     );
   }
-  const job = app.jobId ? getJobById(app.jobId) : undefined;
   if (!job) {
     return (
       <CandidateAppShell title="Application">

@@ -9,8 +9,9 @@ import {
 import {
   Command, CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem,
 } from "@/components/ui/command";
-import { MOCK_JOBS } from "@/lib/mock/jobs";
+import { getJobs } from "@/lib/api/jobs";
 import { getSession } from "@/lib/session";
+import type { Job } from "@/lib/types";
 
 const CANDIDATE_NAV = [
   { href: "/dashboard", label: "Home", icon: Home },
@@ -35,6 +36,7 @@ export function CommandPalette() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [jobs, setJobs] = useState<Job[]>([]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -50,11 +52,15 @@ export function CommandPalette() {
   const role = useMemo(() => (open ? getSession()?.role : undefined), [open]);
   const navItems = role === "enterprise" ? ENTERPRISE_NAV : CANDIDATE_NAV;
 
+  useEffect(() => {
+    if (open && role === "talent" && jobs.length === 0) getJobs().then(setJobs);
+  }, [open, role, jobs.length]);
+
   const jobResults = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
-    return MOCK_JOBS.filter((j) => j.title.toLowerCase().includes(q) || j.company.toLowerCase().includes(q)).slice(0, 5);
-  }, [query]);
+    return jobs.filter((j) => j.title.toLowerCase().includes(q) || j.company.toLowerCase().includes(q)).slice(0, 5);
+  }, [query, jobs]);
 
   const go = (href: string) => {
     setOpen(false);

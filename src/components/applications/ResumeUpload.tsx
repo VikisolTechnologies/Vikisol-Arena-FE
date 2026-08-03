@@ -19,18 +19,20 @@ type Phase = "idle" | "parsing" | "review";
 export function ResumeUpload({ profile, onDone }: { profile: CandidateProfile; onDone: (updated: CandidateProfile) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [phase, setPhase] = useState<Phase>("idle");
-  const [fileName, setFileName] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const fileName = file?.name ?? "";
 
-  const handleFile = (file: File) => {
-    setFileName(file.name);
+  const handleFile = (f: File) => {
+    setFile(f);
     setPhase("parsing");
     setTimeout(() => setPhase("review"), 1600);
   };
 
   const confirm = async () => {
+    if (!file) return;
     setSaving(true);
-    const updated = await updateMyResume({ fileName, skills: profile.skills.map((s) => s.name) });
+    const updated = await updateMyResume({ file, skills: profile.skills.map((s) => s.name) });
     setSaving(false);
     setPhase("idle");
     onDone(updated);

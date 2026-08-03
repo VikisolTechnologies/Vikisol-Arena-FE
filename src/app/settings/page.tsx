@@ -8,7 +8,7 @@ import { CandidateAppShell } from "@/components/app/CandidateAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Switch } from "@/components/ui/switch";
 import { getMyProfile, updateMyConsent, updateMyAutonomy } from "@/lib/api/profile";
-import { getNotifications } from "@/lib/api/notifications";
+import { getNotifications, markNotificationRead, markAllNotificationsRead } from "@/lib/api/notifications";
 import { getManualReducedEffects, setManualReducedEffects } from "@/hooks/use-reduced-motion";
 import { getSession, isOnboarded } from "@/lib/session";
 import { getTalentPlan } from "@/lib/plan";
@@ -70,6 +70,19 @@ export default function SettingsPage() {
   const toggleReducedEffects = (value: boolean) => {
     setReducedEffects(value);
     setManualReducedEffects(value);
+  };
+
+  const openNotification = async (n: AppNotification) => {
+    if (!n.read) {
+      await markNotificationRead(n.id);
+      setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
+    }
+    if (n.link) router.push(n.link);
+  };
+
+  const markAllRead = async () => {
+    await markAllNotificationsRead();
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
   return (
@@ -153,21 +166,34 @@ export default function SettingsPage() {
         </div>
 
         <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
-          <p className="mb-4 flex items-center gap-2 font-display text-sm font-bold"><Bell className="size-4 text-primary-soft" /> Notifications</p>
+          <div className="mb-4 flex items-center justify-between">
+            <p className="flex items-center gap-2 font-display text-sm font-bold"><Bell className="size-4 text-primary-soft" /> Notifications</p>
+            {notifications.some((n) => !n.read) && (
+              <button type="button" onClick={markAllRead} className="text-xs font-medium text-primary-soft hover:underline">
+                Mark all read
+              </button>
+            )}
+          </div>
           <div className="space-y-2.5">
             {notifications.map((n) => {
               const Icon = NOTIF_ICONS[n.type];
               return (
-                <div key={n.id} className={cn("flex items-start gap-3 rounded-xl border border-border px-3.5 py-3", !n.read && "bg-primary/[0.04]")}>
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => openNotification(n)}
+                  className={cn("flex w-full items-start gap-3 rounded-xl border border-border px-3.5 py-3 text-left transition-colors hover:border-white/20", !n.read && "bg-primary/[0.04]")}
+                >
                   <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-white/5 text-primary-soft"><Icon className="size-3.5" /></span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">{n.title}</p>
                     <p className="text-xs text-muted-foreground">{n.body}</p>
                   </div>
                   {!n.read && <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />}
-                </div>
+                </button>
               );
             })}
+            {notifications.length === 0 && <p className="text-sm text-muted-foreground">No notifications yet.</p>}
           </div>
         </div>
       </div>

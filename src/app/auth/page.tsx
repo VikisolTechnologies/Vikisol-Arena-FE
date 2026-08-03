@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { signIn, signUp } from "@/lib/api/auth";
+import { ApiError } from "@/lib/api/httpClient";
+import { isRealMode } from "@/lib/api/mode";
 import { isOnboarded } from "@/lib/session";
 import type { Role } from "@/lib/types";
 
@@ -46,6 +48,8 @@ export default function AuthPage() {
 
       if (role === "enterprise") router.push("/enterprise");
       else router.push(isOnboarded() ? "/dashboard" : "/onboarding");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Something went wrong — please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -146,9 +150,11 @@ export default function AuthPage() {
                 {submitting && <Loader2 className="size-4 animate-spin" />}
                 {submitting ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
               </Button>
-              <p className="text-center text-xs text-muted-foreground">
-                Any email and password works here — this is a design preview, no real account is created.
-              </p>
+              {!isRealMode() && (
+                <p className="text-center text-xs text-muted-foreground">
+                  Any email and password works here — this is a design preview, no real account is created.
+                </p>
+              )}
             </form>
           </div>
         </div>

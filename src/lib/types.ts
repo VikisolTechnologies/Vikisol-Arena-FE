@@ -40,6 +40,8 @@ export interface CandidateProfile {
   bio?: string;
   resumeFileName?: string;
   resumeUploadedAt?: string;
+  /** Real-mode only — the actual uploaded CV file's URL, served by arena-api. Absent in mock mode. */
+  cvUrl?: string;
 }
 
 export interface Job {
@@ -203,6 +205,7 @@ export interface AppNotification {
   body: string;
   timestamp: string;
   read: boolean;
+  link?: string;
 }
 
 export interface EnterpriseSearchResult {

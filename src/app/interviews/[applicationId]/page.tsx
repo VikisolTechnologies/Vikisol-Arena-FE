@@ -9,7 +9,7 @@ import { InterviewRoom } from "@/components/interview/InterviewRoom";
 import { getMyProfile } from "@/lib/api/profile";
 import { getApplicationById } from "@/lib/api/applications";
 import { getInterviewForApplication } from "@/lib/api/interviews";
-import { getJobById } from "@/lib/mock/jobs";
+import { getJob } from "@/lib/api/jobs";
 import { getSession, isOnboarded } from "@/lib/session";
 import type { CandidateProfile, Application, Interview } from "@/lib/types";
 
@@ -26,10 +26,10 @@ export default function CandidateInterviewPage() {
     if (!getSession()) { router.replace("/auth"); return; }
     if (!isOnboarded()) { router.replace("/onboarding"); return; }
     getMyProfile().then(setProfile);
-    getApplicationById(params.applicationId).then((app) => {
+    getApplicationById(params.applicationId).then(async (app) => {
       setApplication(app ?? null);
       if (app?.jobId) {
-        const job = getJobById(app.jobId);
+        const job = await getJob(app.jobId);
         if (job) { setCompanyName(job.company); setCompanyEmoji(job.companyEmoji); }
       }
       getInterviewForApplication(params.applicationId).then((iv) => setInterview(iv ?? null));

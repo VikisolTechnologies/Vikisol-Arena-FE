@@ -11,11 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { getMyProfile } from "@/lib/api/profile";
 import { getMyApplications } from "@/lib/api/applications";
-import { getJobById } from "@/lib/mock/jobs";
+import { getJob } from "@/lib/api/jobs";
 import { proposeInterview, confirmInterviewSlot, getInterviewForApplication } from "@/lib/api/interviews";
 import { useGsap } from "@/lib/gsap";
 import { getSession, isOnboarded } from "@/lib/session";
-import type { CandidateProfile, Application, ApplicationStage, Interview } from "@/lib/types";
+import type { CandidateProfile, Application, ApplicationStage, Interview, Job } from "@/lib/types";
 
 const COLUMNS: { stage: ApplicationStage; label: string }[] = [
   { stage: "applied", label: "Applied" },
@@ -33,6 +33,7 @@ export default function ApplicationsPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [apps, setApps] = useState<Application[]>([]);
+  const [jobsById, setJobsById] = useState<Record<string, Job>>({});
   const [schedulingApp, setSchedulingApp] = useState<Application | null>(null);
   const [interview, setInterview] = useState<Interview | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -44,7 +45,14 @@ export default function ApplicationsPage() {
     if (!getSession()) { router.replace("/auth"); return; }
     if (!isOnboarded()) { router.replace("/onboarding"); return; }
     getMyProfile().then(setProfile);
-    getMyApplications().then(setApps);
+    getMyApplications().then(async (myApps) => {
+      setApps(myApps);
+      const jobIds = [...new Set(myApps.map((a) => a.jobId).filter((id): id is string => !!id))];
+      const jobs = await Promise.all(jobIds.map((id) => getJob(id)));
+      const map: Record<string, Job> = {};
+      jobs.forEach((j, i) => { if (j) map[jobIds[i]] = j; });
+      setJobsById(map);
+    });
   }, [router]);
 
   useGSAP(() => {
@@ -90,7 +98,7 @@ export default function ApplicationsPage() {
               <div className="space-y-2.5">
                 {items.map((app) => {
                   if (!app.jobId) return null;
-                  const job = getJobById(app.jobId);
+                  const job = jobsById[app.jobId];
                   if (!job) return null;
                   return (
                     <div

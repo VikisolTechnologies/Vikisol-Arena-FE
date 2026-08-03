@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import type { CandidateProfile } from "@/lib/types";
 import { signOut } from "@/lib/api/auth";
+import { getUnreadCount } from "@/lib/api/notifications";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -73,6 +74,10 @@ export function CandidateAppShell({
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Recomputed on every render (cheap localStorage read) rather than cached in state -
+  // this naturally reflects mark-read updates the instant a parent (e.g. Settings) re-renders,
+  // with no extra effect/subscription plumbing needed.
+  const hasUnread = getUnreadCount() > 0;
 
   const handleLogout = async () => {
     await signOut();
@@ -141,7 +146,7 @@ export function CandidateAppShell({
               {actions}
               <Button variant="ghost" size="icon" aria-label="Notifications" className="relative" render={<Link href="/settings" />} nativeButton={false}>
                 <Bell className="size-[18px]" />
-                <span className="absolute right-2 top-2 size-1.5 rounded-full bg-primary" />
+                {hasUnread && <span className="absolute right-2 top-2 size-1.5 rounded-full bg-primary" />}
               </Button>
             </div>
           </header>
