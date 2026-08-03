@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Sparkles, Users, MapPin } from "lucide-react";
+import Link from "next/link";
+import { Plus, Sparkles, Users, MapPin, Lock } from "lucide-react";
 import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { getMyEnterpriseProfile, getMyPostings, createPosting, setPostingStatus } from "@/lib/api/enterprise";
+import { getMyEnterpriseProfile, getMyPostings, createPosting, setPostingStatus, PostingLimitError } from "@/lib/api/enterprise";
+import { POSTING_LIMITS } from "@/lib/plan";
 import { SKILLS_BY_INDUSTRY } from "@/lib/mock/seed";
 import { getSession, isEnterpriseOnboarded } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -24,6 +26,7 @@ export default function PostingsPage() {
   const [oneLiner, setOneLiner] = useState("");
   const [drafted, setDrafted] = useState<Omit<JobPosting, "id" | "status" | "createdAt"> | null>(null);
   const [drafting, setDrafting] = useState(false);
+  const [limitError, setLimitError] = useState<string | null>(null);
 
   const load = () => getMyPostings().then(setPostings);
 
@@ -57,11 +60,17 @@ export default function PostingsPage() {
 
   const publish = async () => {
     if (!drafted) return;
-    await createPosting(drafted);
-    setCreating(false);
-    setOneLiner("");
-    setDrafted(null);
-    load();
+    setLimitError(null);
+    try {
+      await createPosting(drafted);
+      setCreating(false);
+      setOneLiner("");
+      setDrafted(null);
+      load();
+    } catch (e) {
+      if (e instanceof PostingLimitError) setLimitError(e.message);
+      else throw e;
+    }
   };
 
   const toggleStatus = async (p: JobPosting) => {
@@ -77,11 +86,24 @@ export default function PostingsPage() {
     );
   }
 
+  const activeCount = postings.filter((p) => p.status !== "closed").length;
+  const limit = POSTING_LIMITS[profile.plan];
+  const atLimit = activeCount >= limit;
+
   return (
     <EnterpriseAppShell
       title="Postings"
       profile={profile}
-      actions={<Button variant="primary-gradient" size="sm" className="gap-1.5" onClick={() => setCreating(true)}><Plus className="size-3.5" /> New posting</Button>}
+      actions={
+        <div className="flex items-center gap-2.5">
+          {Number.isFinite(limit) && (
+            <span className="text-xs text-muted-foreground">{activeCount}/{limit} active</span>
+          )}
+          <Button variant="primary-gradient" size="sm" className="gap-1.5" onClick={() => { setLimitError(null); setCreating(true); }}>
+            <Plus className="size-3.5" /> New posting
+          </Button>
+        </div>
+      }
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {postings.map((p) => (
@@ -120,6 +142,20 @@ export default function PostingsPage() {
             <DialogDescription>One line is enough — your agent drafts the rest.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
+            {atLimit ? (
+              <div className="rounded-2xl border border-primary/25 bg-primary/[0.05] p-4 text-center">
+                <Lock className="mx-auto mb-2 size-5 text-primary-soft" />
+                <p className="text-sm font-medium">You&apos;ve used all {limit} active posting{limit === 1 ? "" : "s"} on the {profile.plan} plan.</p>
+                <p className="mt-1 text-xs text-muted-foreground">Close an existing posting, or upgrade for more.</p>
+                <Button variant="primary-gradient" size="sm" className="mt-3" render={<Link href="/pricing" />} nativeButton={false}>
+                  View plans
+                </Button>
+              </div>
+            ) : (
+              <>
+            {limitError && (
+              <p className="rounded-lg border border-red-500/30 bg-red-500/[0.06] px-3 py-2 text-xs text-red-400">{limitError}</p>
+            )}
             <div className="flex gap-2">
               <Input value={oneLiner} onChange={(e) => setOneLiner(e.target.value)} placeholder="e.g. Senior backend engineer for our payments team" className="border-border bg-white/[0.03]" />
               <Button variant="primary-gradient" size="sm" disabled={drafting} onClick={draftPosting} className="shrink-0 gap-1.5">
@@ -136,6 +172,8 @@ export default function PostingsPage() {
                 <p className="text-xs text-muted-foreground">₹{drafted.salaryMin}–{drafted.salaryMax} LPA · {drafted.location} · {drafted.employmentType}</p>
                 <Button variant="primary-gradient" size="sm" className="w-full" onClick={publish}>Publish posting</Button>
               </div>
+            )}
+              </>
             )}
           </div>
         </DialogContent>

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bot, ShieldCheck, Sparkles, Eye, Waves, Bell, CalendarClock, DollarSign, Cog } from "lucide-react";
+import Link from "next/link";
+import { Bot, ShieldCheck, Sparkles, Eye, Waves, Bell, CalendarClock, DollarSign, Cog, Lock } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +11,7 @@ import { getMyProfile, updateMyConsent, updateMyAutonomy } from "@/lib/api/profi
 import { getNotifications } from "@/lib/api/notifications";
 import { getManualReducedEffects, setManualReducedEffects } from "@/hooks/use-reduced-motion";
 import { getSession, isOnboarded } from "@/lib/session";
+import { getTalentPlan } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import type { CandidateProfile, AutonomyLevel, AppNotification, NotificationType } from "@/lib/types";
 
@@ -32,6 +34,7 @@ export default function SettingsPage() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [reducedEffects, setReducedEffects] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isPro] = useState(() => getTalentPlan() === "pro");
 
   useEffect(() => {
     if (!getSession()) { router.replace("/auth"); return; }
@@ -77,24 +80,43 @@ export default function SettingsPage() {
             <p className="mb-1 flex items-center gap-2 font-display text-sm font-bold"><Bot className="size-4 text-primary-soft" /> Autonomy</p>
             <p className="mb-4 text-xs text-muted-foreground">How much should your agent do without asking?</p>
             <div className="space-y-2.5">
-              {AUTONOMY_OPTIONS.map(({ key, label, desc }) => (
-                <button
-                  key={key}
-                  type="button"
-                  disabled={saving}
-                  onClick={() => setAutonomy(key)}
-                  className={cn(
-                    "flex w-full items-start gap-3 rounded-2xl border px-4 py-3.5 text-left transition-colors",
-                    profile.autonomy === key ? "border-primary/60 bg-primary/10" : "border-border bg-white/[0.02] hover:border-white/20",
-                  )}
-                >
-                  <span className={cn("mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-2", profile.autonomy === key ? "border-primary-soft bg-primary-soft" : "border-border")} />
-                  <span>
-                    <span className="block text-sm font-semibold">{label}</span>
-                    <span className="block text-xs text-muted-foreground">{desc}</span>
-                  </span>
-                </button>
-              ))}
+              {AUTONOMY_OPTIONS.map(({ key, label, desc }) => {
+                const locked = key === "autopilot" && !isPro;
+                if (locked) {
+                  return (
+                    <div key={key} className="flex w-full items-start gap-3 rounded-2xl border border-border bg-white/[0.01] px-4 py-3.5 opacity-60">
+                      <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-2 border-border" />
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-1.5 text-sm font-semibold">
+                          {label} <Lock className="size-3 text-muted-foreground" />
+                        </span>
+                        <span className="block text-xs text-muted-foreground">{desc}</span>
+                        <Link href="/pricing" className="mt-1 inline-block text-xs font-medium text-primary-soft hover:underline">
+                          Requires Pro — upgrade
+                        </Link>
+                      </span>
+                    </div>
+                  );
+                }
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    disabled={saving}
+                    onClick={() => setAutonomy(key)}
+                    className={cn(
+                      "flex w-full items-start gap-3 rounded-2xl border px-4 py-3.5 text-left transition-colors",
+                      profile.autonomy === key ? "border-primary/60 bg-primary/10" : "border-border bg-white/[0.02] hover:border-white/20",
+                    )}
+                  >
+                    <span className={cn("mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-2", profile.autonomy === key ? "border-primary-soft bg-primary-soft" : "border-border")} />
+                    <span>
+                      <span className="block text-sm font-semibold">{label}</span>
+                      <span className="block text-xs text-muted-foreground">{desc}</span>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

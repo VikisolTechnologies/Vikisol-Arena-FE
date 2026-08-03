@@ -2,6 +2,7 @@ import type { Application, ApplicationStage, EnterpriseProfile, JobPosting } fro
 import { getEnterpriseProfile, saveEnterpriseProfile } from "@/lib/session";
 import { MOCK_CANDIDATES, getCandidateById } from "@/lib/mock/candidates";
 import { pick, pickN } from "@/lib/mock/seed";
+import { POSTING_LIMITS } from "@/lib/plan";
 import { readApplications, writeApplications } from "./applicationsStore";
 import { delay } from "./shared";
 
@@ -58,7 +59,18 @@ function seedApplicants(postingId: string, industry: JobPosting["industry"]) {
   writeApplications([...applications, ...readApplications()]);
 }
 
+export class PostingLimitError extends Error {}
+
+/** Enforces the plan's active-posting cap (AUDIT.md flagged this as an ungated limit) - "active"
+ * means open or paused; closed postings don't count against it. Throws rather than returning
+ * null so the UI can show a real upsell message instead of silently doing nothing. */
 export async function createPosting(input: Omit<JobPosting, "id" | "status" | "createdAt">): Promise<JobPosting> {
+  const profile = getEnterpriseProfile();
+  const limit = POSTING_LIMITS[profile?.plan ?? "free"];
+  const activeCount = readPostings().filter((p) => p.status !== "closed").length;
+  if (activeCount >= limit) {
+    throw new PostingLimitError(`Your ${profile?.plan ?? "free"} plan allows ${limit} active posting${limit === 1 ? "" : "s"}.`);
+  }
   const posting: JobPosting = { ...input, id: `posting-${Date.now()}`, status: "open", createdAt: new Date().toISOString() };
   writePostings([posting, ...readPostings()]);
   seedApplicants(posting.id, posting.industry);

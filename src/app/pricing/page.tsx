@@ -9,16 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getMyEnterpriseProfile, saveMyEnterpriseProfile } from "@/lib/api/enterprise";
 import { getSession, isEnterpriseOnboarded } from "@/lib/session";
+import { getTalentPlan, setTalentPlan } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 
-const TALENT_PLAN_KEY = "arena_talent_plan";
-
-function getTalentPlan() {
-  if (typeof window === "undefined") return "free";
-  return localStorage.getItem(TALENT_PLAN_KEY) || "free";
-}
-
-const TALENT_TIERS = [
+const TALENT_TIERS: { key: "free" | "pro"; name: string; price: string; period: string; features: string[]; highlight?: boolean }[] = [
   {
     key: "free", name: "Free", price: "₹0", period: "forever",
     features: ["Agent finds + applies to matches", "Identity graph & career health", "Unlimited practice challenges", "Standard support"],
@@ -31,13 +25,13 @@ const TALENT_TIERS = [
 ];
 
 export default function PricingPage() {
-  const [talentPlan, setTalentPlan] = useState(() => getTalentPlan());
+  const [talentPlan, setTalentPlanState] = useState(() => getTalentPlan());
   const [enterpriseOnboarded] = useState(() => getSession()?.role === "enterprise" && isEnterpriseOnboarded());
   const [seats, setSeats] = useState(3);
 
-  const chooseTalentPlan = (plan: string) => {
-    localStorage.setItem(TALENT_PLAN_KEY, plan);
+  const chooseTalentPlan = (plan: "free" | "pro") => {
     setTalentPlan(plan);
+    setTalentPlanState(plan);
   };
 
   const chooseEnterprisePlan = async (plan: "pro" | "enterprise") => {
