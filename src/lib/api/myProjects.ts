@@ -12,8 +12,9 @@ export interface MyProject extends Project {
   ratings?: ProjectRating[];
 }
 
-interface ProjectResponseWire extends Omit<MyProject, "status"> {
+interface ProjectResponseWire extends Omit<MyProject, "status" | "mine"> {
   status: string;
+  mine: boolean;
 }
 
 function toMyProject(res: ProjectResponseWire): MyProject {
@@ -44,7 +45,13 @@ export async function getMyProjects(): Promise<MyProject[]> {
 
 export async function getMyProject(id: string): Promise<MyProject | undefined> {
   if (isRealMode()) {
-    return apiFetch<ProjectResponseWire>(`/marketplace/projects/${id}`).then(toMyProject).catch(() => undefined);
+    // The generic project-by-id endpoint returns every project regardless of ownership - it's
+    // the same one non-owners use to view/bid on it. The server tells us who owns it via `mine`;
+    // trusting that (rather than hardcoding true, which toMyProject() does) is what lets
+    // ProjectDetailPage fall through to the bidder view for projects that aren't ours.
+    return apiFetch<ProjectResponseWire>(`/marketplace/projects/${id}`)
+      .then((res) => (res.mine ? toMyProject(res) : undefined))
+      .catch(() => undefined);
   }
   return delay(readAll().find((p) => p.id === id), 150);
 }
