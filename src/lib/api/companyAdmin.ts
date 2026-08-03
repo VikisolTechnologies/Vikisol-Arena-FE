@@ -303,6 +303,16 @@ function mockBillingFromProfile(profile: EnterpriseProfile | null): Billing {
   };
 }
 
+// ---- Shared with recruiter workspace (HM3) ----
+
+/** Unlike getTeam() (company_admin-only, CA2's full team-management surface), this is scoped
+ * for any workspace member who needs to pick a hiring manager when scheduling an interview -
+ * see /enterprise/profile/hiring-managers, callable by RECRUITER or COMPANY_ADMIN alike. */
+export async function getHiringManagersForTeam(): Promise<TeamMember[]> {
+  if (isRealMode()) return apiFetch<TeamMember[]>("/enterprise/profile/hiring-managers");
+  return delay(readTeam().filter((m) => m.role === "hiring_manager" && m.status === "active"), 150);
+}
+
 // ---- Consent view (CA6) ----
 
 export async function getConsentView(): Promise<ConsentEntry[]> {

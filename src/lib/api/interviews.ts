@@ -4,6 +4,13 @@ import { delay } from "./shared";
 import { isRealMode } from "./mode";
 import { apiFetch } from "./httpClient";
 
+export interface HiringManagerInterview extends Interview {
+  candidateName: string;
+  candidateEmoji: string;
+  jobTitle: string;
+  companyName: string;
+}
+
 const KEY = "arena_interviews";
 
 function readAll(): Interview[] {
@@ -114,4 +121,46 @@ export async function submitInterviewFeedback(
   }
 
   return delay(all[idx], 300);
+}
+
+// ---- Hiring Manager lite (HM1-HM3) ----
+
+/** HM1: "My interviews" - only ones assigned to the caller. Mock mode has no real multi-user
+ * assignment system (single-user constraint, same as elsewhere in this codebase) - it surfaces
+ * whatever interviews already exist in the shared mock store, best-effort-denormalized via the
+ * existing mock job/application lookups, rather than modeling assignment at all. */
+export async function getMyAssignedInterviews(): Promise<HiringManagerInterview[]> {
+  if (isRealMode()) return apiFetch<HiringManagerInterview[]>("/interviews/mine");
+  const apps = readApplications();
+  const { getJobById } = await import("@/lib/mock/jobs");
+  const interviews = readAll();
+  return delay(
+    interviews.map((iv) => {
+      const app = apps.find((a) => a.id === iv.applicationId);
+      const job = app?.jobId ? getJobById(app.jobId) : undefined;
+      return {
+        ...iv,
+        candidateName: "Candidate",
+        candidateEmoji: "🙂",
+        jobTitle: job?.title ?? "Role",
+        companyName: job?.company ?? "Company",
+      };
+    }),
+    200,
+  );
+}
+
+export async function getMyAssignedInterview(id: string): Promise<HiringManagerInterview | null> {
+  if (isRealMode()) return apiFetch<HiringManagerInterview>(`/interviews/mine/${id}`).catch(() => null);
+  const all = await getMyAssignedInterviews();
+  return delay(all.find((iv) => iv.id === id) ?? null, 150);
+}
+
+/** HM3: a recruiter/company_admin assigns a hiring manager when scheduling. Mock-only: no-ops,
+ * since mock mode's single-user model has nothing real to assign to (see getMyAssignedInterviews
+ * above) - the assignment UI itself only ever renders in real mode's team-aware flow. */
+export async function assignHiringManager(interviewId: string, hiringManagerUserId: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch(`/interviews/${interviewId}/assign-hiring-manager`, { method: "PUT", body: { hiringManagerUserId } });
+  }
 }

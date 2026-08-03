@@ -118,6 +118,33 @@ export async function getApplicantsForPosting(postingId: string): Promise<(Appli
   return delay(applicants.map((a) => ({ ...a, candidate: getCandidateById(a.candidateId) })), 250);
 }
 
+interface ApplicantResponseWire {
+  id: string;
+  jobPostingId: string;
+  candidateId: string;
+  stage: string;
+  appliedAt: string;
+}
+
+/** Enterprise-scoped single-application lookup - fills a real gap: the enterprise interview
+ * room page needs to look up one application by id, but the only single-application-by-id
+ * function that existed (applications.ts's getApplicationById) calls the TALENT-only "my
+ * applications" endpoint, which always 403s for a recruiter/company_admin caller. That page has
+ * been silently broken in real mode since it was built - found live-testing HM3. Explicitly maps
+ * jobPostingId -> postingId (the backend's ApplicantResponse field name, unlike
+ * getApplicantsForPosting() above which trusts the shape matches Application 1:1 and doesn't). */
+export async function getApplicant(applicationId: string): Promise<Application | null> {
+  if (isRealMode()) {
+    return apiFetch<ApplicantResponseWire>(`/enterprise/applicants/${applicationId}`)
+      .then((res) => ({
+        id: res.id, candidateId: res.candidateId, postingId: res.jobPostingId,
+        stage: res.stage as ApplicationStage, appliedAt: res.appliedAt, updatedAt: res.appliedAt,
+      }))
+      .catch(() => null);
+  }
+  return delay(readApplications().find((a) => a.id === applicationId) ?? null, 150);
+}
+
 export async function moveApplicantStage(applicationId: string, stage: ApplicationStage): Promise<void> {
   if (isRealMode()) {
     await apiFetch<void>(`/enterprise/applicants/${applicationId}/stage`, { method: "PUT", body: { stage } });

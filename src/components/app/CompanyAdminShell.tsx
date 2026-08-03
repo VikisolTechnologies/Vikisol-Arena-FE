@@ -45,8 +45,8 @@ export function CompanyAdminShell({
     const session = getSession();
     if (!session) { router.replace("/auth"); return; }
     if (session.role !== "company_admin") { router.replace("/dashboard"); return; }
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate: this is the
-    // client-only auth-gate flip itself, not a data sync side-effect the rule is meant to catch.
+    // Deliberate: this is the client-only auth-gate flip itself, not a data sync side-effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReady(true);
   }, [router]);
 
