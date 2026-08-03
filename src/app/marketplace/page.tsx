@@ -59,9 +59,9 @@ export default function MarketplacePage() {
     }, 900);
   };
 
-  const publish = () => {
+  const publish = async () => {
     if (!drafted) return;
-    createMyProject(drafted);
+    await createMyProject(drafted);
     setPosting(false);
     setOneLiner("");
     setDrafted(null);

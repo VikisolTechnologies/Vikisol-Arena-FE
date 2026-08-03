@@ -8,7 +8,7 @@ import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { getMyProfile } from "@/lib/api/profile";
 import { getMyBids, type MyBidRecord, type MyBidStatus } from "@/lib/api/myBids";
-import { getProjectById } from "@/lib/mock/projects";
+import { getProject } from "@/lib/api/market";
 import { getMyProjects } from "@/lib/api/myProjects";
 import { getSession, isOnboarded } from "@/lib/session";
 import type { CandidateProfile, Project } from "@/lib/types";
@@ -31,10 +31,13 @@ export default function MyBidsPage() {
     if (!getSession()) { router.replace("/auth"); return; }
     if (!isOnboarded()) { router.replace("/onboarding"); return; }
     getMyProfile().then(setProfile);
-    Promise.all([getMyBids(), getMyProjects()]).then(([myBids, mine]) => {
+    Promise.all([getMyBids(), getMyProjects()]).then(async ([myBids, mine]) => {
       setBids(myBids);
       const map: Record<string, Project> = {};
       mine.forEach((p) => { map[p.id] = p; });
+      const missingIds = [...new Set(myBids.map((b) => b.projectId).filter((id) => !map[id]))];
+      const fetched = await Promise.all(missingIds.map((id) => getProject(id)));
+      fetched.forEach((p, i) => { if (p) map[missingIds[i]] = p; });
       setProjects(map);
     });
   }, [router]);
@@ -55,7 +58,7 @@ export default function MyBidsPage() {
 
       <div className="space-y-2.5">
         {bids.map((bid) => {
-          const project = projects[bid.projectId] ?? getProjectById(bid.projectId);
+          const project = projects[bid.projectId];
           return (
             <button
               key={bid.bidId}

@@ -14,14 +14,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getMyProfile } from "@/lib/api/profile";
 import { getActivityFeed } from "@/lib/api/activity";
 import { applyToJob } from "@/lib/api/applications";
-import { placeBid } from "@/lib/api/market";
+import { getProjects, placeBid } from "@/lib/api/market";
 import { agentRealtime } from "@/lib/realtime";
 import { useAgentState, setAgentState } from "@/lib/agentState";
 import { getSession, isOnboarded } from "@/lib/session";
 import { getJobs, getJob } from "@/lib/api/jobs";
-import { MOCK_PROJECTS } from "@/lib/mock/projects";
 import { useTypewriter } from "@/hooks/use-typewriter";
-import type { CandidateProfile, ChatMessage, AgentActivityEvent, IntentCard, Job } from "@/lib/types";
+import type { CandidateProfile, ChatMessage, AgentActivityEvent, IntentCard, Job, Project } from "@/lib/types";
 
 const SUGGESTIONS = [
   "What's my best match right now?",
@@ -51,10 +50,15 @@ function AgentBubble({ message, onApprove, onReject }: {
   );
 }
 
-function buildReply(text: string, profile: CandidateProfile, jobs: Job[]): { content: string; intent?: Omit<IntentCard, "id" | "status"> } {
+function buildReply(
+  text: string,
+  profile: CandidateProfile,
+  jobs: Job[],
+  projects: Project[],
+): { content: string; intent?: Omit<IntentCard, "id" | "status"> } {
   const t = text.toLowerCase();
   const topJob = [...jobs].sort((a, b) => b.matchPercentage - a.matchPercentage)[0];
-  const topProject = MOCK_PROJECTS[0];
+  const topProject = projects[0];
   if (!topJob) return { content: "I don't have any open roles loaded yet — check back in a moment." };
 
   if (t.includes("apply") || t.includes("best match") || t.includes("top match")) {
@@ -67,7 +71,7 @@ function buildReply(text: string, profile: CandidateProfile, jobs: Job[]): { con
       },
     };
   }
-  if (t.includes("bid") || t.includes("project")) {
+  if ((t.includes("bid") || t.includes("project")) && topProject) {
     return {
       content: `"${topProject.title}" is open — ₹${topProject.budgetMin.toLocaleString("en-IN")}–₹${topProject.budgetMax.toLocaleString("en-IN")}, ${topProject.durationWeeks} weeks. Want me to place a competitive bid?`,
       intent: {
@@ -99,6 +103,7 @@ export default function AgentPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const orbState = useAgentState();
   const scrollRef = useRef<HTMLDivElement>(null);
   const idCounter = useRef(0);
@@ -107,9 +112,10 @@ export default function AgentPage() {
   useEffect(() => {
     if (!getSession()) { router.replace("/auth"); return; }
     if (!isOnboarded()) { router.replace("/onboarding"); return; }
-    Promise.all([getMyProfile(), getJobs()]).then(async ([p, jobList]) => {
+    Promise.all([getMyProfile(), getJobs(), getProjects()]).then(async ([p, jobList, projectList]) => {
       setProfile(p);
       setJobs(jobList);
+      setProjects(projectList);
       const params = new URLSearchParams(window.location.search);
       const aboutJobId = params.get("about");
       const askQuery = params.get("ask");
@@ -136,7 +142,7 @@ export default function AgentPage() {
         // From the ⌘K command palette's "Ask agent: ..." action — build the reply against the
         // freshly-loaded profile directly rather than reusing send(), which would read stale
         // (still-null) profile state from this same render's closure.
-        const { content, intent } = buildReply(askQuery, p, jobList);
+        const { content, intent } = buildReply(askQuery, p, jobList, projectList);
         setMessages([
           welcome,
           { id: "ask-user", role: "user", content: askQuery, timestamp: new Date().toISOString() },
@@ -161,7 +167,7 @@ export default function AgentPage() {
     setAgentState("thinking");
 
     setTimeout(() => {
-      const { content, intent } = buildReply(text, profile, jobs);
+      const { content, intent } = buildReply(text, profile, jobs, projects);
       const agentMsg: ChatMessage = {
         id: nextId("a"),
         role: "agent",
