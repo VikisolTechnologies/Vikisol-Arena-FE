@@ -31,7 +31,13 @@ export default function MarketplacePage() {
   const [drafting, setDrafting] = useState(false);
 
   const load = () => {
-    Promise.all([getProjects(), getMyProjects()]).then(([mock, mine]) => setProjects([...mine, ...mock]));
+    Promise.all([getProjects(), getMyProjects()]).then(([all, mine]) => {
+      // Real mode's /marketplace/projects already includes the caller's own postings, so `all`
+      // and `mine` overlap there (mock mode's MOCK_PROJECTS never does) - dedupe by id, keeping
+      // the "mine" copy since it carries the flag the "Mine" badge renders off of.
+      const mineIds = new Set(mine.map((p) => p.id));
+      setProjects([...mine, ...all.filter((p) => !mineIds.has(p.id))]);
+    });
   };
 
   useEffect(() => {
