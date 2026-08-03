@@ -1,9 +1,11 @@
 import type { Role, Session } from "@/lib/types";
 import { CURRENT_CANDIDATE_ID, getCandidateById } from "@/lib/mock/candidates";
-import { setSession, clearSession, getSession } from "@/lib/session";
+import { setSession, clearSession, getSession, setOnboarded, setEnterpriseOnboarded } from "@/lib/session";
 import { delay } from "./shared";
 import { isRealMode } from "./mode";
 import { apiFetch, setToken, clearToken } from "./httpClient";
+import { getMyProfile } from "./profile";
+import { getMyEnterpriseProfile } from "./enterprise";
 
 interface SessionResponse {
   role: string;
@@ -22,12 +24,33 @@ function toSession(res: SessionResponse): Session {
   };
 }
 
+/** Real mode's "onboarded" flag is purely local (localStorage), same as mock mode, but real
+ * accounts can already be fully set up server-side on first login in this browser (any seeded
+ * demo account, or a returning user on a new device) - so a fresh sign-in has to infer it from
+ * the fetched profile's actual completeness instead of defaulting to "not onboarded" and
+ * bouncing an already-set-up account into the wizard every time. Sign-up skips this: a brand
+ * new account never has anything to infer from. */
+async function syncOnboardedFromProfile(role: Role) {
+  try {
+    if (role === "talent") {
+      const profile = await getMyProfile();
+      if (profile.skills.length > 0) setOnboarded();
+    } else {
+      const profile = await getMyEnterpriseProfile();
+      if (profile?.companyName) setEnterpriseOnboarded();
+    }
+  } catch {
+    // Leave onboarded state as-is - the relevant page's own guard will route correctly either way.
+  }
+}
+
 export async function signIn(email: string, password: string, role: Role): Promise<Session> {
   if (isRealMode()) {
     const res = await apiFetch<SessionResponse>("/auth/signin", { method: "POST", auth: false, body: { email, password } });
     setToken(res.token);
     const session = toSession(res);
     setSession(session);
+    await syncOnboardedFromProfile(session.role);
     return session;
   }
   const name = role === "talent" ? getCandidateById(CURRENT_CANDIDATE_ID)?.name ?? "You" : "Enterprise Admin";
