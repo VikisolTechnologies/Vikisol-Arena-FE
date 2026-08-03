@@ -53,18 +53,18 @@ arena-api git log for both.
 
 | # | Step | Mock | Real | Notes |
 |---|------|------|------|-------|
-| D1 | Post project (agent-assisted draft) → preview → publish | ✅ | 🟡 | createMyProject wired to real POST; not clicked through live this pass |
-| D2 | Bids arrive, animate in, agent-pick highlight, compare | ✅ | 🟡 | Real marketplace listing verified live (real projects incl. 2 "Mine"-tagged); bid-compare UI not re-visited live |
-| D3 | Award → project moves to awarded; losing bidders notified | 🟡 | 🟡 | Award endpoint verified live by the arena-api build agent (30/40/30 milestone split confirmed correct on a real bid). "Losing bidders notified" — no notification fires for this yet in either mode, real gap |
-| D4 | Milestones 30/40/30 → deliverable → accept per tranche → complete → rating | ✅ | 🟡 | Full lifecycle verified in mock mode live; real endpoints confirmed to exist and match exactly by the arena-api build agent's own live test, not re-verified by me in the real-mode browser this pass |
+| D1 | Post project (agent-assisted draft) → preview → publish | ✅ | ✅ | Real: posted live end-to-end (draft → publish). Found + fixed a real bug: the marketplace list concatenated getMyProjects()+getProjects() with no dedup — real mode's general listing already includes your own postings, so any project you'd posted rendered twice (React duplicate-key warning) and broke its own click-to-navigate entirely. Fixed by deduping by id. |
+| D2 | Bids arrive, animate in, agent-pick highlight, compare | ✅ | ✅ | Real: a second real account placed a live bid, appeared immediately in Live bids with real match%; poster's manage page compare view confirmed live |
+| D3 | Award → project moves to awarded; losing bidders notified | 🟡 | ✅ | Real: awarded live, 30/40/30 milestone split confirmed correct. "Losing bidders notified" — still no notification fires for this in either mode, real gap (unchanged) |
+| D4 | Milestones 30/40/30 → deliverable → accept per tranche → complete → rating | ✅ | ✅ | Real: full lifecycle walked live end-to-end with two separate real accounts (poster + bidder) — this surfaced and fixed three more real bugs in one pass: (1) getMyProject() ignored the server's `mine` flag entirely, so every user saw every project as their own (Manage button, never "Place a bid") — a real access-UI bug, though the backend independently enforced ownership correctly so it wasn't a security hole. (2) arena-api requires the deliverable to come from the awarded bidder's own session, not the poster (the mock's "poster fills it in for them" assumption doesn't hold in real mode) — there was no bidder-facing UI at all for this, so built one (see commit). (3) MilestoneResponse never returned the submitted deliverable's note/timestamp, so even after a valid submission the poster's accept button stayed permanently disabled — added it to the DTO. (4) Rating submission 400'd — mock's `{fromRole, rating, comment}` shape doesn't match arena-api's `{score, comment}`. All four fixed and re-verified; full lifecycle now completes with zero errors. One residual known gap: submitted ratings are never returned in GET /marketplace/projects/{id} (ProjectResponse has no `ratings` field), so the poster's rating form doesn't know to switch to "already rated" after a successful submit — documented below, not fixed this pass. |
 
 ## E. Bidder
 
 | # | Step | Mock | Real | Notes |
 |---|------|------|------|-------|
-| E1 | Browse/filter projects, place bid, My Bids shows pending | ✅ | 🟡 | Real marketplace/my-bids endpoints wired; live bid placement not re-tested this pass (was tested in mock mode) |
+| E1 | Browse/filter projects, place bid, My Bids shows pending | ✅ | ✅ | Real: a second real account placed a live bid on another account's posting (only reachable after the getMyProject ownership fix above — before that fix every project looked owned, so "Place a bid" never rendered for anyone) |
 | E2 | Bidding window closes → resolves won/lost, never stuck pending | ✅ | N/A | Mock-only concern by design — real mode's arena-api resolves losing bids server-side at award time, no client-side resolution needed (see myBids.ts comment) |
-| E3 | Won: milestone flow from bidder's side; rating updates reputation | 🟡 | 🟡 | Mock: rating feeds a Career Health bump, no separate bidder-side milestone UI (single-user mock constraint, documented in commit). Real: careerHealth is server-computed, not client-patchable — bumpMyCareerHealth() correctly no-ops in real mode |
+| E3 | Won: milestone flow from bidder's side; rating updates reputation | 🟡 | ✅ | Real: the bidder-side milestone UI (built this pass, see D4) let the actual winning account submit all 3 deliverables through the real project detail page. Mock: rating feeds a Career Health bump, no separate bidder-side milestone UI (single-user mock constraint — real mode no longer shares that constraint, now has its own proper UI). Real: careerHealth is server-computed, not client-patchable — bumpMyCareerHealth() correctly no-ops in real mode |
 
 ## F. Cross-cutting
 
@@ -109,6 +109,7 @@ arena-api git log for both.
 - `hasDirectlyApplied` (free contact-unlock for direct applicants) has no backend equivalent yet — real mode conservatively always requires a credit unlock.
 - No "losing bidders notified" on award, either mode.
 - Seats/plan page has nothing to gate yet (no invite-teammate surface exists).
+- Submitted project ratings aren't returned by GET /marketplace/projects/{id} (ProjectResponse has no `ratings` field) — the rating POST works and persists correctly, but the poster's UI has no way to know a rating already exists, so the form doesn't switch to an "already rated" state after a successful submit. Low-risk (no duplicate-prevention server-side either, confirmed by reading ProjectService.rate() — resubmitting just inserts another row rather than erroring).
 
 ## Release gate
 
