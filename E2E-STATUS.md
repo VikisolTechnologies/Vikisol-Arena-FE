@@ -128,4 +128,4 @@ not fixed.
       remain deliberately un-flipped, both documented scope decisions rather than bugs: B12 (plan
       upgrade unlocking Autopilot) needs real payments, explicitly out of scope; C6 (seats/plan
       gating) has no invite-teammate surface to gate yet, noted as a known gap in a prior pass.
-- [ ] `v1.0-rc` tagged
+- [x] `v1.0-rc` tagged — both arena-web and arena-api, locally (not pushed — see BLOCKED.md)
