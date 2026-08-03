@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "./mode";
+import { reportApiUnreachable, reportApiReachable } from "./apiHealth";
 
 const TOKEN_KEY = "arena_jwt_token";
 
@@ -56,11 +57,22 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     if (token) headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE_URL}${path}${buildQuery(query)}`, {
-    method,
-    headers,
-    body: formData ?? (body !== undefined ? JSON.stringify(body) : undefined),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}${buildQuery(query)}`, {
+      method,
+      headers,
+      body: formData ?? (body !== undefined ? JSON.stringify(body) : undefined),
+    });
+  } catch {
+    // fetch() itself throwing (not a 4xx/5xx response) means the request never reached the
+    // server at all - connection refused, DNS failure, offline. Distinct from a normal API
+    // error, and worth surfacing globally rather than leaving every page's loading skeleton
+    // spinning forever with nothing but a silent unhandled rejection in the console.
+    reportApiUnreachable();
+    throw new ApiError(0, "Can't reach the Arena backend right now.");
+  }
+  reportApiReachable();
 
   const text = await res.text();
   let json: unknown = null;
