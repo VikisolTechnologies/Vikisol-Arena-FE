@@ -308,6 +308,74 @@ export interface JobPosting {
   createdAt: string;
 }
 
+// ---- Platform Admin (PA1-PA7) ----
+
+export interface TenantSummary {
+  id: string;
+  companyName: string;
+  logoEmoji: string;
+  plan: "free" | "pro" | "enterprise";
+  status: TenantStatus;
+  seatsUsed: number;
+  seatsTotal: number;
+  unlockCreditsUsed: number;
+  unlockCreditsTotal: number;
+  ownerEmail?: string;
+  createdAt: string;
+}
+
+export interface PlatformUser {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  tenantId?: string;
+  tenantName?: string;
+  createdAt: string;
+}
+
+export type ModerationStatus = "pending" | "dismissed" | "taken_down";
+
+export interface ModerationItem {
+  id: string;
+  postingId: string;
+  postingTitle: string;
+  tenantName: string;
+  reason: string;
+  status: ModerationStatus;
+  createdAt: string;
+}
+
+export interface PlatformAnalytics {
+  tenantsTotal: number;
+  tenantsSuspended: number;
+  tenantsByPlan: Record<string, number>;
+  usersTotal: number;
+  usersByRole: Record<string, number>;
+  postingsTotal: number;
+  postingsOpen: number;
+  applicationsTotal: number;
+  interviewsTotal: number;
+  newTenantsLast7d: number;
+  newUsersLast7d: number;
+}
+
+export interface FeatureFlag {
+  id: string;
+  key: string;
+  label: string;
+  description?: string;
+  enabled: boolean;
+}
+
+export interface PlatformDashboard {
+  tenantsTotal: number;
+  tenantsSuspended: number;
+  usersTotal: number;
+  moderationPending: number;
+  recentActivity: AuditEvent[];
+}
+
 export interface Conversation {
   id: string;
   participantId: string;
