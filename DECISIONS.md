@@ -85,3 +85,46 @@ still green) → new personas G/H/I → tag `v1.1-enterprise-suite`. Given the s
 three consoles are being built as their own coherent, committed chunks rather than one
 giant commit, so a resume point always exists if the session is interrupted (same
 pattern E2E-STATUS.md serves for the previous sprint).
+
+## Platform Admin console (PA1-PA7) (2026-08-04/05)
+
+**Moderation queue has no reporting UI - it's fed by an automatic banned-phrase scan
+instead.** Building a full "report this posting" flow for candidates/recruiters was out
+of scope for this pass. `ModerationService.autoFlag()` scans a new posting's
+title+description against a small static phrase list (`"guaranteed income"`, `"pay to
+apply"`, etc.) at creation time (`JobPostingService.createPosting`) and files a
+`ModerationItem` if anything matches. Good enough to demonstrate a working queue
+end-to-end (verified live: created a real posting with a flagged phrase via curl, it
+appeared in the PA moderation queue immediately, dismiss/take-down both round-tripped
+correctly) without overbuilding a reporting system nobody asked for yet.
+
+**PA2 (subscriptions) always requires a `reason` string, even for a pure plan change**
+- unlike CA4's self-service `changePlan` (which just bumps seats/credits to the new
+plan's minimums, no explanation needed since the tenant is changing their own plan),
+platform_admin changes belong to someone *else's* tenant and get written to that
+tenant's own audit log, so a one-line justification is mandatory, not optional. Credit
+deltas can be negative (clawback) as well as positive (goodwill grant), and are also
+written to `CreditLedgerEntry` so they show up in the tenant's own billing history, not
+just the platform-wide audit feed.
+
+**PA7's "404, not 403" is a frontend-only concern.** `PlatformAdminController` still
+returns a normal 403 JSON body when `@PreAuthorize("hasRole('PLATFORM_ADMIN')")` fails -
+that's correct and sufficient for an API response nobody browses to directly. The actual
+"don't reveal this route exists" requirement is about what a human sees in a browser:
+`PlatformAdminShell` renders the exact same `not-found.tsx` a genuinely nonexistent URL
+would show (imported directly as a component, not navigated to) rather than redirecting
+to `/dashboard` or `/auth` - a redirect would still confirm to a curious visitor that
+`/admin` is a real, gated route, even if they can't get in.
+
+**Found + fixed a real bug live-testing PA7**: a signed-in wrong-role session (tested
+with a hiring_manager account) visiting `/admin` rendered the correct 404 UI, but each
+`/admin/**` page's own data-fetch `useEffect` still fired on mount regardless - a page
+component's hooks run the moment *that component* mounts, completely independent of
+what a *child* component (`PlatformAdminShell`) decides to render internally. So the
+browser still sent a real (server-rejected, no data leaked) request to
+`GET /admin/dashboard` etc. before the shell's own check had even resolved - exactly the
+kind of stray authenticated-looking noise this surface shouldn't make. Fixed by
+exporting `usePlatformAdminGate()` from `PlatformAdminShell.tsx` and having every PA
+page call it directly, gating its own fetch effect on `gate === "ready"` rather than
+relying on the shell alone. Re-verified after the fix: zero network calls fire for an
+unauthenticated or wrong-role visit to any `/admin/**` route.
