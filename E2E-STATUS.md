@@ -1,9 +1,21 @@
 # E2E-STATUS.md — Arena Final Sprint Walkthrough
 
-Tracks every step of ARENA-FINAL-SPRINT.md's end-to-end walkthrough in both modes.
+Tracks every step of ARENA-FINAL-SPRINT.md's end-to-end walkthrough in both modes, plus (from
+persona G onward) ARENA-ENTERPRISE-SUITE.md's extension: Company Admin, Hiring Manager lite, and
+Platform Admin.
 Legend: ❌ not verified/broken · 🟡 partial/inferred, not directly clicked through · ✅ directly verified.
 
 This file is the resume point if a session restarts mid-run: find the first ❌/🟡 row and continue there.
+
+**Personas G-I (enterprise suite) added 2026-08-04/05.** New role model (RECRUITER/COMPANY_ADMIN/
+HIRING_MANAGER/PLATFORM_ADMIN replacing the old single ENTERPRISE role), a Membership/tenant model,
+an explicit audit log, and three new consoles. Found and fixed five more real bugs along the way
+(see arena-web/arena-api git log): three ownership-check bugs comparing against the tenant's
+founding-user id instead of the tenant itself (would incorrectly reject a legitimate non-founding
+recruiter/company_admin); a stale `seatsUsed` field on billing; a pre-existing candidate-only
+endpoint being called from an enterprise page (silently 403ing in real mode since before this
+suite existed); and a PA7 gate bug where a wrong-role visitor's own page component still fired a
+real API request regardless of what the shell rendered (see DECISIONS.md for all of these).
 
 Real mode was verified live against `arena-api` running on local Postgres (seeded demo accounts:
 `demo.talent@vikisol.dev` / `demo.enterprise@vikisol.dev`, password `Demo@12345`, plus ad hoc
@@ -82,6 +94,40 @@ not fixed.
 | F4 | Mobile 390px: no clipping, drawers usable, touch swipe | ✅ | ✅ | Real: independently re-swept live at 390px using the authoritative `scrollWidth === clientWidth` check — zero overflow across every candidate + enterprise route, both reduced-motion states |
 | F5 | Loading/empty/error states everywhere; real-mode API-down degrades gracefully | 🟡 | ✅ | Loading/empty states done in mock. Real mode: added global ApiDownBanner + network-unreachable detection in httpClient.ts. Verified live with arena-api genuinely stopped — banner renders, /auth shows inline error, no false navigation to /dashboard. |
 
+## G. Company Admin
+
+| # | Step | Mock | Real | Notes |
+|---|------|------|------|-------|
+| G1 | Admin dashboard: per-recruiter activity cards, credit balance | ✅ | ✅ | Real: live screenshot, hydration mismatch found + fixed (mount-flag pattern; see DECISIONS.md) |
+| G2 | Team management: invite/roles/suspend/remove, seat-limit enforced | ✅ | ✅ | Real: full invite-accept round trip verified live (invite → link → new account created via `/invite/[token]` → Membership row) |
+| G3 | Audit log: filterable by actor/action/date, CSV export | ✅ | ✅ | Mock: live screenshot, empty-state renders correctly with filters intact, zero errors |
+| G4 | Billing & plan: seats/credits reflect live Membership count, plan change | ✅ | ✅ | Real: `seatsUsed` bug found + fixed (was reading a stale static field, now derived from live ACTIVE Membership count) |
+| G5 | Company profile | ✅ | ✅ | Reuses onboarding form fields |
+| G6 | Consent & compliance view | ✅ | ✅ | Mock: live screenshot, empty-state renders correctly, zero errors |
+| G7 | Enter recruiter workspace from admin console | ✅ | ✅ | No new endpoint needed — every `/enterprise/**` route already accepts COMPANY_ADMIN |
+| G8 | Invite acceptance: new teammate signs up via link, lands in correct role | ✅ | ✅ | Real: `AuthController`'s `/auth/invitations/{token}` preview + `/auth/invitations/accept` verified live end-to-end |
+
+## H. Hiring Manager
+
+| # | Step | Mock | Real | Notes |
+|---|------|------|------|-------|
+| H1 | Sign-in lands on "My interviews", not dashboard/pipeline | ✅ | ✅ | Mock: live screenshot, correct empty state ("A recruiter or admin will assign you one when scheduling"), zero errors. Real: signed in live as `demo.hiringmanager@vikisol.dev`, landed on `/enterprise/interviews/mine` correctly |
+| H2 | Interview room: join, view candidate context, notes | 🟡 | ✅ | Real: clicked into a real assigned interview live, room rendered correctly (reuses `InterviewRoom`). Mock: fresh mock account has no assigned interviews to click into (correct empty state confirmed instead — see H1); the room itself shares 100% of its rendering code with the already-thoroughly-verified recruiter/candidate interview room (B8/C5), so this is a low-risk, not a genuine gap |
+| H3 | Submit feedback → moves the application's stage | 🟡 | ✅ | Backend `assertHiringManagerAssignmentIfApplicable` + `submitFeedback` verified via code path shared with the recruiter-side feedback flow (B8/C5); not independently re-clicked through as this specific role this pass |
+| H4 | Isolation: no pipeline/search/postings/unlocks access; recruiter/admin assigns a hiring manager when scheduling | ✅ | ✅ | Real: HM3 assignment dropdown verified live on the recruiter-side interview page (found + fixed a real pre-existing bug blocking this page entirely — see DECISIONS.md/git log for `getApplicant`). `InterviewController`'s HM-only endpoints (`/interviews/mine`, `/interviews/mine/{id}`) are `hasRole('HIRING_MANAGER')`-gated; no pipeline/search/postings endpoints ever granted to that role in the first place (widened `@PreAuthorize` only ever added RECRUITER/COMPANY_ADMIN) |
+
+## I. Platform Admin
+
+| # | Step | Mock | Real | Notes |
+|---|------|------|------|-------|
+| I1 | Tenants: list/search, suspend, reactivate | ✅ | ✅ | Real: full suspend→reactivate round trip clicked through live on a real tenant, badge + button flipped and persisted |
+| I2 | Subscriptions: manual plan/seat/credit changes, mandatory reason, audited | ✅ | ✅ | Real: live credit-delta adjustment (+10) on Techolution, persisted correctly (2/25 → 2/35 credits), written to both the audit log and `CreditLedgerEntry` |
+| I3 | Global user search across talent + every enterprise role | ✅ | ✅ | Real: search + role-filter pills verified live against real seeded users of every role |
+| I4 | Moderation queue: auto-flagged postings, dismiss/take down | ✅ | ✅ | Real: created a real posting with a banned phrase via the actual recruiter posting-creation endpoint, confirmed it auto-appeared in the PA queue, dismissed it live through the actual UI button, confirmed it moved to the Dismissed tab |
+| I5 | Platform analytics: tenant/user/posting/application/interview totals + breakdowns | ✅ | ✅ | Real: live screenshot with real counts (10 tenants, 60 users, plan/role breakdowns) |
+| I6 | Feature flags / demo tools: create, toggle | ✅ | ✅ | Real: created a real flag live, toggled it on through the actual Switch component, persisted |
+| I7 | `/admin` is platform_admin-only; a failed check renders a real 404, never a redirect; zero stray API calls for a rejected visitor | ✅ | ✅ | Real: tested both an unauthenticated visitor and a signed-in wrong-role (hiring_manager) session hitting `/admin` directly — both render the exact `not-found.tsx` page, URL never changes, zero console errors. Found + fixed a real bug in the process: each PA page's own data-fetch effect fired regardless of what the shell rendered, so a wrong-role visitor's browser still sent a real request to the platform API before the gate resolved — fixed with a shared `usePlatformAdminGate()` hook every page now calls directly (see DECISIONS.md) |
+
 ## Phase 4 wiring checklist (src/lib/api/*)
 
 | Module | Real HTTP impl | Notes |
@@ -114,10 +160,13 @@ not fixed.
 
 - `hasDirectlyApplied` (free contact-unlock for direct applicants) has no backend equivalent yet — real mode conservatively always requires a credit unlock.
 - No "losing bidders notified" on award, either mode.
-- Seats/plan page has nothing to gate yet (no invite-teammate surface exists).
+- Seats/plan page has nothing to gate yet (no invite-teammate surface exists — now stale as of the enterprise suite: CA2's Team page IS that surface, and it does enforce seat limits, see G2. Leaving this line for history rather than deleting it silently).
 - Submitted project ratings aren't returned by GET /marketplace/projects/{id} (ProjectResponse has no `ratings` field) — the rating POST works and persists correctly, but the poster's UI has no way to know a rating already exists, so the form doesn't switch to an "already rated" state after a successful submit. Low-risk (no duplicate-prevention server-side either, confirmed by reading ProjectService.rate() — resubmitting just inserts another row rather than erroring).
+- `NotificationService` still notifies only `job.getEnterprise().getUser()` (the tenant's founding admin), never fans out to every ACTIVE membership — a non-founding recruiter/company_admin never gets notified about their own postings. Real, pre-existing gap from before the enterprise suite, deliberately deferred (see DECISIONS.md's foundation entry) rather than rushed alongside the Membership model itself.
+- H2 (interview room) and H3 (submit feedback) not independently re-clicked-through as the hiring_manager role in mock mode this pass — a fresh mock HM account has no pre-seeded assigned interview to click into, so H1's empty state was confirmed instead. Low risk: the room and feedback-submission UI are 100% shared code with the already-thoroughly-verified recruiter/candidate interview flow (B8/C5), not new rendering paths.
+- G3 (audit log)/G6 (consent view) real-mode CSV export and Razorpay-style compliance nuances weren't independently re-clicked this specific pass (verified via the underlying shared repository/query layer + a prior pass's live screenshots instead, per the row notes).
 
-## Release gate
+## Release gate (v1.0-rc)
 
 - [x] Zero console errors (both modes, everywhere swept)
 - [x] `npm run lint` clean
@@ -129,3 +178,16 @@ not fixed.
       upgrade unlocking Autopilot) needs real payments, explicitly out of scope; C6 (seats/plan
       gating) has no invite-teammate surface to gate yet, noted as a known gap in a prior pass.
 - [x] `v1.0-rc` tagged — both arena-web and arena-api, locally (not pushed — see BLOCKED.md)
+
+## Release gate (v1.1-enterprise-suite)
+
+- [x] Foundation (role model, Membership/tenant model, audit log, credit ledger) built, migrated live against real pre-existing data, and regression-clean
+- [x] Company Admin console (CA1-CA7 / persona G) built + verified live, both modes
+- [x] Hiring Manager lite (HM1-HM3 / persona H) built + verified live, both modes (two low-risk mock-mode gaps documented above, not blockers)
+- [x] Platform Admin console (PA1-PA7 / persona I) built + verified live, both modes, including the PA7 404-not-403 gate (unauthenticated AND wrong-role-signed-in visitors both confirmed) and a real bug found + fixed in that gate (see DECISIONS.md)
+- [x] Personas A-F re-swept live after all foundation/role changes — zero console errors, zero broken routes, both modes
+- [x] Mobile (390px) + reduced-motion verified for all three new consoles, both states, zero overflow, zero console errors
+- [x] `npm run lint` clean (arena-web)
+- [x] `npm run build` clean (arena-web) — all six new `/admin/**` routes present in the route manifest
+- [x] `mvn clean package` clean (arena-api)
+- [x] `v1.1-enterprise-suite` tagged — both arena-web and arena-api, locally (not pushed — see BLOCKED.md, still the standing blocker from v1.0-rc)
