@@ -3,6 +3,78 @@
 Per the mission's standing rule: decisions get logged here instead of interrupting the
 user. Each entry says what was decided, why, and what it costs/defers.
 
+## ARENA-SHIP-IT.md — harden/deploy run scope calls (2026-08-05)
+
+**AI-agent guardrails (checklist section 8) are N/A this pass, not skipped.** A full
+codebase audit found zero live LLM/AI integration anywhere in arena-api — no OpenAI/
+Anthropic SDK, no API key config, no scheduled job. "The agent" is entirely
+`ScoringService`'s deterministic arithmetic (skill-overlap %, career-health formula) plus
+templated notification copy (`NotificationService`, `DataSeeder`'s demo text like "your
+agent scanned 24 postings"). Nothing auto-fires: `ConsentSettings.autoApply` is stored and
+round-tripped but never read to trigger an application anywhere (grepped every call site).
+So there is no prompt-injection surface, no hallucination risk, no autonomous action to
+put a human-in-the-loop gate in front of — building one now would be gating nothing. The
+real guardrail work is legal/UX honesty: none of the current UI/notification copy should
+overclaim "AI" or "autonomous agent" beyond what's actually happening, since overclaiming
+is itself a DPDP/consumer-protection risk once real users read it. Section 8 becomes a
+fast-follow the day a real LLM integration is proposed, not a launch-blocker for what
+exists today. Logged so this doesn't read as "skipped a launch-blocker."
+
+**Payments/marketplace-money (checklist section 3) is confirmed already out of scope and
+untouched this pass.** The only "Razorpay" string in the entire codebase is a seed-data
+company name (`IndianData.java:65`, flavor text for a mock enterprise tenant) — there is
+no payment SDK, no webhook handler, no escrow logic anywhere. Milestone/bid-award flows
+already move fake amounts with no real money ever changing hands (matches the existing
+E2E-STATUS.md D4 note about mocked payments). Nothing to hAPI-freeze or feature-flag off;
+it was never wired up. Confirmed rather than assumed, then left alone per the ship-it
+mission's explicit instruction not to touch this section.
+
+**Flyway adopted, replacing `ddl-auto: update`, via the pg_dump-baseline technique.**
+Hand-writing a from-scratch V1 migration for ~30+ JPA entities is slow and error-prone;
+instead: let Hibernate's existing `ddl-auto=update` generate the schema one last time
+against a scratch database, `pg_dump --schema-only` that as `V1__baseline.sql`, add the
+Flyway dependency, flip `ddl-auto` to `validate` (Hibernate now only checks the schema
+matches its entities, never alters it), and let Spring Boot's own Flyway auto-integration
+apply migrations on every boot — a real CI/CD pipeline to run migrations separately isn't
+possible without GitHub Actions, which is blocked on the GitHub push itself (see
+BLOCKED.md), but Flyway-on-boot achieves the actual safety goal (versioned, deterministic,
+tracked schema changes, no more silent auto-alter) without depending on that pipeline
+existing yet.
+
+**Redis: Memurai locally (already running as a Windows service), Railway's Redis addon
+for staging.** Used for the JWT `jti` revocation denylist and Bucket4j rate-limit buckets.
+No new local install needed; `spring.data.redis.*` reads `${REDIS_URL}` / `${REDIS_HOST}`
+etc. so swapping in Railway's managed Redis at deploy time is a pure env-var change.
+
+**JWT stays Bearer-token/localStorage for the access token; only the NEW refresh token
+moves to an HttpOnly cookie.** Rewriting arena-web's entire `httpClient.ts` auth model to
+cookie-based access tokens this late, across every existing page, is a large blast-radius
+change for a staging-hardening pass. Compromise: short-lived (15 min) Bearer access token
+(unchanged transport, minimal frontend churn) + a new rotating refresh token issued only
+as HttpOnly/Secure/SameSite=Strict, never exposed to JS, used solely to mint new access
+tokens via `POST /auth/refresh`. This satisfies the checklist's actual risk concern (a
+leaked long-lived token doing lasting damage) without the cookie-CSRF-for-every-endpoint
+rework a fully cookie-based access token would require.
+
+**Malware scanning (resume upload) is a documented gap, not implemented.** No ClamAV
+binary/daemon is available in this environment, and standing one up as a Railway sidecar
+service (container + virus-definition downloads + ongoing update cost) is disproportionate
+for a private, unlisted staging environment behind an access gate. Mitigated instead by:
+magic-byte content validation (not just extension), a hard size cap, UUID-only filenames,
+`Content-Disposition: attachment` + `nosniff` on download (so a malicious file can never
+execute in-browser), and DOCX macro-stripping. Full AV scanning stays a Stage-1 fast-follow
+once real recruiter traffic exists, tracked in BLOCKED.md.
+
+**GitHub push stays blocked (no `gh` CLI, no token in this session) — Railway deploy does
+NOT wait on it.** Confirmed `railway` CLI is already authenticated
+(`vikisoltechnologies@gmail.com`) with an existing empty project (`Vikisol-Arena`) in this
+workspace. `railway up` deploys directly from the local working directory without
+requiring a GitHub-connected repo, so the staging deploy (checklist step 8) proceeds
+independently of the GitHub blocker rather than being sequenced behind it. GitHub push
+happens the instant a token/repo exists, per the standing rule, but isn't allowed to block
+everything else in the meantime — matches this run's own explicit instruction ("keep going
+with everything else").
+
 ## ARENA-ENTERPRISE-SUITE.md — foundation architecture (2026-08-03)
 
 **Role model**: extend the existing single `Role` enum (already the sole RBAC source of

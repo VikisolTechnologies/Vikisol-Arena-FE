@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { signIn, signUp } from "@/lib/api/auth";
+import { signIn, signUp, verifyMfa } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/httpClient";
 import { isRealMode } from "@/lib/api/mode";
 import { isOnboarded } from "@/lib/session";
@@ -31,6 +31,33 @@ export default function AuthPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // Set only when signIn() comes back with "mfa_required" (see DECISIONS.md's 2FA flow) - a
+  // non-null value swaps the form below to the code-entry step instead of email/password.
+  const [mfaPendingToken, setMfaPendingToken] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+
+  // Redirect off the session's *actual* role, not the tab the user clicked - real mode's
+  // sign-in ignores the selected role entirely (any account can sign in from either tab) and
+  // returns whichever role the account really has, which matters now that "company_admin"
+  // is one of several distinct enterprise-side landings (see DECISIONS.md role-based landing).
+  const redirectForRole = (sessionRole: string) => {
+    switch (sessionRole) {
+      case "company_admin":
+        router.push("/enterprise/admin");
+        break;
+      case "recruiter":
+        router.push("/enterprise");
+        break;
+      case "hiring_manager":
+        router.push("/enterprise/interviews/mine");
+        break;
+      case "platform_admin":
+        router.push("/admin");
+        break;
+      default:
+        router.push(isOnboarded() ? "/dashboard" : "/onboarding");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,32 +72,34 @@ export default function AuthPage() {
     }
     setSubmitting(true);
     try {
-      // Redirect off the session's *actual* role, not the tab the user clicked - real mode's
-      // sign-in ignores the selected role entirely (any account can sign in from either tab) and
-      // returns whichever role the account really has, which matters now that "company_admin"
-      // is one of several distinct enterprise-side landings (see DECISIONS.md role-based landing).
-      const session = mode === "signin"
-        ? await signIn(form.email, form.password, role)
-        : await signUp(form.name, form.email, form.password, role);
-
-      switch (session.role) {
-        case "company_admin":
-          router.push("/enterprise/admin");
-          break;
-        case "recruiter":
-          router.push("/enterprise");
-          break;
-        case "hiring_manager":
-          router.push("/enterprise/interviews/mine");
-          break;
-        case "platform_admin":
-          router.push("/admin");
-          break;
-        default:
-          router.push(isOnboarded() ? "/dashboard" : "/onboarding");
+      if (mode === "signin") {
+        const result = await signIn(form.email, form.password, role);
+        if (result.status === "mfa_required") {
+          setMfaPendingToken(result.pendingToken);
+          return;
+        }
+        redirectForRole(result.session.role);
+      } else {
+        const session = await signUp(form.name, form.email, form.password, role);
+        redirectForRole(session.role);
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong — please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleVerifyMfa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mfaPendingToken) return;
+    setError("");
+    setSubmitting(true);
+    try {
+      const session = await verifyMfa(mfaPendingToken, mfaCode);
+      redirectForRole(session.role);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Incorrect code — please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -101,6 +130,39 @@ export default function AuthPage() {
           </Link>
 
           <div className="rounded-[24px] border border-border bg-white/5 p-7 backdrop-blur-[18px]">
+            {mfaPendingToken ? (
+              <form onSubmit={handleVerifyMfa} className="space-y-4">
+                <div>
+                  <h2 className="font-display text-lg font-bold tracking-tight">Two-factor verification</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Enter the 6-digit code from your authenticator app.</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="mfaCode">Verification code</Label>
+                  <Input
+                    id="mfaCode"
+                    inputMode="numeric"
+                    autoFocus
+                    maxLength={6}
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
+                    className="h-11 rounded-xl border-border bg-white/[0.03] text-center tracking-[0.5em]"
+                  />
+                </div>
+                {error && <p className="text-sm text-red-400">{error}</p>}
+                <Button type="submit" variant="primary-gradient" size="cta" className="w-full" disabled={submitting || mfaCode.length !== 6}>
+                  {submitting && <Loader2 className="size-4 animate-spin" />}
+                  {submitting ? "Verifying…" : "Verify"}
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => { setMfaPendingToken(null); setMfaCode(""); setError(""); }}
+                  className="w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Back to sign in
+                </button>
+              </form>
+            ) : (
+              <>
             <Tabs value={mode} onValueChange={(v) => setMode(v as "signin" | "signup")}>
               <TabsList className="mb-6 grid w-full grid-cols-2 rounded-full bg-white/5 p-1">
                 <TabsTrigger value="signin" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
@@ -201,6 +263,8 @@ export default function AuthPage() {
                 </p>
               )}
             </form>
+              </>
+            )}
           </div>
         </div>
       </div>

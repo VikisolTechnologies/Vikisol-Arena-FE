@@ -8,21 +8,29 @@ import { getMyProfile } from "./profile";
 import { getMyEnterpriseProfile } from "./enterprise";
 
 interface SessionResponse {
-  role: string;
+  role: string | null;
   candidateId: string | null;
-  name: string;
-  email: string;
-  token: string;
+  name: string | null;
+  email: string | null;
+  token: string | null;
+  mfaRequired: boolean;
+  mfaPendingToken: string | null;
 }
 
 function toSession(res: SessionResponse): Session {
   return {
-    role: res.role.toLowerCase() as Role,
-    name: res.name,
-    email: res.email,
+    role: (res.role as string).toLowerCase() as Role,
+    name: res.name as string,
+    email: res.email as string,
     candidateId: res.candidateId ?? undefined,
   };
 }
+
+// A password check can succeed but still not be enough to sign in - see DECISIONS.md's 2FA flow.
+// The auth page branches on `status` to show either a redirect (immediate) or a code-entry step.
+export type SignInResult =
+  | { status: "success"; session: Session }
+  | { status: "mfa_required"; pendingToken: string };
 
 /** Real mode's "onboarded" flag is purely local (localStorage), same as mock mode, but real
  * accounts can already be fully set up server-side on first login in this browser (any seeded
@@ -46,18 +54,35 @@ async function syncOnboardedFromProfile(role: Role) {
   }
 }
 
-export async function signIn(email: string, password: string, role: Role): Promise<Session> {
+export async function signIn(email: string, password: string, role: Role): Promise<SignInResult> {
   if (isRealMode()) {
     const res = await apiFetch<SessionResponse>("/auth/signin", { method: "POST", auth: false, body: { email, password } });
-    setToken(res.token);
+    if (res.mfaRequired) {
+      return { status: "mfa_required", pendingToken: res.mfaPendingToken as string };
+    }
+    setToken(res.token as string);
     const session = toSession(res);
     setSession(session);
     await syncOnboardedFromProfile(session.role);
-    return session;
+    return { status: "success", session };
   }
+  // Mock mode has no 2FA concept - every seeded demo account in real mode starts without it
+  // enabled too (enrollment is opt-in, see DECISIONS.md), so this branch is unreachable there.
   const session: Session = { role, name: mockNameFor(role), email, candidateId: role === "talent" ? CURRENT_CANDIDATE_ID : undefined };
   setSession(session);
-  return delay(session, 600);
+  return { status: "success", session: await delay(session, 600) };
+}
+
+// Second step of the 2FA flow (see DECISIONS.md) - only reachable after signIn() returned
+// "mfa_required". auth:false because the caller doesn't have a real session yet - the
+// pendingToken (not a Bearer access token) is what proves who they are at this step.
+export async function verifyMfa(pendingToken: string, code: string): Promise<Session> {
+  const res = await apiFetch<SessionResponse>("/auth/2fa/verify", { method: "POST", auth: false, body: { pendingToken, code } });
+  setToken(res.token as string);
+  const session = toSession(res);
+  setSession(session);
+  await syncOnboardedFromProfile(session.role);
+  return session;
 }
 
 function mockNameFor(role: Role): string {
@@ -73,7 +98,7 @@ function mockNameFor(role: Role): string {
 export async function signUp(name: string, email: string, password: string, role: Role): Promise<Session> {
   if (isRealMode()) {
     const res = await apiFetch<SessionResponse>("/auth/signup", { method: "POST", auth: false, body: { name, email, password, role } });
-    setToken(res.token);
+    setToken(res.token as string);
     const session = toSession(res);
     setSession(session);
     return session;
