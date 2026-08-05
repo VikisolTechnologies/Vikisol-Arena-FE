@@ -3,6 +3,39 @@
 Per the mission's standing rule: decisions get logged here instead of interrupting the
 user. Each entry says what was decided, why, and what it costs/defers.
 
+## ARENA-FINAL-CUTOVER.md — Step 1 complete, GitHub push done (2026-08-06)
+
+**Both repos force-pushed successfully; three fine-grained PATs failed first, a classic PAT
+worked immediately.** `arena-web` → `VikisolTechnologies/Vikisol-Arena-FE` (`master:main`,
+forced update, all 4 tags), `arena-api` → `VikisolTechnologies/Vikisol-Arena-BE` (same, 3
+tags). Before finding a working token: two separately-generated fine-grained PATs both
+authenticated fine via the GitHub REST API (`GET /repos/{owner}/{repo}` reported
+`push: true`) but both failed identical `git push` attempts with `remote: Write access to
+repository not granted`; a third fine-grained PAT failed differently, with `remote:
+Permission ... denied to VikisolTechnologies` - GitHub attributing the push attempt to the
+*organization* itself as the actor rather than a member account, which reads as an
+org-level fine-grained-PAT restriction (or a token minted at the org's own token-settings
+page rather than a member's personal one) rather than anything wrong with repo-level
+permissions. A classic PAT (`ghp_...`, `repo` scope) sidesteps that whole mechanism and
+worked on the first attempt. Worth remembering if a token is needed again for this org:
+reach for a classic PAT first, don't burn time on fine-grained ones here.
+
+**Token handling followed the file's own instructions exactly**: every token was embedded
+in the git remote URL only for the single push command that needed it, verified via
+`git remote -v` to confirm it was stripped immediately after (success or failure, every
+time), never written to a file, never echoed in full, never committed. The API-based
+permission check (before ever attempting a push) used `Authorization: Bearer` headers, not
+a logged URL, for the same reason.
+
+**Force-pushed over `Vikisol-Arena-BE` despite its current deployed commit not obviously
+matching the "dead pre-rewrite code" framing** - its live Railway deployment was running a
+2026-08-01-dated commit ("log Ask Arena's real-agency actions and the autonomous-execution
+charter") that doesn't match either "old pre-pivot Spring Boot/Vite app" or anything built
+in this session. Flagged this explicitly before touching anything; Syam confirmed it was
+fine to overwrite. Recorded here in case that commit's content is ever needed later - it no
+longer exists on the default branch after the force-push (git reflog/reachable history on
+the old tip is gone from the remote, per force-push's normal semantics).
+
 ## ARENA-GO-LIVE-ON-DOMAIN.md — domain cutover run (2026-08-06)
 
 **Step 1 (GitHub push) confirmed still blocked** - no `gh` CLI, no token this session

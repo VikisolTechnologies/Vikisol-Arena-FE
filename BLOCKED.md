@@ -1,27 +1,29 @@
 # BLOCKED.md — items waiting on external input
 
-## 🛑 GitHub token needed before domain cutover — refusing to delete the old deployment while
-## the new build exists only on this machine
-ARENA-GO-LIVE-ON-DOMAIN.md's Step 1 (push to GitHub) is a hard prerequisite for Step 5 (retiring
-the old arena.vikisol.in/api-arena.vikisol.in deployments) — that ordering is deliberate and
-non-negotiable per the file itself, so Step 5 will not run until this is resolved, no matter how
-far Steps 2-4 get. `gh` CLI is not installed in this environment and no token has been provided.
+## GitHub push — ✅ DONE (2026-08-06)
+`arena-web` → `VikisolTechnologies/Vikisol-Arena-FE` (`main`, force-pushed over the old
+history, all 4 tags through `v1.2-staging-live`). `arena-api` → `VikisolTechnologies/
+Vikisol-Arena-BE` (`main`, same, 3 tags — `v0.1-fe-complete` is FE-only). Both confirmed via
+git's own "forced update" push output. Step 1's guard rail is satisfied — Step 5 (retiring the
+old deployments) is no longer blocked on this specifically, only on Step 4 (domain verified
+live) still being pending.
 
-**What's needed** (either one):
-- A GitHub Personal Access Token (repo scope) for the VikisolTechnologies org, or
-- The two empty private repos created manually — `VikisolTechnologies/arena-web` and
-  `VikisolTechnologies/arena-api` — with their URLs passed back.
+Three fine-grained PATs failed first (`remote: Write access to repository not granted` twice,
+then `remote: Permission ... denied to VikisolTechnologies` once) before a **classic** PAT
+(`repo` scope) worked immediately — worth knowing if a token is ever needed here again:
+fine-grained PATs for this org hit some access-attribution issue that classic tokens don't.
+Every token was used transiently (embedded in the git remote URL only for the push, stripped
+immediately after) and never written to a file, logged, or committed.
 
-Steps 2-3 (production-domain config, DNS values for Syam to apply) proceed anyway per the
-file's own instruction — only Step 5's deletions wait on this.
-
-## Old deployment retirement (context for Step 5, once GitHub is unblocked)
-Syam has confirmed (ARENA-GO-LIVE-ON-DOMAIN.md's context section) that the existing
-arena.vikisol.in (Vercel, A-record → 76.76.21.21) and api-arena.vikisol.in (old Railway,
-`qzli904x.up.railway.app`) deployments have zero users/data and are approved for deletion once
-the new build is confirmed live on the same domains. Both are Syam-only actions (Claude can't
-reach Vercel's dashboard or delete a Railway service outside this session's own project) —
-exact instructions will be issued at Step 5, not before.
+## Old deployment retirement (context for Step 5)
+Syam has confirmed (ARENA-FINAL-CUTOVER.md's context + DATABASE GUARDRAIL sections) that the
+existing arena.vikisol.in (Vercel, A-record → 76.76.21.21), api-arena.vikisol.in (old Railway,
+`qzli904x.up.railway.app`), and its `vikisol-arena` Postgres have zero users/data and are
+approved for deletion once the new build is confirmed live on the same domains — explicitly
+NOT the `enchanting-vibrancy`/HRLMS production database, which is out of scope entirely. Both
+app deletions are Syam-only actions (Claude can't reach Vercel's dashboard or delete a Railway
+service outside this session's own project) — exact instructions will be issued at Step 5, once
+Step 4 (domain verified live) also passes. GitHub push is no longer what's gating this.
 
 ## 🛑 api-arena.vikisol.in is already claimed by the OLD Railway service — Step 3 needs one of
 ## these from Syam before it can finish
