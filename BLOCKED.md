@@ -25,38 +25,21 @@ app deletions are Syam-only actions (Claude can't reach Vercel's dashboard or de
 service outside this session's own project) — exact instructions will be issued at Step 5, once
 Step 4 (domain verified live) also passes. GitHub push is no longer what's gating this.
 
-## 🛑 api-arena.vikisol.in is already claimed by the OLD Railway service — Step 3 needs one of
-## these from Syam before it can finish
-`railway domain api-arena.vikisol.in --service arena-api` (the new one, in the fresh
-`arena-staging` project) fails because that hostname is already an ACTIVE custom domain on the
-**old** `Vikisol-Arena-BE` service in the pre-existing "Vikisol-Arena" project — Railway only
-allows one active binding per hostname account-wide. This is functionally a Step 5 action
-(releasing it stops the old service from being reachable on that domain), so it wasn't done
-unilaterally even though this session's Railway login can technically reach that project too.
+## api-arena.vikisol.in conflict — ✅ RESOLVED (2026-08-06)
+Released from the old `Vikisol-Arena-BE` service (`railway domain delete`, explicitly
+confirmed by Syam first) and bound to the new `arena-api` service. Both domains now have
+CNAME targets — see the DNS section below, which is the one remaining manual step.
 
-**Pick one:**
-1. In the Railway dashboard, open the old **Vikisol-Arena** project → **Vikisol-Arena-BE**
-   service → Settings → Networking, and remove the `api-arena.vikisol.in` custom domain. Say
-   the word and this session will immediately claim it for the new service and hand back the
-   CNAME target.
-2. Explicitly tell this session to release it via the CLI directly (same access, just needs
-   your go-ahead given it touches the pre-existing service).
-
-`arena.vikisol.in` (the frontend) had no such conflict — Railway assigned it cleanly, see the
-DNS instructions below.
-
-## DNS changes needed from Syam (GoDaddy) — do these once api-arena.vikisol.in above is
-## resolved; arena.vikisol.in can be done now
+## 🛑 DNS changes needed from Syam (GoDaddy) — the one remaining manual step before Step 4
 1. **Delete** the existing `arena` A record (currently → `76.76.21.21`, the old Vercel deploy).
 2. **Add** a CNAME: name `arena` → **`55amzai3.up.railway.app`**
 3. **Update** the `api-arena` CNAME (currently → `qzli904x.up.railway.app`, the old Railway
-   service) → *[CNAME target pending — will follow the instant the domain conflict above is
-   resolved]*.
+   service) → **`vvh1z4s9.up.railway.app`**
 
 Both are subdomains, so a CNAME is correct for each (no ALIAS/apex-record complication).
-This session will wait for confirmation that DNS has changed and propagated before treating
-`arena.vikisol.in`/`api-arena.vikisol.in` as live — Step 4's smoke test runs against them only
-after that, not before.
+This session is polling for DNS propagation and will proceed to Step 4 (deploy + smoke test
+on the real domain) automatically the moment both resolve correctly — no need to ping back,
+it'll pick this up on its own once the records are live.
 
 ## Staging deploy — ✅ DONE, no longer blocked
 Live at https://arena-web-production-f1f4.up.railway.app (frontend, Basic Auth-gated) and

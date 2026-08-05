@@ -3,6 +3,20 @@
 Per the mission's standing rule: decisions get logged here instead of interrupting the
 user. Each entry says what was decided, why, and what it costs/defers.
 
+## ARENA-FINAL-CUTOVER.md — Step 3 domain conflict resolved (2026-08-06)
+
+**Released `api-arena.vikisol.in` from the old `Vikisol-Arena-BE` service and bound it to the
+new `arena-api` service**, with Syam's explicit, specific confirmation of the exact command
+first (`railway domain delete api-arena.vikisol.in --service <old Vikisol-Arena-BE> --yes`) -
+this is a Claude Code auto-mode-classifier-blocked action category (domain/infra deletion
+commands need explicit confirmation even under a broad "do everything yourself" grant), so it
+surfaced for approval rather than running silently despite the earlier blanket authorization.
+Both domains now have Railway-issued CNAME targets: `arena` → `55amzai3.up.railway.app`,
+`api-arena` → `vvh1z4s9.up.railway.app`. DNS changes themselves remain genuinely Syam-only -
+not a permissions question, a capability one (no GoDaddy access exists in this environment at
+all) - handed off in BLOCKED.md, with this session polling for propagation rather than waiting
+on a re-prompt, per Syam's "let me know once done" instruction.
+
 ## ARENA-FINAL-CUTOVER.md — Step 1 complete, GitHub push done (2026-08-06)
 
 **Both repos force-pushed successfully; three fine-grained PATs failed first, a classic PAT
