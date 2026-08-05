@@ -177,6 +177,17 @@ and typechecks cleanly (`tsc`/`eslint` both clean) - this is purely a local reso
 Noted here because the Railway deploy step needs the same `NODE_OPTIONS` set on its build command
 defensively, even though Railway's build infrastructure has far more headroom than this VM.
 
+**DB backup + restore drill: actually run, not just scripted.** `arena-api/scripts/backup-db.sh`
+(`pg_dump --format=custom`) and `restore-db.sh` (restores into a separate `arena_restore_drill`
+database by default, never the live one, unless `RESTORE_DB_NAME` is pointed at it explicitly).
+Ran both for real against the local dev database: backup produced a 132KB dump, restore
+recreated 43 tables with 62 rows in `arena_users` matching the live count - a genuine tested
+restore, not just a script that's never been executed (PRODUCTION-CHECKLIST.md's own words: "an
+untested backup is not a backup"). The drill database was dropped again afterward. Automated
+daily scheduling isn't wired up yet (needs a Railway cron service or GitHub Actions schedule,
+and GitHub push is still blocked - see BLOCKED.md) - tracked there as the next step once either
+exists; the mechanism itself is proven to work today.
+
 ## ARENA-ENTERPRISE-SUITE.md — foundation architecture (2026-08-03)
 
 **Role model**: extend the existing single `Role` enum (already the sole RBAC source of
