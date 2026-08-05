@@ -75,6 +75,41 @@ happens the instant a token/repo exists, per the standing rule, but isn't allowe
 everything else in the meantime — matches this run's own explicit instruction ("keep going
 with everything else").
 
+**Postgres Row-Level Security is deferred to a documented fast-follow, not implemented this
+pass.** The checklist frames RLS explicitly as "a database-level *backstop*" alongside "explicit
+403-vs-200 authorization tests" as the primary control - both matter, but they're not equally
+risky to build under time pressure. Correctly wiring `SET app.current_tenant` into every
+Hibernate/HikariCP connection acquisition (so RLS policies see the right tenant on every query)
+requires either a custom `ConnectionProvider` SPI wrapper or per-transaction AOP with fragile
+`@Transactional` advisor-ordering dependencies - genuinely easy to get subtly wrong (e.g. the GUC
+lands on the wrong pooled connection, or fires before the transaction begins) in a way that could
+silently under- or over-filter legitimate cross-table joins, which is worse than not having RLS
+at all without a full regression pass this session doesn't have budget for. Instead: (1) built
+`scripts/idor-check.sh`, a checked-in, repeatable live-verification script asserting 403-not-200
+across every sensitive object-by-id endpoint with two real seeded tenants - this is the
+primary control the checklist actually asks for, and it already found + let us fix 5 real gaps
+(see the IDOR-fix commit); (2) the concrete implementation plan for RLS is written down here so a
+future pass doesn't start from zero: given `spring.jpa.open-in-view=true` is already active
+(confirmed in boot logs), one Hibernate `Session`/connection is bound to the request thread for
+its whole duration via Spring's `OpenEntityManagerInViewFilter` - a `Filter` placed after JWT
+auth resolves the principal can grab that same request-bound `EntityManager`
+(`EntityManagerFactoryUtils.getTransactionalEntityManager`) and issue
+`SELECT set_config('app.current_tenant', ?, true)` once per request, reliably landing on the
+same connection every later query in that request uses. This needs an empirical ordering check
+against Spring Security's filter chain (not assumed correct from reasoning alone) plus a full
+regression pass before shipping, which is why it's a fast-follow, not this session's work.
+
+**Redis (Memurai locally) is a hard dependency for sign-in itself, not just rate limiting -
+worth flagging as an operational risk.** Discovered mid-session when the local Memurai Windows
+service had stopped (unrelated to this work) and every sign-in attempt failed with "Unable to
+connect to Redis" - login lockout tracking and the JWT `jti` denylist both live in Redis with no
+fallback path. This is *appropriate* for Railway's managed Redis addon in staging/production
+(high uptime, not something this app can be running without anyway once rate limiting is live),
+but is worth the founder knowing: a Redis outage in production means nobody can sign in, not just
+"rate limits stop enforcing." Not changed this pass (graceful degradation would mean auth
+succeeding without lockout protection during an outage, which is arguably the wrong trade-off
+anyway) - documented so it's a known, deliberate characteristic, not a surprise.
+
 ## ARENA-ENTERPRISE-SUITE.md — foundation architecture (2026-08-03)
 
 **Role model**: extend the existing single `Role` enum (already the sole RBAC source of
