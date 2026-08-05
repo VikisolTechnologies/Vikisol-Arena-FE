@@ -23,7 +23,8 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Everything except Next's own static assets - those have no sensitive content and gating
-  // them just breaks image/font loading behind the auth prompt.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // Excludes Next's own static assets (no sensitive content, gating them just breaks image/font
+  // loading behind the auth prompt) and /api/health (Railway's healthcheck prober can't present
+  // a Basic Auth credential - see api/health/route.ts).
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/health).*)"],
 };

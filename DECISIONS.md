@@ -188,6 +188,23 @@ daily scheduling isn't wired up yet (needs a Railway cron service or GitHub Acti
 and GitHub push is still blocked - see BLOCKED.md) - tracked there as the next step once either
 exists; the mechanism itself is proven to work today.
 
+**Found a live production Arena deployment already on Railway - deliberately not touched, deployed
+into a brand-new isolated project instead.** The `railway` CLI's existing "Vikisol-Arena" project
+(the one referenced as already-authenticated in the earlier GitHub-push DECISIONS.md entry) turned
+out to have real services already running, not an empty shell: `Vikisol-Arena-BE`
+(`SPRING_PROFILES_ACTIVE=prod`, real Cloudinary/Google OAuth credentials, a webhook wired to the
+production `vikisol-one-be-production.up.railway.app` backend, serving `https://api-arena.vikisol.in`
+for a frontend at `https://arena.vikisol.in`) plus its own Postgres with a persistent volume. This
+predates this session's full rewrite (CLAUDE.md's Aug-1 pivot note) and is almost certainly a real,
+live, founder-owned production deployment of the old Arena backend - completely incompatible with
+this session's schema/entities regardless, and not something a staging-hardening pass should ever
+redeploy over or connect to. Only read-only inspection was performed (`railway status`,
+`railway variables --json`) - no writes, no deploys, nothing modified. A brand-new, separately-named
+`arena-staging` Railway project (empty, freshly created) is used for everything in this section
+instead, so the existing production service is never at risk. **Flagging this prominently since
+the founder may want to know this exists** - it wasn't mentioned anywhere in this session's own
+history before now, and it's live infrastructure with real paid-service credentials in it.
+
 ## ARENA-ENTERPRISE-SUITE.md — foundation architecture (2026-08-03)
 
 **Role model**: extend the existing single `Role` enum (already the sole RBAC source of
