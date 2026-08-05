@@ -110,6 +110,11 @@ export async function signUp(name: string, email: string, password: string, role
 
 export async function signOut(): Promise<void> {
   if (isRealMode()) {
+    // Was client-discard-only - the access token stayed valid server-side until its natural
+    // 15min expiry even after "signing out." POST /auth/signout denylists it immediately and
+    // revokes the refresh cookie (see AuthController) - the actual point of building a
+    // server-side denylist in the first place.
+    await apiFetch<void>("/auth/signout", { method: "POST" }).catch(() => {});
     clearToken();
     clearSession();
     return;

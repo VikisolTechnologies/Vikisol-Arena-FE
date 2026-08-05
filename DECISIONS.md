@@ -110,6 +110,43 @@ but is worth the founder knowing: a Redis outage in production means nobody can 
 succeeding without lockout protection during an outage, which is arguably the wrong trade-off
 anyway) - documented so it's a known, deliberate characteristic, not a surprise.
 
+**Rate limiting built as plain Redis INCR+EXPIRE, not Bucket4j.** `RateLimitFilter` reuses the
+same `StringRedisTemplate` already wired for `TokenDenylistService`/`RefreshTokenService`
+rather than pulling in `bucket4j-redis`, which needs its own separate Lettuce/Jedis connection
+setup. A 60-second fixed window keyed by user id (authenticated) or client IP (unauthenticated,
+correctly reflecting Railway's proxy once `server.forward-headers-strategy=framework` is set)
+gets the same practical 429+Retry-After behavior the checklist asks for with one Redis client
+style in the codebase instead of two.
+
+**Found live: a Redis outage in `RateLimitFilter` was taking down the entire API, not just rate
+limiting - fixed to fail open.** Mid-session, the local Memurai instance hit a real RDB-
+persistence failure (`MISCONF ... stop-writes-on-bgsave-error`, because it was running without
+admin rights and couldn't write to its default save location under `Program Files`) and started
+refusing all write commands. `RateLimitFilter`'s uncaught `RedisCommandExecutionException` then
+took down *every* request, including `/auth/signin` and `/actuator/health` - a Redis blip
+degraded from "abuse protection off" to "whole app down." Fixed by wrapping the Redis call in a
+try/catch that logs a warning and lets the request through on failure. This is a deliberately
+different tradeoff from `TokenDenylistService`/`RefreshTokenService`, which correctly stay
+fail-closed (a Redis outage blocking auth entirely is the safe failure mode there - see the
+earlier "Redis is a hard dependency for sign-in" entry); for rate limiting specifically,
+fail-open is the safer default. Local fix: restarted Memurai with `--save "" --dir <writable
+path>` so this can't recur in dev; Railway's managed Redis addon won't have this specific
+permissions problem, but the code-level fix is the one that actually matters for staging/prod
+resilience against any transient Redis issue.
+
+**Account deletion (right-to-erasure) anonymizes + disables rather than hard-deletes.**
+`CandidateProfile` and `User` rows are kept (applications/interviews/messages/audit events all
+hold FK references to them - cascading a real delete through every one of those safely is a much
+larger, riskier change than this pass has budget for), but name/bio/skills/CV are cleared, the
+CV file is deleted from disk, `User.deletedAt` is set (new `V2__account_deletion.sql`,
+`AuthService.signIn()` now rejects any account with a non-null `deletedAt`), every refresh token
+for the user is revoked, and the access token making the deletion request itself is denylisted
+immediately (mirrors `AuthService.signOut()`'s exact denylist call - without this the still-live
+15-minute access token could keep calling other endpoints and partially un-anonymize what was
+just erased). Verified live end-to-end: created a throwaway account, deleted it, confirmed
+sign-in afterward returns 401 and the just-used access token itself immediately returns 401 too
+rather than continuing to work for its remaining lifetime.
+
 ## ARENA-ENTERPRISE-SUITE.md — foundation architecture (2026-08-03)
 
 **Role model**: extend the existing single `Role` enum (already the sole RBAC source of

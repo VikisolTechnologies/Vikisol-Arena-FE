@@ -165,3 +165,33 @@ export async function bumpMyCareerHealth(delta: number): Promise<CandidateProfil
   const current = await getMyProfile();
   return patchOnboardingProfile({ careerHealth: Math.max(0, Math.min(100, current.careerHealth + delta)) });
 }
+
+// ---- DPDP self-service data rights (ARENA-SHIP-IT.md #5) ----
+
+export interface DataExport {
+  email: string;
+  profile: CandidateProfile;
+  applications: { jobTitle: string | null; stage: string; appliedAt: string }[];
+  exportedAt: string;
+}
+
+/** Downloads everything arena-api holds on this candidate as one JSON object - mock mode has
+ * no server-side record to export, so it reconstructs the same shape from local state instead
+ * of pretending the button does nothing. */
+export async function exportMyData(): Promise<DataExport> {
+  if (isRealMode()) return apiFetch<DataExport>("/profile/me/export");
+  const profile = await getMyProfile();
+  return { email: "you@example.com", profile, applications: [], exportedAt: new Date().toISOString() };
+}
+
+/** Right-to-erasure. Real mode calls the backend (anonymizes the profile, disables the
+ * account, revokes every session - see CandidateProfileService.deleteMyAccount) and the caller
+ * is responsible for clearing the local session/token afterward. Mock mode just clears local
+ * state directly since there's no server record to erase. */
+export async function deleteMyAccount(): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch<void>("/profile/me", { method: "DELETE" });
+    return;
+  }
+  return delay(undefined, 300);
+}

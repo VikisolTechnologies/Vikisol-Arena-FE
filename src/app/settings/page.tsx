@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bot, ShieldCheck, Sparkles, Eye, Waves, Bell, CalendarClock, DollarSign, Cog, Lock } from "lucide-react";
+import { Bot, ShieldCheck, Sparkles, Eye, Waves, Bell, CalendarClock, DollarSign, Cog, Lock, Download, Trash2 } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Switch } from "@/components/ui/switch";
-import { getMyProfile, updateMyConsent, updateMyAutonomy } from "@/lib/api/profile";
+import { getMyProfile, updateMyConsent, updateMyAutonomy, exportMyData, deleteMyAccount } from "@/lib/api/profile";
+import { signOut } from "@/lib/api/auth";
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from "@/lib/api/notifications";
 import { getManualReducedEffects, setManualReducedEffects } from "@/hooks/use-reduced-motion";
 import { getSession, isOnboarded } from "@/lib/session";
@@ -35,6 +36,9 @@ export default function SettingsPage() {
   const [reducedEffects, setReducedEffects] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isPro] = useState(() => getTalentPlan() === "pro");
+  const [exporting, setExporting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (!getSession()) { router.replace("/auth"); return; }
@@ -83,6 +87,33 @@ export default function SettingsPage() {
   const markAllRead = async () => {
     await markAllNotificationsRead();
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const data = await exportMyData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "arena-my-data.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await deleteMyAccount();
+      await signOut();
+      router.replace("/");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -151,6 +182,51 @@ export default function SettingsPage() {
                 <Switch checked={profile.consent.searchableByEnterprises} onCheckedChange={() => toggleConsent("searchableByEnterprises")} disabled={saving} />
               </div>
             </div>
+          </div>
+
+          <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+            <p className="mb-1 flex items-center gap-2 font-display text-sm font-bold"><ShieldCheck className="size-4 text-primary-soft" /> Your data</p>
+            <p className="mb-4 text-xs text-muted-foreground">Under India&apos;s DPDP Act, you can download a copy of what we hold on you or erase your account at any time.</p>
+            <div className="flex flex-wrap gap-2.5">
+              <button
+                type="button"
+                onClick={handleExportData}
+                disabled={exporting}
+                className="flex items-center gap-1.5 rounded-full border border-border bg-white/[0.02] px-4 py-2 text-xs font-medium transition-colors hover:border-white/20 disabled:opacity-50"
+              >
+                <Download className="size-3.5" /> {exporting ? "Preparing…" : "Export my data"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/5 px-4 py-2 text-xs font-medium text-red-400 transition-colors hover:border-red-500/50"
+              >
+                <Trash2 className="size-3.5" /> Delete my account
+              </button>
+            </div>
+            {showDeleteConfirm && (
+              <div className="mt-3 rounded-2xl border border-red-500/30 bg-red-500/5 p-4">
+                <p className="text-sm font-medium">This permanently erases your profile and signs you out everywhere.</p>
+                <p className="mt-1 text-xs text-muted-foreground">Your name, bio, skills, and CV are removed. This can&apos;t be undone.</p>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDeleteAccount}
+                    disabled={deleting}
+                    className="rounded-full bg-red-500 px-4 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                  >
+                    {deleting ? "Deleting…" : "Yes, delete everything"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="rounded-full border border-border px-4 py-1.5 text-xs font-medium hover:border-white/20"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
