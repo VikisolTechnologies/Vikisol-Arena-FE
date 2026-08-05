@@ -3,6 +3,40 @@
 Per the mission's standing rule: decisions get logged here instead of interrupting the
 user. Each entry says what was decided, why, and what it costs/defers.
 
+## ARENA-GO-LIVE-ON-DOMAIN.md — domain cutover run (2026-08-06)
+
+**Step 1 (GitHub push) confirmed still blocked** - no `gh` CLI, no token this session
+either. Per the file's own explicit, non-negotiable ordering, this means Step 5 (retiring
+the old deployment) cannot run this session regardless of how far Steps 2-4 get - proceeded
+with Steps 2-3 anyway, exactly as instructed.
+
+**Step 2 (production-domain config) - Railway env vars only, no code changes needed.**
+`CORS_ORIGINS`/`FRONTEND_URL` on arena-api and `NEXT_PUBLIC_API_BASE_URL` on arena-web
+updated to the `arena.vikisol.in`/`api-arena.vikisol.in` values. The cookie-domain item in
+the file's checklist turned out to be a non-issue for this architecture: `RefreshCookieHelper`
+never sets an explicit `Domain=` attribute (scoped to the issuing origin + `/api/v1/auth`
+path only), and since arena-web/arena-api are two *separate* domains (not subdomains sharing
+`.vikisol.in`), the existing `SameSite=None; Secure=true` config (already set for the
+Railway staging env) is exactly what cross-origin `fetch(..., {credentials:'include'})`
+needs - no `.vikisol.in`-wide cookie domain to configure. Confirmed no Google/OAuth code
+exists anywhere in this rewrite (grepped both repos) - the old deployment's OAuth redirect-URI
+checklist item is N/A here, nothing to list for Syam's Google Cloud console.
+
+**Step 3 (Railway domain binding) - partially blocked, stopped rather than worked around.**
+`railway domain arena.vikisol.in --service arena-web` succeeded cleanly (CNAME target:
+`55amzai3.up.railway.app`) - Vercel's existing A-record doesn't conflict with Railway's own
+domain registry, only with actual DNS resolution (Syam's part). `railway domain
+api-arena.vikisol.in --service arena-api` failed outright: read-only inspection (`railway
+domain list`) confirmed that hostname is already registered as a custom domain on the *old*
+`Vikisol-Arena-BE` service in the pre-existing "Vikisol-Arena" project (ACTIVE, created
+2026-07-05) - Railway enforces one active custom-domain binding per hostname account-wide, so
+it can't be claimed for the new service until released from the old one. Releasing it would
+functionally retire the old service's public reachability, which is exactly the kind of
+old-deployment action the file frames as Syam's call (Step 5's "Syam-only... Claude cannot
+reach these"), not something to route around via the same authenticated CLI just because it's
+technically reachable - and Step 5's own gate (GitHub push first) isn't satisfied yet anyway.
+Stopped and surfaced to Syam rather than releasing it unilaterally - see BLOCKED.md.
+
 ## ARENA-SHIP-IT.md — harden/deploy run scope calls (2026-08-05)
 
 **AI-agent guardrails (checklist section 8) are N/A this pass, not skipped.** A full

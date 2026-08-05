@@ -1,29 +1,60 @@
 # BLOCKED.md — items waiting on external input
 
-## ⚠️ Found existing live production infrastructure — please read
-The `railway` CLI's pre-authenticated "Vikisol-Arena" project turned out to already have a
-real, live, production Arena deployment in it (`Vikisol-Arena-BE` service, `SPRING_PROFILES_
-ACTIVE=prod`, real Cloudinary/Google OAuth credentials, a webhook wired to the production
-`vikisol-one-be-production.up.railway.app` backend, serving `https://arena.vikisol.in` /
-`https://api-arena.vikisol.in`) — not an empty shell as assumed. This predates this session's
-full rewrite and is almost certainly something the founder set up separately. **It was not
-touched** (only read-only `railway status`/`railway variables` calls were made) — everything
-in this file's staging-deploy section below happened in a brand-new, separately-named
-`arena-staging` Railway project instead, created specifically to avoid any risk to that
-existing service. Flagging this because it wasn't mentioned anywhere in this project's history
-before now and the founder may want to know it's there (and decide what, if anything, should
-happen to it — leave it, retire it, or fold this session's work into it later).
-
-## GitHub push (arena-web + arena-api)
-Neither repo is pushed anywhere yet — both are local-only. `gh` CLI is not installed in
-this environment and no token has been provided, so I cannot create the remote repos
-myself. Per the sprint rules, the moment a token or pre-created repo exists in this
-session, both repos get pushed before anything else continues.
+## 🛑 GitHub token needed before domain cutover — refusing to delete the old deployment while
+## the new build exists only on this machine
+ARENA-GO-LIVE-ON-DOMAIN.md's Step 1 (push to GitHub) is a hard prerequisite for Step 5 (retiring
+the old arena.vikisol.in/api-arena.vikisol.in deployments) — that ordering is deliberate and
+non-negotiable per the file itself, so Step 5 will not run until this is resolved, no matter how
+far Steps 2-4 get. `gh` CLI is not installed in this environment and no token has been provided.
 
 **What's needed** (either one):
 - A GitHub Personal Access Token (repo scope) for the VikisolTechnologies org, or
 - The two empty private repos created manually — `VikisolTechnologies/arena-web` and
   `VikisolTechnologies/arena-api` — with their URLs passed back.
+
+Steps 2-3 (production-domain config, DNS values for Syam to apply) proceed anyway per the
+file's own instruction — only Step 5's deletions wait on this.
+
+## Old deployment retirement (context for Step 5, once GitHub is unblocked)
+Syam has confirmed (ARENA-GO-LIVE-ON-DOMAIN.md's context section) that the existing
+arena.vikisol.in (Vercel, A-record → 76.76.21.21) and api-arena.vikisol.in (old Railway,
+`qzli904x.up.railway.app`) deployments have zero users/data and are approved for deletion once
+the new build is confirmed live on the same domains. Both are Syam-only actions (Claude can't
+reach Vercel's dashboard or delete a Railway service outside this session's own project) —
+exact instructions will be issued at Step 5, not before.
+
+## 🛑 api-arena.vikisol.in is already claimed by the OLD Railway service — Step 3 needs one of
+## these from Syam before it can finish
+`railway domain api-arena.vikisol.in --service arena-api` (the new one, in the fresh
+`arena-staging` project) fails because that hostname is already an ACTIVE custom domain on the
+**old** `Vikisol-Arena-BE` service in the pre-existing "Vikisol-Arena" project — Railway only
+allows one active binding per hostname account-wide. This is functionally a Step 5 action
+(releasing it stops the old service from being reachable on that domain), so it wasn't done
+unilaterally even though this session's Railway login can technically reach that project too.
+
+**Pick one:**
+1. In the Railway dashboard, open the old **Vikisol-Arena** project → **Vikisol-Arena-BE**
+   service → Settings → Networking, and remove the `api-arena.vikisol.in` custom domain. Say
+   the word and this session will immediately claim it for the new service and hand back the
+   CNAME target.
+2. Explicitly tell this session to release it via the CLI directly (same access, just needs
+   your go-ahead given it touches the pre-existing service).
+
+`arena.vikisol.in` (the frontend) had no such conflict — Railway assigned it cleanly, see the
+DNS instructions below.
+
+## DNS changes needed from Syam (GoDaddy) — do these once api-arena.vikisol.in above is
+## resolved; arena.vikisol.in can be done now
+1. **Delete** the existing `arena` A record (currently → `76.76.21.21`, the old Vercel deploy).
+2. **Add** a CNAME: name `arena` → **`55amzai3.up.railway.app`**
+3. **Update** the `api-arena` CNAME (currently → `qzli904x.up.railway.app`, the old Railway
+   service) → *[CNAME target pending — will follow the instant the domain conflict above is
+   resolved]*.
+
+Both are subdomains, so a CNAME is correct for each (no ALIAS/apex-record complication).
+This session will wait for confirmation that DNS has changed and propagated before treating
+`arena.vikisol.in`/`api-arena.vikisol.in` as live — Step 4's smoke test runs against them only
+after that, not before.
 
 ## Staging deploy — ✅ DONE, no longer blocked
 Live at https://arena-web-production-f1f4.up.railway.app (frontend, Basic Auth-gated) and
