@@ -147,6 +147,36 @@ just erased). Verified live end-to-end: created a throwaway account, deleted it,
 sign-in afterward returns 401 and the just-used access token itself immediately returns 401 too
 rather than continuing to work for its remaining lifetime.
 
+**AI-use disclosure (checklist §3) added as one line in the agent chat panel, not a rewrite of
+the app's "your agent" voice.** The personified-agent copy throughout the app ("your agent
+scanned...", Autopilot's description, etc.) is core brand identity (CLAUDE.md's own "The
+Companion" design direction), not something this pass should gut. The actual legal-honesty risk
+is narrower: nothing should claim something is happening autonomously *right now* that isn't. A
+single disclosure line was added directly in `/agent` (`src/app/agent/page.tsx`, right under the
+chat header, where the agent literally proposes actions) stating matching/drafting is
+algorithmic and every application/bid needs approval unless Autopilot is on - true today, and
+satisfies "add an AI-use disclosure in the UI where the agent acts" without a wholesale content
+rewrite that would fight the product's own design brief.
+
+**Sentry (frontend) wired via `instrumentation.ts` + `instrumentation-client.ts`, no
+`withSentryConfig` build-time source-map upload.** Mirrors arena-api's existing dormant-unless-
+DSN-set pattern (`sentry-spring-boot-starter-jakarta` already in `pom.xml`, config already in
+`application.yml`). The Sentry Next.js wizard's usual `next.config.ts` wrapper uploads source
+maps at build time via a Sentry auth token this environment doesn't have (see BLOCKED.md) -
+skipped rather than half-configured; error capture still works, stack traces just won't be
+de-minified in the dashboard until that token exists. Verified with a full `next build`, not
+just `tsc`/`eslint` - Sentry's Next.js integration has broken builds via webpack-plugin
+interactions in other projects before, so a type-check pass alone wasn't enough confidence here.
+
+**Local `next build` needs `NODE_OPTIONS=--max-old-space-size=3584` in this sandboxed dev
+environment - not a code issue.** `npm run build` OOM'd with the default Node heap; the machine
+this session runs on has only 5.8GB total RAM with well under 1GB free at the time (VS Code +
+several Java/Node dev processes already running), not something a Next.js app of this size
+should need extra headroom for on a normal CI/build machine. Confirmed the actual code compiles
+and typechecks cleanly (`tsc`/`eslint` both clean) - this is purely a local resource ceiling.
+Noted here because the Railway deploy step needs the same `NODE_OPTIONS` set on its build command
+defensively, even though Railway's build infrastructure has far more headroom than this VM.
+
 ## ARENA-ENTERPRISE-SUITE.md — foundation architecture (2026-08-03)
 
 **Role model**: extend the existing single `Role` enum (already the sole RBAC source of

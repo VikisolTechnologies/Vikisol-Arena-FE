@@ -259,6 +259,13 @@ export default function AgentPage() {
                 <p className="text-xs capitalize text-muted-foreground">{orbState.replace("-", " ")}</p>
               </div>
             </div>
+            {/* ARENA-SHIP-IT.md #3: AI-use disclosure where the agent acts. It only ever
+                rephrases facts already in your profile - never invents experience - and always
+                asks before applying or bidding on your behalf, unless you've turned on
+                Autopilot in Settings. */}
+            <p className="border-b border-border bg-white/[0.02] px-4 py-2 text-[11px] text-muted-foreground">
+              Matching and drafting here are algorithmic, not a live human — every application or bid still needs your approval below unless Autopilot is on.
+            </p>
 
             <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
               {messages.map((m) =>
