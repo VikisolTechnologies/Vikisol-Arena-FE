@@ -411,3 +411,46 @@ exporting `usePlatformAdminGate()` from `PlatformAdminShell.tsx` and having ever
 page call it directly, gating its own fetch effect on `gate === "ready"` rather than
 relying on the shell alone. Re-verified after the fix: zero network calls fire for an
 unauthenticated or wrong-role visit to any `/admin/**` route.
+
+## Step 4 domain verification — TLS cert still provisioning (2026-08-06)
+DNS confirmed propagated correctly (arena.vikisol.in -> 55amzai3.up.railway.app /
+69.46.46.104; api-arena.vikisol.in -> vvh1z4s9.up.railway.app / 69.46.46.115-ish range).
+Railway domain list shows both custom domains `syncStatus: ACTIVE`. However direct TLS
+inspection (`openssl s_client -servername <host>`) shows BOTH edges still presenting the
+generic `subject=CN=*.up.railway.app` wildcard cert, not one covering the custom hostname
+-> Windows curl/schannel correctly refuses this as SEC_E_WRONG_PRINCIPAL. This produced the
+earlier confusing symptoms: arena-web appeared to return 200 with `Server: Vercel` headers
+only because this machine's own DNS cache was stale and pointed at the OLD Vercel IP
+(76.76.21.21) at that moment -- flushing the local resolver cache (`ipconfig /flushdns`)
+fixed DNS resolution but exposed the real, separate issue (Railway hasn't finished issuing
+Let's Encrypt certs for the two custom domains yet). This is expected/normal right after a
+DNS change -- Railway needs to detect the now-correct DNS before it can complete ACME
+issuance, which was blocked while DNS was still on the wrong record. No action needed here
+except to wait and re-check; polling in background.
+
+## Step 4 domain verification — real root cause found: missing TXT ownership-verification records (2026-08-06)
+Correction to the previous entry's framing ("just needs time"): after the 20-min background
+poll showed zero movement, `railway domain status <domain>` (a more detailed command than
+`railway domain list`, not checked earlier) revealed `Verified: no` and a required
+`_railway-verify.<subdomain>` TXT record for each domain that was never included in the
+original 3-item DNS instruction handed to Syam in BLOCKED.md — that instruction only covered
+the CNAME. Railway will not attempt Let's Encrypt issuance at all until this TXT record
+proves ownership, regardless of how correct the CNAME is or how long we wait; confirmed
+`railway domain certificate retry` itself refuses to run ("only available after certificate
+issuance fails") because it's not even failed yet — it's stuck at ownership validation.
+This is why the app looked "not online" even after DNS was confirmed propagated. Fix: two
+TXT records added to BLOCKED.md for Syam. No code/infra changes needed beyond that — once
+the TXT records are live, Railway's own automation issues the cert without further action.
+
+## TXT verification check — found a value mismatch, not just a missing record (2026-08-06 ~21:56 UTC)
+Polling turn found `_railway-verify.arena` still absent from public DNS entirely, but
+`_railway-verify.api-arena` present (confirmed on both 8.8.8.8 and 1.1.1.1, so not a resolver
+fluke) with value `railway-verify=949939f8...` — which does NOT match what Railway currently
+expects for the new arena-api service's binding (`railway-verify=cfd51b1eec713a3f6...`).
+Likely explanation: the OLD Vikisol-Arena-BE service held this same hostname from 2026-07-05
+until it was released in Step 3, and may have required (and gotten) its own TXT value at
+some point — different services get different verification tokens for the same hostname, so
+a stale value from the old binding wouldn't satisfy the new one. This is a real blocker no
+amount of waiting fixes (unlike simple propagation delay), so flagged to Syam directly in
+BLOCKED.md with the exact delete/re-add correction needed, rather than continuing to poll
+silently as if it were just a matter of time.

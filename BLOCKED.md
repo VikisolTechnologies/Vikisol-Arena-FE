@@ -30,16 +30,57 @@ Released from the old `Vikisol-Arena-BE` service (`railway domain delete`, expli
 confirmed by Syam first) and bound to the new `arena-api` service. Both domains now have
 CNAME targets — see the DNS section below, which is the one remaining manual step.
 
-## 🛑 DNS changes needed from Syam (GoDaddy) — the one remaining manual step before Step 4
-1. **Delete** the existing `arena` A record (currently → `76.76.21.21`, the old Vercel deploy).
-2. **Add** a CNAME: name `arena` → **`55amzai3.up.railway.app`**
-3. **Update** the `api-arena` CNAME (currently → `qzli904x.up.railway.app`, the old Railway
-   service) → **`vvh1z4s9.up.railway.app`**
+## ✅ CNAME changes — DONE, confirmed propagated (2026-08-06)
+Both CNAMEs are live and correct on public DNS (verified via 8.8.8.8 and 1.1.1.1):
+`arena` → `55amzai3.up.railway.app`, `api-arena` → `vvh1z4s9.up.railway.app`. This alone is
+NOT enough to bring the sites online, though — see the next item, which is why the app still
+looks offline.
 
-Both are subdomains, so a CNAME is correct for each (no ALIAS/apex-record complication).
-This session is polling for DNS propagation and will proceed to Step 4 (deploy + smoke test
-on the real domain) automatically the moment both resolve correctly — no need to ping back,
-it'll pick this up on its own once the records are live.
+## 🛑 ONE MORE DNS step needed from Syam (GoDaddy) — TXT verification records
+Railway won't finish issuing the HTTPS certificate for either custom domain until it can
+verify domain ownership via a TXT record. This was missed in the original 3-step DNS
+instructions (my mistake — `railway domain` only surfaces this when you check
+`railway domain status`, not in the initial `railway domain <name>` creation output I read
+from originally). Both domains have been sitting in `CERTIFICATE_STATUS_TYPE_VALIDATING_OWNERSHIP`
+for over an hour/30+ min respectively because of this, not because of the CNAMEs. Please add
+these two TXT records in GoDaddy:
+
+1. TXT record, name **`_railway-verify.arena`**, value:
+   `railway-verify=a0f3fa99cb67bb4f7c1f2c1785609dc376c647fc4aa5815a87f99bd486294aa7`
+2. TXT record, name **`_railway-verify.api-arena`**, value:
+   `railway-verify=cfd51b1eec713a3f6b88c56fc31e95a5eb25926084b88b24e4396c2fad80e9db`
+
+(GoDaddy will likely show these as just `_railway-verify.arena` and `_railway-verify.api-arena`
+under the Name/Host field, and the full `railway-verify=...` string under Value/Points to —
+enter it exactly as shown, including the `railway-verify=` prefix, that's part of the value.)
+
+Once these TXT records are live, Railway auto-detects them and issues the certificate
+automatically (`railway domain certificate retry` becomes available and unnecessary once this
+resolves on its own — Railway checks periodically). This session will poll and proceed to
+Step 4 the moment both domains show `Verified: yes` / a real certificate. No need to ping
+back — will pick it up automatically once live.
+
+## 🛑 UPDATE (2026-08-06 ~21:56 UTC) — one TXT record is live but has the WRONG value
+Checked again: `_railway-verify.arena` still doesn't exist in public DNS at all (not added
+yet). `_railway-verify.api-arena` DOES exist now (confirmed on two independent resolvers,
+8.8.8.8 and 1.1.1.1) — but its value is
+`railway-verify=949939f8d4d4e768417e85e5f3a47e466720a01b9873fa8b261dbf45ec4096dc`, which does
+NOT match what Railway currently expects for this domain:
+`railway-verify=cfd51b1eec713a3f6b88c56fc31e95a5eb25926084b88b24e4396c2fad80e9db`.
+
+Best guess: this may be a leftover TXT value from the OLD `Vikisol-Arena-BE` service's own
+domain binding (that service held `api-arena.vikisol.in` from 2026-07-05 until Step 3's
+release) rather than the value for the new `arena-api` service's binding — the two services
+generate different verification tokens for the same hostname. Whatever the cause, please:
+1. **Delete** the existing `_railway-verify.api-arena` TXT record (the one with value
+   starting `949939f8...`).
+2. **Add** it fresh with the CORRECT value from the list above:
+   `railway-verify=cfd51b1eec713a3f6b88c56fc31e95a5eb25926084b88b24e4396c2fad80e9db`
+3. **Add** the still-missing `_railway-verify.arena` record too (value starting `a0f3fa99...`,
+   full value above) — this one has no record at all yet, old or new.
+
+This session will keep polling quietly and pick this up automatically once both are correct
+and propagated — no need to ping back.
 
 ## Staging deploy — ✅ DONE, no longer blocked
 Live at https://arena-web-production-f1f4.up.railway.app (frontend, Basic Auth-gated) and
