@@ -3,6 +3,7 @@ import { readApplications, writeApplications } from "./applicationsStore";
 import { delay } from "./shared";
 import { isRealMode } from "./mode";
 import { apiFetch } from "./httpClient";
+import type { PagedResponse } from "./paged";
 
 export interface HiringManagerInterview extends Interview {
   candidateName: string;
@@ -130,7 +131,13 @@ export async function submitInterviewFeedback(
  * whatever interviews already exist in the shared mock store, best-effort-denormalized via the
  * existing mock job/application lookups, rather than modeling assignment at all. */
 export async function getMyAssignedInterviews(): Promise<HiringManagerInterview[]> {
-  if (isRealMode()) return apiFetch<HiringManagerInterview[]>("/interviews/mine");
+  if (isRealMode()) {
+    // /interviews/mine returns a PagedResponse now (was a bare array) - the backend added
+    // pagination to fix an unbounded-list N+1 query. size=100 keeps this call site's existing
+    // "get everything" contract without needing real pagination UI here yet.
+    const page = await apiFetch<PagedResponse<HiringManagerInterview>>("/interviews/mine", { query: { page: 0, size: 100 } });
+    return page.content;
+  }
   const apps = readApplications();
   const { getJobById } = await import("@/lib/mock/jobs");
   const interviews = readAll();
