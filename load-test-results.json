@@ -1,0 +1,126 @@
+[
+  {
+    "concurrency": 5,
+    "wallMs": 1319,
+    "throughputRps": "7.6",
+    "totalRequests": 10,
+    "totalErrors": 0,
+    "summary": {
+      "jobs": {
+        "count": 5,
+        "p50": 665,
+        "p95": 700,
+        "p99": 700,
+        "max": 700,
+        "errorRate": 0,
+        "statusCounts": {
+          "200": 5
+        }
+      },
+      "marketplace": {
+        "count": 5,
+        "p50": 349,
+        "p95": 646,
+        "p99": 646,
+        "max": 646,
+        "errorRate": 0,
+        "statusCounts": {
+          "200": 5
+        }
+      }
+    }
+  },
+  {
+    "concurrency": 10,
+    "wallMs": 1468,
+    "throughputRps": "13.6",
+    "totalRequests": 20,
+    "totalErrors": 0,
+    "summary": {
+      "jobs": {
+        "count": 10,
+        "p50": 559,
+        "p95": 743,
+        "p99": 743,
+        "max": 743,
+        "errorRate": 0,
+        "statusCounts": {
+          "200": 10
+        }
+      },
+      "marketplace": {
+        "count": 10,
+        "p50": 407,
+        "p95": 898,
+        "p99": 898,
+        "max": 898,
+        "errorRate": 0,
+        "statusCounts": {
+          "200": 10
+        }
+      }
+    }
+  },
+  {
+    "concurrency": 20,
+    "wallMs": 1930,
+    "throughputRps": "20.7",
+    "totalRequests": 40,
+    "totalErrors": 0,
+    "summary": {
+      "jobs": {
+        "count": 20,
+        "p50": 570,
+        "p95": 1531,
+        "p99": 1543,
+        "max": 1543,
+        "errorRate": 0,
+        "statusCounts": {
+          "200": 20
+        }
+      },
+      "marketplace": {
+        "count": 20,
+        "p50": 607,
+        "p95": 1200,
+        "p99": 1203,
+        "max": 1203,
+        "errorRate": 0,
+        "statusCounts": {
+          "200": 20
+        }
+      }
+    }
+  },
+  {
+    "concurrency": 30,
+    "wallMs": 1118,
+    "throughputRps": "53.7",
+    "totalRequests": 60,
+    "totalErrors": 0,
+    "summary": {
+      "jobs": {
+        "count": 30,
+        "p50": 373,
+        "p95": 695,
+        "p99": 697,
+        "max": 697,
+        "errorRate": 0,
+        "statusCounts": {
+          "200": 30
+        }
+      },
+      "marketplace": {
+        "count": 30,
+        "p50": 577,
+        "p95": 658,
+        "p99": 721,
+        "max": 721,
+        "errorRate": 0,
+        "statusCounts": {
+          "200": 30
+        }
+      }
+    }
+  }
+]
