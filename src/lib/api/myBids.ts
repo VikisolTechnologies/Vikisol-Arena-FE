@@ -41,17 +41,12 @@ export function recordMyBid(record: MyBidRecord) {
   writeAll([record, ...readAll()]);
 }
 
-export function updateMyBidStatus(bidId: string, status: MyBidStatus) {
-  if (isRealMode()) return;
-  writeAll(readAll().map((r) => (r.bidId === bidId ? { ...r, status } : r)));
-}
-
 /** Mock-only: bids on projects the user doesn't own were previously stuck "pending" forever -
  * nothing ever simulated the other poster resolving them. Once a project's bidding window has
  * closed, this resolves each still-pending bid deterministically: highest bid on that project
  * wins. Real mode doesn't need this - arena-api resolves every other bid the moment a project
  * gets awarded, server-side, so `status` on GET /marketplace/my-bids is already current. */
-export async function resolveMyBids(): Promise<MyBidRecord[]> {
+async function resolveMyBids(): Promise<MyBidRecord[]> {
   if (isRealMode()) return [];
   const all = readAll();
   let changed = false;

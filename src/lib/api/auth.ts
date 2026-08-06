@@ -1,6 +1,6 @@
 import type { Role, Session } from "@/lib/types";
 import { CURRENT_CANDIDATE_ID, getCandidateById } from "@/lib/mock/candidates";
-import { setSession, clearSession, getSession, setOnboarded, setEnterpriseOnboarded } from "@/lib/session";
+import { setSession, clearSession, setOnboarded, setEnterpriseOnboarded } from "@/lib/session";
 import { delay } from "./shared";
 import { isRealMode } from "./mode";
 import { apiFetch, setToken, clearToken } from "./httpClient";
@@ -123,6 +123,3 @@ export async function signOut(): Promise<void> {
   return delay(undefined, 150);
 }
 
-export async function getCurrentSession(): Promise<Session | null> {
-  return delay(getSession(), 50);
-}

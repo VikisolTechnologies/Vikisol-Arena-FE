@@ -89,15 +89,3 @@ export async function withdrawApplication(id: string): Promise<void> {
   return delay(undefined, 200);
 }
 
-export async function advanceStage(id: string, stage: ApplicationStage): Promise<Application | null> {
-  if (isRealMode()) {
-    const res = await apiFetch<ApplicationResponse>(`/applications/${id}/stage`, { method: "PUT", body: { stage } });
-    return toApplication(res);
-  }
-  const all = readApplications();
-  const idx = all.findIndex((a) => a.id === id);
-  if (idx === -1) return delay(null, 100);
-  all[idx] = { ...all[idx], stage, updatedAt: new Date().toISOString() };
-  writeApplications(all);
-  return delay(all[idx], 200);
-}

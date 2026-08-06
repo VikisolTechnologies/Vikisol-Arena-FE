@@ -35,11 +35,6 @@ function threeSlotsFromNow(): InterviewSlotOption[] {
   }));
 }
 
-export async function getInterview(id: string): Promise<Interview | null> {
-  if (isRealMode()) return apiFetch<Interview | null>(`/interviews/${id}`).catch(() => null);
-  return delay(readAll().find((i) => i.id === id) ?? null, 150);
-}
-
 export async function getInterviewForApplication(applicationId: string): Promise<Interview | null> {
   if (isRealMode()) {
     return apiFetch<Interview | null>(`/interviews/by-application/${applicationId}`);

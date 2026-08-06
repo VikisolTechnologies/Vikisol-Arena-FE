@@ -2,7 +2,7 @@ import type { Industry } from "@/lib/types";
 
 // Deterministic PRNG (mulberry32) so mock data is stable across reloads within a session
 // instead of reshuffling every refresh — makes screenshots/demos consistent.
-export function mulberry32(seed: number) {
+function mulberry32(seed: number) {
   let a = seed;
   return function () {
     a |= 0;
@@ -33,13 +33,13 @@ export function intBetween(min: number, max: number, r: () => number = rand) {
   return Math.floor(min + r() * (max - min + 1));
 }
 
-export const FIRST_NAMES = [
+const FIRST_NAMES = [
   "Aarav", "Vivaan", "Aditi", "Ananya", "Rohan", "Priya", "Karthik", "Sneha",
   "Arjun", "Meera", "Ishaan", "Kavya", "Rahul", "Divya", "Aman", "Neha",
   "Siddharth", "Pooja", "Vikram", "Riya", "Sanjay", "Anjali", "Rajesh", "Shreya",
   "Nikhil", "Tanvi", "Varun", "Isha", "Karan", "Aisha", "Manoj", "Nisha",
 ];
-export const LAST_NAMES = [
+const LAST_NAMES = [
   "Sharma", "Verma", "Reddy", "Iyer", "Nair", "Gupta", "Rao", "Khan",
   "Mehta", "Joshi", "Kumar", "Pillai", "Chatterjee", "Desai", "Kapoor", "Menon",
 ];
