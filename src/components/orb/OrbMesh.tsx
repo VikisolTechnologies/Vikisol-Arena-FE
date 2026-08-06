@@ -19,7 +19,7 @@ const STATE_CONFIG: Record<
 /** The orb's 3D body — an animated distorted icosahedron whose color, distortion, rotation
  * speed and pulse amplitude all shift with agent state. Reused at multiple sizes/contexts
  * (persistent mini-orb, full agent-chat orb) by just changing the containing Canvas. */
-export function OrbMesh({ state }: { state: AgentOrbState }) {
+export function OrbMesh({ state, detail = 6 }: { state: AgentOrbState; detail?: number }) {
   const meshRef = useRef<Mesh>(null);
   const cfg = STATE_CONFIG[state];
 
@@ -34,7 +34,7 @@ export function OrbMesh({ state }: { state: AgentOrbState }) {
   return (
     <Float speed={cfg.speed} rotationIntensity={0.25} floatIntensity={cfg.floatIntensity}>
       <mesh ref={meshRef}>
-        <icosahedronGeometry args={[1, 6]} />
+        <icosahedronGeometry args={[1, detail]} />
         <MeshDistortMaterial
           color={cfg.color}
           emissive={cfg.color}

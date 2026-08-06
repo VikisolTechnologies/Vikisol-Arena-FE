@@ -13,11 +13,10 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
  * replaces the plain icon+number StatCard for this one metric. */
 export function CareerHealthGauge({ value }: { value: number }) {
   const reduced = useReducedMotion();
+  // ARENA-PERFORMANCE.md non-negotiable: the 3D stays everywhere, desktop and mobile - mobile
+  // gets the same scene at a cheaper quality tier (see HealthOrbScene's `quality` prop), not a
+  // permanent static swap. prefers-reduced-motion is the only accessibility-driven fallback.
   const isMobile = useIsMobileViewport();
-  // Same reasoning as PersistentOrb: this sits on the dashboard (the most-visited page, and
-  // often mounted alongside PersistentOrb's own live orb) - a continuous WebGL render loop for a
-  // 56px stat icon is a real, avoidable cost on mobile, distinct from motion preference.
-  const skipLiveOrb = reduced || isMobile;
   const pct = Math.max(0, Math.min(100, value));
   const dash = (pct / 100) * CIRCUMFERENCE;
 
@@ -25,7 +24,7 @@ export function CareerHealthGauge({ value }: { value: number }) {
     <div className="rounded-2xl border border-border bg-white/[0.03] p-4">
       <div className="relative flex size-14 items-center justify-center">
         <div className="absolute inset-[3px] overflow-hidden rounded-full">
-          {skipLiveOrb ? (
+          {reduced ? (
             <div
               className="size-full rounded-full"
               style={{
@@ -34,7 +33,7 @@ export function CareerHealthGauge({ value }: { value: number }) {
               }}
             />
           ) : (
-            <HealthOrbScene value={pct} />
+            <HealthOrbScene value={pct} quality={isMobile ? "lite" : "full"} />
           )}
         </div>
         <svg className="absolute inset-0 -rotate-90" viewBox="0 0 56 56" aria-hidden>

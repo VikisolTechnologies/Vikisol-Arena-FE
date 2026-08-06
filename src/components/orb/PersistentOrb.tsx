@@ -25,14 +25,12 @@ const STATE_LABEL: Record<string, string> = {
  * Hidden on /agent itself, which owns a full-size orb tied to the same state. */
 export function PersistentOrb() {
   const reduced = useReducedMotion();
+  // ARENA-PERFORMANCE.md non-negotiable: the 3D stays everywhere, desktop and mobile - no
+  // permanent static fallback keyed off viewport/device. Mobile/low-power gets the same scene
+  // at a cheaper quality tier (see OrbScene's `quality` prop) instead of losing it outright.
+  // prefers-reduced-motion is the only thing that swaps to the static CSS disc, since that's an
+  // explicit accessibility signal, not a capability guess.
   const isMobile = useIsMobileViewport();
-  // This orb stays mounted (and its WebGL scene actively rendering) for as long as a candidate
-  // is signed in, across every page - unlike the landing page's hero orb (a one-time, prominent
-  // visual), a continuous render loop is a disproportionate battery/GPU cost for a 44px
-  // decorative floating button, especially on mobile. Distinct from the reduced-motion check
-  // alone: this isn't about the user's animation preference, it's about not running a live 3D
-  // scene in the background of every screen on a phone.
-  const skipLiveOrb = reduced || isMobile;
   const state = useAgentState();
   const pathname = usePathname();
 
@@ -67,14 +65,14 @@ export function PersistentOrb() {
       {state === "needs-approval" && (
         <span className="absolute -right-0.5 -top-0.5 z-10 size-3.5 rounded-full border-2 border-background bg-primary" />
       )}
-      {skipLiveOrb ? (
+      {reduced ? (
         <span
           className="size-9 rounded-full"
           style={{ background: "radial-gradient(circle at 35% 30%, #FF8A5B, #FF6B35 70%)" }}
         />
       ) : (
         <div className="size-11">
-          <OrbScene state={state} cameraDistance={2.6} />
+          <OrbScene state={state} cameraDistance={2.6} quality={isMobile ? "lite" : "full"} />
         </div>
       )}
     </Link>

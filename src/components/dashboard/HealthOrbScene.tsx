@@ -4,8 +4,9 @@ import { useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Float, MeshDistortMaterial } from "@react-three/drei";
 import type { Mesh } from "three";
+import { usePageVisible } from "@/hooks/use-page-visible";
 
-function HealthMesh({ value }: { value: number }) {
+function HealthMesh({ value, detail = 5 }: { value: number; detail?: number }) {
   const meshRef = useRef<Mesh>(null);
   const t = value / 100;
 
@@ -22,7 +23,7 @@ function HealthMesh({ value }: { value: number }) {
   return (
     <Float speed={1.2} rotationIntensity={0.2} floatIntensity={0.4}>
       <mesh ref={meshRef}>
-        <icosahedronGeometry args={[1, 5]} />
+        <icosahedronGeometry args={[1, detail]} />
         <MeshDistortMaterial
           color={color}
           emissive={color}
@@ -38,17 +39,25 @@ function HealthMesh({ value }: { value: number }) {
 }
 
 /** Career Health's 3D body — glow/color/liveliness scale with the health percentage itself,
- * so the visual reads as a gauge on its own even before the SVG ring/number are noticed. */
-export function HealthOrbScene({ value }: { value: number }) {
+ * so the visual reads as a gauge on its own even before the SVG ring/number are noticed.
+ *
+ * `quality="lite"` (ARENA-PERFORMANCE.md Step 2) renders the same scene at a cheaper geometry
+ * subdivision and tighter dpr cap on weaker devices - never removed, just scaled down. Render
+ * loop pauses while the tab is hidden regardless of quality tier. */
+export function HealthOrbScene({ value, quality = "full" }: { value: number; quality?: "full" | "lite" }) {
+  const visible = usePageVisible();
+  const lite = quality === "lite";
+
   return (
     <Canvas
-      dpr={[1, 1.5]}
-      gl={{ alpha: true, antialias: true, powerPreference: "low-power" }}
+      dpr={lite ? 1 : [1, 1.5]}
+      gl={{ alpha: true, antialias: !lite, powerPreference: "low-power" }}
       camera={{ position: [0, 0, 2.8], fov: 40 }}
+      frameloop={visible ? "always" : "never"}
     >
       <ambientLight intensity={0.6} />
       <pointLight position={[2, 2, 3]} intensity={1.3} color="#FFB98A" />
-      <HealthMesh value={value} />
+      <HealthMesh value={value} detail={lite ? 3 : 5} />
     </Canvas>
   );
 }

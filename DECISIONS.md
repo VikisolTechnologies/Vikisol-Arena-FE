@@ -454,3 +454,28 @@ a stale value from the old binding wouldn't satisfy the new one. This is a real 
 amount of waiting fixes (unlike simple propagation delay), so flagged to Syam directly in
 BLOCKED.md with the exact delete/re-add correction needed, rather than continuing to poll
 silently as if it were just a matter of time.
+
+## ARENA-PERFORMANCE.md (v2) — corrected the mobile-orb fix to tier quality, not remove the scene (2026-08-07)
+The prior mobile-lag investigation (same day, earlier) made PersistentOrb and
+CareerHealthGauge swap to a flat CSS gradient on mobile/low-power viewports, on the
+reasoning that a persistent WebGL render loop was a disproportionate cost for a small
+decorative element. ARENA-PERFORMANCE.md's v2 makes this explicitly non-negotiable in the
+other direction: "the 3D stays. Every 3D scene currently in the app remains, on desktop
+AND mobile... do NOT permanently downgrade mobile to a static image." That's a direct,
+intentional product-identity call from Syam, not something to route around - reverted the
+viewport/hardwareConcurrency-driven fallback.
+
+What replaced it, matching Step 2's "quality tiers, not on/off": OrbScene and
+HealthOrbScene now take a `quality?: "full" | "lite"` prop. PersistentOrb/CareerHealthGauge
+pass "lite" on mobile/low-power (same useIsMobileViewport signal, repurposed) - lite drops
+icosahedron subdivision (6→3 / 5→3), caps dpr to a flat 1 instead of [1, 1.5], and disables
+antialiasing + the second point light. The scene is still real WebGL, still the same
+design, just cheaper geometry - never a CSS swap. prefers-reduced-motion remains the ONLY
+thing that shows the static disc, since that's an explicit accessibility signal a user
+opted into, not a capability guess.
+
+Added on top, applying to every quality tier (desktop included) since it's a pure win with
+no visual cost: both Canvases now pause their frameloop ("never" instead of "always") via
+a new usePageVisible() hook whenever the tab is hidden - Step 2's own framing of this as
+"the single biggest battery/CPU win on phones." This doesn't touch what renders, only
+whether it's rendering at every moment.
