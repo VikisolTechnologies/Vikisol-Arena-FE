@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { useIsMobileViewport } from "@/hooks/use-is-mobile-viewport";
 
 const HealthOrbScene = dynamic(() => import("./HealthOrbScene").then((m) => m.HealthOrbScene), { ssr: false });
 
@@ -12,6 +13,11 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
  * replaces the plain icon+number StatCard for this one metric. */
 export function CareerHealthGauge({ value }: { value: number }) {
   const reduced = useReducedMotion();
+  const isMobile = useIsMobileViewport();
+  // Same reasoning as PersistentOrb: this sits on the dashboard (the most-visited page, and
+  // often mounted alongside PersistentOrb's own live orb) - a continuous WebGL render loop for a
+  // 56px stat icon is a real, avoidable cost on mobile, distinct from motion preference.
+  const skipLiveOrb = reduced || isMobile;
   const pct = Math.max(0, Math.min(100, value));
   const dash = (pct / 100) * CIRCUMFERENCE;
 
@@ -19,7 +25,7 @@ export function CareerHealthGauge({ value }: { value: number }) {
     <div className="rounded-2xl border border-border bg-white/[0.03] p-4">
       <div className="relative flex size-14 items-center justify-center">
         <div className="absolute inset-[3px] overflow-hidden rounded-full">
-          {reduced ? (
+          {skipLiveOrb ? (
             <div
               className="size-full rounded-full"
               style={{
