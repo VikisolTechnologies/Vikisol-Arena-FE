@@ -12,6 +12,7 @@ import { signOut } from "@/lib/api/auth";
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from "@/lib/api/notifications";
 import { getManualReducedEffects, setManualReducedEffects } from "@/hooks/use-reduced-motion";
 import { requireOnboarded } from "@/lib/auth-guard";
+import { Card } from "@/components/ui/card";
 import { getTalentPlan } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import type { CandidateProfile, AutonomyLevel, AppNotification, NotificationType } from "@/lib/types";
@@ -119,7 +120,7 @@ export default function SettingsPage() {
     <CandidateAppShell title="Settings" profile={profile}>
       <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
         <div className="space-y-4">
-          <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+          <Card>
             <p className="mb-1 flex items-center gap-2 font-display text-sm font-bold"><Bot className="size-4 text-primary-soft" /> Autonomy</p>
             <p className="mb-4 text-xs text-muted-foreground">How much should your agent do without asking?</p>
             <div className="space-y-2.5">
@@ -161,9 +162,9 @@ export default function SettingsPage() {
                 );
               })}
             </div>
-          </div>
+          </Card>
 
-          <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+          <Card>
             <p className="mb-4 flex items-center gap-2 font-display text-sm font-bold"><ShieldCheck className="size-4 text-primary-soft" /> Consent</p>
             <div className="space-y-2.5">
               <div className="flex items-center justify-between rounded-2xl border border-border bg-white/[0.02] px-4 py-3">
@@ -181,9 +182,9 @@ export default function SettingsPage() {
                 <Switch checked={profile.consent.searchableByEnterprises} onCheckedChange={() => toggleConsent("searchableByEnterprises")} disabled={saving} />
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+          <Card>
             <p className="mb-1 flex items-center gap-2 font-display text-sm font-bold"><ShieldCheck className="size-4 text-primary-soft" /> Your data</p>
             <p className="mb-4 text-xs text-muted-foreground">Under India&apos;s DPDP Act, you can download a copy of what we hold on you or erase your account at any time.</p>
             <div className="flex flex-wrap gap-2.5">
@@ -226,9 +227,9 @@ export default function SettingsPage() {
                 </div>
               </div>
             )}
-          </div>
+          </Card>
 
-          <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+          <Card>
             <p className="mb-4 flex items-center gap-2 font-display text-sm font-bold"><Waves className="size-4 text-primary-soft" /> Accessibility</p>
             <div className="flex items-center justify-between rounded-2xl border border-border bg-white/[0.02] px-4 py-3">
               <span>
@@ -237,10 +238,10 @@ export default function SettingsPage() {
               </span>
               <Switch checked={reducedEffects} onCheckedChange={toggleReducedEffects} />
             </div>
-          </div>
+          </Card>
         </div>
 
-        <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+        <Card>
           <div className="mb-4 flex items-center justify-between">
             <p className="flex items-center gap-2 font-display text-sm font-bold"><Bell className="size-4 text-primary-soft" /> Notifications</p>
             {notifications.some((n) => !n.read) && (
@@ -270,7 +271,7 @@ export default function SettingsPage() {
             })}
             {notifications.length === 0 && <p className="text-sm text-muted-foreground">No notifications yet.</p>}
           </div>
-        </div>
+        </Card>
       </div>
     </CandidateAppShell>
   );

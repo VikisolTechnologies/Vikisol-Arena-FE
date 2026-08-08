@@ -12,6 +12,7 @@ import { getShortlistIds, toggleShortlist } from "@/lib/api/shortlist";
 import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
 import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/format";
+import { Card } from "@/components/ui/card";
 import type { EnterpriseProfile, CandidateProfile } from "@/lib/types";
 
 export default function CandidateDetailPage() {
@@ -70,7 +71,7 @@ export default function CandidateDetailPage() {
       </button>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+        <Card>
           <div className="flex items-start gap-4">
             <span className="text-4xl">{candidate.avatarEmoji}</span>
             <div className="min-w-0 flex-1">
@@ -106,7 +107,7 @@ export default function CandidateDetailPage() {
               <p className="text-[11px] text-muted-foreground">Career health</p>
             </div>
           </div>
-        </div>
+        </Card>
 
         <div className="rounded-[24px] border border-border bg-white/[0.03] p-5">
           {unlocked ? (

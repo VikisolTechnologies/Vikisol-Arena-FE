@@ -5,6 +5,7 @@ import { Building2, Users, Briefcase, FileText, CalendarClock, TrendingUp } from
 import { PlatformAdminShell, usePlatformAdminGate } from "@/components/app/PlatformAdminShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { getPlatformAnalytics } from "@/lib/api/platformAdmin";
+import { Card } from "@/components/ui/card";
 import type { PlatformAnalytics } from "@/lib/types";
 
 const TOP_METRICS = [
@@ -19,7 +20,7 @@ function Breakdown({ title, data }: { title: string; data: Record<string, number
   const entries = Object.entries(data);
   const max = Math.max(1, ...entries.map(([, v]) => v));
   return (
-    <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+    <Card>
       <p className="mb-4 font-display text-sm font-bold">{title}</p>
       <div className="space-y-3">
         {entries.map(([label, value]) => (
@@ -34,7 +35,7 @@ function Breakdown({ title, data }: { title: string; data: Record<string, number
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -62,7 +63,7 @@ export default function PlatformAnalyticsPage() {
             ))}
           </div>
 
-          <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+          <Card>
             <p className="mb-2 flex items-center gap-1.5 font-display text-sm font-bold">
               <TrendingUp className="size-4 text-primary-soft" /> Last 7 days
             </p>
@@ -71,7 +72,7 @@ export default function PlatformAnalyticsPage() {
               <span><span className="font-semibold text-foreground">{data.newUsersLast7d}</span> new users</span>
               <span><span className="font-semibold text-foreground">{data.tenantsSuspended}</span> tenants suspended</span>
             </div>
-          </div>
+          </Card>
 
           <div className="grid gap-4 lg:grid-cols-2">
             <Breakdown title="Tenants by plan" data={data.tenantsByPlan} />
