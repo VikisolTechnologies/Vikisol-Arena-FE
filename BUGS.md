@@ -34,7 +34,29 @@ all triaged below — two are real, one is confirmed not a bug.
 |---|---|---|---|---|---|---|---|
 | 4 | Every candidate-role page (any page rendering `CandidateAppShell`'s desktop sidebar) | talent | **"Log out" is completely unclickable for any first-time visitor** (or anyone who hasn't dismissed the cookie-consent banner). Playwright: `element intercepts pointer events`, 3-5s wait then hard fail. | Isolated, clean repro (`debug-cookiebanner.js`): click fails with the banner visible, succeeds instantly (<300ms) once dismissed. Layout inspection: banner is `fixed inset-x-0 bottom-0`, 88-95px tall, `z-[900]`, full viewport width. Sidebar is `h-svh` with `flex-1` nav pushing the profile/Log-out block to the very bottom of the sidebar — directly under the banner's covered region. | `CandidateAppShell.tsx`'s sidebar never reserved space for the banner; nothing made the two aware of each other. This is also almost certainly what caused most of the interaction-sweep's page-level timeouts (60-90s) on other candidate routes — every fresh test session starts with the banner up, and any click attempt on a blocked element burns its full per-click timeout. | **High** — blocks a fundamental account action (sign-out) for every real first-time user, not an edge case | **Fixed** (`df32b1f`): new `useCookieConsentVisible()` hook (matches the existing `useReducedMotion`/`usePageVisible` pattern); sidebar reserves the banner's height as bottom padding while it's showing. Checked all 4 other role shells (Enterprise/CompanyAdmin/HiringManager/PlatformAdmin) — all use a top-nav layout, Log out nowhere near the viewport bottom, unaffected. Verified fixed live post-deploy (see below). |
 
-### In progress — remaining interaction sweep
+### Methodology note: two test-harness artifacts, not app bugs (found while chasing the above)
 
-*(Continuing after the fix above, since it was very likely the cause of most of the
-sweep's page-level timeouts. Findings for the remaining pages appended as they complete.)*
+While isolating the cookie-banner bug, two OTHER apparent failure patterns turned out to be
+flaws in the sweep script itself, not the app — recorded here so the raw dead/errored counts
+in the table below aren't misread:
+
+1. **"Log out" clicked mid-sweep genuinely signs the session out** (confirmed correct,
+   desired behavior — not a bug), which invalidates every subsequent element the script
+   tries on that page for the rest of that page's test run ("element is not attached to the
+   DOM" / "element no longer present" cascades, and the page-level 60-90s timeouts seen
+   earlier). Fixed the sweep script to skip auto-clicking "Log out" (same treatment as the
+   already-skipped "delete account" pattern — both end the session mid-test) since it's
+   separately, directly verified working (see the fix above).
+2. **The crude "dead click" heuristic** (`hadEffect = urlChanged || networkRequestFired`)
+   doesn't recognize a click that only changes local DOM/state — e.g., the cookie banner's
+   own "Accept"/"Reject" buttons (dismiss the banner, no URL/network change) or a same-page
+   nav link (e.g., clicking "Home" while already on `/dashboard` correctly does nothing).
+   Both get flagged "dead" by the raw heuristic despite working correctly. Spot-checked
+   several of these directly (isolated `getByRole` clicks) to confirm before writing this
+   note, rather than trusting the raw count.
+
+### Remaining interaction sweep (re-run with the fixes above)
+
+*(Findings for the full 28-page pass appended below as it completes — cookie banner
+pre-dismissed and Log out excluded from auto-clicking per the notes above, so this pass
+should surface genuinely new findings rather than re-confirming already-diagnosed ones.)*
