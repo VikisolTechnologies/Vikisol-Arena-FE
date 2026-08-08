@@ -6,6 +6,7 @@ import { PlatformAdminShell, usePlatformAdminGate } from "@/components/app/Platf
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { searchPlatformUsers } from "@/lib/api/platformAdmin";
+import { formatDate } from "@/lib/format";
 import type { PlatformUser, Role } from "@/lib/types";
 
 const ROLE_FILTERS: { key: Role | ""; label: string }[] = [
@@ -75,7 +76,7 @@ export default function PlatformUsersPage() {
               <Badge variant="secondary" className={`capitalize ${ROLE_TONE[u.role] ?? "bg-white/5 text-muted-foreground"}`}>
                 {u.role.replace("_", " ")}
               </Badge>
-              <span className="text-xs text-muted-foreground">{new Date(u.createdAt).toLocaleDateString()}</span>
+              <span className="text-xs text-muted-foreground">{formatDate(u.createdAt)}</span>
             </div>
           ))}
           {users.length === 0 && (

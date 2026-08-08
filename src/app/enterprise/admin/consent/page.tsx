@@ -6,6 +6,7 @@ import { CompanyAdminShell } from "@/components/app/CompanyAdminShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { getConsentView, type ConsentEntry } from "@/lib/api/companyAdmin";
+import { formatDate } from "@/lib/format";
 
 export default function ConsentPage() {
   const [entries, setEntries] = useState<ConsentEntry[] | null>(null);
@@ -29,7 +30,7 @@ export default function ConsentPage() {
             <div key={e.candidateId} className="flex items-center gap-3 rounded-2xl border border-border bg-white/[0.02] px-4 py-3.5">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium">{e.candidateName}</p>
-                <p className="text-xs text-muted-foreground">Unlocked {new Date(e.unlockedAt).toLocaleDateString()}</p>
+                <p className="text-xs text-muted-foreground">Unlocked {formatDate(e.unlockedAt)}</p>
               </div>
               {e.stillConsenting ? (
                 <Badge variant="secondary" className="gap-1 bg-emerald-500/15 text-emerald-400">

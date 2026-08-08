@@ -18,6 +18,7 @@ import { getMyProject, addBidToMyProject } from "@/lib/api/myProjects";
 import { recordMyBid, getMyBids } from "@/lib/api/myBids";
 import { useGsap } from "@/lib/gsap";
 import { getSession, isOnboarded } from "@/lib/session";
+import { formatINR, formatINRRange } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CandidateProfile, Project, Bid } from "@/lib/types";
 
@@ -127,7 +128,7 @@ export default function ProjectDetailPage() {
             <div>
               <h1 className="font-display text-2xl font-bold tracking-tight">{project.title}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                ₹{project.budgetMin.toLocaleString("en-IN")}–₹{project.budgetMax.toLocaleString("en-IN")} · {project.durationWeeks} weeks · Posted by {project.postedBy}
+                {formatINRRange(project.budgetMin, project.budgetMax)} · {project.durationWeeks} weeks · Posted by {project.postedBy}
               </p>
             </div>
             {isMine && (
@@ -171,7 +172,7 @@ export default function ProjectDetailPage() {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-display text-base font-bold">₹{bid.amount.toLocaleString("en-IN")}</span>
+                  <span className="font-display text-base font-bold">{formatINR(bid.amount)}</span>
                   {i === 0 && (
                     <Badge variant="secondary" className="gap-1 bg-primary/15 text-primary-soft">
                       <Sparkles className="size-3" /> agent pick
@@ -196,7 +197,7 @@ export default function ProjectDetailPage() {
                 <div className="flex items-center justify-between">
                   <p className={cn("text-sm font-medium", m.done && "text-muted-foreground line-through")}>{m.label}</p>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground">₹{m.amount.toLocaleString("en-IN")}</span>
+                    <span className="text-xs text-muted-foreground">{formatINR(m.amount)}</span>
                     {m.done && <Check className="size-4 text-emerald-400" />}
                   </div>
                 </div>
@@ -241,7 +242,7 @@ export default function ProjectDetailPage() {
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder={`₹${project.budgetMin.toLocaleString("en-IN")}`}
+              placeholder={formatINR(project.budgetMin)}
               className="border-border bg-white/[0.03]"
             />
             <Button variant="primary-gradient" size="sm" className="w-full" onClick={submitBid} disabled={!amount}>

@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { saveInterviewNotes, submitInterviewFeedback } from "@/lib/api/interviews";
 import { cn } from "@/lib/utils";
+import { formatFriendlyDateTime } from "@/lib/format";
 import type { Interview, InterviewRecommendation } from "@/lib/types";
 
 type Participant = { name: string; avatarEmoji: string };
@@ -44,9 +45,7 @@ export function InterviewRoom({
   const [submitting, setSubmitting] = useState(false);
 
   const confirmedSlot = interview.proposedSlots.find((s) => s.id === interview.confirmedSlotId);
-  const formattedSlot = confirmedSlot
-    ? new Date(confirmedSlot.start).toLocaleString([], { weekday: "long", hour: "2-digit", minute: "2-digit", month: "short", day: "numeric" })
-    : null;
+  const formattedSlot = confirmedSlot ? formatFriendlyDateTime(confirmedSlot.start) : null;
 
   const handleNotesBlur = async () => {
     if (notes === (interview.notes ?? "")) return;

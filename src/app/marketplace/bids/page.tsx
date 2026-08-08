@@ -13,6 +13,7 @@ import { getMyProjects } from "@/lib/api/myProjects";
 import { getSession, isOnboarded } from "@/lib/session";
 import type { CandidateProfile, Project } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { formatINR, formatDate } from "@/lib/format";
 
 const STATUS_TONE: Record<MyBidStatus, string> = {
   pending: "bg-white/10 text-foreground",
@@ -68,7 +69,7 @@ export default function MyBidsPage() {
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{project?.title ?? "Project"}</p>
-                <p className="text-xs text-muted-foreground">₹{bid.amount.toLocaleString("en-IN")} · {new Date(bid.submittedAt).toLocaleDateString()}</p>
+                <p className="text-xs text-muted-foreground">{formatINR(bid.amount)} · {formatDate(bid.submittedAt)}</p>
               </div>
               <Badge variant="secondary" className={cn("shrink-0 capitalize", STATUS_TONE[bid.status])}>{bid.status}</Badge>
             </button>

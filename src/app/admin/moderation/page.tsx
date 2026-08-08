@@ -7,6 +7,7 @@ import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getModerationQueue, resolveModerationItem } from "@/lib/api/platformAdmin";
+import { formatDateTime } from "@/lib/format";
 import type { ModerationItem, ModerationStatus } from "@/lib/types";
 
 const TABS: { key: ModerationStatus; label: string }[] = [
@@ -61,7 +62,7 @@ export default function ModerationPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">{item.postingTitle}</p>
-                  <p className="text-xs text-muted-foreground">{item.tenantName} · {new Date(item.createdAt).toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">{item.tenantName} · {formatDateTime(item.createdAt)}</p>
                 </div>
                 <Badge variant="secondary" className="bg-amber-500/15 text-[10px] text-amber-400">{item.reason}</Badge>
               </div>

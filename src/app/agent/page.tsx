@@ -20,6 +20,7 @@ import { useAgentState, setAgentState } from "@/lib/agentState";
 import { getSession, isOnboarded } from "@/lib/session";
 import { getJobs, getJob } from "@/lib/api/jobs";
 import { useTypewriter } from "@/hooks/use-typewriter";
+import { formatINRRange } from "@/lib/format";
 import type { CandidateProfile, ChatMessage, AgentActivityEvent, IntentCard, Job, Project } from "@/lib/types";
 
 const SUGGESTIONS = [
@@ -73,7 +74,7 @@ function buildReply(
   }
   if ((t.includes("bid") || t.includes("project")) && topProject) {
     return {
-      content: `"${topProject.title}" is open — ₹${topProject.budgetMin.toLocaleString("en-IN")}–₹${topProject.budgetMax.toLocaleString("en-IN")}, ${topProject.durationWeeks} weeks. Want me to place a competitive bid?`,
+      content: `"${topProject.title}" is open — ${formatINRRange(topProject.budgetMin, topProject.budgetMax)}, ${topProject.durationWeeks} weeks. Want me to place a competitive bid?`,
       intent: {
         type: "place_bid",
         summary: `Place a bid on "${topProject.title}"`,

@@ -16,6 +16,7 @@ import {
 } from "@/lib/api/myProjects";
 import { getSession, isOnboarded } from "@/lib/session";
 import { cn } from "@/lib/utils";
+import { formatINR } from "@/lib/format";
 import type { CandidateProfile, Bid, Milestone } from "@/lib/types";
 
 function MilestoneCard({ milestone, onSubmitDeliverable, onAccept }: {
@@ -37,7 +38,7 @@ function MilestoneCard({ milestone, onSubmitDeliverable, onAccept }: {
       <div className="flex items-center justify-between">
         <p className={cn("text-sm font-medium", milestone.done && "text-muted-foreground line-through")}>{milestone.label}</p>
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">₹{milestone.amount.toLocaleString("en-IN")}</span>
+          <span className="text-xs text-muted-foreground">{formatINR(milestone.amount)}</span>
           {milestone.done && <Check className="size-4 text-emerald-400" />}
         </div>
       </div>
@@ -63,7 +64,7 @@ function MilestoneCard({ milestone, onSubmitDeliverable, onAccept }: {
                 onAccept(milestone.id);
               }}
             >
-              Accept &amp; release ₹{milestone.amount.toLocaleString("en-IN")}
+              Accept &amp; release {formatINR(milestone.amount)}
             </Button>
           </div>
         </div>
@@ -156,7 +157,7 @@ export default function ProjectManagePage() {
                   {i === 0 && <Badge variant="secondary" className="gap-1 bg-primary/15 text-primary-soft"><Sparkles className="size-3" /> agent pick</Badge>}
                 </div>
                 <p className="mt-2 text-sm font-semibold">{bid.bidderName}</p>
-                <p className="font-display text-xl font-bold text-primary-soft">₹{bid.amount.toLocaleString("en-IN")}</p>
+                <p className="font-display text-xl font-bold text-primary-soft">{formatINR(bid.amount)}</p>
                 <p className="text-xs text-muted-foreground">{bid.matchPercentage}% match</p>
                 <Button variant="primary-gradient" size="sm" className="mt-3 w-full gap-1.5" onClick={() => setConfirmBid(bid)}>
                   <Award className="size-3.5" /> Award
@@ -174,7 +175,7 @@ export default function ProjectManagePage() {
             <span className="text-2xl">{awardedBid?.bidderEmoji}</span>
             <div>
               <p className="text-sm font-semibold">Awarded to {awardedBid?.bidderName}</p>
-              <p className="text-xs text-muted-foreground">₹{awardedBid?.amount.toLocaleString("en-IN")}</p>
+              <p className="text-xs text-muted-foreground">{awardedBid && formatINR(awardedBid.amount)}</p>
             </div>
             <Badge variant="secondary" className={cn("ml-auto", project.status === "closed" ? "bg-emerald-500/15 text-emerald-400" : "bg-primary/12 text-primary-soft")}>
               {project.status === "closed" ? "Complete" : "In progress"}
@@ -228,7 +229,7 @@ export default function ProjectManagePage() {
           <DialogHeader>
             <DialogTitle>Award this project?</DialogTitle>
             <DialogDescription>
-              {confirmBid && `Awarding to ${confirmBid.bidderName} for ₹${confirmBid.amount.toLocaleString("en-IN")}. This closes bidding.`}
+              {confirmBid && `Awarding to ${confirmBid.bidderName} for ${formatINR(confirmBid.amount)}. This closes bidding.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { saveOnboardingProfile, setOnboarded } from "@/lib/session";
 import { isRealMode } from "@/lib/api/mode";
+import { formatINR } from "@/lib/format";
 import { updateMyProfileDetails, updateMySkills, updateMyConsent } from "@/lib/api/profile";
 import type { Industry, OpenTo } from "@/lib/types";
 
@@ -214,7 +215,7 @@ export default function OnboardingPage() {
             What&apos;s your rate floor?
           </h1>
           <p className="mt-2 text-muted-foreground">Your agent only applies above this.</p>
-          <p className="mt-8 font-display text-5xl font-bold text-primary-soft">₹{rateFloor} LPA</p>
+          <p className="mt-8 font-display text-5xl font-bold text-primary-soft">{formatINR(rateFloor)} LPA</p>
           <div className="mx-auto mt-8 max-w-sm">
             <Slider value={rateFloor} onValueChange={(v) => setRateFloor(v as number)} min={4} max={60} step={1} />
           </div>

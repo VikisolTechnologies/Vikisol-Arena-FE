@@ -13,6 +13,7 @@ import { getMyApplications, withdrawApplication } from "@/lib/api/applications";
 import { getJob } from "@/lib/api/jobs";
 import { getSession, isOnboarded } from "@/lib/session";
 import { cn } from "@/lib/utils";
+import { formatINR } from "@/lib/format";
 import type { CandidateProfile, Application, Job } from "@/lib/types";
 
 const TIMELINE = [
@@ -129,7 +130,7 @@ export default function ApplicationDetailPage() {
       <div className="mb-5 rounded-[24px] border border-primary/25 bg-primary/[0.05] p-5">
         <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-primary-soft">Agent&apos;s rationale</p>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          Matched on {job.skills.slice(0, 2).join(" and ")}, within your ₹{profile.rateFloor} LPA floor, and{" "}
+          Matched on {job.skills.slice(0, 2).join(" and ")}, within your {formatINR(profile.rateFloor)} LPA floor, and{" "}
           {job.remote ? "fully remote" : `based in ${job.location}`}. Scored {job.matchPercentage}% against your identity
           graph — above your 80% auto-apply threshold, so I submitted a tailored resume right away.
         </p>

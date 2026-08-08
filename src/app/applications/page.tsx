@@ -15,6 +15,7 @@ import { getJob } from "@/lib/api/jobs";
 import { proposeInterview, confirmInterviewSlot, getInterviewForApplication } from "@/lib/api/interviews";
 import { useGsap } from "@/lib/gsap";
 import { getSession, isOnboarded } from "@/lib/session";
+import { formatFriendlyDateTime } from "@/lib/format";
 import type { CandidateProfile, Application, ApplicationStage, Interview, Job } from "@/lib/types";
 
 const COLUMNS: { stage: ApplicationStage; label: string }[] = [
@@ -154,9 +155,9 @@ export default function ApplicationsPage() {
               </span>
               <p className="text-sm text-muted-foreground">
                 {interview?.confirmedSlotId &&
-                  new Date(
+                  formatFriendlyDateTime(
                     interview.proposedSlots.find((s) => s.id === interview.confirmedSlotId)?.start ?? "",
-                  ).toLocaleString([], { weekday: "long", hour: "2-digit", minute: "2-digit", month: "short", day: "numeric" })}
+                  )}
               </p>
               <div className="flex gap-2">
                 <Button variant="ghost-glass" size="sm" onClick={() => setSchedulingApp(null)}>
@@ -179,7 +180,7 @@ export default function ApplicationsPage() {
                   onClick={() => confirmSlot(slot.id)}
                   className="flex w-full items-center justify-between rounded-xl border border-border bg-white/[0.03] px-4 py-3 text-left text-sm transition-colors hover:border-primary/50 disabled:opacity-50"
                 >
-                  {new Date(slot.start).toLocaleString([], { weekday: "long", hour: "2-digit", minute: "2-digit", month: "short", day: "numeric" })}
+                  {formatFriendlyDateTime(slot.start)}
                   <Check className="size-4 text-primary-soft opacity-0 transition-opacity group-hover:opacity-100" />
                 </button>
               ))}

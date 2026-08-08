@@ -1,6 +1,7 @@
 import { ShieldCheck } from "lucide-react";
 import type { CandidateProfile } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { formatINR } from "@/lib/format";
 
 /** The standardized, canonical Arena CV — profile fields in a fixed order, independent of any
  * specific job. Per-application views (TailoredResume) reorder/highlight against this same
@@ -58,7 +59,7 @@ export function ArenaCV({ profile, printable }: { profile: CandidateProfile; pri
           <p className="text-[11px] text-black/40">Years exp.</p>
         </div>
         <div>
-          <p className="font-display text-lg font-bold">₹{profile.rateFloor}</p>
+          <p className="font-display text-lg font-bold">{formatINR(profile.rateFloor)}</p>
           <p className="text-[11px] text-black/40">Rate floor</p>
         </div>
         <div>

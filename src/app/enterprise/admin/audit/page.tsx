@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { searchAudit, auditExportUrl, type AuditEvent } from "@/lib/api/companyAdmin";
 import { isRealMode } from "@/lib/api/mode";
 import { getToken } from "@/lib/api/httpClient";
+import { formatDateTime } from "@/lib/format";
 
 const ACTIONS = [
   "", "posting.created", "posting.closed", "candidate.unlocked", "credit.spent", "stage.moved",
@@ -87,7 +88,7 @@ export default function AuditLogPage() {
           <div className="space-y-2">
             {events.map((e) => (
               <div key={e.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-white/[0.02] px-4 py-3 text-sm">
-                <span className="w-40 shrink-0 text-xs text-muted-foreground">{new Date(e.createdAt).toLocaleString()}</span>
+                <span className="w-40 shrink-0 text-xs text-muted-foreground">{formatDateTime(e.createdAt)}</span>
                 <span className="font-medium">{e.actorName}</span>
                 <span className="rounded-full bg-white/5 px-2 py-0.5 text-[11px] text-muted-foreground">{e.action}</span>
                 {e.target && <span className="text-muted-foreground">{e.target}</span>}

@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Upload, FileText, Sparkles, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { updateMyResume } from "@/lib/api/profile";
+import { formatDate } from "@/lib/format";
 import type { CandidateProfile } from "@/lib/types";
 
 type Phase = "idle" | "parsing" | "review";
@@ -97,7 +98,7 @@ export function ResumeUpload({ profile, onDone }: { profile: CandidateProfile; o
         <>
           <p className="text-sm font-medium">{profile.resumeFileName}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Uploaded {profile.resumeUploadedAt ? new Date(profile.resumeUploadedAt).toLocaleDateString() : ""}
+            Uploaded {profile.resumeUploadedAt ? formatDate(profile.resumeUploadedAt) : ""}
           </p>
         </>
       ) : (

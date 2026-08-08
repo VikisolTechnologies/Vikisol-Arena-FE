@@ -5,6 +5,7 @@ import { Building2, Users, ShieldAlert, Activity } from "lucide-react";
 import { PlatformAdminShell, usePlatformAdminGate } from "@/components/app/PlatformAdminShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { getPlatformDashboard } from "@/lib/api/platformAdmin";
+import { formatDateTime } from "@/lib/format";
 import type { PlatformDashboard } from "@/lib/types";
 
 const METRICS = [
@@ -50,7 +51,7 @@ export default function PlatformDashboardPage() {
                   <span className="font-medium">{e.actorName}</span>
                   <span className="text-muted-foreground">{e.action}</span>
                   {e.target && <span className="truncate text-muted-foreground">— {e.target}</span>}
-                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">{new Date(e.createdAt).toLocaleString()}</span>
+                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">{formatDateTime(e.createdAt)}</span>
                 </div>
               ))}
               {dashboard.recentActivity.length === 0 && (

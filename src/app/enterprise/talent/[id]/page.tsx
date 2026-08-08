@@ -11,6 +11,7 @@ import { getMyEnterpriseProfile, getCandidateDetail, unlockCandidate, saveMyEnte
 import { getShortlistIds, toggleShortlist } from "@/lib/api/shortlist";
 import { getSession, isEnterpriseOnboarded } from "@/lib/session";
 import { cn } from "@/lib/utils";
+import { formatINR } from "@/lib/format";
 import type { EnterpriseProfile, CandidateProfile } from "@/lib/types";
 
 export default function CandidateDetailPage() {
@@ -98,7 +99,7 @@ export default function CandidateDetailPage() {
               <p className="text-[11px] text-muted-foreground">Years exp.</p>
             </div>
             <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5 text-center">
-              <p className="font-display text-lg font-bold">₹{candidate.rateFloor}</p>
+              <p className="font-display text-lg font-bold">{formatINR(candidate.rateFloor)}</p>
               <p className="text-[11px] text-muted-foreground">LPA floor</p>
             </div>
             <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5 text-center">

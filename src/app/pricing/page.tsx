@@ -11,6 +11,7 @@ import { getMyEnterpriseProfile, saveMyEnterpriseProfile } from "@/lib/api/enter
 import { getSession, isEnterpriseOnboarded } from "@/lib/session";
 import { getTalentPlan, setTalentPlan } from "@/lib/plan";
 import { cn } from "@/lib/utils";
+import { formatINR } from "@/lib/format";
 
 const TALENT_TIERS: { key: "free" | "pro"; name: string; price: string; period: string; features: string[]; highlight?: boolean }[] = [
   {
@@ -99,7 +100,7 @@ export default function PricingPage() {
           <p className="mt-1 text-sm text-muted-foreground">Search Talent Universe, unlock candidates, hire on proof.</p>
           <div className="mt-4 flex items-center gap-4">
             <p className="font-display text-3xl font-bold">
-              ₹{enterprisePricePerSeat.toLocaleString("en-IN")} <span className="text-sm font-normal text-muted-foreground">/seat/month</span>
+              {formatINR(enterprisePricePerSeat)} <span className="text-sm font-normal text-muted-foreground">/seat/month</span>
             </p>
             <div className="ml-auto flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">Seats:</span>
@@ -108,7 +109,7 @@ export default function PricingPage() {
               <button type="button" onClick={() => setSeats((s) => s + 1)} className="flex size-7 items-center justify-center rounded-full border border-border">+</button>
             </div>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">≈ ₹{(enterprisePricePerSeat * seats).toLocaleString("en-IN")}/month total</p>
+          <p className="mt-1 text-xs text-muted-foreground">≈ {formatINR(enterprisePricePerSeat * seats)}/month total</p>
 
           <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
             {["Unlimited Talent Universe search", "50 candidate unlocks/month", "Applicant pipeline + postings", "Priority support"].map((f) => (

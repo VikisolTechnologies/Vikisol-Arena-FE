@@ -5,6 +5,7 @@ import { MapPin, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useGsap, Draggable } from "@/lib/gsap";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { formatINRRange } from "@/lib/format";
 import type { Job } from "@/lib/types";
 
 export type SwipeDirection = "left" | "right" | "up";
@@ -121,7 +122,7 @@ export const SwipeCard = forwardRef<SwipeCardHandle, {
           <MapPin className="size-3" /> {job.location}
         </span>
         <span>
-          ₹{job.salaryMin}–{job.salaryMax} LPA
+          {formatINRRange(job.salaryMin, job.salaryMax, "LPA")}
         </span>
         <Badge variant="secondary" className="bg-white/5">
           {job.employmentType}

@@ -16,6 +16,7 @@ import { POSTING_LIMITS } from "@/lib/plan";
 import { SKILLS_BY_INDUSTRY } from "@/lib/mock/seed";
 import { getSession, isEnterpriseOnboarded } from "@/lib/session";
 import { cn } from "@/lib/utils";
+import { formatINRRange } from "@/lib/format";
 import type { EnterpriseProfile, JobPosting } from "@/lib/types";
 
 export default function PostingsPage() {
@@ -169,7 +170,7 @@ export default function PostingsPage() {
                 <div className="flex flex-wrap gap-1.5">
                   {drafted.skills.map((s) => <Badge key={s} variant="secondary" className="bg-primary/10 text-primary-soft">{s}</Badge>)}
                 </div>
-                <p className="text-xs text-muted-foreground">₹{drafted.salaryMin}–{drafted.salaryMax} LPA · {drafted.location} · {drafted.employmentType}</p>
+                <p className="text-xs text-muted-foreground">{formatINRRange(drafted.salaryMin, drafted.salaryMax, "LPA")} · {drafted.location} · {drafted.employmentType}</p>
                 <Button variant="primary-gradient" size="sm" className="w-full" onClick={publish}>Publish posting</Button>
               </div>
             )}
