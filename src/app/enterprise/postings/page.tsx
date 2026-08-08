@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { getMyEnterpriseProfile, getMyPostings, createPosting, setPostingStatus, PostingLimitError } from "@/lib/api/enterprise";
 import { POSTING_LIMITS } from "@/lib/plan";
 import { SKILLS_BY_INDUSTRY } from "@/lib/mock/seed";
-import { getSession, isEnterpriseOnboarded } from "@/lib/session";
+import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
 import { cn } from "@/lib/utils";
 import { formatINRRange } from "@/lib/format";
 import type { EnterpriseProfile, JobPosting } from "@/lib/types";
@@ -32,8 +32,7 @@ export default function PostingsPage() {
   const load = () => getMyPostings().then(setPostings);
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isEnterpriseOnboarded()) { router.replace("/enterprise/onboarding"); return; }
+    if (!requireEnterpriseOnboarded(router)) return;
     getMyEnterpriseProfile().then(setProfile);
     load();
   }, [router]);

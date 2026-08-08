@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMyEnterpriseProfile, getCandidateDetail, unlockCandidate, saveMyEnterpriseProfile, getUnlockedCandidateIds, hasDirectlyApplied } from "@/lib/api/enterprise";
 import { getShortlistIds, toggleShortlist } from "@/lib/api/shortlist";
-import { getSession, isEnterpriseOnboarded } from "@/lib/session";
+import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
 import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/format";
 import type { EnterpriseProfile, CandidateProfile } from "@/lib/types";
@@ -25,8 +25,7 @@ export default function CandidateDetailPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isEnterpriseOnboarded()) { router.replace("/enterprise/onboarding"); return; }
+    if (!requireEnterpriseOnboarded(router)) return;
     getMyEnterpriseProfile().then(setProfile);
     getCandidateDetail(params.id).then(async (c) => {
       setCandidate(c ?? null);

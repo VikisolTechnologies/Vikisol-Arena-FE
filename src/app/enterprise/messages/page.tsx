@@ -6,7 +6,7 @@ import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { MessagesInbox } from "@/components/messages/MessagesInbox";
 import { getMyEnterpriseProfile } from "@/lib/api/enterprise";
-import { getSession, isEnterpriseOnboarded } from "@/lib/session";
+import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
 import type { EnterpriseProfile } from "@/lib/types";
 
 export default function EnterpriseMessagesPage() {
@@ -14,8 +14,7 @@ export default function EnterpriseMessagesPage() {
   const [profile, setProfile] = useState<EnterpriseProfile | null>(null);
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isEnterpriseOnboarded()) { router.replace("/enterprise/onboarding"); return; }
+    if (!requireEnterpriseOnboarded(router)) return;
     getMyEnterpriseProfile().then(setProfile);
   }, [router]);
 

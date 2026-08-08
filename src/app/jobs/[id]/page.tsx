@@ -11,7 +11,7 @@ import { getMyProfile } from "@/lib/api/profile";
 import { getJob } from "@/lib/api/jobs";
 import { applyToJob, hasAppliedTo } from "@/lib/api/applications";
 import { agentRealtime } from "@/lib/realtime";
-import { getSession, isOnboarded } from "@/lib/session";
+import { requireOnboarded } from "@/lib/auth-guard";
 import { formatINRRange } from "@/lib/format";
 import type { CandidateProfile, Job } from "@/lib/types";
 
@@ -24,8 +24,7 @@ export default function JobDetailPage() {
   const [applying, setApplying] = useState(false);
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isOnboarded()) { router.replace("/onboarding"); return; }
+    if (!requireOnboarded(router)) return;
     getMyProfile().then(setProfile);
     getJob(params.id).then((j) => setJob(j ?? null));
     hasAppliedTo(params.id).then(setApplied);

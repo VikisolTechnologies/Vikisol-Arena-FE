@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { getMyEnterpriseProfile, getMyPostings, getAllApplicantCounts } from "@/lib/api/enterprise";
 import { getShortlistIds } from "@/lib/api/shortlist";
 import { getCandidateById } from "@/lib/mock/candidates";
-import { getSession, isEnterpriseOnboarded } from "@/lib/session";
+import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { EnterpriseProfile, JobPosting } from "@/lib/types";
 
@@ -33,8 +33,7 @@ export default function EnterpriseDashboardPage() {
   const [shortlistIds, setShortlistIds] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isEnterpriseOnboarded()) { router.replace("/enterprise/onboarding"); return; }
+    if (!requireEnterpriseOnboarded(router)) return;
     getMyEnterpriseProfile().then((p) => {
       setProfile(p);
     });

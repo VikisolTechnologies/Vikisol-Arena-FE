@@ -14,7 +14,7 @@ import { getMyProfile } from "@/lib/api/profile";
 import { getProjects } from "@/lib/api/market";
 import { getMyProjects, createMyProject } from "@/lib/api/myProjects";
 import { SKILLS_BY_INDUSTRY } from "@/lib/mock/seed";
-import { getSession, isOnboarded } from "@/lib/session";
+import { requireOnboarded } from "@/lib/auth-guard";
 import { formatINRRange } from "@/lib/format";
 import type { CandidateProfile, Project } from "@/lib/types";
 
@@ -42,8 +42,7 @@ export default function MarketplacePage() {
   };
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isOnboarded()) { router.replace("/onboarding"); return; }
+    if (!requireOnboarded(router)) return;
     getMyProfile().then(setProfile);
     load();
   }, [router]);

@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { getMyProfile } from "@/lib/api/profile";
 import { getActivityFeed } from "@/lib/api/activity";
 import { getJobs } from "@/lib/api/jobs";
-import { getSession, isOnboarded } from "@/lib/session";
+import { requireOnboarded } from "@/lib/auth-guard";
 import type { CandidateProfile, AgentActivityEvent, Job } from "@/lib/types";
 
 function StatCard({ icon: Icon, value, label }: { icon: LucideIcon; value: string | number; label: string }) {
@@ -35,14 +35,7 @@ export default function DashboardPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
 
   useEffect(() => {
-    if (!getSession()) {
-      router.replace("/auth");
-      return;
-    }
-    if (!isOnboarded()) {
-      router.replace("/onboarding");
-      return;
-    }
+    if (!requireOnboarded(router)) return;
     getMyProfile().then(setProfile);
     getActivityFeed().then(setActivity);
     getJobs().then(setJobs);

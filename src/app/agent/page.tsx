@@ -17,7 +17,7 @@ import { applyToJob } from "@/lib/api/applications";
 import { getProjects, placeBid } from "@/lib/api/market";
 import { agentRealtime } from "@/lib/realtime";
 import { useAgentState, setAgentState } from "@/lib/agentState";
-import { getSession, isOnboarded } from "@/lib/session";
+import { requireOnboarded } from "@/lib/auth-guard";
 import { getJobs, getJob } from "@/lib/api/jobs";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import { formatINRRange } from "@/lib/format";
@@ -111,8 +111,7 @@ export default function AgentPage() {
   const nextId = (prefix: string) => `${prefix}-${++idCounter.current}`;
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isOnboarded()) { router.replace("/onboarding"); return; }
+    if (!requireOnboarded(router)) return;
     Promise.all([getMyProfile(), getJobs(), getProjects()]).then(async ([p, jobList, projectList]) => {
       setProfile(p);
       setJobs(jobList);

@@ -14,7 +14,7 @@ import { getMyProfile } from "@/lib/api/profile";
 import {
   getMyProject, awardProject, submitMilestoneDeliverable, acceptMilestone, submitProjectRating, type MyProject,
 } from "@/lib/api/myProjects";
-import { getSession, isOnboarded } from "@/lib/session";
+import { requireOnboarded } from "@/lib/auth-guard";
 import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/format";
 import type { CandidateProfile, Bid, Milestone } from "@/lib/types";
@@ -86,8 +86,7 @@ export default function ProjectManagePage() {
   const load = () => getMyProject(params.id).then((p) => setProject(p ?? null));
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isOnboarded()) { router.replace("/onboarding"); return; }
+    if (!requireOnboarded(router)) return;
     getMyProfile().then(setProfile);
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps

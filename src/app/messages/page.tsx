@@ -6,7 +6,7 @@ import { CandidateAppShell } from "@/components/app/CandidateAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { MessagesInbox } from "@/components/messages/MessagesInbox";
 import { getMyProfile } from "@/lib/api/profile";
-import { getSession, isOnboarded } from "@/lib/session";
+import { requireOnboarded } from "@/lib/auth-guard";
 import type { CandidateProfile } from "@/lib/types";
 
 export default function MessagesPage() {
@@ -14,8 +14,7 @@ export default function MessagesPage() {
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isOnboarded()) { router.replace("/onboarding"); return; }
+    if (!requireOnboarded(router)) return;
     getMyProfile().then(setProfile);
   }, [router]);
 

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getMyEnterpriseProfile, searchTalent } from "@/lib/api/enterprise";
 import { getShortlistIds, toggleShortlist } from "@/lib/api/shortlist";
-import { getSession, isEnterpriseOnboarded } from "@/lib/session";
+import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
 import { INDUSTRIES } from "@/lib/mock/seed";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
@@ -29,8 +29,7 @@ export default function TalentUniversePage() {
   const [shortlist, setShortlist] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isEnterpriseOnboarded()) { router.replace("/enterprise/onboarding"); return; }
+    if (!requireEnterpriseOnboarded(router)) return;
     getMyEnterpriseProfile().then((p) => {
       setProfile(p);
     });

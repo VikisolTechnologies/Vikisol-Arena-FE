@@ -10,7 +10,7 @@ import { getMyProfile } from "@/lib/api/profile";
 import { getApplicationById } from "@/lib/api/applications";
 import { getInterviewForApplication } from "@/lib/api/interviews";
 import { getJob } from "@/lib/api/jobs";
-import { getSession, isOnboarded } from "@/lib/session";
+import { requireOnboarded } from "@/lib/auth-guard";
 import type { CandidateProfile, Application, Interview } from "@/lib/types";
 
 export default function CandidateInterviewPage() {
@@ -23,8 +23,7 @@ export default function CandidateInterviewPage() {
   const [companyEmoji, setCompanyEmoji] = useState("🏢");
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isOnboarded()) { router.replace("/onboarding"); return; }
+    if (!requireOnboarded(router)) return;
     getMyProfile().then(setProfile);
     getApplicationById(params.applicationId).then(async (app) => {
       setApplication(app ?? null);

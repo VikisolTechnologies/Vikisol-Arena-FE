@@ -16,7 +16,7 @@ import { getMyProfile } from "@/lib/api/profile";
 import { getJobs, getPassedJobIds, passOnJob } from "@/lib/api/jobs";
 import { applyToJob } from "@/lib/api/applications";
 import { agentRealtime } from "@/lib/realtime";
-import { getSession, isOnboarded } from "@/lib/session";
+import { requireOnboarded } from "@/lib/auth-guard";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { CandidateProfile, Job, Industry } from "@/lib/types";
 
@@ -39,8 +39,7 @@ export default function DiscoverPage() {
   const cardRef = useRef<SwipeCardHandle>(null);
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isOnboarded()) { router.replace("/onboarding"); return; }
+    if (!requireOnboarded(router)) return;
     getMyProfile().then(setProfile);
     getJobs().then((j) => {
       setJobs(j);

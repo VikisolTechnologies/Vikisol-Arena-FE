@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { saveMyEnterpriseProfile } from "@/lib/api/enterprise";
-import { setEnterpriseOnboarded, getSession } from "@/lib/session";
+import { setEnterpriseOnboarded } from "@/lib/session";
+import { requireSession } from "@/lib/auth-guard";
 import { INDUSTRIES } from "@/lib/mock/seed";
 import type { CompanySize, Industry } from "@/lib/types";
 
@@ -37,7 +38,7 @@ export default function EnterpriseOnboardingPage() {
   const canContinue = companyName.trim().length > 0 && hiringFor.length > 0;
 
   const finish = async () => {
-    if (!getSession()) { router.replace("/auth"); return; }
+    if (!requireSession(router)) return;
     setSaving(true);
     await saveMyEnterpriseProfile({
       companyName,

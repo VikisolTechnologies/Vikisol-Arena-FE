@@ -10,7 +10,7 @@ import { getMyProfile } from "@/lib/api/profile";
 import { getMyBids, type MyBidRecord, type MyBidStatus } from "@/lib/api/myBids";
 import { getProject } from "@/lib/api/market";
 import { getMyProjects } from "@/lib/api/myProjects";
-import { getSession, isOnboarded } from "@/lib/session";
+import { requireOnboarded } from "@/lib/auth-guard";
 import type { CandidateProfile, Project } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -30,8 +30,7 @@ export default function MyBidsPage() {
   const [projects, setProjects] = useState<Record<string, Project>>({});
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isOnboarded()) { router.replace("/onboarding"); return; }
+    if (!requireOnboarded(router)) return;
     getMyProfile().then(setProfile);
     Promise.all([getMyBids(), getMyProjects()]).then(async ([myBids, mine]) => {
       setBids(myBids);

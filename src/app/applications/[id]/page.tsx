@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { getMyProfile } from "@/lib/api/profile";
 import { getMyApplications, withdrawApplication } from "@/lib/api/applications";
 import { getJob } from "@/lib/api/jobs";
-import { getSession, isOnboarded } from "@/lib/session";
+import { requireOnboarded } from "@/lib/auth-guard";
 import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/format";
 import type { CandidateProfile, Application, Job } from "@/lib/types";
@@ -32,8 +32,7 @@ export default function ApplicationDetailPage() {
   const [withdrawing, setWithdrawing] = useState(false);
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isOnboarded()) { router.replace("/onboarding"); return; }
+    if (!requireOnboarded(router)) return;
     getMyProfile().then(setProfile);
     getMyApplications().then(async (apps) => {
       const found = apps.find((a) => a.id === params.id) ?? null;

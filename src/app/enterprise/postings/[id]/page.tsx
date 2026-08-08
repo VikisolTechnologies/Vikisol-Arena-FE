@@ -8,7 +8,7 @@ import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMyEnterpriseProfile, getPosting, getApplicantsForPosting, moveApplicantStage } from "@/lib/api/enterprise";
-import { getSession, isEnterpriseOnboarded } from "@/lib/session";
+import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { EnterpriseProfile, JobPosting, Application, ApplicationStage, CandidateProfile } from "@/lib/types";
 
@@ -26,8 +26,7 @@ export default function ApplicantPipelinePage() {
   const load = () => getApplicantsForPosting(params.id).then((a) => setApplicants(a as ApplicantWithCandidate[]));
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isEnterpriseOnboarded()) { router.replace("/enterprise/onboarding"); return; }
+    if (!requireEnterpriseOnboarded(router)) return;
     getMyEnterpriseProfile().then(setProfile);
     getPosting(params.id).then((p) => setPosting(p ?? null));
     load();

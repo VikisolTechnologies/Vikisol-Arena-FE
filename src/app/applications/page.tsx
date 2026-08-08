@@ -14,7 +14,7 @@ import { getMyApplications } from "@/lib/api/applications";
 import { getJob } from "@/lib/api/jobs";
 import { proposeInterview, confirmInterviewSlot, getInterviewForApplication } from "@/lib/api/interviews";
 import { useGsap } from "@/lib/gsap";
-import { getSession, isOnboarded } from "@/lib/session";
+import { requireOnboarded } from "@/lib/auth-guard";
 import { formatFriendlyDateTime } from "@/lib/format";
 import type { CandidateProfile, Application, ApplicationStage, Interview, Job } from "@/lib/types";
 
@@ -43,8 +43,7 @@ export default function ApplicationsPage() {
   const gsap = useGsap();
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isOnboarded()) { router.replace("/onboarding"); return; }
+    if (!requireOnboarded(router)) return;
     getMyProfile().then(setProfile);
     getMyApplications().then(async (myApps) => {
       setApps(myApps);

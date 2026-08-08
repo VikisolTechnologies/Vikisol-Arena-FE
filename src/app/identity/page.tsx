@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMyProfile, updateMySkills } from "@/lib/api/profile";
-import { getSession, isOnboarded } from "@/lib/session";
+import { requireOnboarded } from "@/lib/auth-guard";
 import type { CandidateProfile } from "@/lib/types";
 
 export default function IdentityPage() {
@@ -26,8 +26,7 @@ export default function IdentityPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isOnboarded()) { router.replace("/onboarding"); return; }
+    if (!requireOnboarded(router)) return;
     getMyProfile().then((p) => {
       setProfile(p);
       setDraftSkills(p.skills.map((s) => s.name));

@@ -9,7 +9,7 @@ import { InterviewRoom } from "@/components/interview/InterviewRoom";
 import { getMyEnterpriseProfile, getCandidateDetail, getApplicant } from "@/lib/api/enterprise";
 import { getInterviewForApplication, proposeInterview, assignHiringManager } from "@/lib/api/interviews";
 import { getHiringManagersForTeam, type TeamMember } from "@/lib/api/companyAdmin";
-import { getSession, isEnterpriseOnboarded } from "@/lib/session";
+import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
 import type { EnterpriseProfile, Application, Interview, CandidateProfile } from "@/lib/types";
 
 export default function EnterpriseInterviewPage() {
@@ -24,8 +24,7 @@ export default function EnterpriseInterviewPage() {
   const [assignedName, setAssignedName] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isEnterpriseOnboarded()) { router.replace("/enterprise/onboarding"); return; }
+    if (!requireEnterpriseOnboarded(router)) return;
     getMyEnterpriseProfile().then(setProfile);
     getHiringManagersForTeam().then(setHiringManagers);
     getApplicant(params.applicationId).then(async (app) => {

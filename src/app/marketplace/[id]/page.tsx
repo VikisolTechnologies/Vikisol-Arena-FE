@@ -17,7 +17,7 @@ import { getProject, placeBid, submitMyDeliverable } from "@/lib/api/market";
 import { getMyProject, addBidToMyProject } from "@/lib/api/myProjects";
 import { recordMyBid, getMyBids } from "@/lib/api/myBids";
 import { useGsap } from "@/lib/gsap";
-import { getSession, isOnboarded } from "@/lib/session";
+import { requireOnboarded } from "@/lib/auth-guard";
 import { formatINR, formatINRRange } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CandidateProfile, Project, Bid } from "@/lib/types";
@@ -61,8 +61,7 @@ export default function ProjectDetailPage() {
   };
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isOnboarded()) { router.replace("/onboarding"); return; }
+    if (!requireOnboarded(router)) return;
     getMyProfile().then(setProfile);
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps

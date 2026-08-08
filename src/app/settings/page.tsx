@@ -11,7 +11,7 @@ import { getMyProfile, updateMyConsent, updateMyAutonomy, exportMyData, deleteMy
 import { signOut } from "@/lib/api/auth";
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from "@/lib/api/notifications";
 import { getManualReducedEffects, setManualReducedEffects } from "@/hooks/use-reduced-motion";
-import { getSession, isOnboarded } from "@/lib/session";
+import { requireOnboarded } from "@/lib/auth-guard";
 import { getTalentPlan } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import type { CandidateProfile, AutonomyLevel, AppNotification, NotificationType } from "@/lib/types";
@@ -41,8 +41,7 @@ export default function SettingsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
-    if (!getSession()) { router.replace("/auth"); return; }
-    if (!isOnboarded()) { router.replace("/onboarding"); return; }
+    if (!requireOnboarded(router)) return;
     getMyProfile().then((p) => {
       setProfile(p);
       setReducedEffects(getManualReducedEffects());
