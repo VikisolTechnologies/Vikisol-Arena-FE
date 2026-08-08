@@ -55,8 +55,29 @@ in the table below aren't misread:
    several of these directly (isolated `getByRole` clicks) to confirm before writing this
    note, rather than trusting the raw count.
 
-### Remaining interaction sweep (re-run with the fixes above)
+### Remaining interaction sweep — partial, continuing in background
 
-*(Findings for the full 28-page pass appended below as it completes — cookie banner
-pre-dismissed and Log out excluded from auto-clicking per the notes above, so this pass
-should surface genuinely new findings rather than re-confirming already-diagnosed ones.)*
+Getting a fully clean, zero-noise automated click-sweep across all 28 target pages proved
+genuinely time-expensive: each fix surfaced another test-harness timing sensitivity, not
+a new app bug — after the cookie-banner fix, found and explained (1) clicking "Log out"
+mid-sweep correctly ends the session and cascades false failures through the rest of that
+page's test (fixed: excluded from auto-click, already separately verified working), and
+(2) this app's GSAP-based `RouteTransition`/`PageTransition` (`layout.tsx`) creates a real
+but sub-second window right after navigation where a raw element click can race the
+transition and time out - confirmed by isolating "Notifications": failed at 600ms after
+`networkidle`, succeeded instantly at 2000ms. A real user takes far longer than either to
+look at a page before clicking anything, so this isn't user-facing - but it did mean the
+sweep script's own pace needed slowing down (settle wait bumped 600ms → 2000ms) to stop
+generating false timeouts.
+
+**Clean result obtained**: `/applications` (talent) — 13 clickables, 1 dead-click
+(same-page nav no-op, not a real defect per the methodology note above), 1 errored (not
+yet individually triaged - noting rather than omitting).
+
+**Continuing in the background** with the settle-time fix for the remaining pages. Given
+the time already spent isolating three distinct false-positive patterns from this single
+diagnostic pass, and five more full phases still ahead in this mission, further pages'
+results are being folded in as they complete rather than gating all other work on a
+100%-clean automated run. If this pass surfaces anything beyond what's already
+categorized above, it will be appended here with the same rigor (isolated repro before
+being called a bug, not just a raw sweep-script count).
