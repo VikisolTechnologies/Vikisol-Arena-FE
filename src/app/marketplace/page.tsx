@@ -15,6 +15,7 @@ import { getProjects } from "@/lib/api/market";
 import { getMyProjects, createMyProject } from "@/lib/api/myProjects";
 import { SKILLS_BY_INDUSTRY } from "@/lib/mock/seed";
 import { getSession, isOnboarded } from "@/lib/session";
+import { formatINRRange } from "@/lib/format";
 import type { CandidateProfile, Project } from "@/lib/types";
 
 function hoursLeft(endsAt: string) {
@@ -116,7 +117,7 @@ export default function MarketplacePage() {
               ))}
             </div>
             <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-              <span>₹{p.budgetMin.toLocaleString("en-IN")}–₹{p.budgetMax.toLocaleString("en-IN")}</span>
+              <span>{formatINRRange(p.budgetMin, p.budgetMax)}</span>
               <span className="flex items-center gap-1"><Users className="size-3" /> {p.bids.length}</span>
               <span className="flex items-center gap-1"><Clock3 className="size-3" /> {hoursLeft(p.endsAt)}h</span>
             </div>
@@ -158,7 +159,7 @@ export default function MarketplacePage() {
                   {drafted.skills.map((s) => <Badge key={s} variant="secondary" className="bg-primary/10 text-primary-soft">{s}</Badge>)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  ₹{drafted.budgetMin.toLocaleString("en-IN")}–₹{drafted.budgetMax.toLocaleString("en-IN")} · {drafted.durationWeeks} weeks
+                  {formatINRRange(drafted.budgetMin, drafted.budgetMax)} · {drafted.durationWeeks} weeks
                 </p>
                 <Button variant="primary-gradient" size="sm" className="w-full" onClick={publish}>
                   Publish project

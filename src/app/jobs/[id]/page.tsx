@@ -12,6 +12,7 @@ import { getJob } from "@/lib/api/jobs";
 import { applyToJob, hasAppliedTo } from "@/lib/api/applications";
 import { agentRealtime } from "@/lib/realtime";
 import { getSession, isOnboarded } from "@/lib/session";
+import { formatINRRange } from "@/lib/format";
 import type { CandidateProfile, Job } from "@/lib/types";
 
 export default function JobDetailPage() {
@@ -90,7 +91,7 @@ export default function JobDetailPage() {
                 <span className="flex items-center gap-1">
                   <MapPin className="size-3" /> {job.location} {job.remote && "· Remote"}
                 </span>
-                <span>₹{job.salaryMin}–{job.salaryMax} LPA</span>
+                <span>{formatINRRange(job.salaryMin, job.salaryMax, "LPA")}</span>
                 <Badge variant="secondary" className="bg-white/5">{job.employmentType}</Badge>
                 <span>Posted {job.postedDaysAgo === 0 ? "today" : `${job.postedDaysAgo}d ago`}</span>
               </div>
