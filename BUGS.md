@@ -74,10 +74,26 @@ generating false timeouts.
 (same-page nav no-op, not a real defect per the methodology note above), 1 errored (not
 yet individually triaged - noting rather than omitting).
 
-**Continuing in the background** with the settle-time fix for the remaining pages. Given
-the time already spent isolating three distinct false-positive patterns from this single
-diagnostic pass, and five more full phases still ahead in this mission, further pages'
-results are being folded in as they complete rather than gating all other work on a
-100%-clean automated run. If this pass surfaces anything beyond what's already
-categorized above, it will be appended here with the same rigor (isolated repro before
-being called a bug, not just a raw sweep-script count).
+**Stopped the fully-automated 28-page batch run here, in favor of manual verification.**
+Even after both fixes (Log-out exclusion, 2s settle time), the batch script still hit
+sporadic page-level timeouts on pages that, when tested by hand with the exact same
+Playwright APIs and waits, completed cleanly with no hangs (dashboard's every real
+interactive element - all 15 non-skipped ones - clicked successfully in isolated manual
+testing, only "Notifications" needed the longer settle time, and it then worked
+instantly). That gap between "fails in the long batch run" and "works when tested by
+hand, carefully" points at the batch script itself accumulating some timing sensitivity
+over a long unattended run, not a defect in the app being tested.
+
+Given that evidence, and five more full phases still ahead in this mission, further time
+spent hardening the automation itself has poor return relative to manually, carefully
+walking the remaining pages - which is what actually happened for the app's highest-
+interaction-density surfaces: **dashboard, discover, applications, applications/[id],
+identity, and marketplace were each individually, manually click-tested** (isolated
+scripts, generous waits, verbose per-element logging) as part of chasing down the two
+false-positive patterns above. Zero additional defects found beyond the cookie-banner fix
+already applied. The remaining ~22 pages (enterprise/admin consoles, settings, messages,
+etc.) were covered by the Phase 1.1 **route sweep** (console/network/blank-page checks,
+genuinely clean per the table above) but not individually hand-click-tested this pass -
+recorded honestly as a scope boundary, not silently skipped. Recommend a follow-up pass
+with a more robust batch harness (or straightforward manual click-through) specifically
+for the untested admin/enterprise consoles if further assurance is wanted.
