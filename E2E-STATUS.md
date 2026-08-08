@@ -141,7 +141,7 @@ not fixed.
 | market (projects/bids/milestones) | ✅ | + fixed MOCK_PROJECTS bypass in agent.ts, marketplace/bids |
 | myBids | ✅ | resolveMyBids() correctly no-ops in real mode |
 | myProjects | ✅ | |
-| enterprise | ✅ | + fixed talent-search 500 (backend), hasDirectlyApplied is a known mock-only gap |
+| enterprise | ✅ | + fixed talent-search 500 (backend); hasDirectlyApplied now has a real backend equivalent too (TalentSearchService) - the "mock-only gap" note here was stale, corrected 2026-08-08 during ARENA-DEEP-AUDIT.md |
 | shortlist | ✅ | converted from sync to async (3 call sites updated) |
 | messages | ✅ | fake auto-reply correctly disabled in real mode |
 | notifications | ✅ | incl. bulk mark-all-read |
@@ -158,7 +158,6 @@ not fixed.
 
 ## Known real gaps (not blockers, tracked honestly)
 
-- `hasDirectlyApplied` (free contact-unlock for direct applicants) has no backend equivalent yet — real mode conservatively always requires a credit unlock.
 - No "losing bidders notified" on award, either mode.
 - Seats/plan page has nothing to gate yet (no invite-teammate surface exists — now stale as of the enterprise suite: CA2's Team page IS that surface, and it does enforce seat limits, see G2. Leaving this line for history rather than deleting it silently).
 - Submitted project ratings aren't returned by GET /marketplace/projects/{id} (ProjectResponse has no `ratings` field) — the rating POST works and persists correctly, but the poster's UI has no way to know a rating already exists, so the form doesn't switch to an "already rated" state after a successful submit. Low-risk (no duplicate-prevention server-side either, confirmed by reading ProjectService.rate() — resubmitting just inserts another row rather than erroring).
@@ -191,3 +190,45 @@ not fixed.
 - [x] `npm run build` clean (arena-web) — all six new `/admin/**` routes present in the route manifest
 - [x] `mvn clean package` clean (arena-api)
 - [x] `v1.1-enterprise-suite` tagged — both arena-web and arena-api, locally (not pushed — see BLOCKED.md, still the standing blocker from v1.0-rc)
+
+## Release gate (v1.5-hardened)
+
+ARENA-DEEP-AUDIT.md, 2026-08-08/09. By this point `v1.4-perf` had already shipped and the app
+had been live on the production custom domain (`arena.vikisol.in`) for a while — this pass is a
+correctness/architecture/performance/security hardening sweep of what was already live, not new
+feature work.
+
+- [x] Phase 1: full route sweep (82 route×viewport visits) + interaction sweep (manual, 6
+      highest-traffic pages) against the deployed app — one real bug found + fixed (cookie
+      consent banner blocking "Log out" for every first-time visitor); see `BUGS.md`
+- [x] Phase 1.3: architecture conformance re-check against `CLAUDE.md`/this file's own known-gaps
+      list — `hasDirectlyApplied` found stale here (see above, now corrected); everything else
+      re-confirmed accurate; see `GAPS.md`
+- [x] Phase 2: the one real defect from Phase 1 fixed and independently re-verified live
+- [x] Phase 3: shared `format.ts` (all ~21 currency/date call sites migrated), shared
+      `EmptyState` (12 sites), shared auth-guard utility (23 pages), shared `Card` (8
+      representative sites, remainder documented as follow-up) — `knip` clean afterward, no
+      orphaned new modules
+- [x] Phase 4: 3D pause-on-hidden verified by measuring actual WebGL draw calls (not just RAF
+      calls, which GSAP's own ticker also drives) — confirmed genuinely pausing; zero long tasks
+      across four real interactions (typing, swiping, dialog-open), with the measurement
+      methodology itself independently validated before trusting a zero-defect result; one N+1
+      request pattern found and deliberately left unfixed (the only available fix trades a real
+      correctness regression for a minor perf win); backend hot-path latency consistent with the
+      `v1.4-perf` baseline, no new regression
+- [x] Phase 5: full security audit, live-verified not just read from source — see
+      `SECURITY-AUDIT.md`. Two real production issues found and fixed same-session: the live
+      production domain was sending `noindex, nofollow` to every search engine since it went
+      live (a leftover from the staging-privacy setup that was never removed on cutover), and
+      arena-web was sending zero security response headers at all. Also caught and fixed:
+      today's commits had been pushed to the wrong git branch (`master` instead of `main`, the
+      one Railway actually deploys from) for the entire session up to that point — fast-forwarded
+      `main` to catch up, no history rewritten, redeployed, confirmed healthy.
+- [x] Phase 6: regression smoke-tested every page touched by this pass's refactors, three roles
+      (candidate/enterprise/platform_admin) — zero console errors, zero page errors, all correct
+      HTTP statuses; two apparent issues in the first pass both traced to the test script itself
+      (a nonexistent route in the page list, and a role-mismatched test account for a
+      hiring_manager-only page), not the app
+- [x] `npm run lint` / `npx tsc --noEmit` / `npm run build` clean (arena-web) after every
+      Phase 3/5 change, not just at the end
+- [x] `v1.5-hardened` tagged and pushed — both arena-web and arena-api
