@@ -10,10 +10,18 @@ const CREDENTIALS = process.env.STAGING_BASIC_AUTH;
 export function middleware(request: NextRequest) {
   if (!CREDENTIALS) return NextResponse.next();
 
+  // Only reached when STAGING_BASIC_AUTH is actually set - i.e. never in production. Keeps
+  // the "not public/indexed" half of ARENA-SHIP-IT.md #8 paired with the access gate itself,
+  // instead of as a separate always-on header in next.config.ts (which previously kept
+  // shipping noindex on the live production domain after the gate went dormant there).
   const auth = request.headers.get("authorization");
   if (auth?.startsWith("Basic ")) {
     const decoded = atob(auth.slice(6));
-    if (decoded === CREDENTIALS) return NextResponse.next();
+    if (decoded === CREDENTIALS) {
+      const res = NextResponse.next();
+      res.headers.set("X-Robots-Tag", "noindex, nofollow");
+      return res;
+    }
   }
 
   return new NextResponse("Authentication required", {

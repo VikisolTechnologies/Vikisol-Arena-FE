@@ -4,18 +4,14 @@ const nextConfig: NextConfig = {
   // Standalone output for the Docker runtime image - bundles only the traced production
   // dependencies into .next/standalone instead of shipping the full node_modules tree.
   output: "standalone",
-  async headers() {
-    return [
-      {
-        // ARENA-SHIP-IT.md #8: "keep staging PRIVATE - add noindex." Applies regardless of
-        // STAGING_PRIVATE (the middleware.ts basic-auth gate) so this is never accidentally
-        // left off if that env var is ever unset - a search engine finding an unlisted staging
-        // URL is a mistake either way, not just while the access gate happens to be on.
-        source: "/:path*",
-        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
-      },
-    ];
-  },
+  // ARENA-DEEP-AUDIT.md Phase 5: this used to unconditionally set X-Robots-Tag: noindex,
+  // nofollow here, which meant the header shipped on the live production domain too (found by
+  // curl-checking prod response headers directly) - Google was never going to index the site
+  // since noindex was never removed when the domain cutover to arena.vikisol.in happened. The
+  // noindex/nofollow header now lives in middleware.ts, gated behind the same
+  // STAGING_BASIC_AUTH check as the access gate itself, so it only ever applies to an actual
+  // staging deploy that opts in - never to production, regardless of build vs. runtime env
+  // var timing.
 };
 
 export default nextConfig;
