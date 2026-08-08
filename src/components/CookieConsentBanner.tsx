@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Cookie } from "lucide-react";
+import { markCookieConsentResolved } from "@/hooks/use-cookie-consent-visible";
 
 const KEY = "arena_cookie_consent";
 
@@ -25,6 +26,7 @@ export function CookieConsentBanner() {
   const respond = (choice: "accepted" | "rejected") => {
     localStorage.setItem(KEY, choice);
     setVisible(false);
+    markCookieConsentResolved();
   };
 
   if (!visible) return null;

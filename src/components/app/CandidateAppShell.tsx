@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import type { CandidateProfile } from "@/lib/types";
 import { signOut } from "@/lib/api/auth";
 import { getUnreadCount } from "@/lib/api/notifications";
+import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -74,6 +75,13 @@ export function CandidateAppShell({
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  // The cookie banner (CookieConsentBanner) is a fixed, full-width, bottom-of-viewport overlay
+  // (z-[900]) - the sidebar is h-svh with the Log out button pushed to its bottom by the nav's
+  // flex-1, which lands it directly under the banner while undismissed, silently eating the
+  // click (found via ARENA-DEEP-AUDIT.md's click-every-button sweep: real, reproducible - Log
+  // out is completely unclickable for any first-time visitor until they dismiss the banner).
+  // Reserving the banner's height as bottom padding pushes Log out back above it instead.
+  const cookieBannerVisible = useCookieConsentVisible();
   // Recomputed on every render (cheap localStorage read) rather than cached in state -
   // this naturally reflects mark-read updates the instant a parent (e.g. Settings) re-renders,
   // with no extra effect/subscription plumbing needed.
@@ -89,7 +97,10 @@ export function CandidateAppShell({
       <AuraBackground />
       <div className="relative z-10 mx-auto flex min-h-svh w-full max-w-[1600px]">
         {/* desktop sidebar */}
-        <aside className="sticky top-0 hidden h-svh w-[240px] shrink-0 flex-col border-r border-border py-5 lg:flex">
+        <aside
+          className="sticky top-0 hidden h-svh w-[240px] shrink-0 flex-col border-r border-border py-5 lg:flex"
+          style={cookieBannerVisible ? { paddingBottom: 88 } : undefined}
+        >
           <Link href="/dashboard" className="mb-6 flex items-center gap-2.5 px-4">
             <span className="font-display text-sm font-bold tracking-wide">
               ARENA<span className="text-primary">.</span>
