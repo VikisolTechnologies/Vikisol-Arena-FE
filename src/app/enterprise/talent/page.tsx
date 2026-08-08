@@ -13,6 +13,7 @@ import { getMyEnterpriseProfile, searchTalent } from "@/lib/api/enterprise";
 import { getShortlistIds, toggleShortlist } from "@/lib/api/shortlist";
 import { getSession, isEnterpriseOnboarded } from "@/lib/session";
 import { INDUSTRIES } from "@/lib/mock/seed";
+import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import type { EnterpriseProfile, CandidateProfile } from "@/lib/types";
 
@@ -130,11 +131,7 @@ export default function TalentUniversePage() {
             </div>
           );
         })}
-        {results.length === 0 && (
-          <div className="col-span-full rounded-2xl border border-dashed border-border-strong px-6 py-12 text-center text-sm text-muted-foreground">
-            No candidates match — try a different search.
-          </div>
-        )}
+        {results.length === 0 && <EmptyState title="No candidates match — try a different search." className="col-span-full" />}
       </div>
     </EnterpriseAppShell>
   );

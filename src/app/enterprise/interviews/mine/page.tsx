@@ -7,6 +7,7 @@ import { HiringManagerShell } from "@/components/app/HiringManagerShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { getMyAssignedInterviews, type HiringManagerInterview } from "@/lib/api/interviews";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const STATUS_TONE: Record<string, string> = {
   proposed: "bg-amber-500/15 text-amber-400",
@@ -56,10 +57,7 @@ export default function MyInterviewsPage() {
             );
           })}
           {interviews.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-border-strong px-6 py-16 text-center">
-              <p className="text-sm font-medium">No interviews assigned yet</p>
-              <p className="mt-1 text-xs text-muted-foreground">A recruiter or admin will assign you one when scheduling.</p>
-            </div>
+            <EmptyState title="No interviews assigned yet" description="A recruiter or admin will assign you one when scheduling." className="py-16" />
           )}
         </div>
       )}

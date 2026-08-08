@@ -12,6 +12,7 @@ import { getMyEnterpriseProfile, getMyPostings, getAllApplicantCounts } from "@/
 import { getShortlistIds } from "@/lib/api/shortlist";
 import { getCandidateById } from "@/lib/mock/candidates";
 import { getSession, isEnterpriseOnboarded } from "@/lib/session";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { EnterpriseProfile, JobPosting } from "@/lib/types";
 
 function StatCard({ icon: Icon, value, label }: { icon: typeof Briefcase; value: string | number; label: string }) {
@@ -77,9 +78,10 @@ export default function EnterpriseDashboardPage() {
               </Link>
             ))}
             {postings.length === 0 && (
-              <div className="rounded-xl border border-dashed border-border-strong px-4 py-8 text-center text-xs text-muted-foreground">
-                No postings yet — <Link href="/enterprise/postings" className="text-primary-soft hover:underline">create one</Link>.
-              </div>
+              <EmptyState
+                title={<>No postings yet — <Link href="/enterprise/postings" className="text-primary-soft hover:underline">create one</Link>.</>}
+                className="rounded-xl px-4 py-8 text-xs"
+              />
             )}
           </div>
         </div>
@@ -107,9 +109,7 @@ export default function EnterpriseDashboardPage() {
               );
             })}
             {shortlistIds.length === 0 && (
-              <div className="rounded-xl border border-dashed border-border-strong px-4 py-8 text-center text-xs text-muted-foreground">
-                Save candidates from Talent Universe to see them here.
-              </div>
+              <EmptyState title="Save candidates from Talent Universe to see them here." className="rounded-xl px-4 py-8 text-xs" />
             )}
           </div>
         </div>

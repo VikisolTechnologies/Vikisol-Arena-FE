@@ -13,6 +13,7 @@ import { getMyProjects } from "@/lib/api/myProjects";
 import { getSession, isOnboarded } from "@/lib/session";
 import type { CandidateProfile, Project } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatINR, formatDate } from "@/lib/format";
 
 const STATUS_TONE: Record<MyBidStatus, string> = {
@@ -76,10 +77,7 @@ export default function MyBidsPage() {
           );
         })}
         {bids.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-border-strong px-6 py-12 text-center">
-            <p className="text-sm font-medium">No bids yet</p>
-            <p className="mt-1 text-xs text-muted-foreground">Bids you place in the Marketplace will show up here.</p>
-          </div>
+          <EmptyState title="No bids yet" description="Bids you place in the Marketplace will show up here." />
         )}
       </div>
     </CandidateAppShell>

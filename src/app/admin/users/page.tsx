@@ -7,6 +7,7 @@ import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { searchPlatformUsers } from "@/lib/api/platformAdmin";
 import { formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { PlatformUser, Role } from "@/lib/types";
 
 const ROLE_FILTERS: { key: Role | ""; label: string }[] = [
@@ -79,11 +80,7 @@ export default function PlatformUsersPage() {
               <span className="text-xs text-muted-foreground">{formatDate(u.createdAt)}</span>
             </div>
           ))}
-          {users.length === 0 && (
-            <p className="rounded-2xl border border-dashed border-border-strong px-6 py-16 text-center text-sm text-muted-foreground">
-              No users match that search.
-            </p>
-          )}
+          {users.length === 0 && <EmptyState title="No users match that search." className="py-16" />}
         </div>
       )}
     </PlatformAdminShell>

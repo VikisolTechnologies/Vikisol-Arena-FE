@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { listTenants, setTenantSuspended, adjustSubscription, type AdjustSubscriptionInput } from "@/lib/api/platformAdmin";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { TenantSummary } from "@/lib/types";
 
 const STATUS_TONE: Record<string, string> = {
@@ -106,11 +107,7 @@ export default function TenantsPage() {
             )}
           </div>
         ))}
-        {tenants.length === 0 && (
-          <p className="rounded-2xl border border-dashed border-border-strong px-6 py-16 text-center text-sm text-muted-foreground">
-            No tenants match that search.
-          </p>
-        )}
+        {tenants.length === 0 && <EmptyState title="No tenants match that search." className="py-16" />}
       </div>
 
       <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>

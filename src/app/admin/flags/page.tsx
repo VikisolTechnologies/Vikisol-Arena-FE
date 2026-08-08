@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { listFeatureFlags, createFeatureFlag, toggleFeatureFlag } from "@/lib/api/platformAdmin";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { FeatureFlag } from "@/lib/types";
 
 export default function FeatureFlagsPage() {
@@ -71,11 +72,7 @@ export default function FeatureFlagsPage() {
             <Switch checked={f.enabled} onCheckedChange={() => toggle(f)} />
           </div>
         ))}
-        {flags.length === 0 && (
-          <p className="rounded-2xl border border-dashed border-border-strong px-6 py-16 text-center text-sm text-muted-foreground">
-            No feature flags yet.
-          </p>
-        )}
+        {flags.length === 0 && <EmptyState title="No feature flags yet." className="py-16" />}
       </div>
 
       <Dialog open={creating} onOpenChange={setCreating}>

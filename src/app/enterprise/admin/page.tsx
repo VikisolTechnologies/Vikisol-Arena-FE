@@ -6,6 +6,7 @@ import { CompanyAdminShell } from "@/components/app/CompanyAdminShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { getDashboard, type AdminDashboard } from "@/lib/api/companyAdmin";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const RANGES = [7, 30, 90];
 
@@ -98,11 +99,7 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
               ))}
-              {dashboard.recruiterActivity.length === 0 && (
-                <p className="rounded-2xl border border-dashed border-border-strong px-6 py-8 text-center text-sm text-muted-foreground">
-                  No active team members yet.
-                </p>
-              )}
+              {dashboard.recruiterActivity.length === 0 && <EmptyState title="No active team members yet." className="py-8" />}
             </div>
           </div>
         </div>

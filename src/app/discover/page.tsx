@@ -17,6 +17,7 @@ import { getJobs, getPassedJobIds, passOnJob } from "@/lib/api/jobs";
 import { applyToJob } from "@/lib/api/applications";
 import { agentRealtime } from "@/lib/realtime";
 import { getSession, isOnboarded } from "@/lib/session";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { CandidateProfile, Job, Industry } from "@/lib/types";
 
 const INDUSTRIES: Industry[] = ["Engineering", "Design", "Sales", "Healthcare", "Logistics"];
@@ -147,10 +148,11 @@ export default function DiscoverPage() {
       <div className="mx-auto flex max-w-md flex-col items-center">
         <div className="relative h-[440px] w-full">
           {visible.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center rounded-[24px] border border-dashed border-border text-center">
-              <p className="text-sm font-medium">You&apos;re all caught up</p>
-              <p className="mt-1 text-xs text-muted-foreground">Check back later, or reset your filters.</p>
-            </div>
+            <EmptyState
+              title="You're all caught up"
+              description="Check back later, or reset your filters."
+              className="flex h-full flex-col items-center justify-center rounded-[24px] border-border px-0 py-0"
+            />
           ) : (
             visible.map((job, i) =>
               i === 0 ? (

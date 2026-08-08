@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMyEnterpriseProfile, getPosting, getApplicantsForPosting, moveApplicantStage } from "@/lib/api/enterprise";
 import { getSession, isEnterpriseOnboarded } from "@/lib/session";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { EnterpriseProfile, JobPosting, Application, ApplicationStage, CandidateProfile } from "@/lib/types";
 
 const STAGES: ApplicationStage[] = ["applied", "screening", "interview", "offer", "rejected"];
@@ -112,11 +113,7 @@ export default function ApplicantPipelinePage() {
                     )}
                   </div>
                 ))}
-                {items.length === 0 && (
-                  <div className="rounded-2xl border border-dashed border-border-strong px-3 py-6 text-center text-xs text-muted-foreground">
-                    Nothing here
-                  </div>
-                )}
+                {items.length === 0 && <EmptyState title="Nothing here" className="px-3 py-6 text-xs" />}
               </div>
             </div>
           );

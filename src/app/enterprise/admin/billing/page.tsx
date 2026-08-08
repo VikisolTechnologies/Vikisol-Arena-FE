@@ -7,6 +7,7 @@ import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getBilling, changePlan, type Billing } from "@/lib/api/companyAdmin";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const PLANS: { key: Billing["plan"]; name: string; price: string; seats: string; credits: string }[] = [
   { key: "free", name: "Free", price: "₹0", seats: "3 seats", credits: "25 credits" },
@@ -88,11 +89,7 @@ export default function BillingPage() {
             <Badge variant="secondary" className="bg-emerald-500/15 text-emerald-400 capitalize">{inv.status}</Badge>
           </div>
         ))}
-        {billing.invoices.length === 0 && (
-          <p className="rounded-2xl border border-dashed border-border-strong px-6 py-8 text-center text-sm text-muted-foreground">
-            No invoices on the Free plan.
-          </p>
-        )}
+        {billing.invoices.length === 0 && <EmptyState title="No invoices on the Free plan." className="py-8" />}
       </div>
     </CompanyAdminShell>
   );

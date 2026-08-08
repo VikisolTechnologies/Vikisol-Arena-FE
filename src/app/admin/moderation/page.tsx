@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getModerationQueue, resolveModerationItem } from "@/lib/api/platformAdmin";
 import { formatDateTime } from "@/lib/format";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { ModerationItem, ModerationStatus } from "@/lib/types";
 
 const TABS: { key: ModerationStatus; label: string }[] = [
@@ -78,11 +79,7 @@ export default function ModerationPage() {
               )}
             </div>
           ))}
-          {items.length === 0 && (
-            <p className="rounded-2xl border border-dashed border-border-strong px-6 py-16 text-center text-sm text-muted-foreground">
-              Nothing in this queue right now.
-            </p>
-          )}
+          {items.length === 0 && <EmptyState title="Nothing in this queue right now." className="py-16" />}
         </div>
       )}
     </PlatformAdminShell>
