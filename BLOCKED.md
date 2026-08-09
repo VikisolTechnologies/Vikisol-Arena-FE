@@ -1,5 +1,30 @@
 # BLOCKED.md — items waiting on external input
 
+## GitHub push authentication is broken on this machine (2026-08-09) — blocks pushing, not building
+Mid-way through committing the v3 rewrite spec docs, `git push` on **both** `arena-web` and
+`arena-api` started failing with `401 Unauthorized`, then hanging for 60–90s per attempt
+instead of failing fast. Traced with `GIT_TRACE=1 GIT_CURL_VERBOSE=1`: the stored GitHub
+credential is being rejected, which makes git fall back to `git credential-manager get` —
+Windows Git Credential Manager's normal recovery path for that is an **interactive
+browser-based OAuth prompt**, which cannot complete in this headless tool environment (no
+browser, no display). Verified directly: the credential the credential store hands back
+now 401s against `api.github.com/user` too, so this isn't push-specific — the token itself
+is dead (most likely GCM auto-revoked/rotated it after the first failed push saw a 401 and
+called `git credential reject` internally). `git fetch`/`git ls-remote` still work fine
+(read access uses a different, still-valid path or is cached), only push/write auth is
+affected. Confirmed the same failure on both repos' remotes (same GitHub account, same
+credential store) — not repo-specific.
+
+**What this means:** every commit made from here forward is real and correct, but stays
+**local-only** until this is fixed — nothing new is reaching GitHub, Railway's
+auto-deploy-from-`arena-web`-on-push, or any collaborator, until push auth is restored.
+**How to unblock:** run `git push` once by hand in a real terminal on this machine (not
+through this tool) so the interactive Windows Credential Manager browser prompt can
+actually complete, or provide a fresh GitHub PAT to use instead of the OAuth flow. Per this
+doc's own standing instruction ("missing credentials → BLOCKED.md, then continue"), work
+keeps going and commits keep accumulating locally in the meantime — this file will get a
+line the moment push starts working again, and everything queued will go up in one shot.
+
 ## Women-only activity option (§4) — needs a real product decision on gender data, not a quick fix
 `ARENA-V2-PRODUCT-ARCHITECTURE.md` §4 explicitly names "women-only / invite-only options for
 activity posts" under Approval controls. Invite-only is functionally covered by what already
