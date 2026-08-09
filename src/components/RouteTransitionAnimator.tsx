@@ -7,7 +7,7 @@ import { gsap } from "gsap";
  *  specifically so it's a genuine next/dynamic code-split boundary (see RouteTransition.tsx's
  *  comment for why a plain `import("gsap")` inside an always-mounted component didn't achieve
  *  that on its own). Only ever loaded once a real transition needs to play. */
-export default function RouteTransitionAnimator({
+export function RouteTransitionAnimator({
   barRef,
   trigger,
 }: {

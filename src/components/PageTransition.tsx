@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
-const Animator = dynamic(() => import("./PageTransitionAnimator"), { ssr: false });
+const Animator = dynamic(() => import("./PageTransitionAnimator").then((m) => m.PageTransitionAnimator), { ssr: false });
 
 /**
  * Fades/lifts the new route's content in on every navigation. App Router swaps `children`

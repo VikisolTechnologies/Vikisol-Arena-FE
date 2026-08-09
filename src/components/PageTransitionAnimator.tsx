@@ -6,7 +6,7 @@ import { gsap } from "gsap";
 /** The actual gsap entrance tween for PageTransition, split into its own file for the same
  *  genuine-code-split reason as RouteTransitionAnimator — only loaded once a real transition
  *  needs to play, never part of any route's initial bundle. */
-export default function PageTransitionAnimator({
+export function PageTransitionAnimator({
   containerRef,
   trigger,
 }: {

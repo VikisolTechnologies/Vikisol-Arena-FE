@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
-const Animator = dynamic(() => import("./RouteTransitionAnimator"), { ssr: false });
+const Animator = dynamic(() => import("./RouteTransitionAnimator").then((m) => m.RouteTransitionAnimator), { ssr: false });
 
 /** A thin top progress bar that sweeps on every route change — Next.js App Router has no
  *  built-in transition event, so this keys off pathname changes directly.

@@ -6,7 +6,7 @@ import { gsap } from "gsap";
 /** The actual gsap cursor-parallax loop for AuraBackground, split into its own file for the
  *  same genuine-code-split reason as RouteTransitionAnimator — only mounted after the first
  *  real mousemove, so touch visitors (this investigation's whole point) never load it at all. */
-export default function AuraBackgroundAnimator() {
+export function AuraBackgroundAnimator() {
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       const x = e.clientX / window.innerWidth - 0.5;

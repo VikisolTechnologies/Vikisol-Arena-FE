@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
-const Animator = dynamic(() => import("./AuraBackgroundAnimator"), { ssr: false });
+const Animator = dynamic(() => import("./AuraBackgroundAnimator").then((m) => m.AuraBackgroundAnimator), { ssr: false });
 
 /** The two fixed, blurred gradient blobs behind the app (arena-prototype.html .aura) — drift
  * gently toward the cursor for a subtle sense of depth behind the glass surfaces on top.
