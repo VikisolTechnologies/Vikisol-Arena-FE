@@ -3,11 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bot, ShieldCheck, Sparkles, Eye, Waves, Bell, CalendarClock, DollarSign, Cog, Lock, Download, Trash2 } from "lucide-react";
+import { Bot, ShieldCheck, Sparkles, Eye, Waves, Bell, CalendarClock, DollarSign, Cog, Lock, Download, Trash2, MapPin, Phone, Cake } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Switch } from "@/components/ui/switch";
-import { getMyProfile, updateMyConsent, updateMyAutonomy, exportMyData, deleteMyAccount } from "@/lib/api/profile";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { getMyProfile, updateMyConsent, updateMyAutonomy, updateMyLocation, exportMyData, deleteMyAccount } from "@/lib/api/profile";
+import { getVerificationStatus, requestPhoneOtp, confirmPhoneOtp, setDateOfBirth } from "@/lib/api/verification";
 import { signOut } from "@/lib/api/auth";
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from "@/lib/api/notifications";
 import { getManualReducedEffects, setManualReducedEffects } from "@/hooks/use-reduced-motion";
@@ -15,7 +18,13 @@ import { requireOnboarded } from "@/lib/auth-guard";
 import { Card } from "@/components/ui/card";
 import { getTalentPlan } from "@/lib/plan";
 import { cn } from "@/lib/utils";
-import type { CandidateProfile, AutonomyLevel, AppNotification, NotificationType } from "@/lib/types";
+import type { CandidateProfile, AutonomyLevel, AppNotification, NotificationType, LocationConsent, VerificationStatus } from "@/lib/types";
+
+const LOCATION_OPTIONS: { key: LocationConsent; label: string; desc: string }[] = [
+  { key: "precise", label: "Precise", desc: "Your device's location, coarsened and jittered before it's ever stored or shown to anyone" },
+  { key: "city", label: "City-level", desc: "Just the city you type in, nothing device-based" },
+  { key: "off", label: "Off", desc: "No location at all - Feed and Map both still work, just without distance-based sorting" },
+];
 
 const AUTONOMY_OPTIONS: { key: AutonomyLevel; label: string; desc: string }[] = [
   { key: "manual", label: "Manual", desc: "Your agent only researches — you approve everything, every time." },
@@ -41,6 +50,18 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const [verification, setVerification] = useState<VerificationStatus | null>(null);
+  const [locationSaving, setLocationSaving] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [cityInput, setCityInput] = useState("");
+  const [dobInput, setDobInput] = useState("");
+  const [dobSaving, setDobSaving] = useState(false);
+  const [dobSaved, setDobSaved] = useState(false);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [otpInput, setOtpInput] = useState("");
+  const [phoneBusy, setPhoneBusy] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!requireOnboarded(router)) return;
     getMyProfile().then((p) => {
@@ -48,6 +69,10 @@ export default function SettingsPage() {
       setReducedEffects(getManualReducedEffects());
     });
     getNotifications().then(setNotifications);
+    getVerificationStatus().then((v) => {
+      setVerification(v);
+      setPhoneInput(v.phoneNumber ?? "");
+    });
   }, [router]);
 
   if (!profile) {
@@ -74,6 +99,79 @@ export default function SettingsPage() {
   const toggleReducedEffects = (value: boolean) => {
     setReducedEffects(value);
     setManualReducedEffects(value);
+  };
+
+  // §5's location consent - "precise" fires its own explicit browser Geolocation prompt right
+  // here (independent of the composer's own per-post version), "city" just geocodes the typed
+  // name server-side, "off" clears everything. The app stays fully usable at "off" - Feed/Map
+  // just lose distance-based sorting, never a broken or blocked state.
+  const setLocation = async (consent: LocationConsent) => {
+    setLocationError(null);
+    if (consent === "off") {
+      setLocationSaving(true);
+      setProfile(await updateMyLocation({ consent: "off" }));
+      setLocationSaving(false);
+      return;
+    }
+    if (consent === "city") {
+      if (!cityInput.trim()) { setLocationError("Enter a city first."); return; }
+      setLocationSaving(true);
+      setProfile(await updateMyLocation({ consent: "city", city: cityInput.trim() }));
+      setLocationSaving(false);
+      return;
+    }
+    if (!navigator.geolocation) { setLocationError("Location isn't available in this browser."); return; }
+    setLocationSaving(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        setProfile(await updateMyLocation({ consent: "precise", lat: pos.coords.latitude, lng: pos.coords.longitude }));
+        setLocationSaving(false);
+      },
+      () => {
+        setLocationError("Couldn't get your location - check permissions and try again.");
+        setLocationSaving(false);
+      },
+      { enableHighAccuracy: false, timeout: 8000 },
+    );
+  };
+
+  const saveDob = async () => {
+    if (!dobInput) return;
+    setDobSaving(true);
+    try {
+      await setDateOfBirth(dobInput);
+      setDobSaved(true);
+    } finally {
+      setDobSaving(false);
+    }
+  };
+
+  const requestOtp = async () => {
+    if (!phoneInput.trim()) return;
+    setPhoneBusy(true);
+    setPhoneError(null);
+    try {
+      await requestPhoneOtp(phoneInput.trim());
+      setVerification((v) => (v ? { ...v, otpPending: true, phoneNumber: phoneInput.trim() } : v));
+    } catch (err) {
+      setPhoneError(err instanceof Error ? err.message : "Couldn't send a code.");
+    } finally {
+      setPhoneBusy(false);
+    }
+  };
+
+  const confirmOtp = async () => {
+    if (!otpInput.trim()) return;
+    setPhoneBusy(true);
+    setPhoneError(null);
+    try {
+      setVerification(await confirmPhoneOtp(otpInput.trim()));
+      setOtpInput("");
+    } catch (err) {
+      setPhoneError(err instanceof Error ? err.message : "That code didn't work.");
+    } finally {
+      setPhoneBusy(false);
+    }
   };
 
   const openNotification = async (n: AppNotification) => {
@@ -180,6 +278,88 @@ export default function SettingsPage() {
                   <span className="mt-0.5 block text-xs text-muted-foreground">Show up in Talent Universe search results</span>
                 </span>
                 <Switch checked={profile.consent.searchableByEnterprises} onCheckedChange={() => toggleConsent("searchableByEnterprises")} disabled={saving} />
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <p className="mb-1 flex items-center gap-2 font-display text-sm font-bold"><MapPin className="size-4 text-primary-soft" /> Location</p>
+            <p className="mb-4 text-xs text-muted-foreground">Powers Feed and Map proximity - never stores your exact position, even server-side.</p>
+            <div className="space-y-2.5">
+              {LOCATION_OPTIONS.map(({ key, label, desc }) => (
+                <div key={key}>
+                  <button
+                    type="button"
+                    disabled={locationSaving}
+                    onClick={() => setLocation(key)}
+                    className={cn(
+                      "flex w-full items-start gap-3 rounded-2xl border px-4 py-3.5 text-left transition-colors",
+                      profile.locationConsent === key || (!profile.locationConsent && key === "off")
+                        ? "border-primary/60 bg-primary/10" : "border-border bg-white/[0.02] hover:border-white/20",
+                    )}
+                  >
+                    <span className={cn("mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-2", (profile.locationConsent ?? "off") === key ? "border-primary-soft bg-primary-soft" : "border-border")} />
+                    <span>
+                      <span className="block text-sm font-semibold">{label}</span>
+                      <span className="block text-xs text-muted-foreground">{desc}</span>
+                    </span>
+                  </button>
+                  {key === "city" && (profile.locationConsent === "city" || cityInput) && (
+                    <Input
+                      value={cityInput || profile.homeCity || ""}
+                      onChange={(e) => setCityInput(e.target.value)}
+                      placeholder="e.g. Hyderabad"
+                      className="mt-1.5 ml-7 h-8 w-[calc(100%-1.75rem)] border-border bg-white/[0.03] text-xs"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+            {locationError && <p className="mt-2 text-xs text-red-400">{locationError}</p>}
+          </Card>
+
+          <Card>
+            <p className="mb-1 flex items-center gap-2 font-display text-sm font-bold"><ShieldCheck className="size-4 text-primary-soft" /> Verification &amp; safety</p>
+            <p className="mb-4 text-xs text-muted-foreground">Required before joining or creating activities that meet up in person.</p>
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-border bg-white/[0.02] px-4 py-3.5">
+                <p className="flex items-center gap-1.5 text-sm font-medium"><Cake className="size-3.5 text-primary-soft" /> Date of birth</p>
+                <p className="mt-0.5 mb-2.5 text-xs text-muted-foreground">Self-declared, used only to block under-18s from activity meetups.</p>
+                <div className="flex items-center gap-2">
+                  <Input type="date" value={dobInput} onChange={(e) => { setDobInput(e.target.value); setDobSaved(false); }} className="h-8 border-border bg-white/[0.03] text-xs" />
+                  <Button variant="ghost-glass" size="sm" disabled={!dobInput || dobSaving} onClick={saveDob}>
+                    {dobSaving ? "Saving…" : dobSaved ? "Saved ✓" : "Save"}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-white/[0.02] px-4 py-3.5">
+                <p className="flex items-center gap-1.5 text-sm font-medium">
+                  <Phone className="size-3.5 text-primary-soft" /> Phone verification
+                  {verification?.phoneVerified && <span className="text-[11px] font-normal text-emerald-400">· Verified</span>}
+                </p>
+                <p className="mt-0.5 mb-2.5 text-xs text-muted-foreground">Lets you create or join activities that require a verified phone.</p>
+                {verification?.phoneVerified ? (
+                  <p className="text-xs text-muted-foreground">{verification.phoneNumber}</p>
+                ) : verification?.otpPending ? (
+                  <div className="space-y-2">
+                    <p className="text-[11px] text-muted-foreground">Code sent to {verification.phoneNumber}. (Demo mode: the code is <span className="font-mono text-primary-soft">123456</span>.)</p>
+                    <div className="flex items-center gap-2">
+                      <Input value={otpInput} onChange={(e) => setOtpInput(e.target.value)} placeholder="6-digit code" className="h-8 border-border bg-white/[0.03] text-xs" />
+                      <Button variant="primary-gradient" size="sm" disabled={!otpInput.trim() || phoneBusy} onClick={confirmOtp}>
+                        {phoneBusy ? "Confirming…" : "Confirm"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Input value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} placeholder="+91 98765 43210" className="h-8 border-border bg-white/[0.03] text-xs" />
+                    <Button variant="ghost-glass" size="sm" disabled={!phoneInput.trim() || phoneBusy} onClick={requestOtp}>
+                      {phoneBusy ? "Sending…" : "Send code"}
+                    </Button>
+                  </div>
+                )}
+                {phoneError && <p className="mt-2 text-xs text-red-400">{phoneError}</p>}
               </div>
             </div>
           </Card>
