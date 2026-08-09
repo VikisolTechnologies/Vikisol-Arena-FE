@@ -16,17 +16,16 @@ export function BlockButton({ userId, className }: { userId: string; className?:
     getMyBlocks().then((blocks) => setBlocked(blocks.some((b) => b.userId === userId)));
   }, [userId]);
 
+  // MOBILE-PERF-BASELINE.md: optimistic, same as FollowButton/ReactionButton - reverts on failure.
   const toggle = async () => {
     if (blocked === null) return;
+    const next = !blocked;
+    setBlocked(next);
     setBusy(true);
     try {
-      if (blocked) {
-        await unblockUser(userId);
-        setBlocked(false);
-      } else {
-        await blockUser(userId);
-        setBlocked(true);
-      }
+      await (next ? blockUser(userId) : unblockUser(userId));
+    } catch {
+      setBlocked(!next);
     } finally {
       setBusy(false);
     }

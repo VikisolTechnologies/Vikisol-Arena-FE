@@ -13,17 +13,18 @@ export function FollowButton({ userId, className }: { userId: string; className?
     getCounts(userId).then((c) => setFollowing(!!c.viewerFollows));
   }, [userId]);
 
+  // MOBILE-PERF-BASELINE.md: was await-then-update, meaning every click sat frozen for a full
+  // round trip before the button changed at all. Flips state immediately (ReactionButton
+  // already does this) and only reverts if the call genuinely fails.
   const toggle = async () => {
     if (following === null) return;
+    const next = !following;
+    setFollowing(next);
     setBusy(true);
     try {
-      if (following) {
-        await unfollow(userId);
-        setFollowing(false);
-      } else {
-        await follow(userId);
-        setFollowing(true);
-      }
+      await (next ? follow(userId) : unfollow(userId));
+    } catch {
+      setFollowing(!next);
     } finally {
       setBusy(false);
     }

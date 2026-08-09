@@ -26,6 +26,9 @@ export function ReactionButton({
     setReactionCount((c) => c + (next ? 1 : -1));
     try {
       await (next ? reactToPost(postId) : unreactToPost(postId));
+    } catch {
+      setMyReacted(!next);
+      setReactionCount((c) => c + (next ? -1 : 1));
     } finally {
       setBusy(false);
     }

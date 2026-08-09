@@ -9,17 +9,16 @@ export function CompanyFollowButton({ companyId, initialFollowing, className }: 
   const [following, setFollowing] = useState(initialFollowing);
   const [busy, setBusy] = useState(false);
 
+  // MOBILE-PERF-BASELINE.md: optimistic, same as FollowButton/ReactionButton - reverts on failure.
   const toggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    const next = !following;
+    setFollowing(next);
     setBusy(true);
     try {
-      if (following) {
-        await unfollowCompany(companyId);
-        setFollowing(false);
-      } else {
-        await followCompany(companyId);
-        setFollowing(true);
-      }
+      await (next ? followCompany(companyId) : unfollowCompany(companyId));
+    } catch {
+      setFollowing(!next);
     } finally {
       setBusy(false);
     }

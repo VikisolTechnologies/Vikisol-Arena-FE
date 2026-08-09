@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -11,6 +11,32 @@ import { agentRealtime } from "@/lib/realtime";
 import { cn } from "@/lib/utils";
 
 const OrbScene = dynamic(() => import("./OrbScene").then((m) => m.OrbScene), { ssr: false });
+
+// MOBILE-PERF-BASELINE.md: this Canvas's own vendor chunk (three/@react-three/fiber/drei) is
+// ~876KB - correctly code-split away from every route's initial bundle already, but the
+// dynamic import used to fire the instant this component mounted, i.e. immediately once the
+// authenticated shell renders, landing squarely in the same window the page's own data fetch
+// is competing for bandwidth in. Deferring the mount to next idle (with a timeout fallback for
+// browsers with no requestIdleCallback) doesn't change the scene itself at all - full 3D,
+// same quality tiering, same everything - it only changes *when* the browser goes and fetches
+// it, so it stops racing the content the user is actually there to see.
+function useIdleReady(timeoutMs = 1200) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(() => setReady(true), { timeout: timeoutMs });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const id = window.setTimeout(() => setReady(true), 300);
+    return () => window.clearTimeout(id);
+  }, [timeoutMs]);
+  return ready;
+}
 
 const STATE_LABEL: Record<string, string> = {
   idle: "Agent — idle. Open agent chat",
@@ -33,6 +59,7 @@ export function PersistentOrb() {
   const isMobile = useIsMobileViewport();
   const state = useAgentState();
   const pathname = usePathname();
+  const sceneReady = useIdleReady();
 
   useEffect(() => {
     if (pathname === "/agent") return; // the full orb on that page owns state directly
@@ -65,7 +92,11 @@ export function PersistentOrb() {
       {state === "needs-approval" && (
         <span className="absolute -right-0.5 -top-0.5 z-10 size-3.5 rounded-full border-2 border-background bg-primary" />
       )}
-      {reduced ? (
+      {reduced || !sceneReady ? (
+        // Same static disc doubles as the pre-idle placeholder, not just the reduced-motion
+        // fallback - the 3D scene still always arrives (full quality tiering intact), just a
+        // beat later, once the browser's had a chance to get the actual feed content on screen
+        // first. See useIdleReady's own comment.
         <span
           className="size-9 rounded-full"
           style={{ background: "radial-gradient(circle at 35% 30%, #FF8A5B, #FF6B35 70%)" }}

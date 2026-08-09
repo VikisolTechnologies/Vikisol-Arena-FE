@@ -37,14 +37,12 @@ function FeedPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router, searchParams, sort]);
 
-  if (!profile) {
-    return (
-      <CandidateAppShell title="Feed">
-        <OrbLoader className="h-96" />
-      </CandidateAppShell>
-    );
-  }
-
+  // MOBILE-PERF-BASELINE.md: this used to block the ENTIRE page (shell chrome included) on
+  // `profile` specifically, even on requests where the feed's own data resolves first -
+  // CandidateAppShell already renders a graceful "Loading…" placeholder for a null profile
+  // (see its own `profile?.name ?? "Loading…"`), so there's no reason to hold the whole page
+  // hostage to whichever of the two parallel fetches happens to be slower. Feed content itself
+  // still correctly waits on `!posts` below.
   return (
     <CandidateAppShell
       title="Feed"
