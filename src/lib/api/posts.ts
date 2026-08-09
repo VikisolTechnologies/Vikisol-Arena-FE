@@ -163,6 +163,8 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
     commentCount: 0,
     reactionCount: 0,
     myReacted: false,
+    authorJoinCount: 0,
+    authorAccountAgeDays: 30,
   };
   writePosts([post, ...readPosts()]);
   return delay(post, 300);
@@ -358,4 +360,16 @@ export async function unreactToPost(postId: string): Promise<void> {
     writePosts(readPosts().map((p) => (p.id === postId ? { ...p, reactionCount: Math.max(0, p.reactionCount - 1), myReacted: false } : p)));
   }
   await delay(undefined, 150);
+}
+
+// §4 safety-audit fix: "report ... everywhere" - posts are now directly reportable, not just
+// via a Room (which UPDATE posts and not-yet-joined ACTIVITY/ASK posts never had). Mock mode
+// has no moderation backend to write to - same "confirms to the user, nothing durable to
+// persist locally" scope as reportRoom in rooms.ts.
+export async function reportPost(postId: string, reason: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch<void>(`/posts/${postId}/report`, { method: "POST", body: { reason } });
+    return;
+  }
+  await delay(undefined, 200);
 }

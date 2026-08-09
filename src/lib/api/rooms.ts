@@ -107,3 +107,21 @@ export async function reportRoom(roomId: string, reason: string): Promise<void> 
   // "no queue reads this yet" scope for Phase A.
   await delay(undefined, 200);
 }
+
+// §4 safety-audit fix: "creator can remove anyone" - previously entirely unbuilt. Only the
+// room's own admin (the post's author) can call this successfully; the backend enforces that,
+// this is just the client call.
+export async function removeRoomMember(roomId: string, userId: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch<void>(`/rooms/${roomId}/members/${userId}`, { method: "DELETE" });
+    return;
+  }
+  const members = readMembers();
+  const key = Object.keys(members).find((k) => k === roomId);
+  if (key) {
+    const remaining: Record<string, RoomMember[]> = { ...members, [key]: members[key].filter((m) => m.userId !== userId) };
+    localStorage.setItem(MEMBERS_KEY, JSON.stringify(remaining));
+  }
+  writeRooms(readRooms().map((r) => (r.id === roomId ? { ...r, memberCount: Math.max(1, r.memberCount - 1) } : r)));
+  await delay(undefined, 200);
+}

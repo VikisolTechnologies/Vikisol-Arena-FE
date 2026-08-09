@@ -26,6 +26,8 @@ export const MOCK_POSTS: Post[] = [
     commentCount: 2,
     reactionCount: 4,
     myReacted: false,
+    authorJoinCount: 6,
+    authorAccountAgeDays: 210,
   },
   {
     id: "post-2",
@@ -43,6 +45,8 @@ export const MOCK_POSTS: Post[] = [
     commentCount: 3,
     reactionCount: 1,
     myReacted: false,
+    authorJoinCount: 2,
+    authorAccountAgeDays: 95,
   },
   {
     id: "post-3",
@@ -60,6 +64,8 @@ export const MOCK_POSTS: Post[] = [
     commentCount: 5,
     reactionCount: 9,
     myReacted: true,
+    authorJoinCount: 0,
+    authorAccountAgeDays: 340,
   },
   {
     id: "post-4",
@@ -80,6 +86,8 @@ export const MOCK_POSTS: Post[] = [
     commentCount: 1,
     reactionCount: 3,
     myReacted: false,
+    authorJoinCount: 4,
+    authorAccountAgeDays: 12,
   },
   {
     id: "post-5",
@@ -97,6 +105,8 @@ export const MOCK_POSTS: Post[] = [
     commentCount: 0,
     reactionCount: 0,
     myReacted: false,
+    authorJoinCount: 8,
+    authorAccountAgeDays: 480,
   },
 ];
 

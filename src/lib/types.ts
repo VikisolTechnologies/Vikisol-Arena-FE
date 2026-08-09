@@ -412,11 +412,12 @@ export interface ThreadMessage {
 
 // ---- Phase A: posts / rooms / follows (ARENA-V2-PRODUCT-ARCHITECTURE.md) ----
 
-// Only the three intent types with no pre-existing backing entity - JOB/PROJECT/COMPANY stay on
-// their existing tables (Job, Project; company pages don't exist yet). See §"Room becomes" in
-// the source doc: ACTIVITY/ASK map to a real Room, UPDATE maps to a comment thread (Phase C,
-// not built yet) - an UPDATE post in Phase A is just a feed item with no join/room UI at all.
-export type PostIntentType = "activity" | "ask" | "update";
+// Only intent types with no pre-existing backing entity live here - JOB/PROJECT stay on their
+// existing tables (Job, Project). See §"Room becomes" in the source doc: ACTIVITY/ASK map to a
+// real Room, UPDATE/COMPANY map to a comment thread - comments/reactions apply generically to
+// every post type (Phase C). "company" was added in the post-spec reconciliation pass -
+// §3.5/§6's "Company posts appear in the feed," postable only via lib/api/companyPosts.ts.
+export type PostIntentType = "activity" | "ask" | "update" | "company";
 
 export type PostAudience = "global" | "followers" | "local"; // "local" not selectable yet (needs Phase B geo)
 export type PostVisibility = "public" | "approval"; // drives the join/approve flow; ignored for "update"
@@ -428,6 +429,8 @@ export interface Post {
   authorUserId: string;
   authorName: string;
   authorEmoji: string;
+  /** Set only for intentType="company" - links the post's author straight to /companies/{id}. */
+  authorCompanyId?: string;
   intentType: PostIntentType;
   body: string;
   locationText?: string;
@@ -463,6 +466,9 @@ export interface Post {
   commentCount: number;
   reactionCount: number;
   myReacted?: boolean;
+  // §4 safety-audit additions - trust signals for whoever's about to meet this post's author.
+  authorJoinCount: number;
+  authorAccountAgeDays: number;
 }
 
 export interface PostJoinRequest {

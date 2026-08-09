@@ -1,4 +1,4 @@
-import { CalendarClock, MapPin, MessageCircle, Sparkles, Users } from "lucide-react";
+import { Briefcase, CalendarClock, MapPin, MessageCircle, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ReactionButton } from "@/components/feed/ReactionButton";
 import { formatFriendlyDateTime } from "@/lib/format";
@@ -8,13 +8,20 @@ const INTENT_LABEL: Record<Post["intentType"], string> = {
   activity: "Activity",
   ask: "Ask",
   update: "Update",
+  company: "Company",
 };
 
 const INTENT_ICON: Record<Post["intentType"], typeof Sparkles> = {
   activity: Users,
   ask: Sparkles,
   update: CalendarClock,
+  company: Briefcase,
 };
+
+// §4 safety-audit addition: "Show join-count ... and account age" - a fresh, zero-track-record
+// account posting an in-person meetup is exactly the risk signal this is meant to surface, so
+// it only renders for the two intent types that actually involve meeting a stranger.
+const NEW_ACCOUNT_THRESHOLD_DAYS = 14;
 
 export function PostCard({ post, onClick }: { post: Post; onClick: () => void }) {
   const Icon = INTENT_ICON[post.intentType];
@@ -64,6 +71,19 @@ export function PostCard({ post, onClick }: { post: Post; onClick: () => void })
         )}
         <span className="ml-auto">{formatFriendlyDateTime(post.createdAt)}</span>
       </div>
+
+      {post.joinable && !post.mine && (
+        <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+          {post.authorAccountAgeDays < NEW_ACCOUNT_THRESHOLD_DAYS ? (
+            <span className="flex items-center gap-1 text-amber-400">New account (joined {post.authorAccountAgeDays}d ago)</span>
+          ) : (
+            <span>On Arena {post.authorAccountAgeDays}d</span>
+          )}
+          {post.authorJoinCount > 0 && (
+            <span className="flex items-center gap-1"><ShieldCheck className="size-3" /> {post.authorJoinCount} activities joined</span>
+          )}
+        </div>
+      )}
 
       <div className="mt-3 flex items-center gap-4 border-t border-border pt-3">
         <ReactionButton postId={post.id} reacted={!!post.myReacted} count={post.reactionCount} />

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { AlertTriangle, ArrowLeft, MapPin, MessageCircle, ShieldCheck, Users, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Flag, MapPin, MessageCircle, Share2, ShieldCheck, Users, XCircle } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
@@ -14,13 +14,14 @@ import { ReactionButton } from "@/components/feed/ReactionButton";
 import { CommentThread } from "@/components/feed/CommentThread";
 import { JoinRequestsPanel } from "@/components/feed/JoinRequestsPanel";
 import { getMyProfile } from "@/lib/api/profile";
-import { getPost, requestJoin, cancelPost } from "@/lib/api/posts";
+import { getPost, requestJoin, cancelPost, reportPost } from "@/lib/api/posts";
 import { requireOnboarded } from "@/lib/auth-guard";
 import { formatFriendlyDateTime } from "@/lib/format";
 import { getSession } from "@/lib/session";
 import type { CandidateProfile, Post } from "@/lib/types";
 
 const VERIFICATION_LABEL: Record<string, string> = { basic: "Basic", phone: "Phone-verified", id: "ID-verified" };
+const NEW_ACCOUNT_THRESHOLD_DAYS = 14;
 
 export default function PostDetailPage() {
   const params = useParams<{ id: string }>();
@@ -30,6 +31,8 @@ export default function PostDetailPage() {
   const [joining, setJoining] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [reported, setReported] = useState(false);
+  const [shared, setShared] = useState(false);
 
   const load = () => { getPost(params.id).then((p) => setPost(p ?? null)); };
 
@@ -78,6 +81,34 @@ export default function PostDetailPage() {
     }
   };
 
+  // §4 safety-audit fix: "report ... everywhere" - posts are directly reportable now, not just
+  // via a Room (which UPDATE posts and not-yet-joined ACTIVITY/ASK posts never had at all).
+  const report = async () => {
+    await reportPost(post.id, "Reported from the post");
+    setReported(true);
+  };
+
+  // §4's "share-my-plan (send room details to a trusted contact)" - no backend/contacts system
+  // needed: assembles the same info already on this page into shareable text and hands it to
+  // the OS share sheet (falls back to clipboard), so the user can send it to whoever they want
+  // via WhatsApp/SMS/anything themselves.
+  const sharePlan = async () => {
+    const when = post.startsAt ? formatFriendlyDateTime(post.startsAt) : "time not set";
+    const where = post.exactMeetingPoint || post.locationText || "location not set";
+    const text = `I'm meeting up via Arena:\n"${post.body}"\nWith: ${post.authorName}\nWhen: ${when}\nWhere: ${where}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "My meetup plan", text });
+        return;
+      } catch {
+        // user cancelled the share sheet - fall through to clipboard
+      }
+    }
+    await navigator.clipboard.writeText(text);
+    setShared(true);
+    setTimeout(() => setShared(false), 2000);
+  };
+
   const myUserId = getSession()?.candidateId;
   const inactive = post.status === "cancelled" || post.status === "expired";
   const spotsLeft = post.capacity ? Math.max(0, post.capacity - post.spotsFilled) : undefined;
@@ -100,7 +131,11 @@ export default function PostDetailPage() {
               {post.mine ? (
                 <p className="text-sm font-semibold">{post.authorName}</p>
               ) : (
-                <button type="button" onClick={() => router.push(`/people/${post.authorUserId}`)} className="text-sm font-semibold hover:underline">
+                <button
+                  type="button"
+                  onClick={() => router.push(post.authorCompanyId ? `/companies/${post.authorCompanyId}` : `/people/${post.authorUserId}`)}
+                  className="text-sm font-semibold hover:underline"
+                >
                   {post.authorName}
                 </button>
               )}
@@ -112,13 +147,29 @@ export default function PostDetailPage() {
                 {post.status === "cancelled" ? "Cancelled" : post.status === "expired" ? "Expired" : "Full"}
               </Badge>
             )}
-            {!post.mine && myUserId !== post.authorUserId && (
+            {!post.mine && myUserId !== post.authorUserId && !post.authorCompanyId && (
               <div className="flex items-center gap-1.5">
                 <FollowButton userId={post.authorUserId} />
                 <BlockButton userId={post.authorUserId} />
+                <Button variant="ghost-glass" size="icon-sm" disabled={reported} onClick={report} aria-label="Report this post" title={reported ? "Reported" : "Report"}>
+                  <Flag className={reported ? "size-3.5 text-red-400" : "size-3.5"} />
+                </Button>
               </div>
             )}
           </div>
+
+          {post.joinable && !post.mine && (
+            <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+              {post.authorAccountAgeDays < NEW_ACCOUNT_THRESHOLD_DAYS ? (
+                <span className="text-amber-400">New account (joined {post.authorAccountAgeDays}d ago)</span>
+              ) : (
+                <span>On Arena {post.authorAccountAgeDays}d</span>
+              )}
+              {post.authorJoinCount > 0 && (
+                <span className="flex items-center gap-1"><ShieldCheck className="size-3" /> {post.authorJoinCount} activities joined</span>
+              )}
+            </div>
+          )}
 
           <p className="mt-5 whitespace-pre-wrap text-sm leading-relaxed">{post.body}</p>
 
@@ -147,12 +198,25 @@ export default function PostDetailPage() {
           </div>
 
           {post.exactMeetingPoint && (
-            <div className="mt-4 flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/[0.04] px-3.5 py-3">
-              <MapPin className="mt-0.5 size-3.5 shrink-0 text-primary-soft" />
-              <div>
-                <p className="text-xs font-semibold text-primary-soft">Meeting point</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{post.exactMeetingPoint}</p>
+            <div className="mt-4 rounded-xl border border-primary/20 bg-primary/[0.04] px-3.5 py-3">
+              <div className="flex items-start gap-2">
+                <MapPin className="mt-0.5 size-3.5 shrink-0 text-primary-soft" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-primary-soft">Meeting point</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{post.exactMeetingPoint}</p>
+                </div>
               </div>
+              {/* §4 "in-room safety UX: public-place suggestions, share-my-plan" */}
+              <p className="mt-2.5 text-[11px] text-muted-foreground">
+                For a first meetup, prefer a public place and daylight hours where possible.
+              </p>
+              <button
+                type="button"
+                onClick={sharePlan}
+                className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-primary-soft hover:underline"
+              >
+                <Share2 className="size-3" /> {shared ? "Copied to clipboard" : "Share this plan with someone"}
+              </button>
             </div>
           )}
 
