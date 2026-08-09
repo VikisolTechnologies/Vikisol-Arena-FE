@@ -28,31 +28,46 @@ foundation (nothing thrown away — see PART 15's build order, which is additive
 transformative, not a wipe) and rebuilds the route map, data model, visual system, and
 adds real-time/map/promotions/media on top of it.
 
-**Step 1 (auth/session rewrite) — in progress, real backend + frontend mechanism shipped:**
-- `arena-api`: new `arena_session` HttpOnly cookie (`SessionCookieHelper`), issued
-  alongside the existing access-token JSON response at every sign-in/signup/2FA-verify/
-  invite-accept/refresh call site; `JwtAuthenticationFilter` accepts it as a fallback when
-  no `Authorization` header is present. Purely additive — the existing Bearer-token flow
-  is unchanged.
+**The founder set one change to the plan (2026-08-10):** deploy and ask for a look once
+*both* Step 2 (design tokens + primitives) and Step 5 (the real Home feed) are built — one
+combined checkpoint, not one after every step — then pause there before Steps 6–14
+specifically. Continuing to build and commit locally in the meantime; nothing gets deployed
+for review until that checkpoint is genuinely reached.
+
+**Step 1 (auth/session rewrite) — mechanism shipped, real remaining scope still open:**
+- `arena-api`: `arena_session` HttpOnly cookie (`SessionCookieHelper`), issued alongside
+  the existing access-token JSON response at every sign-in/signup/2FA-verify/invite-accept/
+  refresh call site; `JwtAuthenticationFilter` accepts it as a fallback when no
+  `Authorization` header is present. Purely additive.
 - `arena-web`: `serverSession.ts` (Edge-compatible JWT verification via `jose`) +
-  `middleware.ts` now resolves an already-signed-in visitor to `/auth` server-side,
-  before any page JS loads — the exact waterfall MOBILE-PERF-BASELINE.md measured.
-  Fails closed (inert, not broken) until `JWT_SECRET`/`JWT_COOKIE_DOMAIN` are set on
-  Railway — see BLOCKED.md for the exact commands.
-- Not yet done, real remaining scope: migrating the other ~26 client-guarded routes
-  (`auth-guard.ts`) to server-resolved equivalents, the `/home` route + new shell/nav
-  (PART 4), and the onboarding-status server-side signal (today only in localStorage).
-- Spec docs committed (`ARENA-MASTER-ARCHITECTURE.md`, `ARENA-DESIGN-SYSTEM.md`), key
-  infra/architecture decisions logged (DECISIONS.md), real open blockers logged
-  (BLOCKED.md — object storage, map tile provider, the JWT env-var copy above, and a
-  broken GitHub push credential queuing every commit locally until fixed by hand), route
-  migration table written (ROUTES.md).
-- **Steps 2–14 (design system, data model, media, feed, map, inbox, work, profiles/
-  workspace, promotions, notifications/settings/admin, seed content, perf/security pass,
-  verification+tag) have not started.** This is being executed as a genuinely
-  multi-session rewrite per PART 15's own order, continuously and without stopping to
-  ask per the standing charter — not attempted as a single-turn claim of completion. This
-  section gets updated honestly as each step actually lands.
+  `middleware.ts` resolves an already-signed-in visitor to `/auth` server-side, before any
+  page JS loads. Fails closed until `JWT_SECRET`/`JWT_COOKIE_DOMAIN` are actually set on
+  Railway — **re-verified 2026-08-10 that this still hasn't happened**, see BLOCKED.md.
+- New `AppShell` (PART 4: side nav, mobile tab bar, GlobalSearch trigger, right-rail slot)
+  + a real `/home` route on it (reuses existing feed data — not yet Step 5's full rebuild).
+  `/feed` now redirects to `/home`. `CandidateAppShell` and every route still on it are
+  untouched.
+- Not yet done: migrating the other ~26 client-guarded routes (`auth-guard.ts`) to
+  server-resolved equivalents, and a server-side onboarding-status signal (today only in
+  localStorage) — ongoing background work, not gating the Step 2+5 checkpoint.
+
+**Step 2 (design system) — tokens + scoping mechanism shipped, primitive polish ongoing:**
+- Full `ARENA-DESIGN-SYSTEM.md` §2 token set added, scoped to `[data-theme="product"]`
+  rather than replacing `:root` — see DECISIONS.md for why the polarity is deliberately
+  inverted from the doc's own end-state (new surfaces opt into light, nothing currently
+  dark breaks). `AppShell` carries the scope attribute; shared primitives (Button, Card,
+  Avatar, Badge, ...) reskin automatically via the CSS cascade since they already reference
+  semantic tokens, not hardcoded colors — Card's one hardcoded `bg-white/[0.03]` (which
+  would've been invisible on ivory) is the exception, fixed to `bg-card`.
+  Poppins loaded and applied product-wide. New `premium` Button variant added.
+- Not yet done: Input/Chip/Nav/Sheet/Toast/Skeleton/EmptyState's exact radius/shadow
+  polish per §4/§6 (functionally correct via the token cascade already, pixel-perfect
+  tuning is follow-up), re-materialing the 3D orb for the light theme (§9).
+
+**Steps 3–14 have not started.** This is a genuinely multi-session rewrite, executed
+continuously per PART 15's order and the standing charter — this section is updated
+honestly as each step actually lands, never marked done ahead of the real commits behind
+it.
 
 ## Architecture (target, per the master spec)
 
