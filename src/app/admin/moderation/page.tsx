@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ShieldX, ShieldCheck } from "lucide-react";
+import { MessagesSquare, ShieldX, ShieldCheck, Briefcase } from "lucide-react";
 import { PlatformAdminShell, usePlatformAdminGate } from "@/components/app/PlatformAdminShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
@@ -62,8 +62,16 @@ export default function ModerationPage() {
             <div key={item.id} className="rounded-2xl border border-border bg-white/[0.02] px-4 py-3.5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">{item.postingTitle}</p>
-                  <p className="text-xs text-muted-foreground">{item.tenantName} · {formatDateTime(item.createdAt)}</p>
+                  <p className="flex items-center gap-1.5 truncate text-sm font-semibold">
+                    {item.contentType === "room" ? <MessagesSquare className="size-3.5 shrink-0 text-primary-soft" /> : <Briefcase className="size-3.5 shrink-0 text-muted-foreground" />}
+                    {item.postingTitle}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {item.contentType === "room"
+                      ? `Room report${item.reporterName ? ` · reported by ${item.reporterName}` : ""}`
+                      : item.tenantName}
+                    {" · "}{formatDateTime(item.createdAt)}
+                  </p>
                 </div>
                 <Badge variant="secondary" className="bg-amber-500/15 text-[10px] text-amber-400">{item.reason}</Badge>
               </div>
