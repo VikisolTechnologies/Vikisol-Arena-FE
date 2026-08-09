@@ -1,5 +1,28 @@
 # BLOCKED.md — items waiting on external input
 
+## ID verification tier (ARENA-V2-PRODUCT-ARCHITECTURE.md §4) — needs a KYC vendor decision
+Phone verification is fully built and working this pass (real OTP generate/hash/expire/verify
+flow, Noop-provider pattern so no paid SMS integration is required to function). ID
+verification is genuinely blocked, not skipped for convenience: proving a government ID is
+real needs either (a) a KYC/identity-verification vendor (Persona, Onfido, IDfy/Signzy for an
+India-specific option, etc. — needs an account + API key, a real integration decision, and
+likely a compliance review given DPDP), or (b) a fully human platform-admin manual-review
+workflow (submit a document image, an admin looks at it and clicks approve/reject) — buildable
+without a vendor, but still real scope (upload UI, admin review queue, storage/retention
+policy for ID images specifically, which is more sensitive than a resume). The `verificationLevel`
+enum already has the `ID` value and every join/creation gate already checks `>= required level`
+generically, so whichever path is chosen later is a scoped addition, not a redesign. Recommend
+deciding (a) vs (b) before building either, since they're genuinely different scope sizes.
+
+## Map screen — real map tiles need a maps provider key
+Phase B's Map screen (see DECISIONS.md) is a stylized R3F relative-position visualization, not
+real street-map tiles, specifically because no Mapbox/MapLibre/Google Maps API key exists in
+this environment. If real street/satellite map tiles are wanted later, that's a scoped,
+self-contained upgrade to one component (the visualization itself; the geo data
+model/API/filtering underneath doesn't change) — just needs a maps provider chosen and an API
+key issued.
+
+
 ## GitHub push — ✅ DONE (2026-08-06)
 `arena-web` → `VikisolTechnologies/Vikisol-Arena-FE` (`main`, force-pushed over the old
 history, all 4 tags through `v1.2-staging-live`). `arena-api` → `VikisolTechnologies/

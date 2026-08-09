@@ -3,6 +3,97 @@
 Per the mission's standing rule: decisions get logged here instead of interrupting the
 user. Each entry says what was decided, why, and what it costs/defers.
 
+## ARENA-V2-PRODUCT-ARCHITECTURE.md Phase B — architecture calls (2026-08-09)
+
+**No PostGIS. Geohash + Haversine in application code instead.** Confirmed before starting:
+zero spatial extension, zero `hibernate-spatial`/JTS dependency, plain `PostgreSQLDialect`
+anywhere in `arena-api`. Standing up PostGIS on a hosted Railway Postgres (confirming the
+extension is even available, a schema migration enabling it, a new geometry-type Maven
+dependency) is real infra risk for what "coarse nearby discovery" actually needs. Instead:
+a small self-contained `GeohashUtil` (encode/decode, ~40 lines, no new dependency) buckets
+posts by geohash-prefix match for a cheap first-pass radius filter, refined by real Haversine
+distance (also inline, no dependency) computed against the already-coarse/jittered stored
+coordinates for accurate sort-by-distance within that bucket. This is a well-established
+simplification for "good enough" proximity search and matches §5's own explicit instruction
+to store "a coarse geohash/H3 cell," not precise geometry.
+
+**The Map screen is a stylized relative-position visualization built on the existing React
+Three Fiber stack, not a real street map.** No Mapbox/MapLibre/Google Maps API key is
+configured anywhere in this environment, and none of those libraries are dependencies today.
+Rather than blocking on obtaining a paid mapping key, or introducing a brand-new heavy mapping
+library + tile-loading infra for a "coarse discovery" feature, pins are plotted on a tilted 3D
+plane (R3F, already a dependency) using each post's offset from the viewer's own coarse
+position (bearing + distance -> local x/z coordinates), styled with the same glass/glow
+language as the "Talent Universe" starfield. This is a *direct* application of §9's own
+framing — "the Talent Universe language applied to the real world" — not an improvised
+substitute for a real map. A sortable/filterable list view sits alongside it so discovery is
+fully usable by distance/time/type even without reading the visualization, matching how
+Talent Universe already pairs a visual with real underlying search results. Real street-map
+tiles (Mapbox/MapLibre + a real API key) are a clean drop-in upgrade later that only touches
+this one component — nothing else in the data model or API depends on which rendering
+approach the map uses.
+
+**`ModerationItem` generalized additively, not restructured.** Its current shape (a single,
+`nullable = false` FK straight to `JobPosting`) has an explicit comment noting the
+single-moderatable-entity assumption. Rather than migrating to a generic
+`contentType`/`contentId` pair (a real schema/data-risk change to a table that may already
+hold live PENDING items from the existing job-posting auto-flag flow), added a nullable
+`room_id` FK and a `contentType` enum (`JOB_POSTING` default for all existing/future
+job-posting flags, `ROOM` for the new room-report flow) alongside the untouched existing
+column. `ModerationService`'s existing `autoFlag`/`dismiss`/`listQueue` logic for job
+postings is completely unchanged; `takedown()` branches on `contentType` for the one place
+its behavior genuinely differs (closing a `JobPosting` vs. cancelling a `Post`/closing its
+`Room`). Phase A's `RoomReport` table is kept as the immutable raw-evidence record (reporter,
+room, reason, timestamp) and now *additionally* files a real `ModerationItem` so reports are
+actually actionable in the admin queue, not just sitting in an unread table — the mission's
+own explicit "wired into the platform-admin moderation queue" requirement.
+
+**Phone verification is fully real, built on the existing Noop-provider pattern
+(`EmailProvider`/`WhatsAppProvider` -> `Noop*Provider` -> real, resolved once at startup by
+`IntegrationProviderConfig`).** A `PhoneOtpProvider` interface + `NoopPhoneOtpProvider`
+(logs the code it would have sent, same style as the existing Noop providers) means the
+entire OTP generate/hash/expire/verify flow is genuinely functional today with zero paid SMS
+integration — a real Twilio-backed (or similar) provider is a pure drop-in later, exactly
+like Resend/WhatsApp already work. **ID verification tier is NOT built this pass** — see
+BLOCKED.md. Faking "ID verified" with no real document check would be a materially different,
+more safety-critical gap to paper over than an OTP a Noop provider logs instead of SMS-ing;
+the honest scope this pass is phone-tier verification fully working, ID-tier modeled in the
+schema (the enum has the value, gating logic already checks `>=` a required level generically)
+but not reachable through any real or manual-review flow yet.
+
+**Age-gating is self-attested date-of-birth, not cryptographically verified.** No ID-
+verification vendor exists (see above), so there is no way to *prove* an entered birthdate
+this pass — the honest implementation is: capture a date of birth once, hard-block joining or
+creating any `ACTIVITY` post (the stranger-meetup-relevant intent type; `ASK`/`UPDATE` don't
+carry the same real-world-meetup risk) for anyone under 18 by that self-attested date, and
+never let the flow be skipped. This is real, working, minor-blocking logic — not a checkbox
+that does nothing — but it's not fraud-proof, and that limitation is stated plainly rather
+than implied to be stronger than it is. Automated age/ID verification is the natural
+extension once a KYC vendor is chosen (see BLOCKED.md).
+
+**Location: only ever store a geohash-derived *approximation* of a person's own position,
+never the raw device coordinate, even server-side.** When the browser reports a precise
+GPS point (only ever requested under `PRECISE` consent, via an explicit browser permission
+prompt, and only for account-level "what's near me" centering — never persisted raw), the
+backend immediately geohash-encodes it and decodes that geohash back into an approximate
+lat/lng for storage — the literal reported point is used for the one encode operation and
+discarded, never written to a column. Every stored position (a user's own discovery center,
+a post's location) is already-coarse by construction, then gets a second, independent random
+jitter (up to ~150m) applied *again* at read/serve time for map-pin display specifically, so
+even the coarse stored value isn't the exact thing rendered to other users. `CITY` consent
+skips device geolocation entirely (manually typed home city, geocoded to that city's own
+public center point — inherently coarse). `OFF` stores nothing location-related at all; the
+Map screen and Feed's ranking both degrade gracefully to "no distance-based centering/sort,"
+never a broken or blocked state, per §5's explicit "the app must remain usable at 'off'."
+
+**Scope note, stated plainly rather than silently compressed:** Phase B is substantially
+larger than Phase A (new geospatial capability, a new safety/verification subsystem, the
+first scheduled-job infrastructure in this codebase, and a new 3D screen), and this session
+is building it completely and correctly rather than rushing into Phase C to also "finish" a
+mission the founder framed as continuous. Phase C (company pages, comments/reactions, trends,
+profile revamp, embedding-based feed ranking) starts immediately after Phase B is verified
+and tagged `v2.1-phase-b`, in the same continuous session, not deferred to a future prompt.
+
 ## ARENA-FINAL-CUTOVER.md — Step 3 domain conflict resolved (2026-08-06)
 
 **Released `api-arena.vikisol.in` from the old `Vikisol-Arena-BE` service and bound it to the
