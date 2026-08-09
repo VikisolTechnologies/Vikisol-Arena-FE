@@ -62,7 +62,11 @@ function readUsers(): PlatformUser[] {
 
 function seedModeration(): ModerationItem[] {
   return [
-    { id: "mod-1", postingId: "posting-mock-1", postingTitle: "Remote Data Entry — guaranteed income", tenantName: "Nimbus Health", reason: "Flagged terms: guaranteed income", status: "pending", createdAt: new Date(Date.now() - 2 * 86400000).toISOString() },
+    { id: "mod-1", contentType: "job_posting", postingId: "posting-mock-1", postingTitle: "Remote Data Entry — guaranteed income", tenantName: "Nimbus Health", reason: "Flagged terms: guaranteed income", status: "pending", createdAt: new Date(Date.now() - 2 * 86400000).toISOString() },
+    // ARENA-V2-PRODUCT-ARCHITECTURE.md §4 - room reports now feed the same queue (see
+    // DECISIONS.md's ModerationItem-generalized-additively entry), demo'd here so the admin
+    // moderation UI has a room-shaped item to render even in mock mode.
+    { id: "mod-2", contentType: "room", roomId: "room-1", postingTitle: "Badminton at 6pm today, Gachibowli - need 2 more for doubles", reporterName: "Someone in the room", reason: "Reported from the room chat", status: "pending", createdAt: new Date(Date.now() - 5 * 3600000).toISOString() },
   ];
 }
 

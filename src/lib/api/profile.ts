@@ -1,6 +1,7 @@
 import { CURRENT_CANDIDATE_ID, getCandidateById } from "@/lib/mock/candidates";
 import { getOnboardingProfile, saveOnboardingProfile } from "@/lib/session";
-import type { AutonomyLevel, CandidateProfile, ConsentSettings, Industry, OpenTo } from "@/lib/types";
+import type { AutonomyLevel, CandidateProfile, ConsentSettings, Industry, LocationConsent, OpenTo } from "@/lib/types";
+import { jitterCoord } from "@/lib/geo";
 import { delay } from "./shared";
 import { isRealMode } from "./mode";
 import { apiFetch } from "./httpClient";
@@ -23,6 +24,10 @@ interface CandidateProfileResponse {
   bio?: string;
   cvUrl?: string;
   cvFileName?: string;
+  locationConsent?: string;
+  homeCity?: string;
+  approxLat?: number;
+  approxLng?: number;
 }
 
 function toCandidateProfile(res: CandidateProfileResponse): CandidateProfile {
@@ -44,7 +49,34 @@ function toCandidateProfile(res: CandidateProfileResponse): CandidateProfile {
     bio: res.bio,
     cvUrl: res.cvUrl,
     resumeFileName: res.cvFileName,
+    locationConsent: res.locationConsent as LocationConsent | undefined,
+    homeCity: res.homeCity,
+    approxLat: res.approxLat,
+    approxLng: res.approxLng,
   };
+}
+
+// Mock-mode-only overlay for §5's location consent, kept separate from OnboardingProfile since
+// it's a Phase B addition orthogonal to onboarding - same small-dedicated-key pattern as
+// verification.ts's own mock state.
+const LOCATION_KEY = "arena_location_consent";
+interface MockLocationState {
+  locationConsent: LocationConsent;
+  homeCity?: string;
+  approxLat?: number;
+  approxLng?: number;
+}
+function readMockLocation(): MockLocationState {
+  if (typeof window === "undefined") return { locationConsent: "off" };
+  try {
+    const raw = localStorage.getItem(LOCATION_KEY);
+    return raw ? (JSON.parse(raw) as MockLocationState) : { locationConsent: "off" };
+  } catch {
+    return { locationConsent: "off" };
+  }
+}
+function writeMockLocation(state: MockLocationState) {
+  localStorage.setItem(LOCATION_KEY, JSON.stringify(state));
 }
 
 /** Merges the static seed candidate with whatever the user entered during onboarding. */
@@ -73,7 +105,8 @@ export async function getMyProfile(): Promise<CandidateProfile> {
         careerHealth: onboarding.careerHealth ?? base.careerHealth,
       }
     : base;
-  return delay(merged, 300);
+  const location = readMockLocation();
+  return delay({ ...merged, ...location }, 300);
 }
 
 async function patchOnboardingProfile(
@@ -134,6 +167,26 @@ export async function updateMyConsent(consent: ConsentSettings): Promise<Candida
     return apiFetch<CandidateProfileResponse>("/profile/me/consent", { method: "PUT", body: consent }).then(toCandidateProfile);
   }
   return patchOnboardingProfile({ consent });
+}
+
+// ARENA-V2-PRODUCT-ARCHITECTURE.md §5 (Phase B). "precise" sends a real one-shot browser
+// Geolocation reading (its own explicit permission prompt, independent of any other consent),
+// "city" sends a manually-typed city name only, "off" sends neither - the caller (Settings page)
+// is responsible for gathering lat/lng via navigator.geolocation before calling this with
+// consent="precise".
+export async function updateMyLocation(input: { consent: LocationConsent; lat?: number; lng?: number; city?: string }): Promise<CandidateProfile> {
+  if (isRealMode()) {
+    return apiFetch<CandidateProfileResponse>("/profile/me/location", { method: "PUT", body: input }).then(toCandidateProfile);
+  }
+  if (input.consent === "off") {
+    writeMockLocation({ locationConsent: "off" });
+  } else if (input.consent === "city") {
+    writeMockLocation({ locationConsent: "city", homeCity: input.city });
+  } else {
+    const approx = input.lat != null && input.lng != null ? jitterCoord(input.lat, input.lng) : undefined;
+    writeMockLocation({ locationConsent: "precise", approxLat: approx?.lat, approxLng: approx?.lng });
+  }
+  return getMyProfile();
 }
 
 export async function updateMyAutonomy(autonomy: AutonomyLevel): Promise<CandidateProfile> {

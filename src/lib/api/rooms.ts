@@ -80,6 +80,15 @@ export async function sendRoomMessage(roomId: string, content: string): Promise<
   return delay(message, 200);
 }
 
+export async function setRoomMuted(roomId: string, muted: boolean): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch<void>(`/rooms/${roomId}/${muted ? "mute" : "unmute"}`, { method: "PUT" });
+    return;
+  }
+  writeRooms(readRooms().map((r) => (r.id === roomId ? { ...r, muted } : r)));
+  await delay(undefined, 150);
+}
+
 export async function markRoomRead(roomId: string): Promise<void> {
   if (isRealMode()) {
     await apiFetch<void>(`/rooms/${roomId}/read`, { method: "PUT" });

@@ -45,6 +45,12 @@ export interface CandidateProfile {
   resumeUploadedAt?: string;
   /** Real-mode only — the actual uploaded CV file's URL, served by arena-api. Absent in mock mode. */
   cvUrl?: string;
+  // ARENA-V2-PRODUCT-ARCHITECTURE.md §5 (Phase B). approxLat/approxLng are already a
+  // geohash-derived approximation, never the raw device coordinate - see DECISIONS.md.
+  locationConsent?: LocationConsent;
+  homeCity?: string;
+  approxLat?: number;
+  approxLng?: number;
 }
 
 export interface Job {
@@ -336,11 +342,21 @@ export interface PlatformUser {
 
 export type ModerationStatus = "pending" | "dismissed" | "taken_down";
 
+// ARENA-V2-PRODUCT-ARCHITECTURE.md §4 (Phase B): the queue now also carries room reports, not
+// just job-posting auto-flags - contentType says which of the two shapes is populated.
+// job_posting items have postingId/postingTitle/tenantName; room items have roomId/reporterName
+// (postBody is reused for postingTitle's slot server-side so the title column always has
+// something readable to show regardless of contentType).
+export type ModerationContentType = "job_posting" | "room";
+
 export interface ModerationItem {
   id: string;
-  postingId: string;
+  contentType: ModerationContentType;
+  postingId?: string;
   postingTitle: string;
-  tenantName: string;
+  tenantName?: string;
+  roomId?: string;
+  reporterName?: string;
   reason: string;
   status: ModerationStatus;
   createdAt: string;
@@ -431,6 +447,18 @@ export interface Post {
   /** Set once the viewer has an approved join (or is the author) and a Room exists. */
   roomId?: string;
   createdAt: string;
+  // ARENA-V2-PRODUCT-ARCHITECTURE.md §4/§5 (Phase B). approxLat/approxLng are already jittered
+  // for display server-side (see PostMapper) - never the stored value directly, and a fresh
+  // jitter every response (two calls for the same post return slightly different coordinates by
+  // design). exactMeetingPoint is only ever non-null when the viewer is the author or an
+  // approved room member.
+  approxLat?: number;
+  approxLng?: number;
+  exactMeetingPoint?: string;
+  requiredVerificationLevel?: VerificationLevel;
+  /** Client-computed only (Haversine against the viewer's own approx position) - never sent by
+   * the API, populated by lib/api/posts.ts's getNearby() for map/list display. */
+  distanceKm?: number;
 }
 
 export interface PostJoinRequest {
@@ -452,6 +480,9 @@ export interface Room {
   postIntentType: PostIntentType;
   memberCount: number;
   unread: boolean;
+  /** Phase B: per-member mute - muted members still see history but don't count toward unread. */
+  muted: boolean;
+  postStatus: PostStatus;
   lastMessageAt: string;
   lastMessagePreview?: string;
 }
@@ -486,5 +517,30 @@ export interface FollowerEntry {
   name: string;
   emoji: string;
   followedAt: string;
+}
+
+// ---- Phase B: map/discovery, location consent, verification, safety (ARENA-V2-PRODUCT-ARCHITECTURE.md §4/§5) ----
+
+// Ordinal-comparable, mirrors backend VerificationLevel.atLeast() - "id" is modeled but not
+// reachable through any real or manual-review flow yet (see BLOCKED.md).
+export type VerificationLevel = "basic" | "phone" | "id";
+
+// "local" audience/"off" location behave the same way: the app stays fully usable, discovery
+// (Feed proximity, Map) just degrades to no distance-based centering/sorting.
+export type LocationConsent = "precise" | "city" | "off";
+
+export interface VerificationStatus {
+  verificationLevel: VerificationLevel;
+  phoneVerified: boolean;
+  phoneNumber?: string;
+  /** True while a requested OTP hasn't been confirmed or has expired unconfirmed. */
+  otpPending: boolean;
+}
+
+export interface BlockedUser {
+  userId: string;
+  name: string;
+  emoji: string;
+  blockedAt: string;
 }
 

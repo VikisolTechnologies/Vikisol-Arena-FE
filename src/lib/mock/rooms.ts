@@ -12,6 +12,8 @@ export const MOCK_ROOMS: Room[] = [
     postIntentType: "activity",
     memberCount: 2,
     unread: true,
+    muted: false,
+    postStatus: "open",
     lastMessageAt: new Date(Date.now() - 40 * 60000).toISOString(),
     lastMessagePreview: "6pm sharp, court's booked till 7:30.",
   },

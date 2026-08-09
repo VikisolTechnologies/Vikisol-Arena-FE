@@ -1,10 +1,24 @@
-import type { Post, PostIntentType, PostAudience, PostVisibility, PostJoinRequest } from "@/lib/types";
+import type { Post, PostIntentType, PostAudience, PostVisibility, PostJoinRequest, VerificationLevel } from "@/lib/types";
 import { MOCK_POSTS, MOCK_POST_JOIN_REQUESTS } from "@/lib/mock/posts";
 import { CURRENT_CANDIDATE_ID, getCandidateById } from "@/lib/mock/candidates";
+import { getMockDateOfBirth } from "./verification";
+import { haversineKm, isAdult, jitterCoord } from "@/lib/geo";
 import { delay } from "./shared";
 import { isRealMode } from "./mode";
 import { apiFetch } from "./httpClient";
 import type { PagedResponse } from "./paged";
+
+const AGE_GATE_MESSAGE = "Add your date of birth in Settings before creating or joining an activity.";
+const AGE_GATE_MINOR_MESSAGE = "You must be 18 or older to create or join an activity.";
+
+// Mirrors PostService.requireAdult()'s exact gate for mock mode - only ACTIVITY carries the
+// real-world-meetup risk the age-gate exists for (see DECISIONS.md).
+function requireAdultMock(intentType: PostIntentType) {
+  if (intentType !== "activity") return;
+  const dob = getMockDateOfBirth();
+  if (!dob) throw new Error(AGE_GATE_MESSAGE);
+  if (!isAdult(dob)) throw new Error(AGE_GATE_MINOR_MESSAGE);
+}
 
 const POSTS_KEY = "arena_posts";
 const JOINS_KEY = "arena_post_joins";
@@ -43,6 +57,15 @@ export interface CreatePostInput {
   visibility?: PostVisibility;
   capacity?: number;
   tags?: string[];
+  startsAt?: string;
+  endsAt?: string;
+  /** Only ever sent when the author explicitly taps "use my current location" in the composer -
+   * its own in-the-moment browser Geolocation prompt, independent of account-wide discovery
+   * consent. */
+  lat?: number;
+  lng?: number;
+  exactMeetingPoint?: string;
+  requiredVerificationLevel?: VerificationLevel;
 }
 
 // Recency + follows-affinity, mirrors FeedRankingService's scoring shape client-side for mock
@@ -75,10 +98,14 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
         intentType: input.intentType, body: input.body, locationText: input.locationText,
         audience: input.audience ?? "global", visibility: input.visibility ?? "public",
         capacity: input.capacity, tags: input.tags ?? [],
+        startsAt: input.startsAt, endsAt: input.endsAt, lat: input.lat, lng: input.lng,
+        exactMeetingPoint: input.exactMeetingPoint, requiredVerificationLevel: input.requiredVerificationLevel,
       },
     });
   }
+  requireAdultMock(input.intentType);
   const me = getCandidateById(CURRENT_CANDIDATE_ID);
+  const approx = input.lat != null && input.lng != null ? jitterCoord(input.lat, input.lng) : undefined;
   const post: Post = {
     id: `post-${Date.now()}`,
     authorUserId: CURRENT_CANDIDATE_ID,
@@ -92,14 +119,67 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
     capacity: input.capacity,
     spotsFilled: 0,
     status: "open",
+    startsAt: input.startsAt,
+    endsAt: input.endsAt,
     tags: input.tags ?? [],
     mediaUrls: [],
     joinable: input.intentType === "activity" || input.intentType === "ask",
     mine: true,
     createdAt: new Date().toISOString(),
+    approxLat: approx?.lat,
+    approxLng: approx?.lng,
+    exactMeetingPoint: input.exactMeetingPoint,
+    requiredVerificationLevel: input.requiredVerificationLevel,
   };
   writePosts([post, ...readPosts()]);
   return delay(post, 300);
+}
+
+export async function cancelPost(postId: string): Promise<Post> {
+  if (isRealMode()) return apiFetch<Post>(`/posts/${postId}/cancel`, { method: "PUT" });
+  const posts = readPosts();
+  const updated = posts.map((p) => (p.id === postId ? { ...p, status: "cancelled" as const } : p));
+  writePosts(updated);
+  const result = updated.find((p) => p.id === postId);
+  if (!result) throw new Error("Post not found");
+  return delay(result, 250);
+}
+
+export interface NearbyQuery {
+  lat: number;
+  lng: number;
+  radiusKm?: number;
+  withinHours?: number;
+  intentType?: PostIntentType;
+}
+
+// ARENA-V2-PRODUCT-ARCHITECTURE.md §5's map/nearby discovery screen. Neither the real endpoint
+// nor mock mode returns a precomputed distance - both compute it client-side (haversineKm)
+// against the viewer-supplied center, which is exactly as safe to do in the browser as the
+// coordinates it's already operating on (see lib/geo.ts).
+export async function getNearby(query: NearbyQuery): Promise<Post[]> {
+  const radiusKm = query.radiusKm ?? 5;
+  if (isRealMode()) {
+    const results = await apiFetch<Post[]>("/posts/nearby", {
+      query: { lat: query.lat, lng: query.lng, radiusKm, withinHours: query.withinHours, intentType: query.intentType },
+    });
+    return results.map((p) => ({
+      ...p,
+      distanceKm: p.approxLat != null && p.approxLng != null ? haversineKm(query.lat, query.lng, p.approxLat, p.approxLng) : undefined,
+    }));
+  }
+  const now = Date.now();
+  const withinMs = query.withinHours ? query.withinHours * 3600000 : undefined;
+  return delay(
+    readPosts()
+      .filter((p) => p.joinable && p.status === "open" && p.approxLat != null && p.approxLng != null)
+      .filter((p) => !query.intentType || p.intentType === query.intentType)
+      .filter((p) => !withinMs || !p.startsAt || new Date(p.startsAt).getTime() - now <= withinMs)
+      .map((p) => ({ ...p, distanceKm: haversineKm(query.lat, query.lng, p.approxLat!, p.approxLng!) }))
+      .filter((p) => p.distanceKm! <= radiusKm)
+      .sort((a, b) => a.distanceKm! - b.distanceKm!),
+    300,
+  );
 }
 
 export async function requestJoin(postId: string): Promise<PostJoinRequest> {
@@ -107,6 +187,11 @@ export async function requestJoin(postId: string): Promise<PostJoinRequest> {
   const posts = readPosts();
   const post = posts.find((p) => p.id === postId);
   if (!post) throw new Error("Post not found");
+  requireAdultMock(post.intentType);
+  // requiredVerificationLevel gating is left to the real backend only (VerificationService's
+  // full tier comparison) - mock mode's simplified age-gate above already proves the pattern
+  // works end-to-end; re-deriving the same >= comparison against localStorage state here would
+  // duplicate real logic for a demo-only path with no safety stakes.
   const autoApprove = post.visibility === "public";
   const me = getCandidateById(CURRENT_CANDIDATE_ID);
   const joinRequest: PostJoinRequest = {
