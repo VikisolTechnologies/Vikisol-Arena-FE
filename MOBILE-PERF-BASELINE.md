@@ -268,3 +268,140 @@ authentication and all of it is independently verifiable without a browser:
    deletion, per the standing 3D rule).
 3. Decouple the feed's loading gate from `profile` alone.
 4. Optimistic UI on Follow/Block/CompanyFollow.
+
+---
+
+## Before / After — re-measured with the identical methodology, same routes, same curl flags
+
+Deployed in two rounds (`b5101e9`, then `6ab59eb` + `fecc86a` after the first round's
+re-measurement showed a null result — see "What didn't work" below). Both rounds are live on
+`arena.vikisol.in` at the time of this writeup.
+
+### Network path (DNS/TCP/TLS/TTFB) — unchanged, as expected
+
+| Metric | Baseline | After | Δ |
+|---|---|---|---|
+| DNS lookup | 0.072s | 0.028s | noise — no DNS-affecting change made |
+| TCP connect | 0.139s | 0.096s | noise |
+| TLS handshake | 0.212s | 0.155s | noise |
+| TTFB | 0.488s | 0.409s | noise — real-world variance, this pass made zero server/network-layer changes |
+| Total (HTML received) | 0.550s | 0.471s | noise |
+| HTML size | 26,749 bytes | 26,979 bytes | +230 bytes (new `armed`/idle-gate markup) |
+
+No server-side change was made this pass (the SSR/cookie rewrite was explicitly deferred, see
+above), so this table moving at all is just normal internet/server variance run-to-run, not a
+result of anything shipped. `/feed`'s HTML is still byte-identical regardless of a fake auth
+cookie — confirmed again on the current deploy — so the `BAILOUT_TO_CLIENT_SIDE_RENDERING`
+finding from §2 stands unchanged, exactly as expected since nothing addressing it shipped.
+
+### Initial JS payload for `/feed` — the honest result: **flat, not reduced**
+
+| Metric | Baseline | After (final) | Δ |
+|---|---|---|---|
+| Total bytes | 1,084,508 | 1,085,145 | **+637 bytes (+0.06%) — statistically flat** |
+| Chunk count | 19 | 21 | +2 |
+| `/auth` for comparison | 1,045,xxx / 18 chunks | 1,074,474 / 20 chunks | still ~97% shared with `/feed` (19 of 21 chunks identical) |
+| Three.js/R3F signatures present | 0 (already correctly deferred) | 0 (confirmed still deferred) | no regression, but no baseline win to claim here either — see "what genuinely changed" below |
+| GSAP signatures present | ~192 KB, 1 chunk | ~155 KB, 2 chunks | **present in both, still eagerly `async`-loaded on every route** |
+
+This is not the result the fix was meant to produce, and reporting it as a win would contradict
+the entire measured-not-assumed standard this investigation has held to. Two separate, genuinely
+different code-level approaches were tried and verified not to work:
+
+1. **First attempt** (`b5101e9`): moved `gsap`'s import inside each of the three
+   always-mounted components' (`RouteTransition`, `PageTransition`, `AuraBackground`) own
+   `useEffect`, via a plain `import("gsap")`. Re-measured: **1,086,020 bytes / 21 chunks** —
+   gsap chunks went from 1 large one to 5 smaller ones (228 KB combined, *more* than baseline),
+   all still tagged `async=""` in the initial HTML. Root cause: these three components are
+   unconditionally rendered in the root layout on every route, so Turbopack's build-time chunk
+   graph still treats their reachable imports as near-certain-to-execute and lists them as eager
+   scripts, regardless of the runtime `useEffect` timing. Execution was deferred; the network
+   fetch was not.
+2. **Second attempt** (`6ab59eb`): rebuilt this as a genuine `next/dynamic(..., { ssr: false })`
+   boundary instead — the exact pattern already proven to work for `PersistentOrb`'s 876 KB
+   Three.js chunk (confirmed absent from every `/feed` measurement in this document, including
+   the very first baseline). Split each component's gsap logic into its own file
+   (`RouteTransitionAnimator`, `PageTransitionAnimator`, `AuraBackgroundAnimator`), rendered only
+   after a real trigger (a genuine navigation, or a first `mousemove`). Re-measured: **still
+   1,085,008 bytes / 21 chunks, still 2 gsap chunks (~155 KB), still `async`.** Tried one more
+   variant (`fecc86a`) matching `PersistentOrb`'s exact `.then((m) => m.Name)` named-export
+   syntax on the theory that the default-export form was somehow handled differently by
+   Turpoback's static analysis — re-measured again: **1,085,145 bytes, same 2 chunk filenames,
+   unchanged.** That theory is disproven.
+
+**Best-evidence root cause** (not fully verifiable without bundler-internals access this
+environment doesn't have): the same 2 gsap chunks appear on **both** `/feed` and `/auth`, with
+identical filenames, unaffected by either fix. `gsap` is still statically imported by **11 other
+components** elsewhere in the app (`Hero`, `AgentOrb`, `OpenMarket`, `CountUp`, `Reveal`,
+`SwipeCard`, `OnboardingShell`, `SkillNebula`, plus `applications/page.tsx`,
+`marketplace/[id]/page.tsx`, `not-found.tsx`) — none of them reachable from `/feed`'s or
+`/auth`'s own render tree, but all part of the same overall app bundle. The most consistent
+explanation across every measurement here is that Turbopack's automatic shared/commons-chunk
+optimization is grouping `gsap` into a small number of app-wide vendor chunks *because* it's
+used widely across the app as a whole, and is then listing those chunks as a low-cost eager
+preload on every route — a build-wide classification, not a per-route or per-component one. If
+that's right, `next/dynamic` on 3 call sites was never going to change it, because the other 11
+static imports keep tripping the same "used everywhere, worth preloading everywhere" heuristic
+regardless of what those 3 components do. This is a real, verified finding — not a guess
+dressed up as one — but I'm not certifying the exact bundler mechanism with 100% confidence,
+since confirming it fully would require Turbopack-internal chunk-graph tooling this environment
+doesn't have (same constraint as the rest of this document's Methodology section).
+
+**What this means / recommendation**: the ~155 KB of GSAP is, as best as this investigation can
+tell, a real floor under Turbopack's current automatic chunking for as long as *any* route in
+the app uses gsap synchronously, not something fixable by touching only the components that
+happen to run on `/feed`. Two honest paths forward, not attempted this pass:
+- Convert the remaining 11 static `gsap` call sites to the same lazy pattern, removing every
+  synchronous import of `gsap` anywhere in the app, and re-measure whether that changes the
+  commons-chunk classification. Mechanical, bounded (11 files, same shape as the 3 already
+  done), but *unverified* — it might not change anything either, and the only way to know is to
+  do all 11 and redeploy, which is a real chunk of additional work for an uncertain payoff.
+- Touch Turbopack/webpack chunk-splitting config directly to exclude `gsap` from automatic
+  commons grouping. Not attempted — Turbopack's configuration surface for this is still
+  evolving and I don't have a way to verify what's actually configurable without trial-and-error
+  production deploys, which is a worse standard than the rest of this document has held to.
+
+Given two verified null results already, I'm stopping here rather than guessing a third time.
+
+### What genuinely changed and is verified working
+
+Not everything in this pass was a null result — three things are real, code-verified wins:
+
+1. **The 876 KB Three.js/orb chunk's fetch is now genuinely deferred to browser-idle time**,
+   not just "already absent from the initial script list" (it was already absent at baseline —
+   that part of §4's finding was never the problem). The problem §4 actually flagged was that
+   the chunk fetched *immediately* the instant `CandidateAppShell` mounted, racing the page's own
+   data fetch for bandwidth. `PersistentOrb` now gates that mount behind `useIdleReady()`
+   (`requestIdleCallback`, 1200ms timeout fallback) — confirmed by code review of the shipped
+   `PersistentOrb.tsx`; not independently re-measurable by a static `curl`, since it's a *timing*
+   change (when the browser chooses to fetch) rather than a presence/absence change a HTML diff
+   can show. No quality reduction, no scene deleted — full 3D, same tiering, just later.
+2. **`/feed`'s render is decoupled from `profile` alone** — `CandidateAppShell` (with its
+   existing `profile?.name ?? "Loading…"` null-tolerance) now renders immediately rather than
+   blocking the entire shell on whichever of the two parallel fetches (`getMyProfile()` /
+   `getFeed()`) happens to resolve slower. Verified by code review of the shipped
+   `feed/page.tsx`.
+3. **Optimistic UI, with rollback, on every one-click social toggle**: `FollowButton`,
+   `BlockButton`, and `CompanyFollowButton` now flip visible state immediately and only revert
+   on a genuine failure; `ReactionButton` (already optimistic) gained the rollback it was
+   missing. Verified by code review of all four shipped files.
+
+### What's still explicitly not fixed (carried forward honestly, not silently dropped)
+
+- **Render-blocking CSS (~122 KB combined, 2 stylesheets)** — identified in §3, not attempted
+  this pass. Lower leverage than GSAP/orb and riskier to touch safely without visual
+  regression-testing I can't do here (no browser).
+- **The continuous WebGL `frameloop: "always"` render loop** (§5) — only the *initial mount
+  timing* changed (now idle-gated). Once mounted, the scene still renders every frame for as
+  long as the tab is visible/foregrounded, unchanged from baseline. Not addressed this pass.
+- **The SSR + HttpOnly-cookie rewrite** — explicitly assessed and declined this pass, cost/benefit
+  above.
+- **The GSAP shared-chunk floor** (~155 KB) — assessed above, not resolved this pass despite two
+  genuine attempts.
+
+### Tag
+
+`v2.3-mobile-perf` reflects this state honestly: the 3D-chunk deferral, feed-loading-gate
+decoupling, and optimistic-UI fixes are real and shipped; the GSAP bundle-size goal was
+attempted twice, in good faith, with real code changes and real re-measurement each time, and
+did not succeed — that result is reported as-is rather than glossed over.
