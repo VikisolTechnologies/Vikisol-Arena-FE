@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Flag, Search, Send, Users } from "lucide-react";
+import { Bell, BellOff, Flag, Search, Send, Users } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { getMyRooms, getRoomMessages, sendRoomMessage, markRoomRead, reportRoom } from "@/lib/api/rooms";
+import { getMyRooms, getRoomMessages, sendRoomMessage, markRoomRead, reportRoom, setRoomMuted } from "@/lib/api/rooms";
 import type { Room, RoomMessage } from "@/lib/types";
 
 function timeAgo(iso: string) {
@@ -64,6 +64,12 @@ export function RoomsInbox() {
     setReported(true);
   };
 
+  const toggleMute = async () => {
+    if (!active) return;
+    await setRoomMuted(active.id, !active.muted);
+    loadRooms();
+  };
+
   return (
     <div className="glass-panel grid overflow-hidden rounded-[24px] border border-border bg-white/[0.02] lg:grid-cols-[300px_1fr]" style={{ height: "min(640px, 72vh)" }}>
       <div className="flex flex-col border-b border-border lg:border-b-0 lg:border-r">
@@ -106,8 +112,21 @@ export function RoomsInbox() {
                 <div className="flex items-center gap-1.5">
                   <Badge variant="secondary" className="bg-white/5 text-[10px] text-muted-foreground">{INTENT_LABEL[active.postIntentType]}</Badge>
                   <span className="text-xs text-muted-foreground">{active.memberCount} in room</span>
+                  {active.postStatus !== "open" && active.postStatus !== "full" && (
+                    <Badge variant="secondary" className="bg-red-500/10 text-[10px] text-red-400">
+                      {active.postStatus === "cancelled" ? "Cancelled" : "Expired"}
+                    </Badge>
+                  )}
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={toggleMute}
+                className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                aria-label={active.muted ? "Unmute this room" : "Mute this room"}
+              >
+                {active.muted ? <BellOff className="size-3.5" /> : <Bell className="size-3.5" />} {active.muted ? "Muted" : "Mute"}
+              </button>
               <button
                 type="button"
                 onClick={report}
