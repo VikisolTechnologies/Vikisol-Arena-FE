@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Newspaper, PlusCircle, Users, Fingerprint } from "lucide-react";
+import { Newspaper, PlusCircle, Users, Fingerprint, MapPinned } from "lucide-react";
 import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 // not a persistent view, so it never shows as the active tab even while sitting on /feed.
 const TABS = [
   { href: "/feed", label: "Feed", icon: Newspaper },
+  { href: "/map", label: "Map", icon: MapPinned },
   { href: "/feed?compose=1", label: "Post", icon: PlusCircle },
   { href: "/rooms", label: "Rooms", icon: Users },
   { href: "/identity", label: "Profile", icon: Fingerprint },

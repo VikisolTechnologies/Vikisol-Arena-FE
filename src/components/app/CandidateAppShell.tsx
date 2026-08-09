@@ -13,6 +13,7 @@ import {
   Bell,
   LogOut,
   Mail,
+  MapPinned,
 } from "lucide-react";
 import { AuraBackground } from "@/components/landing/AuraBackground";
 import { PersistentOrb } from "@/components/orb/PersistentOrb";
@@ -32,6 +33,7 @@ import { cn } from "@/lib/utils";
 // top-level slot.
 const NAV_ITEMS = [
   { href: "/feed", label: "Feed", icon: Newspaper },
+  { href: "/map", label: "Map", icon: MapPinned },
   { href: "/rooms", label: "Rooms", icon: Users },
   { href: "/work", label: "Work", icon: Briefcase },
   { href: "/identity", label: "Identity", icon: Fingerprint },
