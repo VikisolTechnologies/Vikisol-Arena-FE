@@ -17,7 +17,6 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { AuraBackground } from "@/components/landing/AuraBackground";
 import { PersistentOrb } from "@/components/orb/PersistentOrb";
 import { CommandDialog, CommandInput, CommandList, CommandEmpty } from "@/components/ui/command";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -106,8 +105,11 @@ export function AppShell({
   };
 
   return (
-    <div className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
-      <AuraBackground />
+    <div data-theme="product" className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
+      {/* ARENA-DESIGN-SYSTEM.md kill list: "zero neon orange in the product" - AuraBackground's
+          glow blobs are tuned for the dark marketing theme and stay there; the product shell
+          doesn't render it. The 3D orb stays (never-delete rule) via PersistentOrb below,
+          re-materialling it for the light theme (§9) is separate follow-up work. */}
       <div className="relative z-10 mx-auto flex min-h-svh w-full max-w-[1600px]">
         {/* desktop side nav (w-248 per PART 4; icon rail on tablet is a later refinement -
             full-width nav down to lg is an acceptable interim, matches CandidateAppShell's

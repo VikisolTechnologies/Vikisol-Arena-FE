@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Inter, Manrope } from "next/font/google";
+import { Space_Grotesk, Inter, Manrope, Poppins } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { CommandPalette } from "@/components/command-palette/CommandPalette";
@@ -26,6 +26,17 @@ const manrope = Manrope({
   weight: ["500", "600", "700"],
 });
 
+// ARENA-DESIGN-SYSTEM.md §3 - the product theme's body/UI typeface (Space Grotesk stays on
+// the marketing hero only, per that doc's own carve-out). Loaded alongside the existing three
+// rather than replacing them, since the marketing routes aren't migrating off Space Grotesk/
+// Inter/Manrope in this pass.
+const poppins = Poppins({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Arena — It works while you sleep",
   description:
@@ -45,6 +56,7 @@ export default function RootLayout({
         spaceGrotesk.variable,
         inter.variable,
         manrope.variable,
+        poppins.variable,
       )}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">

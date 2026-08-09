@@ -38,6 +38,79 @@
   --radius: 1rem;
 }
 
+/*
+ * ARENA-DESIGN-SYSTEM.md — the v3 "luxury marketplace" product theme (ivory/champagne/gold),
+ * scoped to `[data-theme="product"]` rather than replacing :root. That doc's own migration
+ * plan (§11) says flip the whole app's default to light and wrap marketing in a dark
+ * override - the right end state, but not safe to do in one step: dozens of still-unmigrated
+ * pages (admin/enterprise/HM/settings/marketplace/etc., see ROUTES.md) share these exact
+ * token names today, and flipping :root would break every one of them at once. Scoping the
+ * override the other way around - new pages opt in via `data-theme="product"`, everything
+ * else keeps the current dark values as its default - means Step 2 ships real, working,
+ * correctly-themed new surfaces without a single currently-working page changing appearance.
+ * Flipping the polarity to match the doc exactly is a mechanical last step once every route
+ * in ROUTES.md is migrated, not a decision to make now. See DECISIONS.md.
+ *
+ * Both the EXISTING semantic names (--background, --primary, --card, --border, etc. - so
+ * every shared primitive in src/components/ui/ that already reads these via Tailwind's
+ * bg-primary/text-foreground/etc. utilities reskins for free, zero component changes needed
+ * beyond the bg-white/[0.03]-style literal-color fixes already made) and the NEW names the
+ * design doc itself uses (--canvas, --ink, --gold, --champagne, etc., for new v3-specific
+ * component work) are defined here, side by side, pointing at the same values.
+ */
+[data-theme="product"] {
+  --canvas: #f7f1ea;
+  --canvas-alt: #fbf7f2;
+  --surface: #ffffff;
+  --surface-sunk: #f2ece4;
+
+  --ink: #000000;
+  --ink-800: #111111;
+  --ink-600: #2f2f2f;
+  --ink-400: #6b6b6b;
+  --ink-300: #9a9a9a;
+
+  --line: rgba(0, 0, 0, 0.08);
+  --line-strong: rgba(0, 0, 0, 0.14);
+
+  --champagne: #ffe6bc;
+  --gold-soft: #f3d79b;
+  --gold: #d6a84f;
+  --gold-deep: #a87c2c;
+
+  --success: #2e7d5b;
+  --warning: #b8791f;
+  --danger: #c0392b;
+  --info: #2f5d8c;
+
+  /* remapped existing semantic names - this is what makes shared primitives (Button, Card,
+     Avatar, Badge, Input, Sheet, Toast, Skeleton, EmptyState, ...) reskin automatically */
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --faint: var(--ink-300);
+
+  --primary: var(--ink);
+  --primary-soft: var(--ink-600);
+  --primary-foreground: #ffffff;
+
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+
+  --secondary: var(--surface-sunk);
+  --secondary-foreground: var(--ink);
+  --muted: var(--surface-sunk);
+  --muted-foreground: var(--ink-400);
+  --accent: var(--champagne);
+  --accent-foreground: var(--gold-deep);
+  --destructive: var(--danger);
+
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--gold);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -67,6 +140,7 @@
   --font-display: var(--font-space-grotesk);
   --font-sans: var(--font-inter);
   --font-label: var(--font-manrope);
+  --font-product: var(--font-poppins);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -74,6 +148,32 @@
   --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
+
+  /* ARENA-DESIGN-SYSTEM.md §2 named tokens - only resolve to real values inside
+     [data-theme="product"] (see the block above); harmless no-ops elsewhere. */
+  --color-canvas: var(--canvas);
+  --color-canvas-alt: var(--canvas-alt);
+  --color-surface: var(--surface);
+  --color-surface-sunk: var(--surface-sunk);
+
+  --color-ink: var(--ink);
+  --color-ink-800: var(--ink-800);
+  --color-ink-600: var(--ink-600);
+  --color-ink-400: var(--ink-400);
+  --color-ink-300: var(--ink-300);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-champagne: var(--champagne);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold: var(--gold);
+  --color-gold-deep: var(--gold-deep);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
 }
 
 ::selection {
@@ -105,6 +205,11 @@ body {
   }
   html {
     @apply font-sans;
+  }
+  /* ARENA-DESIGN-SYSTEM.md §3 - Poppins throughout the product theme; marketing keeps the
+     existing Inter/Space Grotesk pairing (this rule only fires inside the scoped override). */
+  [data-theme="product"] {
+    font-family: var(--font-poppins), var(--font-sans);
   }
 }
 

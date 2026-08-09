@@ -24,6 +24,11 @@ const buttonVariants = cva(
           "rounded-full bg-linear-to-r from-primary-soft to-primary text-primary-foreground shadow-[0_8px_30px_rgba(255,107,53,0.35)] hover:shadow-[0_10px_40px_rgba(255,107,53,0.55)] hover:-translate-y-0.5",
         "ghost-glass":
           "rounded-full border-border bg-white/5 text-foreground/85 backdrop-blur-md hover:bg-white/[0.09]",
+        // ARENA-DESIGN-SYSTEM.md §6 "Premium" - champagne->gold gradient, black text, for
+        // Get matched / Upgrade / Promote / premium CTAs only. Only renders as intended inside
+        // [data-theme="product"] (uses the new §2 tokens); additive, no existing variant touched.
+        premium:
+          "rounded-full bg-linear-to-r from-champagne to-gold text-ink shadow-[0_8px_24px_rgba(214,168,79,0.35)] hover:shadow-[0_10px_32px_rgba(214,168,79,0.5)] hover:-translate-y-0.5",
       },
       size: {
         default:
