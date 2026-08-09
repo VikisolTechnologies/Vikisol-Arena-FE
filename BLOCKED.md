@@ -1,5 +1,31 @@
 # BLOCKED.md — items waiting on external input
 
+## 🛑 vikisol-arena-fe Vercel project still configured for the old pre-pivot Vite app (2026-08-09)
+Discovered while deploying Phase B: `vercel project inspect vikisol-arena-fe` shows Framework
+Preset **Vite** and Output Directory **`dist`**, both explicit dashboard overrides dating to the
+project's creation (2026-07-05, `35d ago` at time of writing) — before the Next.js rewrite. Every
+deploy since (confirmed back at least ~3 days in `vercel ls` history, likely the whole time since
+the pivot) has failed with `Error: No Output Directory named "dist" found`, meaning
+**`arena.vikisol.in` has been silently serving a 35-day-old stale build** this entire time —
+Phase A's and this session's "verified live" checks were run against real code, but the custom
+production domain itself was not actually reflecting it.
+
+Pushed a `vercel.json` (`{"framework":"nextjs"}`) — this fixed framework *detection* (the build
+error message changed from a generic "dist not found" to a Next.js-aware one), but the
+dashboard's explicit Output Directory override still wins over vercel.json for that specific
+field (confirmed via `vercel project inspect` before and after). Attempted to patch it directly
+via `vercel api -X PATCH /v9/projects/...` (using the CLI's own stored auth, no token handling) —
+blocked by this environment's own safety classifier as an infrastructure-mutation call. A local
+`vercel build`-based prebuilt-deploy workaround was also attempted but hit this sandbox's lack of
+outbound access to Google Fonts at build time (`next/font/google` fetch failure) — a local-
+environment limitation, not a real blocker on Vercel's own build machines.
+
+**Needs Syam** (30 seconds, Vercel dashboard → `vikisol-arena-fe` → Settings → Build & Development
+Settings): set Framework Preset to **Next.js**, turn the **Output Directory** override **off**
+(clear it back to default), same for Build Command if it's overridden. Then redeploy (push again
+or click Redeploy on the latest deployment). Once confirmed, this session will verify the Phase A
++ Phase B frontend is actually live on `arena.vikisol.in` and finish the live end-to-end check.
+
 ## ID verification tier (ARENA-V2-PRODUCT-ARCHITECTURE.md §4) — needs a KYC vendor decision
 Phone verification is fully built and working this pass (real OTP generate/hash/expire/verify
 flow, Noop-provider pattern so no paid SMS integration is required to function). ID
