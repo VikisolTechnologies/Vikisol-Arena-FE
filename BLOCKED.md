@@ -1,5 +1,15 @@
 # BLOCKED.md — items waiting on external input
 
+## Real embeddings (OpenAI) for Phase C feed ranking — needs an API key
+`HashingEmbeddingProvider` (a real, local, zero-dependency hashing-trick embedding) is the
+active default and genuinely working - not blocked on anything to function. A real
+`OpenAiEmbeddingProvider` is already built and wired behind the same dormant-until-configured
+`@Bean @Primary` pattern as every other integration (Resend/WhatsApp/Teams/phone-OTP) - just
+needs `OPENAI_API_KEY` set as a Railway env var whenever wanted. Note: switching providers means
+existing posts' cached embeddings (128-dim hashing vs 1536-dim OpenAI) need a one-time re-embed
+pass before cosine similarity against new posts is meaningful again - see
+OpenAiEmbeddingProvider's own class comment.
+
 ## ✅ RESOLVED (2026-08-09) — vikisol-arena-fe Vercel project still configured for the old pre-pivot Vite app
 Discovered while deploying Phase B: `vercel project inspect vikisol-arena-fe` shows Framework
 Preset **Vite** and Output Directory **`dist`**, both explicit dashboard overrides dating to the
