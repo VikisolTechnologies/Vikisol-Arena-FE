@@ -1,6 +1,6 @@
 # BLOCKED.md — items waiting on external input
 
-## 🛑 vikisol-arena-fe Vercel project still configured for the old pre-pivot Vite app (2026-08-09)
+## ✅ RESOLVED (2026-08-09) — vikisol-arena-fe Vercel project still configured for the old pre-pivot Vite app
 Discovered while deploying Phase B: `vercel project inspect vikisol-arena-fe` shows Framework
 Preset **Vite** and Output Directory **`dist`**, both explicit dashboard overrides dating to the
 project's creation (2026-07-05, `35d ago` at time of writing) — before the Next.js rewrite. Every
@@ -20,11 +20,11 @@ blocked by this environment's own safety classifier as an infrastructure-mutatio
 outbound access to Google Fonts at build time (`next/font/google` fetch failure) — a local-
 environment limitation, not a real blocker on Vercel's own build machines.
 
-**Needs Syam** (30 seconds, Vercel dashboard → `vikisol-arena-fe` → Settings → Build & Development
-Settings): set Framework Preset to **Next.js**, turn the **Output Directory** override **off**
-(clear it back to default), same for Build Command if it's overridden. Then redeploy (push again
-or click Redeploy on the latest deployment). Once confirmed, this session will verify the Phase A
-+ Phase B frontend is actually live on `arena.vikisol.in` and finish the live end-to-end check.
+**Fixed by Syam directly in the dashboard** (Framework Preset → Next.js, Output Directory
+override cleared) within minutes of being flagged. Next deploy went green immediately;
+`arena.vikisol.in` confirmed serving the current build (verified: `/map` returns 200, page
+content reflects Phase B code, not a cached/stale response). See DECISIONS.md for the full
+writeup of what was wrong and why an automated fix wasn't possible from this session.
 
 ## ID verification tier (ARENA-V2-PRODUCT-ARCHITECTURE.md §4) — needs a KYC vendor decision
 Phone verification is fully built and working this pass (real OTP generate/hash/expire/verify

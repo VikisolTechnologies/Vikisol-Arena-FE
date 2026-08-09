@@ -3,6 +3,24 @@
 Per the mission's standing rule: decisions get logged here instead of interrupting the
 user. Each entry says what was decided, why, and what it costs/defers.
 
+## Production deploy pipeline was silently broken since before Phase B (found + fixed 2026-08-09)
+
+While deploying Phase B, discovered `vikisol-arena-fe`'s Vercel project was still configured
+for the pre-pivot Vite app (Framework Preset: Vite, Output Directory: `dist`) from its creation
+35 days ago. Every deploy since had failed with "No Output Directory named dist found" -
+`arena.vikisol.in` had been silently serving a build from before the Next.js rewrite this whole
+time. A `vercel.json` (`{"framework":"nextjs"}`) fixed framework *detection* but the dashboard's
+explicit Output Directory override still won over it - that field needed clearing at the source,
+which needs dashboard access this session doesn't have (an API patch attempt was correctly
+blocked by this environment's own safety classifier as an infrastructure-mutation call). Syam
+fixed the two dashboard fields directly; a fresh deploy immediately went green and
+`arena.vikisol.in` now serves the real, current build for the first time in over a month.
+Logged in BLOCKED.md while open, keeping this entry as the permanent record of what was wrong
+and how it was actually fixed. Practical upshot: treat any *prior* "verified live on
+arena.vikisol.in" claim from before this fix with suspicion — the underlying code was almost
+certainly correct (verified via direct `*.vercel.app` deployment URLs or the API layer
+directly), but the custom production domain itself was not reflecting it until now.
+
 ## ARENA-V2-PRODUCT-ARCHITECTURE.md Phase B — architecture calls (2026-08-09)
 
 **No PostGIS. Geohash + Haversine in application code instead.** Confirmed before starting:
