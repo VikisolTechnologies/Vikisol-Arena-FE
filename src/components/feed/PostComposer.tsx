@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
+import { LocateFixed, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { createPost } from "@/lib/api/posts";
-import type { Post, PostAudience, PostVisibility } from "@/lib/types";
+import type { Post, PostAudience, PostVisibility, VerificationLevel } from "@/lib/types";
 
 const INTENTS: { key: Post["intentType"]; label: string; hint: string }[] = [
   { key: "activity", label: "Activity", hint: "A game, a trek, a meetup - people join you in real life" },
@@ -28,18 +28,52 @@ export function PostComposer({ open, onOpenChange, onPublished }: {
   const [audience, setAudience] = useState<PostAudience>("global");
   const [capacity, setCapacity] = useState("");
   const [tags, setTags] = useState("");
+  const [startsAt, setStartsAt] = useState("");
+  const [meetingPoint, setMeetingPoint] = useState("");
+  const [requiredVerification, setRequiredVerification] = useState<VerificationLevel>("basic");
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locateError, setLocateError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const joinable = intent === "activity" || intent === "ask";
+  const isActivity = intent === "activity";
 
   const reset = () => {
     setIntent("activity"); setBody(""); setLocation(""); setVisibility("public");
-    setAudience("global"); setCapacity(""); setTags("");
+    setAudience("global"); setCapacity(""); setTags(""); setStartsAt(""); setMeetingPoint("");
+    setRequiredVerification("basic"); setCoords(null); setLocateError(null); setError(null);
+  };
+
+  // §5's "own in-the-moment browser Geolocation prompt, independent of account-wide discovery
+  // consent" - only ever fires when the author explicitly taps this button, and only the
+  // resulting approximate pin (never the raw reading) is ever shown back to anyone, including
+  // the author themself.
+  const useMyLocation = () => {
+    if (!navigator.geolocation) {
+      setLocateError("Location isn't available in this browser.");
+      return;
+    }
+    setLocating(true);
+    setLocateError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocating(false);
+      },
+      () => {
+        setLocateError("Couldn't get your location - check permissions and try again.");
+        setLocating(false);
+      },
+      { enableHighAccuracy: false, timeout: 8000 },
+    );
   };
 
   const publish = async () => {
     if (!body.trim()) return;
     setPublishing(true);
+    setError(null);
     try {
       await createPost({
         intentType: intent,
@@ -49,10 +83,17 @@ export function PostComposer({ open, onOpenChange, onPublished }: {
         visibility: joinable ? visibility : "public",
         capacity: joinable && capacity ? Number(capacity) : undefined,
         tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+        startsAt: isActivity && startsAt ? new Date(startsAt).toISOString() : undefined,
+        lat: isActivity ? coords?.lat : undefined,
+        lng: isActivity ? coords?.lng : undefined,
+        exactMeetingPoint: isActivity && meetingPoint.trim() ? meetingPoint.trim() : undefined,
+        requiredVerificationLevel: isActivity && requiredVerification !== "basic" ? requiredVerification : undefined,
       });
       reset();
       onOpenChange(false);
       onPublished();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't publish that post.");
     } finally {
       setPublishing(false);
     }
@@ -91,13 +132,65 @@ export function PostComposer({ open, onOpenChange, onPublished }: {
             className="min-h-24 border-border bg-white/[0.03]"
           />
 
-          {intent === "activity" && (
-            <Input
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Where (e.g. Gachibowli) - kept general, no exact address"
-              className="border-border bg-white/[0.03]"
-            />
+          {isActivity && (
+            <>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Where (e.g. Gachibowli) - kept general, no exact address"
+                  className="border-border bg-white/[0.03]"
+                />
+                <button
+                  type="button"
+                  onClick={useMyLocation}
+                  disabled={locating}
+                  className={cn(
+                    "flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[11px] font-medium transition-colors disabled:opacity-60",
+                    coords ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-white/[0.02] text-muted-foreground hover:border-white/20",
+                  )}
+                >
+                  <LocateFixed className="size-3.5" /> {locating ? "Locating…" : coords ? "Located" : "Use my location"}
+                </button>
+              </div>
+              {locateError && <p className="text-[11px] text-red-400">{locateError}</p>}
+              {coords && (
+                <p className="text-[11px] text-muted-foreground">
+                  Captured - only an approximate, jittered pin will ever be shown to others, never your exact position.
+                </p>
+              )}
+
+              <Input
+                type="datetime-local"
+                value={startsAt}
+                onChange={(e) => setStartsAt(e.target.value)}
+                className="border-border bg-white/[0.03] text-xs"
+              />
+
+              <Input
+                value={meetingPoint}
+                onChange={(e) => setMeetingPoint(e.target.value)}
+                placeholder="Exact meeting point (optional) - shown only inside the room to approved joiners"
+                className="border-border bg-white/[0.03]"
+              />
+
+              <div className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1 text-[11px] text-muted-foreground"><ShieldCheck className="size-3" /> Who can join needs:</span>
+                {(["basic", "phone"] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setRequiredVerification(v)}
+                    className={cn(
+                      "rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
+                      requiredVerification === v ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-white/[0.02] text-muted-foreground",
+                    )}
+                  >
+                    {v === "basic" ? "No extra check" : "Phone-verified"}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
 
           {joinable && (
@@ -154,6 +247,8 @@ export function PostComposer({ open, onOpenChange, onPublished }: {
             placeholder="Tags, comma-separated (optional)"
             className="border-border bg-white/[0.03]"
           />
+
+          {error && <p className="text-xs text-red-400">{error}</p>}
 
           <Button variant="primary-gradient" size="sm" className="w-full gap-1.5" disabled={!body.trim() || publishing} onClick={publish}>
             <Sparkles className="size-3.5" /> {publishing ? "Publishing…" : "Publish"}

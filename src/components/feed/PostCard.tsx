@@ -29,9 +29,16 @@ export function PostCard({ post, onClick }: { post: Post; onClick: () => void })
           <span className="text-sm font-semibold">{post.authorName}</span>
           {post.mine && <Badge variant="secondary" className="bg-primary/12 text-[11px] text-primary-soft">You</Badge>}
         </div>
-        <Badge variant="secondary" className="gap-1 bg-white/5 text-[11px] text-muted-foreground">
-          <Icon className="size-3" /> {INTENT_LABEL[post.intentType]}
-        </Badge>
+        <div className="flex items-center gap-1.5">
+          {(post.status === "cancelled" || post.status === "expired" || post.status === "full") && (
+            <Badge variant="secondary" className={post.status === "full" ? "bg-white/5 text-[11px] text-muted-foreground" : "bg-red-500/10 text-[11px] text-red-400"}>
+              {post.status === "cancelled" ? "Cancelled" : post.status === "expired" ? "Expired" : "Full"}
+            </Badge>
+          )}
+          <Badge variant="secondary" className="gap-1 bg-white/5 text-[11px] text-muted-foreground">
+            <Icon className="size-3" /> {INTENT_LABEL[post.intentType]}
+          </Badge>
+        </div>
       </div>
 
       <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-foreground/90">{post.body}</p>
