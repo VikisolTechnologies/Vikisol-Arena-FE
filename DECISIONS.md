@@ -3,6 +3,66 @@
 Per the mission's standing rule: decisions get logged here instead of interrupting the
 user. Each entry says what was decided, why, and what it costs/defers.
 
+## ARENA-MASTER-ARCHITECTURE.md + ARENA-DESIGN-SYSTEM.md arrive — full v3 rewrite begins (2026-08-09)
+
+Syam pasted the actual master spec: supersedes ARENA-V2-PRODUCT-ARCHITECTURE.md and
+everything built under it entirely — new route map, new data model, new API contract, a
+full visual rewrite (dark/orange → light ivory/champagne/gold "luxury marketplace"),
+WebSocket realtime, a real map, promotions/advertising, and a server-resolved cookie-auth
+model. Instructed to build PART 15's order continuously, no stopping to ask, tag
+`v3.0-arena-network` at the end. Per the standing autonomous-execution charter (granted
+2026-07-19, still in force), this is exactly the kind of feature/architecture work that's
+pre-approved — proceeding without a check-in. The three carve-outs that charter names as
+still requiring explicit sign-off (payments/billing/escrow, production credentials,
+irreversible/high-blast-radius actions) are addressed individually below and in
+BLOCKED.md, not silently crossed.
+
+**Key interpretive/infra calls made up front, before writing code:**
+
+- **Payments/credits/promotion budgets stay mocked**, per the spec's own explicit words
+  ("invoices (mock until payments are live)"). Building `credit_ledger`, billing UI,
+  promotion budget tracking as real internal state/DB rows with real math — just no real
+  payment gateway (Razorpay etc.) gets wired. That remains a separate, explicit-sign-off
+  decision untouched by this rewrite, consistent with the standing payments carve-out.
+- **Map tiles: MapLibre GL against a keyless/self-hostable tile source** (OpenFreeMap-style,
+  no API key), not a paid provider (MapTiler/Mapbox/Stadia). A paid tile provider would be a
+  new production credential/vendor account — the charter's carve-out — so defaulting to a
+  real, working, keyless map now and flagging the paid-provider upgrade decision (better
+  reliability/rate limits at real scale) in BLOCKED.md for Syam, rather than either
+  fabricating a fake map or unilaterally signing up for a paid vendor.
+- **Video transcoding: self-hosted ffmpeg inside the existing arena-api Dockerfile**, not a
+  third-party video API (Mux/Cloudflare Stream/etc.) — same reasoning: a new paid vendor
+  account is a credentials decision, not an architecture one. ffmpeg run as an async
+  post-upload job (accept → store original → transcode to 720p H.264 + poster frame →
+  mark ready) is real, in-house, and needs no new credentials.
+- **Object storage for the media pipeline is a genuine open gap, not a call I can make
+  silently.** PART 8 requires direct-to-storage signed-URL upload — that needs a real
+  S3-compatible bucket (or equivalent), and none exists in this project's infra today
+  (confirmed via Railway: only Postgres/Redis/arena-api/arena-web are provisioned, no
+  storage service). This is a genuine "missing credentials" case per the spec's own
+  instruction — logged in BLOCKED.md with the concrete unblock action, not invented.
+  Interim: media upload code is being built against the existing local-disk
+  `FileStorageService` (already flagged ephemeral-on-redeploy in BLOCKED.md) so the
+  feature is real and functional today on staging, structured so swapping in real object
+  storage later is a one-class change, not a redesign — matching how the CV-upload gap was
+  already handled.
+- **WebSocket realtime needs no new infra** — Redis already exists on `arena-staging`
+  (confirmed via Railway service list), so Spring's WebSocket support + Redis pub/sub for
+  cross-instance fan-out (PART 13) is pure code, no new provisioning or credentials.
+- **The HttpOnly-cookie auth rewrite (PART 11/12) is proceeding**, revisiting the exact
+  decision declined in the mobile-perf pass (MOBILE-PERF-BASELINE.md) where it was
+  correctly judged too large to retrofit as a scoped patch onto the existing app. This is
+  different: it's PART 15 Step 1 of a wholesale rewrite where every route is being rebuilt
+  anyway, not a surgical change to a stable app. Same disclosed limitation still applies
+  and is being carried forward honestly: this environment has no browser automation, so
+  server-side cookie/redirect correctness is verified via `curl` (real `Set-Cookie`
+  headers, real redirect chains, real server-rendered auth state), but genuine
+  multi-tab/multi-navigation browser cookie-jar behavior cannot be verified the way
+  real DevTools access would allow. Flagged here rather than glossed over.
+- **GitHub push authentication broke mid-session** (see BLOCKED.md) — commits continue
+  locally per the spec's own "missing credentials → BLOCKED.md, then continue" instruction;
+  nothing reaches GitHub/Railway until push auth is restored by hand on this machine.
+
 ## The real ARENA-V2-PRODUCT-ARCHITECTURE.md arrived + full §4/§5 audit + Phase C reconciliation (2026-08-10)
 
 Syam pasted the actual source document today - every prior phase (A/B/C) had been built from

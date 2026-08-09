@@ -25,6 +25,30 @@ doc's own standing instruction ("missing credentials → BLOCKED.md, then contin
 keeps going and commits keep accumulating locally in the meantime — this file will get a
 line the moment push starts working again, and everything queued will go up in one shot.
 
+## Real object storage for the v3 media pipeline — needs a provider decision + credentials
+ARENA-MASTER-ARCHITECTURE.md PART 8 requires direct-to-storage signed-URL upload (images/
+video never proxied through the API) with real image renditions and video transcoding.
+No S3-compatible bucket exists anywhere in this project's infra today — confirmed via
+Railway (`arena-staging` has only Postgres, Redis, arena-api, arena-web provisioned).
+Setting up a new bucket means a new production credential (AWS/Cloudflare R2/Backblaze
+B2/etc.) — per the standing charter, that needs Syam's sign-off, not a unilateral signup.
+**Interim (shipping now, not blocked on this):** media upload is built against the
+existing local-disk `FileStorageService` already used for CVs (ephemeral on redeploy,
+already flagged above) — real upload, real renditions computed and served, just not yet
+durable across redeploys. **Unblock action:** pick a provider (Cloudflare R2 is the
+cheapest S3-compatible option and pairs well with Railway; Syam may already have an AWS/
+GCP account worth reusing instead) and hand over the bucket + access key/secret; swapping
+the storage backend is a one-class change given the interface is written provider-agnostic
+from the start.
+
+## Map tile provider for `/map` — shipping keyless now, paid provider is a real decision later
+PART 7.9/9 wants a real MapLibre GL map with a custom-styled basemap. Shipped against a
+keyless, no-signup tile source (OpenFreeMap-style) so `/map` is real and working today with
+zero new credentials. A paid provider (MapTiler/Mapbox/Stadia) would give more reliable
+rate limits and nicer custom styling at real traffic scale, but that's a new vendor
+account/credential — Syam's call whenever `/map` traffic justifies it, not a blocker to
+shipping the feature now.
+
 ## Women-only activity option (§4) — needs a real product decision on gender data, not a quick fix
 `ARENA-V2-PRODUCT-ARCHITECTURE.md` §4 explicitly names "women-only / invite-only options for
 activity posts" under Approval controls. Invite-only is functionally covered by what already
