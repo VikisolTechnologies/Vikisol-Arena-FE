@@ -14,8 +14,13 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMyProfile, updateMySkills } from "@/lib/api/profile";
+import { getMyFollowers, getMyFollowing } from "@/lib/api/follows";
 import { requireOnboarded } from "@/lib/auth-guard";
-import type { CandidateProfile } from "@/lib/types";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { formatDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import type { CandidateProfile, FollowerEntry } from "@/lib/types";
 
 export default function IdentityPage() {
   const router = useRouter();
@@ -24,6 +29,9 @@ export default function IdentityPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftSkills, setDraftSkills] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [followers, setFollowers] = useState<FollowerEntry[]>([]);
+  const [following, setFollowing] = useState<FollowerEntry[]>([]);
+  const [followTab, setFollowTab] = useState<"followers" | "following">("followers");
 
   useEffect(() => {
     if (!requireOnboarded(router)) return;
@@ -32,6 +40,8 @@ export default function IdentityPage() {
       setDraftSkills(p.skills.map((s) => s.name));
       setSelectedId("me");
     });
+    getMyFollowers().then(setFollowers);
+    getMyFollowing().then(setFollowing);
   }, [router]);
 
   if (!profile) {
@@ -70,6 +80,10 @@ export default function IdentityPage() {
           <div>
             <h1 className="font-display text-xl font-bold tracking-tight">{profile.name}</h1>
             <p className="text-sm text-muted-foreground">{profile.title} · {profile.location}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">{followers.length}</span> followers ·{" "}
+              <span className="font-semibold text-foreground">{following.length}</span> following
+            </p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -171,6 +185,43 @@ export default function IdentityPage() {
           )}
         </div>
       </div>
+      )}
+
+      {mode !== "resume" && (
+        <Card className="mt-4">
+          <div className="mb-3 flex gap-1.5">
+            {(["followers", "following"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setFollowTab(tab)}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                  followTab === tab ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-white/[0.02] text-muted-foreground",
+                )}
+              >
+                {tab === "followers" ? `Followers (${followers.length})` : `Following (${following.length})`}
+              </button>
+            ))}
+          </div>
+          {(followTab === "followers" ? followers : following).length === 0 ? (
+            <EmptyState
+              title={followTab === "followers" ? "No followers yet" : "You're not following anyone yet"}
+              description="Follow people from their posts in the Feed."
+              className="py-8"
+            />
+          ) : (
+            <div className="space-y-2">
+              {(followTab === "followers" ? followers : following).map((f) => (
+                <div key={f.userId} className="flex items-center gap-3 rounded-xl border border-border bg-white/[0.02] px-3.5 py-2.5">
+                  <span className="text-lg">{f.emoji}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{f.name}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">since {formatDate(f.followedAt)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
       )}
     </CandidateAppShell>
   );

@@ -394,3 +394,97 @@ export interface ThreadMessage {
   timestamp: string;
 }
 
+// ---- Phase A: posts / rooms / follows (ARENA-V2-PRODUCT-ARCHITECTURE.md) ----
+
+// Only the three intent types with no pre-existing backing entity - JOB/PROJECT/COMPANY stay on
+// their existing tables (Job, Project; company pages don't exist yet). See §"Room becomes" in
+// the source doc: ACTIVITY/ASK map to a real Room, UPDATE maps to a comment thread (Phase C,
+// not built yet) - an UPDATE post in Phase A is just a feed item with no join/room UI at all.
+export type PostIntentType = "activity" | "ask" | "update";
+
+export type PostAudience = "global" | "followers" | "local"; // "local" not selectable yet (needs Phase B geo)
+export type PostVisibility = "public" | "approval"; // drives the join/approve flow; ignored for "update"
+export type PostStatus = "open" | "full" | "closed" | "cancelled" | "expired";
+export type PostJoinStatus = "pending" | "approved" | "declined";
+
+export interface Post {
+  id: string;
+  authorUserId: string;
+  authorName: string;
+  authorEmoji: string;
+  intentType: PostIntentType;
+  body: string;
+  locationText?: string;
+  audience: PostAudience;
+  visibility: PostVisibility;
+  capacity?: number;
+  spotsFilled: number;
+  status: PostStatus;
+  startsAt?: string;
+  endsAt?: string;
+  tags: string[];
+  mediaUrls: string[];
+  joinable: boolean;
+  mine?: boolean;
+  /** The viewer's own join request status against this post, if any. */
+  myJoinStatus?: PostJoinStatus;
+  /** Set once the viewer has an approved join (or is the author) and a Room exists. */
+  roomId?: string;
+  createdAt: string;
+}
+
+export interface PostJoinRequest {
+  id: string;
+  postId: string;
+  userId: string;
+  userName: string;
+  userEmoji: string;
+  status: PostJoinStatus;
+  createdAt: string;
+}
+
+export type RoomMemberRole = "admin" | "member";
+
+export interface Room {
+  id: string;
+  postId: string;
+  postBody: string;
+  postIntentType: PostIntentType;
+  memberCount: number;
+  unread: boolean;
+  lastMessageAt: string;
+  lastMessagePreview?: string;
+}
+
+export interface RoomMessage {
+  id: string;
+  roomId: string;
+  senderUserId: string;
+  senderName: string;
+  senderEmoji: string;
+  fromMe: boolean;
+  content: string;
+  createdAt: string;
+}
+
+export interface RoomMember {
+  userId: string;
+  name: string;
+  emoji: string;
+  role: RoomMemberRole;
+}
+
+export interface FollowCounts {
+  userId: string;
+  followerCount: number;
+  followingCount: number;
+  viewerFollows?: boolean;
+}
+
+export interface FollowerEntry {
+  userId: string;
+  name: string;
+  emoji: string;
+  followedAt: string;
+}
+

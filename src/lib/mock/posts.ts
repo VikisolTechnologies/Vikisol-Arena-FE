@@ -1,0 +1,107 @@
+import type { Post, PostJoinRequest } from "@/lib/types";
+import { CURRENT_CANDIDATE_ID, getCandidateById, MOCK_CANDIDATES } from "@/lib/mock/candidates";
+
+function authorFor(candidateId: string) {
+  const c = getCandidateById(candidateId);
+  return { authorUserId: candidateId, authorName: c?.name ?? "Someone", authorEmoji: c?.avatarEmoji ?? "🧑🏽" };
+}
+
+export const MOCK_POSTS: Post[] = [
+  {
+    id: "post-1",
+    ...authorFor(CURRENT_CANDIDATE_ID),
+    intentType: "activity",
+    body: "Badminton at 6pm today, Gachibowli - need 2 more for doubles",
+    locationText: "Gachibowli",
+    audience: "global",
+    visibility: "public",
+    capacity: 4,
+    spotsFilled: 1,
+    status: "open",
+    tags: ["badminton", "sports"],
+    mediaUrls: [],
+    joinable: true,
+    mine: true,
+    createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
+  },
+  {
+    id: "post-2",
+    ...authorFor(MOCK_CANDIDATES[3].id),
+    intentType: "ask",
+    body: "Anyone used a good freelance invoicing tool for Indian clients? Tired of manual GST calculations.",
+    audience: "global",
+    visibility: "public",
+    spotsFilled: 0,
+    status: "open",
+    tags: ["freelance"],
+    mediaUrls: [],
+    joinable: true,
+    createdAt: new Date(Date.now() - 5 * 3600000).toISOString(),
+  },
+  {
+    id: "post-3",
+    ...authorFor(MOCK_CANDIDATES[7].id),
+    intentType: "update",
+    body: "Shipped a side project this weekend - a small habit tracker. First real users today!",
+    audience: "global",
+    visibility: "public",
+    spotsFilled: 0,
+    status: "open",
+    tags: [],
+    mediaUrls: [],
+    joinable: false,
+    createdAt: new Date(Date.now() - 20 * 3600000).toISOString(),
+  },
+  {
+    id: "post-4",
+    ...authorFor(MOCK_CANDIDATES[12].id),
+    intentType: "activity",
+    body: "Weekend trek to Ananthagiri Hills, Saturday early morning - open to 5 people, first-timers welcome",
+    locationText: "Ananthagiri Hills",
+    audience: "global",
+    visibility: "approval",
+    capacity: 6,
+    spotsFilled: 2,
+    status: "open",
+    tags: ["trek", "outdoors"],
+    mediaUrls: [],
+    joinable: true,
+    myJoinStatus: "pending",
+    createdAt: new Date(Date.now() - 30 * 3600000).toISOString(),
+  },
+  {
+    id: "post-5",
+    ...authorFor(MOCK_CANDIDATES[20].id),
+    intentType: "ask",
+    body: "Looking for a solid React Native mentor for a couple of hours a week - happy to pay for the time.",
+    audience: "followers",
+    visibility: "approval",
+    spotsFilled: 0,
+    status: "open",
+    tags: ["mentorship", "react-native"],
+    mediaUrls: [],
+    joinable: true,
+    createdAt: new Date(Date.now() - 40 * 3600000).toISOString(),
+  },
+];
+
+export const MOCK_POST_JOIN_REQUESTS: PostJoinRequest[] = [
+  {
+    id: "join-1",
+    postId: "post-1",
+    userId: MOCK_CANDIDATES[5].id,
+    userName: MOCK_CANDIDATES[5].name,
+    userEmoji: MOCK_CANDIDATES[5].avatarEmoji,
+    status: "approved",
+    createdAt: new Date(Date.now() - 1.5 * 3600000).toISOString(),
+  },
+  {
+    id: "join-2",
+    postId: "post-4",
+    userId: CURRENT_CANDIDATE_ID,
+    userName: getCandidateById(CURRENT_CANDIDATE_ID)?.name ?? "You",
+    userEmoji: getCandidateById(CURRENT_CANDIDATE_ID)?.avatarEmoji ?? "🧑🏽",
+    status: "pending",
+    createdAt: new Date(Date.now() - 29 * 3600000).toISOString(),
+  },
+];

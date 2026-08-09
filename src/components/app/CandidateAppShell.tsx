@@ -4,12 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Home,
-  Compass,
-  MessageSquare,
+  Newspaper,
+  Users,
   Fingerprint,
-  ClipboardList,
-  Store,
+  Briefcase,
   Settings,
   Menu,
   Bell,
@@ -18,6 +16,7 @@ import {
 } from "lucide-react";
 import { AuraBackground } from "@/components/landing/AuraBackground";
 import { PersistentOrb } from "@/components/orb/PersistentOrb";
+import { BottomTabBar } from "@/components/app/BottomTabBar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import type { CandidateProfile } from "@/lib/types";
@@ -26,13 +25,16 @@ import { getUnreadCount } from "@/lib/api/notifications";
 import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
 import { cn } from "@/lib/utils";
 
+// ARENA-V2-PRODUCT-ARCHITECTURE.md Phase A: Feed replaces Dashboard as the default landing/home
+// nav item (Dashboard itself still exists as a real page, just no longer primary nav - see
+// auth/page.tsx's redirectForRole). Discover/Applications/Marketplace/Agent moved under the new
+// "Work" hub (reachable from here and from Feed/Profile) rather than each getting their own
+// top-level slot.
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/discover", label: "Discover", icon: Compass },
-  { href: "/agent", label: "Agent", icon: MessageSquare },
+  { href: "/feed", label: "Feed", icon: Newspaper },
+  { href: "/rooms", label: "Rooms", icon: Users },
+  { href: "/work", label: "Work", icon: Briefcase },
   { href: "/identity", label: "Identity", icon: Fingerprint },
-  { href: "/applications", label: "Applications", icon: ClipboardList },
-  { href: "/marketplace", label: "Marketplace", icon: Store },
   { href: "/messages", label: "Messages", icon: Mail },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -101,7 +103,7 @@ export function CandidateAppShell({
           className="sticky top-0 hidden h-svh w-[240px] shrink-0 flex-col border-r border-border py-5 lg:flex"
           style={cookieBannerVisible ? { paddingBottom: 88 } : undefined}
         >
-          <Link href="/dashboard" className="mb-6 flex items-center gap-2.5 px-4">
+          <Link href="/feed" className="mb-6 flex items-center gap-2.5 px-4">
             <span className="font-display text-sm font-bold tracking-wide">
               ARENA<span className="text-primary">.</span>
             </span>
@@ -128,7 +130,7 @@ export function CandidateAppShell({
           <div className="fixed inset-0 z-40 lg:hidden">
             <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
             <div className="absolute left-0 top-0 flex h-full w-[260px] flex-col border-r border-border bg-background py-5">
-              <Link href="/dashboard" className="mb-6 flex items-center gap-2.5 px-4">
+              <Link href="/feed" className="mb-6 flex items-center gap-2.5 px-4">
                 <span className="font-display text-sm font-bold tracking-wide">
                   ARENA<span className="text-primary">.</span>
                 </span>
@@ -162,9 +164,10 @@ export function CandidateAppShell({
             </div>
           </header>
 
-          <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+          <main className="min-w-0 flex-1 px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-6">{children}</main>
         </div>
       </div>
+      <BottomTabBar />
       <PersistentOrb />
     </div>
   );

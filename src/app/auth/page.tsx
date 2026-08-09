@@ -55,7 +55,7 @@ export default function AuthPage() {
         router.push("/admin");
         break;
       default:
-        router.push(isOnboarded() ? "/dashboard" : "/onboarding");
+        router.push(isOnboarded() ? "/feed" : "/onboarding");
     }
   };
 
