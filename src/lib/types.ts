@@ -459,6 +459,10 @@ export interface Post {
   /** Client-computed only (Haversine against the viewer's own approx position) - never sent by
    * the API, populated by lib/api/posts.ts's getNearby() for map/list display. */
   distanceKm?: number;
+  // Phase C additions.
+  commentCount: number;
+  reactionCount: number;
+  myReacted?: boolean;
 }
 
 export interface PostJoinRequest {
@@ -542,5 +546,55 @@ export interface BlockedUser {
   name: string;
   emoji: string;
   blockedAt: string;
+}
+
+// ---- Phase C: company pages, comments/reactions, trends, profile revamp (ARENA-V2-PRODUCT-ARCHITECTURE.md) ----
+
+// The talent-facing view of an enterprise tenant - see DECISIONS.md for why this wraps
+// EnterpriseProfile rather than being a new backend entity. Deliberately excludes
+// seats/credits/plan/status, which are that tenant's own internal business data.
+export interface Company {
+  id: string;
+  name: string;
+  emoji: string;
+  industry: Industry;
+  size: CompanySize;
+  openJobCount: number;
+  followerCount: number;
+  viewerFollows?: boolean;
+}
+
+export interface PostComment {
+  id: string;
+  postId: string;
+  authorUserId: string;
+  authorName: string;
+  authorEmoji: string;
+  content: string;
+  createdAt: string;
+}
+
+// The other-viewer-facing view of a CandidateProfile - `/identity` was self-only before Phase C
+// (see DECISIONS.md). Redacted the same direction as Company: no cvUrl/rateFloor/consent/
+// autonomy/approxLat/approxLng, only homeCity (and only if the profile's own consent isn't off).
+export interface PublicCandidateProfile {
+  id: string;
+  name: string;
+  avatarEmoji: string;
+  title: string;
+  industry: Industry;
+  location: string;
+  remote: boolean;
+  skills: Skill[];
+  experienceYears: number;
+  openTo: OpenTo[];
+  careerHealth: number;
+  bio?: string;
+  verificationLevel: VerificationLevel;
+  phoneVerified: boolean;
+  homeCity?: string;
+  followerCount: number;
+  followingCount: number;
+  viewerFollows?: boolean;
 }
 

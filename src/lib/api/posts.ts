@@ -1,4 +1,4 @@
-import type { Post, PostIntentType, PostAudience, PostVisibility, PostJoinRequest, VerificationLevel } from "@/lib/types";
+import type { Post, PostIntentType, PostAudience, PostVisibility, PostJoinRequest, PostComment, VerificationLevel } from "@/lib/types";
 import { MOCK_POSTS, MOCK_POST_JOIN_REQUESTS } from "@/lib/mock/posts";
 import { CURRENT_CANDIDATE_ID, getCandidateById } from "@/lib/mock/candidates";
 import { getMockDateOfBirth } from "./verification";
@@ -22,6 +22,8 @@ function requireAdultMock(intentType: PostIntentType) {
 
 const POSTS_KEY = "arena_posts";
 const JOINS_KEY = "arena_post_joins";
+const COMMENTS_KEY = "arena_post_comments";
+const REACTIONS_KEY = "arena_post_reactions";
 
 function readPosts(): Post[] {
   if (typeof window === "undefined") return MOCK_POSTS;
@@ -47,6 +49,34 @@ function readJoins(): PostJoinRequest[] {
 }
 function writeJoins(joins: PostJoinRequest[]) {
   localStorage.setItem(JOINS_KEY, JSON.stringify(joins));
+}
+
+function readComments(): PostComment[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(COMMENTS_KEY);
+    return raw ? (JSON.parse(raw) as PostComment[]) : [];
+  } catch {
+    return [];
+  }
+}
+function writeComments(comments: PostComment[]) {
+  localStorage.setItem(COMMENTS_KEY, JSON.stringify(comments));
+}
+
+// { [postId]: true } for CURRENT_CANDIDATE_ID's own reaction - mock mode only ever needs the
+// viewer's own state, mirroring blocks.ts/companies.ts's small-dedicated-key pattern.
+function readReactions(): Record<string, boolean> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(REACTIONS_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+  } catch {
+    return {};
+  }
+}
+function writeReactions(reactions: Record<string, boolean>) {
+  localStorage.setItem(REACTIONS_KEY, JSON.stringify(reactions));
 }
 
 export interface CreatePostInput {
@@ -130,6 +160,9 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
     approxLng: approx?.lng,
     exactMeetingPoint: input.exactMeetingPoint,
     requiredVerificationLevel: input.requiredVerificationLevel,
+    commentCount: 0,
+    reactionCount: 0,
+    myReacted: false,
   };
   writePosts([post, ...readPosts()]);
   return delay(post, 300);
@@ -229,4 +262,100 @@ export async function decideJoin(postId: string, joinId: string, approve: boolea
   const result = updated.find((j) => j.id === joinId);
   if (!result) throw new Error("Join request not found");
   return delay(result, 250);
+}
+
+// ARENA-V2-PRODUCT-ARCHITECTURE.md Phase C - trending posts, reused as a feed sort option
+// rather than a separate subsystem (see DECISIONS.md). Mock mode ranks by the same seeded
+// commentCount/reactionCount/spotsFilled fields, recency-decayed - an honest simplification
+// since there's no real engagement-event log in mock mode to replay.
+export async function getTrending(page = 0, size = 20): Promise<Post[]> {
+  if (isRealMode()) return apiFetch<Post[]>("/posts/trending", { query: { page, size } });
+  const now = Date.now();
+  const scored = [...readPosts()]
+    .filter((p) => p.status === "open")
+    .map((p) => {
+      const hoursOld = (now - new Date(p.createdAt).getTime()) / 3600000;
+      const engagement = p.spotsFilled * 3 + p.commentCount * 2 + p.reactionCount;
+      return { post: p, score: engagement * Math.pow(0.5, hoursOld / 48) };
+    })
+    .sort((a, b) => b.score - a.score)
+    .map((s) => s.post);
+  return delay(scored.slice(page * size, page * size + size), 250);
+}
+
+// Profile revamp's "activity" tab (Phase C) - a target user's own visible-to-viewer posts,
+// same audience-gate simplification the real backend applies (GLOBAL always visible, FOLLOWERS
+// only if the viewer follows them, self always sees everything, CANCELLED hidden).
+export async function getUserPosts(targetUserId: string, page = 0, size = 20): Promise<PagedResponse<Post>> {
+  if (isRealMode()) return apiFetch<PagedResponse<Post>>(`/posts/by-user/${targetUserId}`, { query: { page, size } });
+  const isSelf = targetUserId === CURRENT_CANDIDATE_ID;
+  const visible = readPosts()
+    .filter((p) => p.authorUserId === targetUserId && p.status !== "cancelled")
+    .filter((p) => isSelf || p.audience === "global")
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const content = visible.slice(page * size, page * size + size);
+  return delay({
+    content, page, size, totalElements: visible.length,
+    totalPages: Math.ceil(visible.length / size), last: (page + 1) * size >= visible.length,
+  }, 200);
+}
+
+export async function getComments(postId: string): Promise<PostComment[]> {
+  if (isRealMode()) return apiFetch<PostComment[]>(`/posts/${postId}/comments`);
+  return delay(readComments().filter((c) => c.postId === postId), 200);
+}
+
+export async function addComment(postId: string, content: string): Promise<PostComment> {
+  if (isRealMode()) return apiFetch<PostComment>(`/posts/${postId}/comments`, { method: "POST", body: { content } });
+  const me = getCandidateById(CURRENT_CANDIDATE_ID);
+  const comment: PostComment = {
+    id: `comment-${Date.now()}`,
+    postId,
+    authorUserId: CURRENT_CANDIDATE_ID,
+    authorName: me?.name ?? "You",
+    authorEmoji: me?.avatarEmoji ?? "🧑🏽",
+    content,
+    createdAt: new Date().toISOString(),
+  };
+  writeComments([...readComments(), comment]);
+  writePosts(readPosts().map((p) => (p.id === postId ? { ...p, commentCount: p.commentCount + 1 } : p)));
+  return delay(comment, 250);
+}
+
+export async function deleteComment(postId: string, commentId: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch<void>(`/posts/${postId}/comments/${commentId}`, { method: "DELETE" });
+    return;
+  }
+  writeComments(readComments().filter((c) => c.id !== commentId));
+  writePosts(readPosts().map((p) => (p.id === postId ? { ...p, commentCount: Math.max(0, p.commentCount - 1) } : p)));
+  await delay(undefined, 200);
+}
+
+export async function reactToPost(postId: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch<void>(`/posts/${postId}/react`, { method: "POST" });
+    return;
+  }
+  const reactions = readReactions();
+  if (!reactions[postId]) {
+    writeReactions({ ...reactions, [postId]: true });
+    writePosts(readPosts().map((p) => (p.id === postId ? { ...p, reactionCount: p.reactionCount + 1, myReacted: true } : p)));
+  }
+  await delay(undefined, 150);
+}
+
+export async function unreactToPost(postId: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch<void>(`/posts/${postId}/react`, { method: "DELETE" });
+    return;
+  }
+  const reactions = readReactions();
+  if (reactions[postId]) {
+    const rest = { ...reactions };
+    delete rest[postId];
+    writeReactions(rest);
+    writePosts(readPosts().map((p) => (p.id === postId ? { ...p, reactionCount: Math.max(0, p.reactionCount - 1), myReacted: false } : p)));
+  }
+  await delay(undefined, 150);
 }

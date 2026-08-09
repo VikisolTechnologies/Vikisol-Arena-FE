@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Eye, ShieldCheck, Briefcase, GraduationCap, X, FileText } from "lucide-react";
+import { Pencil, Eye, ShieldCheck, Briefcase, GraduationCap, X, FileText, MapPin, Phone, Sparkles } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { ForceGraph } from "@/components/identity/ForceGraph";
@@ -10,28 +10,35 @@ import { SkillPicker } from "@/components/onboarding/SkillPicker";
 import { ArenaCV } from "@/components/applications/ArenaCV";
 import { ResumeUpload } from "@/components/applications/ResumeUpload";
 import { DownloadPdfButton } from "@/components/applications/DownloadPdfButton";
+import { PostCard } from "@/components/feed/PostCard";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMyProfile, updateMySkills } from "@/lib/api/profile";
 import { getMyFollowers, getMyFollowing } from "@/lib/api/follows";
+import { getMyPosts } from "@/lib/api/posts";
+import { getVerificationStatus } from "@/lib/api/verification";
 import { requireOnboarded } from "@/lib/auth-guard";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { CandidateProfile, FollowerEntry } from "@/lib/types";
+import type { CandidateProfile, FollowerEntry, Post, VerificationStatus } from "@/lib/types";
+
+const VERIFICATION_LABEL: Record<string, string> = { basic: "Basic", phone: "Phone-verified", id: "ID-verified" };
 
 export default function IdentityPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
-  const [mode, setMode] = useState<"public" | "edit" | "resume">("public");
+  const [mode, setMode] = useState<"public" | "edit" | "resume" | "activity">("public");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftSkills, setDraftSkills] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [followers, setFollowers] = useState<FollowerEntry[]>([]);
   const [following, setFollowing] = useState<FollowerEntry[]>([]);
   const [followTab, setFollowTab] = useState<"followers" | "following">("followers");
+  const [verification, setVerification] = useState<VerificationStatus | null>(null);
+  const [myPosts, setMyPosts] = useState<Post[] | null>(null);
 
   useEffect(() => {
     if (!requireOnboarded(router)) return;
@@ -42,7 +49,12 @@ export default function IdentityPage() {
     });
     getMyFollowers().then(setFollowers);
     getMyFollowing().then(setFollowing);
+    getVerificationStatus().then(setVerification);
   }, [router]);
+
+  useEffect(() => {
+    if (mode === "activity" && myPosts === null) getMyPosts().then(setMyPosts);
+  }, [mode, myPosts]);
 
   if (!profile) {
     return (
@@ -79,14 +91,25 @@ export default function IdentityPage() {
           </Avatar>
           <div>
             <h1 className="font-display text-xl font-bold tracking-tight">{profile.name}</h1>
-            <p className="text-sm text-muted-foreground">{profile.title} · {profile.location}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              <span className="font-semibold text-foreground">{followers.length}</span> followers ·{" "}
-              <span className="font-semibold text-foreground">{following.length}</span> following
-            </p>
+            <p className="text-sm text-muted-foreground">{profile.title} · {profile.homeCity ?? profile.location}</p>
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+              <span>
+                <span className="font-semibold text-foreground">{followers.length}</span> followers ·{" "}
+                <span className="font-semibold text-foreground">{following.length}</span> following
+              </span>
+              {verification && verification.verificationLevel !== "basic" && (
+                <span className="flex items-center gap-1 text-primary-soft"><ShieldCheck className="size-3" /> {VERIFICATION_LABEL[verification.verificationLevel]}</span>
+              )}
+              {verification?.phoneVerified && (
+                <span className="flex items-center gap-1 text-primary-soft"><Phone className="size-3" /> Phone verified</span>
+              )}
+              {profile.locationConsent && profile.locationConsent !== "off" && (
+                <span className="flex items-center gap-1"><MapPin className="size-3" /> Location: {profile.locationConsent === "precise" ? "Precise" : "City-level"}</span>
+              )}
+            </div>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant={mode === "public" ? "primary-gradient" : "ghost-glass"}
             size="sm"
@@ -102,6 +125,14 @@ export default function IdentityPage() {
             onClick={() => setMode("edit")}
           >
             <Pencil className="size-3.5" /> Edit
+          </Button>
+          <Button
+            variant={mode === "activity" ? "primary-gradient" : "ghost-glass"}
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setMode("activity")}
+          >
+            <Sparkles className="size-3.5" /> Activity
           </Button>
           <Button
             variant={mode === "resume" ? "primary-gradient" : "ghost-glass"}
@@ -122,6 +153,18 @@ export default function IdentityPage() {
             <DownloadPdfButton />
           </div>
         </div>
+      ) : mode === "activity" ? (
+        !myPosts ? (
+          <OrbLoader className="h-64" />
+        ) : myPosts.length === 0 ? (
+          <EmptyState title="Nothing posted yet" description="Head to the Feed to publish your first post." className="py-16" />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {myPosts.map((p) => (
+              <PostCard key={p.id} post={p} onClick={() => router.push(`/feed/${p.id}`)} />
+            ))}
+          </div>
+        )
       ) : (
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <div className="rounded-[24px] border border-border bg-white/[0.03] p-4">
@@ -187,7 +230,7 @@ export default function IdentityPage() {
       </div>
       )}
 
-      {mode !== "resume" && (
+      {mode !== "resume" && mode !== "activity" && (
         <Card className="mt-4">
           <div className="mb-3 flex gap-1.5">
             {(["followers", "following"] as const).map((tab) => (

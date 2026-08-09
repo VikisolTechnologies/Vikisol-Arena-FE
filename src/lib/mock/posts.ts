@@ -23,6 +23,9 @@ export const MOCK_POSTS: Post[] = [
     joinable: true,
     mine: true,
     createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
+    commentCount: 2,
+    reactionCount: 4,
+    myReacted: false,
   },
   {
     id: "post-2",
@@ -37,6 +40,9 @@ export const MOCK_POSTS: Post[] = [
     mediaUrls: [],
     joinable: true,
     createdAt: new Date(Date.now() - 5 * 3600000).toISOString(),
+    commentCount: 3,
+    reactionCount: 1,
+    myReacted: false,
   },
   {
     id: "post-3",
@@ -51,6 +57,9 @@ export const MOCK_POSTS: Post[] = [
     mediaUrls: [],
     joinable: false,
     createdAt: new Date(Date.now() - 20 * 3600000).toISOString(),
+    commentCount: 5,
+    reactionCount: 9,
+    myReacted: true,
   },
   {
     id: "post-4",
@@ -68,6 +77,9 @@ export const MOCK_POSTS: Post[] = [
     joinable: true,
     myJoinStatus: "pending",
     createdAt: new Date(Date.now() - 30 * 3600000).toISOString(),
+    commentCount: 1,
+    reactionCount: 3,
+    myReacted: false,
   },
   {
     id: "post-5",
@@ -82,6 +94,9 @@ export const MOCK_POSTS: Post[] = [
     mediaUrls: [],
     joinable: true,
     createdAt: new Date(Date.now() - 40 * 3600000).toISOString(),
+    commentCount: 0,
+    reactionCount: 0,
+    myReacted: false,
   },
 ];
 

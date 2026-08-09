@@ -1,7 +1,8 @@
 import { CURRENT_CANDIDATE_ID, getCandidateById } from "@/lib/mock/candidates";
 import { getOnboardingProfile, saveOnboardingProfile } from "@/lib/session";
-import type { AutonomyLevel, CandidateProfile, ConsentSettings, Industry, LocationConsent, OpenTo } from "@/lib/types";
+import type { AutonomyLevel, CandidateProfile, ConsentSettings, Industry, LocationConsent, OpenTo, PublicCandidateProfile } from "@/lib/types";
 import { jitterCoord } from "@/lib/geo";
+import { getCounts } from "./follows";
 import { delay } from "./shared";
 import { isRealMode } from "./mode";
 import { apiFetch } from "./httpClient";
@@ -209,6 +210,27 @@ export async function updateMyResume(input: { file: File; skills?: string[] }): 
     resumeUploadedAt: new Date().toISOString(),
     skills: input.skills,
   });
+}
+
+// ARENA-V2-PRODUCT-ARCHITECTURE.md Phase C profile revamp - the public/other-user view
+// getMyProfile() never had (self-only before this pass, see DECISIONS.md). Mock mode has no
+// per-candidate verification-tier state beyond CURRENT_CANDIDATE_ID's own (verification.ts's
+// mock store is intentionally single-user, matching how there's only ever one "you" in this
+// demo) - other candidates show the honest default (basic/unverified) rather than fabricating
+// per-candidate state that doesn't exist anywhere else in mock mode.
+export async function getPublicProfile(userId: string): Promise<PublicCandidateProfile | undefined> {
+  if (isRealMode()) return apiFetch<PublicCandidateProfile>(`/profile/${userId}`).catch(() => undefined);
+  const c = getCandidateById(userId);
+  if (!c) return undefined;
+  const counts = await getCounts(userId);
+  return delay({
+    id: c.id, name: c.name, avatarEmoji: c.avatarEmoji, title: c.title, industry: c.industry,
+    location: c.location, remote: c.remote, skills: c.skills, experienceYears: c.experienceYears,
+    openTo: c.openTo, careerHealth: c.careerHealth, bio: c.bio,
+    verificationLevel: "basic", phoneVerified: false,
+    homeCity: c.homeCity,
+    followerCount: counts.followerCount, followingCount: counts.followingCount, viewerFollows: counts.viewerFollows,
+  }, 200);
 }
 
 /** Small, capped nudge to Career Health when verified work completes — a won bid, an accepted

@@ -1,5 +1,6 @@
-import { CalendarClock, MapPin, Sparkles, Users } from "lucide-react";
+import { CalendarClock, MapPin, MessageCircle, Sparkles, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ReactionButton } from "@/components/feed/ReactionButton";
 import { formatFriendlyDateTime } from "@/lib/format";
 import type { Post } from "@/lib/types";
 
@@ -62,6 +63,13 @@ export function PostCard({ post, onClick }: { post: Post; onClick: () => void })
           </span>
         )}
         <span className="ml-auto">{formatFriendlyDateTime(post.createdAt)}</span>
+      </div>
+
+      <div className="mt-3 flex items-center gap-4 border-t border-border pt-3">
+        <ReactionButton postId={post.id} reacted={!!post.myReacted} count={post.reactionCount} />
+        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+          <MessageCircle className="size-3.5" /> {post.commentCount > 0 ? post.commentCount : ""}
+        </span>
       </div>
 
       {post.myJoinStatus && (

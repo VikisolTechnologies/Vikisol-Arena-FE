@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { PostCard } from "@/components/feed/PostCard";
 import { PostComposer } from "@/components/feed/PostComposer";
 import { getMyProfile } from "@/lib/api/profile";
-import { getFeed } from "@/lib/api/posts";
+import { getFeed, getTrending } from "@/lib/api/posts";
 import { requireOnboarded } from "@/lib/auth-guard";
+import { cn } from "@/lib/utils";
 import type { CandidateProfile, Post } from "@/lib/types";
 
 function FeedPageInner() {
@@ -20,8 +21,9 @@ function FeedPageInner() {
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [sort, setSort] = useState<"forYou" | "trending">("forYou");
 
-  const load = () => { getFeed().then(setPosts); };
+  const load = () => { (sort === "trending" ? getTrending() : getFeed()).then(setPosts); };
 
   useEffect(() => {
     if (!requireOnboarded(router)) return;
@@ -32,7 +34,8 @@ function FeedPageInner() {
       setComposerOpen(true);
       router.replace("/feed");
     }
-  }, [router, searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, searchParams, sort]);
 
   if (!profile) {
     return (
@@ -52,6 +55,22 @@ function FeedPageInner() {
         </Button>
       }
     >
+      <div className="mb-4 flex gap-1 rounded-full border border-border bg-white/[0.03] p-1 w-fit">
+        {(["forYou", "trending"] as const).map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => setSort(s)}
+            className={cn(
+              "rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors",
+              sort === s ? "bg-primary/15 text-primary-soft" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {s === "forYou" ? "For you" : "Trending"}
+          </button>
+        ))}
+      </div>
+
       {!posts ? (
         <OrbLoader className="h-64" />
       ) : posts.length === 0 ? (

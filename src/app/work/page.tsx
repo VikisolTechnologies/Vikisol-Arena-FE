@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Compass, ClipboardList, Store, MessageSquare, type LucideIcon } from "lucide-react";
+import { Compass, ClipboardList, Store, MessageSquare, Building2, type LucideIcon } from "lucide-react";
 import { CandidateAppShell } from "@/components/app/CandidateAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Card } from "@/components/ui/card";
@@ -14,6 +14,7 @@ const WORK_SURFACES: { href: string; label: string; description: string; icon: L
   { href: "/discover", label: "Discover", description: "Swipe through jobs matched to your profile", icon: Compass },
   { href: "/applications", label: "Applications", description: "Track every application through the pipeline", icon: ClipboardList },
   { href: "/marketplace", label: "Marketplace", description: "Bid on projects, or post one of your own", icon: Store },
+  { href: "/companies", label: "Companies", description: "Browse companies, see open roles, follow the ones you like", icon: Building2 },
   { href: "/agent", label: "Agent", description: "Chat with your agent, approve actions it drafts", icon: MessageSquare },
 ];
 

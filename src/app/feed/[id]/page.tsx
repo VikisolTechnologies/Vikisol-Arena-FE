@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FollowButton } from "@/components/feed/FollowButton";
 import { BlockButton } from "@/components/feed/BlockButton";
+import { ReactionButton } from "@/components/feed/ReactionButton";
+import { CommentThread } from "@/components/feed/CommentThread";
 import { JoinRequestsPanel } from "@/components/feed/JoinRequestsPanel";
 import { getMyProfile } from "@/lib/api/profile";
 import { getPost, requestJoin, cancelPost } from "@/lib/api/posts";
@@ -95,7 +97,13 @@ export default function PostDetailPage() {
           <div className="flex items-start gap-3">
             <span className="text-2xl">{post.authorEmoji}</span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold">{post.authorName}</p>
+              {post.mine ? (
+                <p className="text-sm font-semibold">{post.authorName}</p>
+              ) : (
+                <button type="button" onClick={() => router.push(`/people/${post.authorUserId}`)} className="text-sm font-semibold hover:underline">
+                  {post.authorName}
+                </button>
+              )}
               <p className="text-xs text-muted-foreground">{formatFriendlyDateTime(post.createdAt)}</p>
             </div>
             {(post.status === "cancelled" || post.status === "expired" || post.status === "full") && (
@@ -153,6 +161,10 @@ export default function PostDetailPage() {
               <XCircle className="size-3.5" /> {cancelling ? "Cancelling…" : "Cancel this post"}
             </Button>
           )}
+
+          <div className="mt-4 flex items-center gap-4 border-t border-border pt-4">
+            <ReactionButton postId={post.id} reacted={!!post.myReacted} count={post.reactionCount} className="text-sm" />
+          </div>
         </Card>
 
         {post.joinable && (
@@ -192,6 +204,11 @@ export default function PostDetailPage() {
           </Card>
         )}
       </div>
+
+      <Card className="mt-4">
+        <p className="mb-3 font-display text-sm font-bold">Comments</p>
+        <CommentThread postId={post.id} postAuthorUserId={post.authorUserId} />
+      </Card>
     </CandidateAppShell>
   );
 }
