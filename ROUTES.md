@@ -29,7 +29,7 @@ Legend: ✅ done and verified · 🚧 in progress · ⬜ not started · ➡️ r
 
 | Route | Status | Migration note |
 |---|---|---|
-| `/home` | ⬜ | new — today's default is `/feed`; `/dashboard` also exists and is being fully retired |
+| `/home` | 🚧 | real route, new `AppShell` (PART 4), reuses existing feed data — not yet Step 5's full rebuild (composer row, Nearby rail, right rail). `/feed` now redirects here (307, `next.config.ts`); `/dashboard` also exists and is being fully retired |
 | `/onboarding` | 🚧 | exists — needs the 8-step rebuild in PART 7.4 |
 | `/discover` | 🚧 | shared with public — auth adds actions |
 | `/map` | 🚧 | exists today but is NOT a real map (no MapLibre) — full rebuild per PART 7.9 |

@@ -109,7 +109,7 @@ export default function OnboardingPage() {
       });
     }
     setOnboarded();
-    setTimeout(() => router.push("/feed"), 600);
+    setTimeout(() => router.push("/home"), 600);
   };
 
   return (

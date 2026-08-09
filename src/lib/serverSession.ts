@@ -54,9 +54,10 @@ export async function verifySessionToken(token: string | undefined): Promise<Ser
   }
 }
 
-/** Mirrors auth/page.tsx's redirectForRole - same current-route targets (not the v3 route
- *  map's /home, /workspace, /hm/interviews yet, since those don't exist as real pages until
- *  the shell/nav rebuild lands - this stays non-breaking at every intermediate commit). */
+/** Mirrors auth/page.tsx's redirectForRole. The individual/default case now lands on the
+ *  real /home route (AppShell + PART 15 Step 1); enterprise/admin targets stay on their
+ *  current routes until /workspace and /hm/interviews exist as real pages (Step 9/16) - kept
+ *  non-breaking at every intermediate commit rather than pointing at routes that 404. */
 export function landingRouteForRole(role: string): string {
   switch (role) {
     case "company_admin":
@@ -68,6 +69,6 @@ export function landingRouteForRole(role: string): string {
     case "platform_admin":
       return "/admin";
     default:
-      return "/feed";
+      return "/home";
   }
 }

@@ -34,6 +34,12 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // ARENA-MASTER-ARCHITECTURE.md PART 2/15 - /home replaces /feed as the default landing.
+  // Only the exact list route redirects; /feed/[id] (post detail) keeps working as-is until
+  // Step 5 migrates it to /p/[postId] - not bundling an unrelated route rename into this one.
+  async redirects() {
+    return [{ source: "/feed", destination: "/home", permanent: false }];
+  },
 };
 
 export default nextConfig;
