@@ -1,5 +1,22 @@
 # BLOCKED.md — items waiting on external input
 
+## Still unresolved as of 2026-08-10, despite believing both were fixed — verified directly, not assumed
+Checked both the "push to GitHub" and "set the Railway env vars" items below directly rather
+than taking them as done: GitHub's actual `main` branch (via the API, not local git cache)
+is still at the pre-v3 commit `38d14c3` for `arena-web` — none of the 5 commits from the
+last session have landed. `railway variables --json` on both services confirms `JWT_SECRET`/
+`JWT_ISSUER`/`JWT_AUDIENCE` are still unset on `arena-web` and `JWT_COOKIE_DOMAIN` is still
+unset on `arena-api`. A retried `git push` from this session hangs the same way as before
+(GCM has no cached credential at all right now — not even an invalid one — so it needs the
+interactive browser flow every time, same root cause as last session). Whatever fixed this
+elsewhere didn't carry over to this tool session's credential state. **Not testing the live
+cookie mechanism against this** — it would just be re-measuring the old, pre-v3 behavior and
+either wrongly reporting a failure or wrongly assuming success. Continuing to build and
+commit locally in the meantime per this file's own standing instruction; the two things
+below (push + env vars) are the same unblock actions as before, just re-confirmed as still
+needed. Once push succeeds, verify against the GitHub API directly (`curl .../commits/main`)
+rather than trusting the push command's own exit code, given it hung silently before too.
+
 ## `JWT_SECRET` needs copying to arena-web's Railway env — blocks the cookie-auth mechanism activating
 Step 1 of the v3 rewrite (server-resolved `/auth` redirect, `serverSession.ts`/`middleware.ts`)
 needs `JWT_SECRET` available to arena-web so it can verify JWTs arena-api signs — it's
