@@ -1,5 +1,35 @@
 # BLOCKED.md — items waiting on external input
 
+## `JWT_SECRET` needs copying to arena-web's Railway env — blocks the cookie-auth mechanism activating
+Step 1 of the v3 rewrite (server-resolved `/auth` redirect, `serverSession.ts`/`middleware.ts`)
+needs `JWT_SECRET` available to arena-web so it can verify JWTs arena-api signs — it's
+already set on arena-api (Railway project `arena-staging`). Copying an existing internal
+secret between our own two services isn't a new vendor credential, but writing env vars to
+a live Railway service got correctly blocked by the auto-mode safety classifier as a
+production-infra mutation, so it needs to be run by hand. Two commands, in order:
+
+```bash
+# 1. read the existing value (run from the arena-api directory, linked to arena-staging)
+railway variables --json | grep -o '"JWT_SECRET":"[^"]*"'
+
+# 2. set the SAME value on arena-web (run from the arena-web directory, also arena-staging)
+railway variables --set "JWT_SECRET=<paste the value from step 1>"
+```
+Also needs, same idea, both already real values on arena-api and both currently unset on
+arena-web (safe to copy verbatim, not secrets, just config): `JWT_ISSUER` (defaults to
+`vikisol-arena` if unset on either side, so only needed if arena-api's was ever overridden
+away from that default — check with the same `railway variables --json | grep` pattern
+first) and `JWT_AUDIENCE` (same, default `vikisol-arena-web`). And one arena-api-side
+value that does NOT exist yet anywhere and needs setting fresh, not copied: `JWT_COOKIE_DOMAIN=.vikisol.in`
+(blank today, meaning the `arena_session` cookie is currently host-only and won't yet
+cross from `api-arena.vikisol.in` to `arena.vikisol.in` in production — this is the one
+that actually makes the cookie visible to arena-web's server at all, the `JWT_SECRET` copy
+above only lets arena-web verify it once it can see it).
+
+Until all of this is set, the code is live and harmless (fails closed — `serverSession.ts`
+returns `null`/unauthenticated whenever `JWT_SECRET` is unset, so `/auth`'s redirect simply
+never fires and everything behaves exactly as it did before this commit) but inert.
+
 ## GitHub push authentication is broken on this machine (2026-08-09) — blocks pushing, not building
 Mid-way through committing the v3 rewrite spec docs, `git push` on **both** `arena-web` and
 `arena-api` started failing with `401 Unauthorized`, then hanging for 60–90s per attempt

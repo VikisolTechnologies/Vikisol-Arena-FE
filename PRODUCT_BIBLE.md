@@ -28,12 +28,31 @@ foundation (nothing thrown away — see PART 15's build order, which is additive
 transformative, not a wipe) and rebuilds the route map, data model, visual system, and
 adds real-time/map/promotions/media on top of it.
 
-**As of this entry, v3 code has not started yet** — this session so far has: committed
-the spec docs, logged the key infra/architecture decisions (DECISIONS.md), logged the
-real open blockers (BLOCKED.md — object storage, map tile provider, and a broken GitHub
-push credential that's queuing commits locally), written the route migration table
-(ROUTES.md), and is about to begin PART 15 Step 1 (auth/session rewrite). This file will
-be updated as each step lands, with real per-step status — not marked done until it is.
+**Step 1 (auth/session rewrite) — in progress, real backend + frontend mechanism shipped:**
+- `arena-api`: new `arena_session` HttpOnly cookie (`SessionCookieHelper`), issued
+  alongside the existing access-token JSON response at every sign-in/signup/2FA-verify/
+  invite-accept/refresh call site; `JwtAuthenticationFilter` accepts it as a fallback when
+  no `Authorization` header is present. Purely additive — the existing Bearer-token flow
+  is unchanged.
+- `arena-web`: `serverSession.ts` (Edge-compatible JWT verification via `jose`) +
+  `middleware.ts` now resolves an already-signed-in visitor to `/auth` server-side,
+  before any page JS loads — the exact waterfall MOBILE-PERF-BASELINE.md measured.
+  Fails closed (inert, not broken) until `JWT_SECRET`/`JWT_COOKIE_DOMAIN` are set on
+  Railway — see BLOCKED.md for the exact commands.
+- Not yet done, real remaining scope: migrating the other ~26 client-guarded routes
+  (`auth-guard.ts`) to server-resolved equivalents, the `/home` route + new shell/nav
+  (PART 4), and the onboarding-status server-side signal (today only in localStorage).
+- Spec docs committed (`ARENA-MASTER-ARCHITECTURE.md`, `ARENA-DESIGN-SYSTEM.md`), key
+  infra/architecture decisions logged (DECISIONS.md), real open blockers logged
+  (BLOCKED.md — object storage, map tile provider, the JWT env-var copy above, and a
+  broken GitHub push credential queuing every commit locally until fixed by hand), route
+  migration table written (ROUTES.md).
+- **Steps 2–14 (design system, data model, media, feed, map, inbox, work, profiles/
+  workspace, promotions, notifications/settings/admin, seed content, perf/security pass,
+  verification+tag) have not started.** This is being executed as a genuinely
+  multi-session rewrite per PART 15's own order, continuously and without stopping to
+  ask per the standing charter — not attempted as a single-turn claim of completion. This
+  section gets updated honestly as each step actually lands.
 
 ## Architecture (target, per the master spec)
 
