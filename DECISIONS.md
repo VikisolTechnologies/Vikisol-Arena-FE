@@ -3,6 +3,38 @@
 Per the mission's standing rule: decisions get logged here instead of interrupting the
 user. Each entry says what was decided, why, and what it costs/defers.
 
+## Step 3: the feed unifies JOB/PROJECT/FREELANCE/ACTIVITY/ASK/UPDATE at the API response
+## level, not by merging JobPosting/Project into the `posts` table (2026-08-10)
+
+ARENA-MASTER-ARCHITECTURE.md PART 5 specs one `posts` table with `type` spanning all six
+kinds. But Phase A already made a deliberate, documented call the other way — see
+`Post.java`'s own comment: "JOB/PROJECT stay on their own existing tables (JobPosting/
+Project) - unifying those into `posts` is explicitly later-phase work, not a migration of
+live production data." That reasoning hasn't changed: `JobPosting` and `Project` are
+mature, feature-rich entities with their own pipeline-stage/bid-award-milestone lifecycles
+that don't map onto the generic `Post`/`PostJoinRequest` join-approve model at all — forcing
+them into one physical table would mean either flattening away real behavior or bolting a
+second lifecycle system onto the same rows, and it would mean migrating live data under
+`ddl-auto: validate` for a database-schema decision the product doesn't actually need
+(nobody asked for one giant table — PART 7.5 only asks for one *feed a user scrolls*).
+
+**What's actually happening instead:** the feed becomes a real aggregate at the *response*
+level. `GET /feed` (and `/home`'s data layer) queries `Post`, `JobPosting`, and `Project`
+independently, maps each into the same `FeedItemResponse` shape with a `type` discriminator
+or `PostCard` variant, merges and ranks them together, and returns one paginated stream.
+`PostCard`'s own "variants per type" requirement (PART 3) already assumes the frontend
+doesn't care where a card's data physically lives — this just means the backend honors
+that same boundary. Each underlying table keeps its own real behavior (bidding stays on
+`Project`, pipeline stays on `JobPosting`) untouched.
+
+**FREELANCE is treated as a `Project` sub-classification, not a new entity.** PART 7.6
+groups PROJECT and FREELANCE under identical composer fields (budget, deadline, skills,
+deliverables) and `Project` already has the full bid→award→milestone lifecycle FREELANCE
+would need. Rather than build a fourth backing table for a type that's structurally
+identical to one that exists, `Project` gains a lightweight kind/engagement-type distinction
+for feed labeling. Revisit only if FREELANCE turns out to need real behavioral differences
+from PROJECT, not just a different badge.
+
 ## ARENA-MASTER-ARCHITECTURE.md + ARENA-DESIGN-SYSTEM.md arrive — full v3 rewrite begins (2026-08-09)
 
 Syam pasted the actual master spec: supersedes ARENA-V2-PRODUCT-ARCHITECTURE.md and
