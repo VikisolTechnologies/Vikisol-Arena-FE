@@ -3,6 +3,84 @@
 Per the mission's standing rule: decisions get logged here instead of interrupting the
 user. Each entry says what was decided, why, and what it costs/defers.
 
+## Phase C — scope interpretation, since the source doc's own Phase C section isn't available this pass (2026-08-09)
+
+`ARENA-V2-PRODUCT-ARCHITECTURE.md` was pasted directly into chat for Phases A/B and was never
+saved as a file in either repo (confirmed via exhaustive git history/reflog/stash search across
+both repos before writing any Phase C code) — this session only has the one-line phase
+definition ("company pages, comments/reactions, trends, profile revamp, embedding-based feed
+ranking") plus whatever the codebase itself quotes verbatim from earlier sections (§6, §7.3).
+Rather than block on that, every judgment call below is made from the strongest signal actually
+available — usually a schema column or code comment already staged for exactly this — and
+recorded here so it's auditable/correctable against the real doc later if it resurfaces.
+
+**Company pages wrap `EnterpriseProfile`, not a new parallel entity.** `Post.authorCompanyId` was
+already reserved (raw UUID, no FK) specifically for this, and `JobPosting` already belongs to
+`EnterpriseProfile` — a talent-facing "company page" is a redaction/read layer over the same
+tenant root recruiters already manage, mirroring `TalentSearchService.redactIfLocked`'s existing
+"same entity, narrower public DTO" pattern, just in the opposite direction (enterprise data
+redacted for talent viewers instead of candidate data redacted for enterprise viewers). Shows:
+public company info (name, emoji, industry, size, open job postings), never seat counts, credit
+balances, or team membership. `Follow` gets a nullable `followingCompanyId` alongside its
+existing user-to-user columns (additive, matches the moderation-generalization precedent) so the
+same follow graph covers both people and companies rather than a parallel `CompanyFollow` table.
+
+**UPDATE-type posts become the comment-thread type; ACTIVITY/ASK keep their Rooms.** Both
+`Post.java` and `types.ts` already say this explicitly ("UPDATE posts... comments/reactions are
+explicitly Phase C"). `PostComment` is a field-for-field continuation of the established
+`ThreadMessage` → `RoomMessage` lineage (post FK, author FK, content TEXT). Comments are enabled
+on every post type, not just UPDATE, since gating comments by intent type would be an arbitrary
+extra restriction the doc's own wording doesn't actually ask for — UPDATE posts just don't *also*
+get a Room, which is the real distinction being drawn.
+
+**Reactions are a single like/emoji-style toggle, not a multi-type reaction picker.** An
+independent join entity (`PostReaction`: post FK, user FK, `UNIQUE(post_id, user_id)`) — same
+shape as `Bid`/`PostJoinRequest`/`UserBlock`/`Follow`, this codebase's one consistent pattern for
+"one row per (parent, user)." A multi-emoji reaction palette (Facebook-style) is a strictly
+additive UI/enum upgrade later if wanted; a single toggle is the honest minimum that satisfies
+"reactions" without inventing UI the brief didn't ask for.
+
+**"Trends" = trending posts ranked by recent engagement velocity**, since no more specific
+definition survives anywhere in the codebase (confirmed via full-repo grep — this is the one
+Phase C item with zero prior hint of any kind). Score = weighted count of joins + comments +
+reactions + follows-of-author within a rolling 48h window, computed the same "bounded window,
+score in Java" way as `FeedRankingService`/`TalentSearchService` rather than a materialized
+view — reused directly as a `sortBy=trending` option on the feed, not a separate subsystem, so
+it doesn't duplicate the feed's own pagination/filtering.
+
+**Embedding-based feed ranking gets a real, self-contained embedding provider — not pgvector, not
+a paid API key.** `FeedRankingService`'s own comment already names the target precisely:
+"relevance/quality are embedding/reports-based." Zero embedding infra exists anywhere in
+`arena-api` today (no pgvector extension, no OpenAI/Anthropic SDK, no vector column — confirmed
+via full dependency + migration audit). Following the exact Noop-provider convention already
+established for Email/WhatsApp/Teams/phone-OTP (interface → Noop impl → real impl behind a
+`@Bean @Primary` factory, dormant unless configured): `EmbeddingProvider.embed(text) -> float[]`,
+with `HashingEmbeddingProvider` as the always-active default — a real, deterministic hashing-
+trick bag-of-words vectorizer (fixed 128 dimensions, same technique Vowpal Wabbit/scikit-learn's
+`HashingVectorizer` use), not a placeholder that returns zeros. This is a genuine, functioning
+local embedding — not the *same quality* as a real transformer embedding model, but a real
+semantic-ish similarity signal computed with zero external dependency, same honesty bar as
+`NoopPhoneOtpProvider` doing real OTP generation/hashing and just skipping the SMS send. A real
+`OpenAiEmbeddingProvider` is a pure drop-in later once an API key exists (see BLOCKED.md).
+`relevance` = cosine similarity between the viewer's own interest vector (embedding of their
+skills + bio + recent post bodies) and each candidate post's embedding, computed over the
+existing bounded feed window. `quality` = inverse of that post's live `ModerationItem` report
+count (already-real data, zero new tracking needed) - a post with reports against it is
+down-ranked, one with none is neutral. Embeddings are computed at post-creation time and cached
+on the row (a `real[]` Postgres array column, no `pgvector` extension required for a
+128-dimension cosine similarity computed in plain Java over a few hundred bounded rows).
+
+**Profile revamp adds a real public/other-user view — today `/identity` is hard-wired to
+`getMyProfile()` only, with no way to view anyone else's profile at all**, discovered while
+scoping this (not something the doc needed to spell out — it's a precondition for company pages
+and comments to feel connected: clicking a name anywhere needs somewhere to land). Adds: a
+`GET /profile/{id}` talent-facing public endpoint (redacted the same direction as company pages
+— skills/bio/career-health/verification-tier visible, no contact info, no resume download unless
+it's your own profile), an activity tab showing the person's own Posts, verification-tier badges
+(Phase B data that already exists but was never surfaced anywhere), and location (home city only,
+respecting their own consent level — never lat/lng, matching the enterprise-search redaction
+precedent of never exposing precise location outside its original consent scope).
+
 ## Production deploy pipeline was silently broken since before Phase B (found + fixed 2026-08-09)
 
 While deploying Phase B, discovered `vikisol-arena-fe`'s Vercel project was still configured
