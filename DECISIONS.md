@@ -3,6 +3,31 @@
 Per the mission's standing rule: decisions get logged here instead of interrupting the
 user. Each entry says what was decided, why, and what it costs/defers.
 
+## The real ARENA-V2-PRODUCT-ARCHITECTURE.md arrived + full §4/§5 audit + Phase C reconciliation (2026-08-10)
+
+Syam pasted the actual source document today - every prior phase (A/B/C) had been built from
+this session's own interpretation of a one-line phase summary, never the real text (see the
+entry below for why - it was never saved as a file). Checked it in at both repo roots
+immediately (`ARENA-V2-PRODUCT-ARCHITECTURE.md`) so this can't happen again, then did two things
+with it: reconciled Phase C's guesses against the real §3.5/§6/§7.3 text, and audited every §4/§5
+safety claim against the actual current code (not memory of what was believed complete).
+
+**Full verdict lives in SAFETY-STATUS.md** - this entry just summarizes what changed. Real gaps
+found and fixed, all live-verified against production: posts weren't directly reportable (only
+via a Room, which most posts never have), auto-flag phrase scanning was JobPosting-only,
+"creator can remove anyone" was entirely unbuilt, and "show join-count/ratings/account age" had
+none of the three built. Company pages' actual headline requirement - "company posts appear in
+the feed" - had been skipped in the original Phase C pass in favor of browse/follow only;
+added a real `COMPANY` post intent type and a posting flow for RECRUITER/COMPANY_ADMIN. Feed
+ranking's "urgency" term (§7.3, activity starting soon + spots filling) was missing from the six
+named ranking factors and has been added.
+
+**Left open, stated plainly rather than rushed**: a women-only activity option needs a real
+decision on whether to collect gender data at all (none exists anywhere in this app today) -
+not a field to bolt on inside an audit pass. An activity ratings/reputation system doesn't
+exist and is real, separate scope. Both logged in BLOCKED.md with reasoning, not silently
+dropped.
+
 ## Phase C — scope interpretation, since the source doc's own Phase C section isn't available this pass (2026-08-09)
 
 `ARENA-V2-PRODUCT-ARCHITECTURE.md` was pasted directly into chat for Phases A/B and was never

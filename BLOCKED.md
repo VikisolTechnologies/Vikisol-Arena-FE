@@ -1,5 +1,24 @@
 # BLOCKED.md — items waiting on external input
 
+## Women-only activity option (§4) — needs a real product decision on gender data, not a quick fix
+`ARENA-V2-PRODUCT-ARCHITECTURE.md` §4 explicitly names "women-only / invite-only options for
+activity posts" under Approval controls. Invite-only is functionally covered by what already
+exists (creator-approval visibility + the new creator-removal capability - see
+SAFETY-STATUS.md). Women-only is genuinely not buildable right now: **no gender field exists
+anywhere in this app's data model**, on any profile. Adding one purely to gate a safety toggle
+is itself a real, DPDP-relevant product decision (a new personal-data category needs its own
+purpose-scoped, revocable consent capture per this project's own privacy rules) - deserves a
+deliberate decision from Syam on whether/how to collect it at all, not a rushed field bolted on
+inside a gap-fixing pass.
+
+## Activity ratings/reputation (§4 "join-count, ratings, and account age") — real feature, not a fix
+Join-count and account age are now real and shown (see SAFETY-STATUS.md). Ratings are not -
+there is no rating system for activity participation anywhere (marketplace project ratings
+exist via `ProjectRating` and are unrelated/don't cover this). Needs: a prompt-to-rate flow
+after an activity's `endsAt` passes, a new entity, and surfacing an aggregate somewhere trust-
+relevant (post cards, public profile). Real scope, not a quick addition - flagged rather than
+half-built.
+
 ## Real embeddings (OpenAI) for Phase C feed ranking — needs an API key
 `HashingEmbeddingProvider` (a real, local, zero-dependency hashing-trick embedding) is the
 active default and genuinely working - not blocked on anything to function. A real
