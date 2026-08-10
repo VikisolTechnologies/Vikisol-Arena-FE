@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SlidersHorizontal, X, MessageCircleQuestion, Check, RotateCcw } from "lucide-react";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { SwipeCard, type SwipeCardHandle, type SwipeDirection } from "@/components/discovery/SwipeCard";
 import { Button } from "@/components/ui/button";
@@ -88,19 +88,19 @@ export default function DiscoverPage() {
 
   if (!profile) {
     return (
-      <CandidateAppShell title="Discover">
+      <AppShell title="Discover">
         <OrbLoader className="h-96" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
   return (
-    <CandidateAppShell
+    <AppShell
       title="Discover"
       profile={profile}
       actions={
         <Sheet>
-          <SheetTrigger render={<Button variant="ghost-glass" size="sm" className="gap-1.5" />}>
+          <SheetTrigger render={<Button variant="outline" size="sm" className="gap-1.5" />}>
             <SlidersHorizontal className="size-3.5" /> Filters
           </SheetTrigger>
           <SheetContent side="right" className="border-border">
@@ -133,7 +133,7 @@ export default function DiscoverPage() {
             </div>
             <SheetFooter>
               <Button
-                variant="ghost-glass"
+                variant="outline"
                 size="sm"
                 onClick={() => { setIndustries(INDUSTRIES); setRemoteOnly(false); setMinMatch(0); setCursor(0); }}
               >
@@ -165,20 +165,20 @@ export default function DiscoverPage() {
 
         {current && (
           <div className="mt-6 flex items-center gap-4">
-            <Button variant="ghost-glass" size="icon-lg" className="size-14 rounded-full" aria-label="Pass" onClick={() => cardRef.current?.swipe("left")}>
+            <Button variant="outline" size="icon-lg" className="size-14 rounded-full" aria-label="Pass" onClick={() => cardRef.current?.swipe("left")}>
               <X className="size-5" />
             </Button>
-            <Button variant="ghost-glass" size="icon-lg" className="size-12 rounded-full" aria-label="Tell me more" onClick={() => cardRef.current?.swipe("up")}>
+            <Button variant="outline" size="icon-lg" className="size-12 rounded-full" aria-label="Tell me more" onClick={() => cardRef.current?.swipe("up")}>
               <MessageCircleQuestion className="size-4" />
             </Button>
-            <Button variant="primary-gradient" size="icon-lg" className="size-14 rounded-full" aria-label="Apply" onClick={() => cardRef.current?.swipe("right")}>
+            <Button variant="default" size="icon-lg" className="size-14 rounded-full" aria-label="Apply" onClick={() => cardRef.current?.swipe("right")}>
               <Check className="size-5" />
             </Button>
           </div>
         )}
 
         {lastAction && (
-          <div className="mt-4 flex items-center gap-2 rounded-full border border-border bg-white/[0.03] px-4 py-2 text-xs text-muted-foreground">
+          <div className="mt-4 flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs text-muted-foreground">
             {lastAction.direction === "right" && `Applied to ${lastAction.job.title} ✓`}
             {lastAction.direction === "left" && `Passed on ${lastAction.job.title}`}
             {lastAction.direction === "right" && (
@@ -193,6 +193,6 @@ export default function DiscoverPage() {
           </div>
         )}
       </div>
-    </CandidateAppShell>
+    </AppShell>
   );
 }

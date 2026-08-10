@@ -5,11 +5,12 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LocateFixed, MapPin, Sparkles, Users } from "lucide-react";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PersonAvatar } from "@/components/ui/person-avatar";
 import { getMyProfile } from "@/lib/api/profile";
 import { getNearby, requestJoin } from "@/lib/api/posts";
 import { requireOnboarded } from "@/lib/auth-guard";
@@ -97,14 +98,14 @@ export default function MapPage() {
 
   if (!profile) {
     return (
-      <CandidateAppShell title="Map">
+      <AppShell title="Map">
         <OrbLoader className="h-96" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
   return (
-    <CandidateAppShell title="Map" profile={profile}>
+    <AppShell title="Map" profile={profile}>
       {!center && (
         <>
           <EmptyState
@@ -113,7 +114,7 @@ export default function MapPage() {
             className="py-16"
           />
           <div className="mx-auto mt-4 flex max-w-sm flex-col items-center gap-2.5">
-            <Button variant="primary-gradient" size="sm" className="gap-1.5" disabled={locating} onClick={useMyLocationOnce}>
+            <Button variant="default" size="sm" className="gap-1.5" disabled={locating} onClick={useMyLocationOnce}>
               <LocateFixed className="size-3.5" /> {locating ? "Locating…" : "Use my location for this visit"}
             </Button>
             <Link href="/settings" className="text-xs text-muted-foreground hover:text-foreground hover:underline">
@@ -136,7 +137,7 @@ export default function MapPage() {
                   onClick={() => setRadiusKm(r)}
                   className={cn(
                     "rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
-                    radiusKm === r ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-white/[0.02] text-muted-foreground",
+                    radiusKm === r ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground",
                   )}
                 >
                   {r}km
@@ -151,7 +152,7 @@ export default function MapPage() {
                   onClick={() => setTimeKey(t.key)}
                   className={cn(
                     "rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
-                    timeKey === t.key ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-white/[0.02] text-muted-foreground",
+                    timeKey === t.key ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground",
                   )}
                 >
                   {t.label}
@@ -166,7 +167,7 @@ export default function MapPage() {
                   onClick={() => setTypeKey(t.key)}
                   className={cn(
                     "rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
-                    typeKey === t.key ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-white/[0.02] text-muted-foreground",
+                    typeKey === t.key ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground",
                   )}
                 >
                   {t.label}
@@ -176,7 +177,7 @@ export default function MapPage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-            <div className="glass-panel overflow-hidden rounded-[24px] border border-border bg-white/[0.02]" style={{ height: "min(480px, 60vh)" }}>
+            <div className="glass-panel overflow-hidden rounded-[24px] border border-border bg-secondary" style={{ height: "min(480px, 60vh)" }}>
               {posts === null ? (
                 <OrbLoader className="h-full" />
               ) : (
@@ -196,7 +197,7 @@ export default function MapPage() {
               {selected && (
                 <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4">
                   <div className="flex items-start gap-2.5">
-                    <span className="text-lg">{selected.authorEmoji}</span>
+                    <PersonAvatar seed={selected.authorUserId} name={selected.authorName} size="sm" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold">{selected.authorName}</p>
                       <p className="text-xs text-muted-foreground">
@@ -212,11 +213,11 @@ export default function MapPage() {
                         {selected.myJoinStatus === "approved" ? "You're in" : selected.myJoinStatus === "pending" ? "Request pending" : "Request declined"}
                       </p>
                     ) : (
-                      <Button variant="primary-gradient" size="sm" className="gap-1.5" disabled={joining} onClick={() => join(selected)}>
+                      <Button variant="default" size="sm" className="gap-1.5" disabled={joining} onClick={() => join(selected)}>
                         <Sparkles className="size-3.5" /> {joining ? "Requesting…" : selected.visibility === "public" ? "Join" : "Request to join"}
                       </Button>
                     )}
-                    <Button variant="ghost-glass" size="sm" onClick={() => router.push(`/feed/${selected.id}`)}>View post</Button>
+                    <Button variant="outline" size="sm" onClick={() => router.push(`/feed/${selected.id}`)}>View post</Button>
                   </div>
                 </div>
               )}
@@ -232,16 +233,16 @@ export default function MapPage() {
                       onClick={() => setSelectedId(p.id)}
                       className={cn(
                         "flex w-full items-start gap-2.5 rounded-xl border px-3.5 py-3 text-left transition-colors",
-                        p.id === selectedId ? "border-primary/50 bg-primary/[0.06]" : "border-border bg-white/[0.02] hover:border-white/20",
+                        p.id === selectedId ? "border-primary/50 bg-primary/[0.06]" : "border-border bg-secondary hover:border-white/20",
                       )}
                     >
-                      <span className="text-base">{p.authorEmoji}</span>
+                      <PersonAvatar seed={p.authorUserId} name={p.authorName} size="sm" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-xs font-medium">{p.authorName}</p>
                         <p className="line-clamp-1 text-xs text-muted-foreground">{p.body}</p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
-                        <Badge variant="secondary" className="gap-1 bg-white/5 text-[10px] text-muted-foreground">
+                        <Badge variant="secondary" className="gap-1 bg-secondary text-[10px] text-muted-foreground">
                           <MapPin className="size-2.5" /> {p.distanceKm != null ? `${p.distanceKm.toFixed(1)}km` : ""}
                         </Badge>
                         {p.capacity && (
@@ -256,6 +257,6 @@ export default function MapPage() {
           </div>
         </>
       )}
-    </CandidateAppShell>
+    </AppShell>
   );
 }

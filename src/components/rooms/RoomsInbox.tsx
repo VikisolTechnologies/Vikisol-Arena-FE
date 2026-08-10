@@ -88,12 +88,12 @@ export function RoomsInbox() {
   };
 
   return (
-    <div className="glass-panel grid overflow-hidden rounded-[24px] border border-border bg-white/[0.02] lg:grid-cols-[300px_1fr]" style={{ height: "min(640px, 72vh)" }}>
+    <div className="glass-panel grid overflow-hidden rounded-[24px] border border-border bg-secondary lg:grid-cols-[300px_1fr]" style={{ height: "min(640px, 72vh)" }}>
       <div className="flex flex-col border-b border-border lg:border-b-0 lg:border-r">
         <div className="border-b border-border p-3">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search rooms..." className="border-border bg-white/[0.03] pl-9" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search rooms..." className="border-border bg-card pl-9" />
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -102,9 +102,9 @@ export function RoomsInbox() {
               key={r.id}
               type="button"
               onClick={() => setActiveId(r.id)}
-              className={cn("flex w-full items-start gap-3 border-b border-border/50 px-3.5 py-3 text-left transition-colors", r.id === activeId ? "bg-primary/10" : "hover:bg-white/[0.03]")}
+              className={cn("flex w-full items-start gap-3 border-b border-border/50 px-3.5 py-3 text-left transition-colors", r.id === activeId ? "bg-primary/10" : "hover:bg-card")}
             >
-              <Avatar className="size-9"><AvatarFallback className="bg-white/5 text-sm"><Users className="size-4" /></AvatarFallback></Avatar>
+              <Avatar className="size-9"><AvatarFallback className="bg-secondary text-sm"><Users className="size-4" /></AvatarFallback></Avatar>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate text-sm font-medium">{r.postBody}</p>
@@ -123,11 +123,11 @@ export function RoomsInbox() {
         {active ? (
           <>
             <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-              <Avatar className="size-8"><AvatarFallback className="bg-white/5 text-sm"><Users className="size-4" /></AvatarFallback></Avatar>
+              <Avatar className="size-8"><AvatarFallback className="bg-secondary text-sm"><Users className="size-4" /></AvatarFallback></Avatar>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{active.postBody}</p>
                 <div className="flex items-center gap-1.5">
-                  <Badge variant="secondary" className="bg-white/5 text-[10px] text-muted-foreground">{INTENT_LABEL[active.postIntentType]}</Badge>
+                  <Badge variant="secondary" className="bg-secondary text-[10px] text-muted-foreground">{INTENT_LABEL[active.postIntentType]}</Badge>
                   <span className="text-xs text-muted-foreground">{active.memberCount} in room</span>
                   {active.postStatus !== "open" && active.postStatus !== "full" && (
                     <Badge variant="secondary" className="bg-red-500/10 text-[10px] text-red-400">
@@ -168,10 +168,10 @@ export function RoomsInbox() {
               // remove action.
               <div className="max-h-40 space-y-1.5 overflow-y-auto border-b border-border p-3">
                 {members.map((m) => (
-                  <div key={m.userId} className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-white/[0.02]">
+                  <div key={m.userId} className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-secondary">
                     <span className="text-base">{m.emoji}</span>
                     <span className="min-w-0 flex-1 truncate text-xs font-medium">{m.name}</span>
-                    {m.role === "admin" && <Badge variant="secondary" className="bg-white/5 text-[10px] text-muted-foreground">Host</Badge>}
+                    {m.role === "admin" && <Badge variant="secondary" className="bg-secondary text-[10px] text-muted-foreground">Host</Badge>}
                     {iAmAdmin && m.role !== "admin" && m.userId !== myUserId && (
                       <button
                         type="button"
@@ -191,7 +191,7 @@ export function RoomsInbox() {
                 <div key={m.id} className={cn("flex", m.fromMe && "justify-end")}>
                   <div className={cn("max-w-[75%]", m.fromMe && "text-right")}>
                     {!m.fromMe && <p className="mb-0.5 text-[11px] text-muted-foreground">{m.senderEmoji} {m.senderName}</p>}
-                    <div className={cn("inline-block rounded-2xl px-3.5 py-2.5 text-left text-sm", m.fromMe ? "rounded-tr-sm bg-primary/15" : "rounded-tl-sm bg-white/[0.04]")}>
+                    <div className={cn("inline-block rounded-2xl px-3.5 py-2.5 text-left text-sm", m.fromMe ? "rounded-tr-sm bg-primary/15" : "rounded-tl-sm bg-secondary")}>
                       {m.content}
                     </div>
                   </div>
@@ -200,7 +200,7 @@ export function RoomsInbox() {
             </div>
             <div className="border-t border-border p-3">
               <form className="flex items-center gap-2" onSubmit={(e) => { e.preventDefault(); send(); }}>
-                <Input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Message the room..." className="border-border bg-white/[0.03]" />
+                <Input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Message the room..." className="border-border bg-card" />
                 <button type="submit" className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-opacity hover:opacity-90" aria-label="Send">
                   <Send className="size-4" />
                 </button>

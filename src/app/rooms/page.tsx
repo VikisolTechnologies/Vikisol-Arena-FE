@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { RoomsInbox } from "@/components/rooms/RoomsInbox";
 import { getMyProfile } from "@/lib/api/profile";
@@ -20,17 +20,17 @@ export default function RoomsPage() {
 
   if (!profile) {
     return (
-      <CandidateAppShell title="Rooms">
+      <AppShell title="Rooms">
         <OrbLoader className="h-96" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
   return (
-    <CandidateAppShell title="Rooms" profile={profile}>
+    <AppShell title="Rooms" profile={profile}>
       <Suspense fallback={<OrbLoader className="h-96" />}>
         <RoomsInbox />
       </Suspense>
-    </CandidateAppShell>
+    </AppShell>
   );
 }

@@ -99,7 +99,13 @@ export const SwipeCard = forwardRef<SwipeCardHandle, {
   return (
     <div
       ref={cardRef}
-      className="absolute inset-0 touch-none select-none rounded-[24px] border border-border bg-white/[0.04] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.5)] backdrop-blur-xl"
+      // ARENA-VISUAL-RICHNESS.md R1/R4 - Discover's hero moment (the swipe deck itself) is also
+      // its one deep-contrast element: a deliberately black card on the ivory canvas around it,
+      // same pattern as Home's black composer bar. Fixed dark colors here on purpose, not the
+      // semantic tokens the rest of the product theme uses - this card opts out of the light
+      // cascade the same way the marketing/landing surfaces do, so `--primary`/`--muted-foreground`
+      // (remapped to near-black in the product theme) don't go black-on-black here.
+      className="absolute inset-0 touch-none select-none overflow-hidden rounded-[var(--radius-card,24px)] border border-white/10 bg-ink p-6 text-white shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
       style={{
         transform: isTop
           ? undefined
@@ -109,29 +115,38 @@ export const SwipeCard = forwardRef<SwipeCardHandle, {
         filter: stackDepth > 0 ? `brightness(${1 - stackDepth * 0.12})` : undefined,
       }}
     >
-      <div className="flex items-start justify-between gap-3">
-        <span className="flex size-12 items-center justify-center rounded-2xl bg-white/5 text-2xl">{job.companyEmoji}</span>
-        <Badge variant="secondary" className="gap-1 bg-primary/12 text-primary-soft">
+      {/* R2 - a company thumbnail (real logo once one exists; deterministic placeholder photo
+          until then, same reasoning as PersonAvatar/FeedItemCard's thumbnails). */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- seeded placeholder URL, see comment above */}
+      <img
+        src={`https://picsum.photos/seed/${encodeURIComponent(job.id)}/640/280`}
+        alt=""
+        className="pointer-events-none absolute inset-x-0 top-0 h-28 w-full object-cover opacity-40"
+        loading="lazy"
+      />
+      <div className="relative flex items-start justify-between gap-3">
+        <span className="champagne-ring flex size-12 items-center justify-center rounded-2xl bg-ink-800 text-2xl">{job.companyEmoji}</span>
+        <Badge variant="secondary" className="gap-1 bg-champagne text-ink">
           <Sparkles className="size-3" /> {job.matchPercentage}% match
         </Badge>
       </div>
-      <h2 className="mt-4 font-display text-2xl font-bold tracking-tight">{job.title}</h2>
-      <p className="text-sm text-muted-foreground">{job.company}</p>
-      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+      <h2 className="relative mt-4 font-display text-2xl font-bold tracking-tight">{job.title}</h2>
+      <p className="relative text-sm text-white/60">{job.company}</p>
+      <div className="relative mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/60">
         <span className="flex items-center gap-1">
           <MapPin className="size-3" /> {job.location}
         </span>
         <span>
           {formatINRRange(job.salaryMin, job.salaryMax, "LPA")}
         </span>
-        <Badge variant="secondary" className="bg-white/5">
+        <Badge variant="secondary" className="bg-white/10 text-white">
           {job.employmentType}
         </Badge>
       </div>
-      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{job.description}</p>
-      <div className="mt-4 flex flex-wrap gap-1.5">
+      <p className="relative mt-4 text-sm leading-relaxed text-white/60">{job.description}</p>
+      <div className="relative mt-4 flex flex-wrap gap-1.5">
         {job.skills.map((s) => (
-          <Badge key={s} variant="secondary" className="bg-white/5 text-[11px] text-muted-foreground">
+          <Badge key={s} variant="secondary" className="bg-white/10 text-[11px] text-white/70">
             {s}
           </Badge>
         ))}
