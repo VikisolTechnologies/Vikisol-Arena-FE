@@ -121,7 +121,7 @@ export function AppShell({
             own existing lg breakpoint) */}
         <aside
           className="sticky top-0 hidden h-svh w-[248px] shrink-0 flex-col border-r border-border py-5 lg:flex"
-          style={cookieBannerVisible ? { paddingBottom: 88 } : undefined}
+          style={cookieBannerVisible ? { paddingBottom: "var(--cookie-banner-h, 88px)" } : undefined}
         >
           <Link href="/home" className="mb-6 flex items-center gap-2.5 px-4">
             <span className="font-display text-sm font-bold tracking-wide">
@@ -213,21 +213,28 @@ export function AppShell({
             <div className="ml-auto flex shrink-0 items-center gap-2">
               {actions}
               <Button
-                variant="primary-gradient"
+                variant="default"
                 size="sm"
                 className="hidden gap-1.5 lg:inline-flex"
                 onClick={() => setComposerOpen(true)}
               >
                 <Plus className="size-3.5" /> Post
               </Button>
-              <Button variant="ghost" size="icon" aria-label="Notifications" className="relative" render={<Link href="/notifications" />} nativeButton={false}>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Notifications"
+                className="relative before:absolute before:inset-[-6px] before:content-['']"
+                render={<Link href="/notifications" />}
+                nativeButton={false}
+              >
                 <Bell className="size-[18px]" />
                 {hasUnread && <span className="absolute right-2 top-2 size-1.5 rounded-full bg-primary" />}
               </Button>
               <button
                 type="button"
                 onClick={() => setMobileNavOpen(true)}
-                className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border lg:hidden"
+                className="relative flex size-9 shrink-0 items-center justify-center rounded-full border border-border before:absolute before:inset-[-4px] before:content-[''] lg:hidden"
                 aria-label="Open menu"
               >
                 <Menu className="size-4" />
@@ -248,10 +255,18 @@ export function AppShell({
 
       {/* mobile bottom tab bar - Home/Discover/+/Map/Work per PART 4, distinct from the
           legacy BottomTabBar (Feed/Post/Rooms/Profile) which CandidateAppShell still uses -
-          not touching that one so unmigrated routes keep working exactly as before */}
+          not touching that one so unmigrated routes keep working exactly as before.
+          ARENA-PERF-AND-MOBILE-FIX.md Track A - this bar had NO cookie-banner reservation at
+          all (unlike BottomTabBar, which at least attempted one), so CookieConsentBanner
+          rendered directly on top of it - Home/Discover/New post/Map/Work were all unreachable
+          on every migrated screen for any first-time mobile visitor until they dismissed the
+          banner. Same measured-height fix as BottomTabBar. */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-[890] flex items-stretch justify-around border-t border-border bg-background/95 backdrop-blur-xl lg:hidden"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        className="fixed inset-x-0 z-[890] flex items-stretch justify-around border-t border-border bg-background/95 backdrop-blur-xl lg:hidden"
+        style={{
+          bottom: cookieBannerVisible ? "var(--cookie-banner-h, 88px)" : 0,
+          paddingBottom: cookieBannerVisible ? 0 : "env(safe-area-inset-bottom)",
+        }}
       >
         {MOBILE_TAB_ITEMS.map((item) => {
           if (!item.href) {

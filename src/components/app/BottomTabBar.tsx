@@ -22,10 +22,6 @@ const TABS = [
   { href: "/identity", label: "Profile", icon: Fingerprint },
 ];
 
-// Matches CookieConsentBanner's own approximate height (see CandidateAppShell's sidebar
-// padding-reservation comment) - close enough that the two never overlap while both are visible.
-const COOKIE_BANNER_HEIGHT = 88;
-
 export function BottomTabBar() {
   const pathname = usePathname();
   const cookieBannerVisible = useCookieConsentVisible();
@@ -33,7 +29,14 @@ export function BottomTabBar() {
   return (
     <nav
       className="fixed inset-x-0 z-[890] flex items-stretch justify-around border-t border-border bg-background/90 backdrop-blur-xl lg:hidden"
-      style={{ bottom: cookieBannerVisible ? COOKIE_BANNER_HEIGHT : 0, paddingBottom: cookieBannerVisible ? 0 : "env(safe-area-inset-bottom)" }}
+      style={{
+        // ARENA-PERF-AND-MOBILE-FIX.md Track A - was a hardcoded 88px guess, which undershot the
+        // banner's real ~115px height at mobile widths (its text wraps to 2 lines there) and let
+        // the banner cover this bar anyway. CookieConsentBanner now measures and publishes its
+        // own real height via this var, so the reservation is correct at every viewport width.
+        bottom: cookieBannerVisible ? "var(--cookie-banner-h, 88px)" : 0,
+        paddingBottom: cookieBannerVisible ? 0 : "env(safe-area-inset-bottom)",
+      }}
     >
       {TABS.map(({ href, label, icon: Icon }) => {
         const active = pathname === href;

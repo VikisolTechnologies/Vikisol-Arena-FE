@@ -103,7 +103,7 @@ export function CandidateAppShell({
         {/* desktop sidebar */}
         <aside
           className="sticky top-0 hidden h-svh w-[240px] shrink-0 flex-col border-r border-border py-5 lg:flex"
-          style={cookieBannerVisible ? { paddingBottom: 88 } : undefined}
+          style={cookieBannerVisible ? { paddingBottom: "var(--cookie-banner-h, 88px)" } : undefined}
         >
           <Link href="/feed" className="mb-6 flex items-center gap-2.5 px-4">
             <span className="font-display text-sm font-bold tracking-wide">
