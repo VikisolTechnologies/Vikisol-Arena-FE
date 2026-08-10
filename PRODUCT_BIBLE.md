@@ -60,9 +60,16 @@ for review until that checkpoint is genuinely reached.
   semantic tokens, not hardcoded colors — Card's one hardcoded `bg-white/[0.03]` (which
   would've been invisible on ivory) is the exception, fixed to `bg-card`.
   Poppins loaded and applied product-wide. New `premium` Button variant added.
-- Not yet done: Input/Chip/Nav/Sheet/Toast/Skeleton/EmptyState's exact radius/shadow
-  polish per §4/§6 (functionally correct via the token cascade already, pixel-perfect
-  tuning is follow-up), re-materialing the 3D orb for the light theme (§9).
+  Card gained real `--radius-card`/`--shadow-card-*` tokens (20px + soft shadow in the
+  product theme, unchanged 24px/no-shadow everywhere else) — the highest-visibility single
+  primitive, applied to `Card.tsx` and the new `FeedItemCard`.
+- Not yet done, by deliberate scope: Button/Input/Sheet/Toast/Skeleton/EmptyState's own
+  exact height/shadow/color specs (e.g. §6's 48/52px buttons) — functionally correct via
+  the token cascade already (colors/fonts reskin), but their *geometry* (height, padding)
+  is shared globally by ~50+ still-unmigrated pages, so changing it needs a real per-theme
+  approach, not a blind global edit that would break every one of those pages at once — the
+  same risk Card's own radius had, solved the same way, just not done yet for these.
+  Re-materialing the 3D orb for the light theme (§9) also not started.
 
 **Step 3 (data model + unified feed) — the feed-unification core is shipped, real scope remains:**
 - `arena-api`: new `feed` package — `FeedAggregationService` queries `Post`/`JobPosting`/
