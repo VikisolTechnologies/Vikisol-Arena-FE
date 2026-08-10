@@ -77,13 +77,18 @@ export function PersistentOrb() {
       title={STATE_LABEL[state]}
       className={cn(
         "fixed bottom-6 right-5 z-30 flex size-15 items-center justify-center rounded-full",
-        "border border-border bg-white/[0.04] backdrop-blur-md transition-transform hover:scale-105 sm:right-7",
+        "border border-border bg-card backdrop-blur-md transition-transform hover:scale-105 sm:right-7",
       )}
+      // ARENA-DESIGN-SYSTEM.md kill list: "zero neon orange in the product" - this shadow was a
+      // literal Vikisol-orange rgba, not a token, so it rendered as an orange glow on every
+      // migrated (ivory) screen regardless of theme. Swapped to --gold (matches the same fix
+      // applied to the marketplace bid-highlight and Button's primary-gradient shadow elsewhere
+      // this pass) so the "needs approval" urgency signal reads as gold, not orange.
       style={{
         boxShadow:
           state === "needs-approval"
-            ? "0 0 0 3px rgba(255,107,53,0.28), 0 8px 30px rgba(255,107,53,0.5)"
-            : "0 8px 24px rgba(255,107,53,0.28)",
+            ? "0 0 0 3px rgba(214,168,79,0.28), 0 8px 30px rgba(214,168,79,0.5)"
+            : "0 8px 24px rgba(0,0,0,0.16)",
       }}
     >
       {state === "needs-approval" && !reduced && (
