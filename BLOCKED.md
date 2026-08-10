@@ -37,6 +37,12 @@ Split outcome on the founder's "do it yourself" ask:
   immediate deploy without waiting on push. (a) is the better long-term fix since it also
   restores normal auto-deploy; (b) is faster if you want to look at Step 2 sooner.
 
+**UPDATE, same day:** the ARENA-VISUAL-RICHNESS.md pass (see PRODUCT_BIBLE.md) and the
+arena-api server-perf work (see `arena-api/SERVER-PERF.md`) both landed as further local
+commits on top of this same blocker — not re-tested again since nothing about the local
+credential/environment state changed since the re-test above. Nothing new to unblock; still
+just the one unblock action needed, above.
+
 ## `JWT_SECRET` needs copying to arena-web's Railway env — blocks the cookie-auth mechanism activating
 Step 1 of the v3 rewrite (server-resolved `/auth` redirect, `serverSession.ts`/`middleware.ts`)
 needs `JWT_SECRET` available to arena-web so it can verify JWTs arena-api signs — it's
