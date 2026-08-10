@@ -64,7 +64,36 @@ for review until that checkpoint is genuinely reached.
   polish per §4/§6 (functionally correct via the token cascade already, pixel-perfect
   tuning is follow-up), re-materialing the 3D orb for the light theme (§9).
 
-**Steps 3–14 have not started.** This is a genuinely multi-session rewrite, executed
+**Step 3 (data model + unified feed) — the feed-unification core is shipped, real scope remains:**
+- `arena-api`: new `feed` package — `FeedAggregationService` queries `Post`/`JobPosting`/
+  `Project` independently and merges them into one ranked `GET /feed?tab=for-you|nearby|
+  following` stream (`FeedItemResponse`, a `type` discriminator + nullable per-variant
+  fields) — see DECISIONS.md for why this is a response-level merge, not a data-model
+  merge. `User.handle` (generated at signup/invite/seed, backfilled for existing rows),
+  `Post.title`, `PostSave` (`/posts/{id}/save`, `/posts/saved`), `Project.kind`
+  (PROJECT/FREELANCE). Verified past `mvn compile`: booted locally against the real dev
+  Postgres/Redis specifically to catch any `ddl-auto: validate` mismatch before it could
+  surface as a Railway boot failure — clean.
+- Not yet done: `POST /posts/{id}/share` (repost/quote — a real composer-flow feature, not
+  a quick add), media entity with renditions (that's Step 4's job), promotions/campaigns
+  entities (Step 10's job).
+
+**Step 5 (composer → Home feed) — Home feed is real and running on the unified API, composer
+rebuild and post detail/discover are not started:**
+- `arena-web`: `/home` now calls the real `GET /feed`, renders posts/jobs/projects through
+  one new `FeedItemCard` (PART 7.5's "one component, type variants"), has the composer
+  trigger row + quick type chips (Activity/Ask/Update open the composer preset to that
+  type; Project deep-links to `/marketplace`'s own existing create flow), and
+  For you/Nearby/Following tabs. Right rail: trending tags derived from the live feed,
+  Nearby now (reuses the viewer's already-consented profile location, never a fresh
+  geolocation prompt), Promoted as an honest empty state (no fake campaigns) until Step 10.
+  `PostComposer` gained a `title` field and a `defaultIntent` preset.
+- Not yet done: PART 7.6's actual 6-type composer redesign with a live PostCard preview
+  (today's composer is still the pre-v3 Activity/Ask/Update dialog plus a title field, not
+  a redesign), `/p/[id]` post detail (still routes to the existing `/feed/[id]`), Discover
+  facets.
+
+**Steps 4, 6–14 have not started.** This is a genuinely multi-session rewrite, executed
 continuously per PART 15's order and the standing charter — this section is updated
 honestly as each step actually lands, never marked done ahead of the real commits behind
 it.
