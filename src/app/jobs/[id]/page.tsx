@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { MapPin, CheckCircle2, XCircle, MessageCircle, ArrowLeft } from "lucide-react";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,16 +32,16 @@ export default function JobDetailPage() {
 
   if (job === undefined || !profile) {
     return (
-      <CandidateAppShell title="Opportunity">
+      <AppShell title="Opportunity">
         <OrbLoader className="h-96" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
   if (job === null) {
     return (
-      <CandidateAppShell title="Opportunity">
+      <AppShell title="Opportunity">
         <p className="text-sm text-muted-foreground">This opportunity isn&apos;t available anymore.</p>
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
@@ -68,7 +68,7 @@ export default function JobDetailPage() {
   };
 
   return (
-    <CandidateAppShell profile={profile}>
+    <AppShell profile={profile}>
       <button
         type="button"
         onClick={() => router.back()}
@@ -78,11 +78,15 @@ export default function JobDetailPage() {
       </button>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+        <div className="rounded-[24px] border border-border bg-card p-6">
           <div className="flex items-start gap-4">
-            <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-white/5 text-2xl">
-              {job.companyEmoji}
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element -- seeded placeholder, see PersonAvatar */}
+            <img
+              src={`https://picsum.photos/seed/${encodeURIComponent(job.id)}/112/112`}
+              alt=""
+              className="size-14 shrink-0 rounded-2xl object-cover"
+              loading="lazy"
+            />
             <div className="min-w-0 flex-1">
               <h1 className="font-display text-2xl font-bold tracking-tight">{job.title}</h1>
               <p className="text-sm text-muted-foreground">{job.company}</p>
@@ -91,7 +95,7 @@ export default function JobDetailPage() {
                   <MapPin className="size-3" /> {job.location} {job.remote && "· Remote"}
                 </span>
                 <span>{formatINRRange(job.salaryMin, job.salaryMax, "LPA")}</span>
-                <Badge variant="secondary" className="bg-white/5">{job.employmentType}</Badge>
+                <Badge variant="secondary" className="bg-secondary">{job.employmentType}</Badge>
                 <span>Posted {job.postedDaysAgo === 0 ? "today" : `${job.postedDaysAgo}d ago`}</span>
               </div>
             </div>
@@ -106,21 +110,21 @@ export default function JobDetailPage() {
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Skills</p>
             <div className="flex flex-wrap gap-1.5">
               {job.skills.map((s) => (
-                <Badge key={s} variant="secondary" className="bg-white/5 text-muted-foreground">{s}</Badge>
+                <Badge key={s} variant="secondary" className="bg-secondary text-muted-foreground">{s}</Badge>
               ))}
             </div>
           </div>
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-[24px] border border-border bg-white/[0.03] p-5">
-            <p className="mb-3 font-display text-sm font-bold">Why this match?</p>
+          <div className="rounded-[24px] border border-border bg-card p-5">
+            <p className="mb-3 champagne-hairline font-display text-sm font-bold">Why this match?</p>
             <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between rounded-lg border border-border bg-white/[0.02] px-3 py-2">
+              <div className="flex items-center justify-between rounded-lg border border-border bg-secondary px-3 py-2">
                 <span className="text-muted-foreground">Salary fit</span>
                 {salaryFit ? <CheckCircle2 className="size-4 text-emerald-400" /> : <XCircle className="size-4 text-amber-400" />}
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-border bg-white/[0.02] px-3 py-2">
+              <div className="flex items-center justify-between rounded-lg border border-border bg-secondary px-3 py-2">
                 <span className="text-muted-foreground">Location fit</span>
                 {locationFit ? <CheckCircle2 className="size-4 text-emerald-400" /> : <XCircle className="size-4 text-amber-400" />}
               </div>
@@ -140,7 +144,7 @@ export default function JobDetailPage() {
                 <p className="mb-1.5 text-xs text-muted-foreground">Not on your profile yet</p>
                 <div className="flex flex-wrap gap-1.5">
                   {missingSkills.map((s) => (
-                    <Badge key={s} variant="secondary" className="bg-white/5 text-muted-foreground">{s}</Badge>
+                    <Badge key={s} variant="secondary" className="bg-secondary text-muted-foreground">{s}</Badge>
                   ))}
                 </div>
               </div>
@@ -149,7 +153,7 @@ export default function JobDetailPage() {
 
           <div className="space-y-2.5">
             <Button
-              variant="primary-gradient"
+              variant="default"
               size="cta"
               className="w-full"
               disabled={applied || applying}
@@ -158,7 +162,7 @@ export default function JobDetailPage() {
               {applied ? "Applied ✓" : applying ? "Applying…" : "Apply with agent"}
             </Button>
             <Button
-              variant="ghost-glass"
+              variant="outline"
               size="cta"
               className="w-full gap-1.5"
               onClick={() => router.push(`/agent?about=${job.id}`)}
@@ -168,6 +172,6 @@ export default function JobDetailPage() {
           </div>
         </div>
       </div>
-    </CandidateAppShell>
+    </AppShell>
   );
 }
