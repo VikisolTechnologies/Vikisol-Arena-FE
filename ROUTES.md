@@ -17,7 +17,7 @@ Legend: ✅ done and verified · 🚧 in progress · ⬜ not started · ➡️ r
 | `/pricing` | 🚧 | exists today — needs plan/copy rework to PART 7.2 |
 | `/discover` | 🚧 | exists today — needs faceted rebuild to PART 7.8 |
 | `/p/[postId]` | ⬜ | new public permalink; today's `/feed/[id]` is auth-only |
-| `/people/[handle]` | 🚧 | exists as `/people/[id]` — `User.handle` now exists (Step 3) but this route still resolves by id, not handle; path/lookup move still open |
+| `/people/[handle]` | 🚧 | exists as `/people/[id]`, migrated onto `AppShell`/product theme with Identity's cover-photo + black stats-block hero (ARENA-VISUAL-RICHNESS.md) — `User.handle` now exists (Step 3) but this route still resolves by id, not handle; path/lookup move still open |
 | `/company/[handle]` | 🚧 | exists as `/companies/[id]`, migrated onto `AppShell`/product theme with real seeded logos (ARENA-VISUAL-RICHNESS.md) — same handle-vs-id gap |
 | `/legal/privacy` `/legal/terms` `/legal/acceptable-use` `/legal/cookies` | 🚧 | exist today as `/privacy` `/terms` `/aup` — need path move + a 4th (cookies) page |
 | `/auth` | 🚧 | exists — needs Individual/Company-only signup per PART 7.3, delete role chips |
@@ -37,7 +37,7 @@ Legend: ✅ done and verified · 🚧 in progress · ⬜ not started · ➡️ r
 | `/p/[postId]` (auth view) | ⬜ | new |
 | `/inbox` `/inbox/[id]` | ⬜ | new — merges today's separate `/rooms` and `/messages`; `/rooms` itself is now migrated onto `AppShell`/product theme in the meantime |
 | `/work` overview | 🚧 | migrated onto `AppShell`/product theme with a black "top match" hero card (ARENA-VISUAL-RICHNESS.md) — still a link hub, not a command centre, needs PART 7.11 rebuild |
-| `/work/applications` `/work/applications/[id]` | 🚧 | exist today as `/applications` — path move + rebuild |
+| `/work/applications` `/work/applications/[id]` | 🚧 | exist today as `/applications`, migrated onto `AppShell`/product theme with company-photo thumbnails (ARENA-VISUAL-RICHNESS.md) — path move + rebuild |
 | `/work/bids` | 🚧 | exists as `/marketplace/bids`, migrated onto `AppShell`/product theme — path move |
 | `/work/projects` `/work/projects/[id]` | 🚧 | exist as `/marketplace` `/marketplace/[id]` (+ `/manage`), migrated onto `AppShell`/product theme with project thumbnails + bidder photos (ARENA-VISUAL-RICHNESS.md) — path move |
 | `/work/interviews` `/work/interviews/[id]` | 🚧 | exist as `/interviews` `/interviews/[applicationId]` — path move |
