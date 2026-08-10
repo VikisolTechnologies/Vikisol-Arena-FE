@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { getMyProfile } from "@/lib/api/profile";
@@ -17,7 +17,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { formatINR, formatDate } from "@/lib/format";
 
 const STATUS_TONE: Record<MyBidStatus, string> = {
-  pending: "bg-white/10 text-foreground",
+  pending: "bg-secondary text-foreground",
   shortlisted: "bg-amber-500/15 text-amber-400",
   won: "bg-emerald-500/15 text-emerald-400",
   lost: "bg-red-500/15 text-red-400",
@@ -45,14 +45,14 @@ export default function MyBidsPage() {
 
   if (!profile) {
     return (
-      <CandidateAppShell title="My Bids">
+      <AppShell title="My Bids">
         <OrbLoader className="h-64" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
   return (
-    <CandidateAppShell title="My Bids" profile={profile}>
+    <AppShell title="My Bids" profile={profile}>
       <button type="button" onClick={() => router.push("/marketplace")} className="mb-4 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" /> Back to Marketplace
       </button>
@@ -65,7 +65,7 @@ export default function MyBidsPage() {
               key={bid.bidId}
               type="button"
               onClick={() => router.push(`/marketplace/${bid.projectId}`)}
-              className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-white/[0.03] p-4 text-left"
+              className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 text-left"
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{project?.title ?? "Project"}</p>
@@ -79,6 +79,6 @@ export default function MyBidsPage() {
           <EmptyState title="No bids yet" description="Bids you place in the Marketplace will show up here." />
         )}
       </div>
-    </CandidateAppShell>
+    </AppShell>
   );
 }

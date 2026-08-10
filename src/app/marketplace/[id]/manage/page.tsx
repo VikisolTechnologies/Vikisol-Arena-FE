@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Award, Check, Sparkles, Star } from "lucide-react";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { PersonAvatar } from "@/components/ui/person-avatar";
 import { getMyProfile } from "@/lib/api/profile";
 import {
   getMyProject, awardProject, submitMilestoneDeliverable, acceptMilestone, submitProjectRating, type MyProject,
@@ -34,7 +35,7 @@ function MilestoneCard({ milestone, onSubmitDeliverable, onAccept }: {
   };
 
   return (
-    <div className="rounded-xl border border-border bg-white/[0.02] px-4 py-3.5">
+    <div className="rounded-xl border border-border bg-secondary px-4 py-3.5">
       <div className="flex items-center justify-between">
         <p className={cn("text-sm font-medium", milestone.done && "text-muted-foreground line-through")}>{milestone.label}</p>
         <div className="flex items-center gap-1.5">
@@ -48,14 +49,14 @@ function MilestoneCard({ milestone, onSubmitDeliverable, onAccept }: {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Deliverable notes (filled in on the bidder's behalf in this preview)…"
-            className="min-h-16 border-border bg-white/[0.02] text-xs"
+            className="min-h-16 border-border bg-secondary text-xs"
           />
           <div className="flex gap-1.5">
-            <Button variant="ghost-glass" size="sm" disabled={saving} onClick={save}>
+            <Button variant="outline" size="sm" disabled={saving} onClick={save}>
               {saving ? "Saving…" : "Save note"}
             </Button>
             <Button
-              variant="primary-gradient"
+              variant="default"
               size="sm"
               className="flex-1"
               disabled={!milestone.deliverable && !note.trim()}
@@ -94,16 +95,16 @@ export default function ProjectManagePage() {
 
   if (project === undefined || !profile) {
     return (
-      <CandidateAppShell title="Manage Project">
+      <AppShell title="Manage Project">
         <OrbLoader className="h-96" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
   if (project === null) {
     return (
-      <CandidateAppShell title="Manage Project">
+      <AppShell title="Manage Project">
         <p className="text-sm text-muted-foreground">You can only manage projects you posted.</p>
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
@@ -135,12 +136,12 @@ export default function ProjectManagePage() {
   const posterRating = project.ratings?.find((r) => r.fromRole === "poster");
 
   return (
-    <CandidateAppShell profile={profile}>
+    <AppShell profile={profile}>
       <button type="button" onClick={() => router.push(`/marketplace/${project.id}`)} className="mb-4 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" /> Back to project
       </button>
 
-      <div className="mb-5 rounded-[24px] border border-border bg-white/[0.03] p-6">
+      <div className="mb-5 rounded-[24px] border border-border bg-card p-6">
         <h1 className="font-display text-xl font-bold tracking-tight">{project.title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{project.bids.length} bids · Status: <span className="capitalize">{project.status}</span></p>
       </div>
@@ -150,15 +151,15 @@ export default function ProjectManagePage() {
           <p className="mb-3 font-display text-sm font-bold">Compare bids</p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {project.bids.map((bid, i) => (
-              <div key={bid.id} className={cn("rounded-[24px] border p-5", i === 0 ? "border-primary/40 bg-primary/[0.05]" : "border-border bg-white/[0.03]")}>
+              <div key={bid.id} className={cn("rounded-[24px] border p-5", i === 0 ? "border-primary/40 bg-primary/[0.05]" : "border-border bg-card")}>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl">{bid.bidderEmoji}</span>
+                  <PersonAvatar seed={bid.id} name={bid.bidderName} size="default" />
                   {i === 0 && <Badge variant="secondary" className="gap-1 bg-primary/15 text-primary-soft"><Sparkles className="size-3" /> agent pick</Badge>}
                 </div>
                 <p className="mt-2 text-sm font-semibold">{bid.bidderName}</p>
                 <p className="font-display text-xl font-bold text-primary-soft">{formatINR(bid.amount)}</p>
                 <p className="text-xs text-muted-foreground">{bid.matchPercentage}% match</p>
-                <Button variant="primary-gradient" size="sm" className="mt-3 w-full gap-1.5" onClick={() => setConfirmBid(bid)}>
+                <Button variant="default" size="sm" className="mt-3 w-full gap-1.5" onClick={() => setConfirmBid(bid)}>
                   <Award className="size-3.5" /> Award
                 </Button>
               </div>
@@ -169,9 +170,9 @@ export default function ProjectManagePage() {
       )}
 
       {(project.status === "awarded" || project.status === "closed") && (
-        <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+        <div className="rounded-[24px] border border-border bg-card p-6">
           <div className="mb-4 flex items-center gap-3">
-            <span className="text-2xl">{awardedBid?.bidderEmoji}</span>
+            {awardedBid && <PersonAvatar seed={awardedBid.id} name={awardedBid.bidderName} size="default" />}
             <div>
               <p className="text-sm font-semibold">Awarded to {awardedBid?.bidderName}</p>
               <p className="text-xs text-muted-foreground">{awardedBid && formatINR(awardedBid.amount)}</p>
@@ -193,7 +194,7 @@ export default function ProjectManagePage() {
                 <Star className="size-3.5" /> Rate {awardedBid?.bidderName}
               </p>
               {posterRating ? (
-                <div className="rounded-xl border border-border bg-white/[0.02] px-4 py-3 text-sm">
+                <div className="rounded-xl border border-border bg-secondary px-4 py-3 text-sm">
                   <div className="flex items-center gap-1">
                     {Array.from({ length: 5 }, (_, i) => (
                       <Star key={i} className={cn("size-3.5", i < posterRating.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
@@ -202,7 +203,7 @@ export default function ProjectManagePage() {
                   {posterRating.comment && <p className="mt-1.5 text-muted-foreground">{posterRating.comment}</p>}
                 </div>
               ) : (
-                <div className="rounded-xl border border-border bg-white/[0.02] p-4">
+                <div className="rounded-xl border border-border bg-secondary p-4">
                   <p className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
                     Rating <span className="text-foreground">{ratingValue}/5</span>
                   </p>
@@ -211,9 +212,9 @@ export default function ProjectManagePage() {
                     value={ratingComment}
                     onChange={(e) => setRatingComment(e.target.value)}
                     placeholder="How was working with them?"
-                    className="mb-3 border-border bg-white/[0.03] text-sm"
+                    className="mb-3 border-border bg-card text-sm"
                   />
-                  <Button variant="primary-gradient" size="sm" className="w-full" disabled={submittingRating} onClick={doSubmitRating}>
+                  <Button variant="default" size="sm" className="w-full" disabled={submittingRating} onClick={doSubmitRating}>
                     {submittingRating ? "Submitting…" : "Submit rating"}
                   </Button>
                 </div>
@@ -232,11 +233,11 @@ export default function ProjectManagePage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="ghost-glass" size="sm" onClick={() => setConfirmBid(null)}>Cancel</Button>
-            <Button variant="primary-gradient" size="sm" onClick={doAward}>Confirm award</Button>
+            <Button variant="outline" size="sm" onClick={() => setConfirmBid(null)}>Cancel</Button>
+            <Button variant="default" size="sm" onClick={doAward}>Confirm award</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </CandidateAppShell>
+    </AppShell>
   );
 }

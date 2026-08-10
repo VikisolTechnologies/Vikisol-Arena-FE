@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Clock3, Plus, Sparkles, Users } from "lucide-react";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -76,22 +76,22 @@ export default function MarketplacePage() {
 
   if (!profile) {
     return (
-      <CandidateAppShell title="Marketplace">
+      <AppShell title="Marketplace">
         <OrbLoader className="h-96" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
   return (
-    <CandidateAppShell
+    <AppShell
       title="Marketplace"
       profile={profile}
       actions={
         <div className="flex gap-2">
-          <Button variant="ghost-glass" size="sm" onClick={() => router.push("/marketplace/bids")}>
+          <Button variant="outline" size="sm" onClick={() => router.push("/marketplace/bids")}>
             My bids
           </Button>
-          <Button variant="primary-gradient" size="sm" className="gap-1.5" onClick={() => setPosting(true)}>
+          <Button variant="default" size="sm" className="gap-1.5" onClick={() => setPosting(true)}>
             <Plus className="size-3.5" /> Post a project
           </Button>
         </div>
@@ -103,8 +103,17 @@ export default function MarketplacePage() {
             key={p.id}
             type="button"
             onClick={() => router.push(`/marketplace/${p.id}`)}
-            className="rounded-[24px] border border-border bg-white/[0.03] p-5 text-left transition-transform hover:-translate-y-0.5"
+            className="overflow-hidden rounded-[24px] border border-border bg-card text-left transition-transform hover:-translate-y-0.5"
           >
+            {/* R2 - project thumbnail; seeded placeholder until media upload (Step 4) exists. */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- seeded placeholder, see PersonAvatar */}
+            <img
+              src={`https://picsum.photos/seed/${encodeURIComponent(p.id)}/480/220`}
+              alt=""
+              className="h-28 w-full object-cover"
+              loading="lazy"
+            />
+            <div className="p-5">
             <div className="flex items-start justify-between gap-2">
               <p className="font-display text-sm font-bold leading-snug">{p.title}</p>
               {"mine" in p && <Badge variant="secondary" className="shrink-0 bg-primary/12 text-primary-soft">Mine</Badge>}
@@ -112,13 +121,14 @@ export default function MarketplacePage() {
             <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{p.description}</p>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {p.skills.slice(0, 3).map((s) => (
-                <Badge key={s} variant="secondary" className="bg-white/5 text-[11px] text-muted-foreground">{s}</Badge>
+                <Badge key={s} variant="secondary" className="bg-secondary text-[11px] text-muted-foreground">{s}</Badge>
               ))}
             </div>
             <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
               <span>{formatINRRange(p.budgetMin, p.budgetMax)}</span>
               <span className="flex items-center gap-1"><Users className="size-3" /> {p.bids.length}</span>
               <span className="flex items-center gap-1"><Clock3 className="size-3" /> {hoursLeft(p.endsAt)}h</span>
+            </div>
             </div>
           </button>
         ))}
@@ -137,22 +147,22 @@ export default function MarketplacePage() {
                 value={oneLiner}
                 onChange={(e) => setOneLiner(e.target.value)}
                 placeholder="e.g. Need a React dashboard for inventory tracking"
-                className="border-border bg-white/[0.03]"
+                className="border-border bg-card"
               />
-              <Button variant="primary-gradient" size="sm" disabled={drafting} onClick={draftBrief} className="shrink-0 gap-1.5">
+              <Button variant="default" size="sm" disabled={drafting} onClick={draftBrief} className="shrink-0 gap-1.5">
                 <Sparkles className="size-3.5" /> {drafting ? "Drafting…" : "Draft"}
               </Button>
             </div>
 
             {drafted && (
-              <div className="space-y-3 rounded-2xl border border-border bg-white/[0.02] p-4">
+              <div className="space-y-3 rounded-2xl border border-border bg-secondary p-4">
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Title</label>
-                  <Input value={drafted.title} onChange={(e) => setDrafted({ ...drafted, title: e.target.value })} className="border-border bg-white/[0.03]" />
+                  <Input value={drafted.title} onChange={(e) => setDrafted({ ...drafted, title: e.target.value })} className="border-border bg-card" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Brief</label>
-                  <Textarea value={drafted.description} onChange={(e) => setDrafted({ ...drafted, description: e.target.value })} className="border-border bg-white/[0.03]" rows={3} />
+                  <Textarea value={drafted.description} onChange={(e) => setDrafted({ ...drafted, description: e.target.value })} className="border-border bg-card" rows={3} />
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {drafted.skills.map((s) => <Badge key={s} variant="secondary" className="bg-primary/10 text-primary-soft">{s}</Badge>)}
@@ -160,7 +170,7 @@ export default function MarketplacePage() {
                 <p className="text-xs text-muted-foreground">
                   {formatINRRange(drafted.budgetMin, drafted.budgetMax)} · {drafted.durationWeeks} weeks
                 </p>
-                <Button variant="primary-gradient" size="sm" className="w-full" onClick={publish}>
+                <Button variant="default" size="sm" className="w-full" onClick={publish}>
                   Publish project
                 </Button>
               </div>
@@ -168,6 +178,6 @@ export default function MarketplacePage() {
           </div>
         </DialogContent>
       </Dialog>
-    </CandidateAppShell>
+    </AppShell>
   );
 }

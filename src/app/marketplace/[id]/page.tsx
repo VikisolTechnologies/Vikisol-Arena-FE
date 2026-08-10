@@ -4,13 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Clock3, Sparkles, Settings2 } from "lucide-react";
 import { useGSAP } from "@gsap/react";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { PersonAvatar } from "@/components/ui/person-avatar";
 import { Check } from "lucide-react";
 import { getMyProfile } from "@/lib/api/profile";
 import { getProject, placeBid, submitMyDeliverable } from "@/lib/api/market";
@@ -79,16 +80,16 @@ export default function ProjectDetailPage() {
 
   if (project === undefined || !profile) {
     return (
-      <CandidateAppShell title="Project">
+      <AppShell title="Project">
         <OrbLoader className="h-96" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
   if (project === null) {
     return (
-      <CandidateAppShell title="Project">
+      <AppShell title="Project">
         <p className="text-sm text-muted-foreground">This project isn&apos;t available anymore.</p>
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
@@ -116,13 +117,13 @@ export default function ProjectDetailPage() {
   };
 
   return (
-    <CandidateAppShell profile={profile}>
+    <AppShell profile={profile}>
       <button type="button" onClick={() => router.push("/marketplace")} className="mb-4 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" /> Back to Marketplace
       </button>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+        <div className="rounded-[24px] border border-border bg-card p-6">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h1 className="font-display text-2xl font-bold tracking-tight">{project.title}</h1>
@@ -131,20 +132,20 @@ export default function ProjectDetailPage() {
               </p>
             </div>
             {isMine && (
-              <Button variant="ghost-glass" size="sm" className="shrink-0 gap-1.5" onClick={() => router.push(`/marketplace/${project.id}/manage`)}>
+              <Button variant="outline" size="sm" className="shrink-0 gap-1.5" onClick={() => router.push(`/marketplace/${project.id}/manage`)}>
                 <Settings2 className="size-3.5" /> Manage
               </Button>
             )}
           </div>
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{project.description}</p>
           <div className="mt-4 flex flex-wrap gap-1.5">
-            {project.skills.map((s) => <Badge key={s} variant="secondary" className="bg-white/5 text-muted-foreground">{s}</Badge>)}
+            {project.skills.map((s) => <Badge key={s} variant="secondary" className="bg-secondary text-muted-foreground">{s}</Badge>)}
           </div>
           <div
             className={`mt-5 flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm transition-colors ${
               msLeft !== null && msLeft > 0 && msLeft < 3_600_000
                 ? "border-amber-500/40 bg-amber-500/[0.07] animate-pulse"
-                : "border-border bg-white/[0.02]"
+                : "border-border bg-secondary"
             }`}
           >
             <Clock3 className="size-4 text-primary-soft" />
@@ -152,13 +153,13 @@ export default function ProjectDetailPage() {
           </div>
 
           {!isMine && (
-            <Button variant="primary-gradient" size="cta" className="mt-5 w-full" onClick={() => setBidding(true)} disabled={msLeft === null || msLeft <= 0}>
+            <Button variant="default" size="cta" className="mt-5 w-full" onClick={() => setBidding(true)} disabled={msLeft === null || msLeft <= 0}>
               Place a bid
             </Button>
           )}
         </div>
 
-        <div className="rounded-[24px] border border-border bg-white/[0.03] p-5">
+        <div className="rounded-[24px] border border-border bg-card p-5">
           <p className="mb-3 font-display text-sm font-bold">Live bids ({project.bids.length})</p>
           <div ref={bidsListRef} className="space-y-2.5">
             {project.bids.map((bid, i) => (
@@ -166,8 +167,8 @@ export default function ProjectDetailPage() {
                 key={bid.id}
                 className={`rounded-xl border px-3.5 py-3 transition-transform ${
                   i === 0
-                    ? "border-primary/40 bg-primary/[0.06] scale-[1.02] shadow-[0_10px_28px_rgba(255,107,53,0.22)]"
-                    : "border-border bg-white/[0.02]"
+                    ? "border-primary/40 bg-primary/[0.06] scale-[1.02] shadow-[0_10px_28px_rgba(214,168,79,0.25)]"
+                    : "border-border bg-secondary"
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -178,7 +179,10 @@ export default function ProjectDetailPage() {
                     </Badge>
                   )}
                 </div>
-                <p className="mt-0.5 text-xs text-muted-foreground">{bid.bidderEmoji} {bid.bidderName} · {bid.matchPercentage}% match</p>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <PersonAvatar seed={bid.id} name={bid.bidderName} size="sm" />
+                  <p className="text-xs text-muted-foreground">{bid.bidderName} · {bid.matchPercentage}% match</p>
+                </div>
               </div>
             ))}
             {project.bids.length === 0 && <p className="text-sm text-muted-foreground">No bids yet — be the first.</p>}
@@ -187,12 +191,12 @@ export default function ProjectDetailPage() {
       </div>
 
       {isWinner && project.milestones && project.milestones.length > 0 && (
-        <div className="mt-4 rounded-[24px] border border-border bg-white/[0.03] p-6">
+        <div className="mt-4 rounded-[24px] border border-border bg-card p-6">
           <p className="mb-1 font-display text-sm font-bold">You won this project 🎉</p>
           <p className="mb-4 text-xs text-muted-foreground">Submit each milestone&apos;s deliverable — the poster reviews and releases payment per tranche.</p>
           <div className="space-y-2.5">
             {project.milestones.map((m) => (
-              <div key={m.id} className="rounded-xl border border-border bg-white/[0.02] px-4 py-3.5">
+              <div key={m.id} className="rounded-xl border border-border bg-secondary px-4 py-3.5">
                 <div className="flex items-center justify-between">
                   <p className={cn("text-sm font-medium", m.done && "text-muted-foreground line-through")}>{m.label}</p>
                   <div className="flex items-center gap-1.5">
@@ -210,10 +214,10 @@ export default function ProjectDetailPage() {
                           value={deliverableNotes[m.id] ?? ""}
                           onChange={(e) => setDeliverableNotes((prev) => ({ ...prev, [m.id]: e.target.value }))}
                           placeholder="Describe what you're delivering for this milestone…"
-                          className="min-h-16 border-border bg-white/[0.02] text-xs"
+                          className="min-h-16 border-border bg-secondary text-xs"
                         />
                         <Button
-                          variant="primary-gradient"
+                          variant="default"
                           size="sm"
                           disabled={submittingId === m.id || !(deliverableNotes[m.id] ?? "").trim()}
                           onClick={() => submitDeliverable(m.id)}
@@ -242,14 +246,14 @@ export default function ProjectDetailPage() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder={formatINR(project.budgetMin)}
-              className="border-border bg-white/[0.03]"
+              className="border-border bg-card"
             />
-            <Button variant="primary-gradient" size="sm" className="w-full" onClick={submitBid} disabled={!amount}>
+            <Button variant="default" size="sm" className="w-full" onClick={submitBid} disabled={!amount}>
               Submit bid
             </Button>
           </div>
         </DialogContent>
       </Dialog>
-    </CandidateAppShell>
+    </AppShell>
   );
 }
