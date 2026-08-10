@@ -24,6 +24,7 @@ const POSTS_KEY = "arena_posts";
 const JOINS_KEY = "arena_post_joins";
 const COMMENTS_KEY = "arena_post_comments";
 const REACTIONS_KEY = "arena_post_reactions";
+const SAVES_KEY = "arena_post_saves";
 
 function readPosts(): Post[] {
   if (typeof window === "undefined") return MOCK_POSTS;
@@ -79,8 +80,52 @@ function writeReactions(reactions: Record<string, boolean>) {
   localStorage.setItem(REACTIONS_KEY, JSON.stringify(reactions));
 }
 
+// { [postId]: true } for CURRENT_CANDIDATE_ID's own saves - same small-dedicated-key pattern as
+// readReactions above.
+function readSaves(): Record<string, boolean> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(SAVES_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+  } catch {
+    return {};
+  }
+}
+function writeSaves(saves: Record<string, boolean>) {
+  localStorage.setItem(SAVES_KEY, JSON.stringify(saves));
+}
+
+// PART 6 SAVE - kept under /posts (see PostController's own comment), matching every other
+// post-interaction endpoint in this client.
+export async function savePost(postId: string): Promise<void> {
+  if (isRealMode()) return apiFetch<void>(`/posts/${postId}/save`, { method: "POST" });
+  const saves = readSaves();
+  saves[postId] = true;
+  writeSaves(saves);
+  await delay(undefined, 100);
+}
+
+export async function unsavePost(postId: string): Promise<void> {
+  if (isRealMode()) return apiFetch<void>(`/posts/${postId}/save`, { method: "DELETE" });
+  const saves = readSaves();
+  delete saves[postId];
+  writeSaves(saves);
+  await delay(undefined, 100);
+}
+
+export async function getSavedPosts(page = 0, size = 20): Promise<Post[]> {
+  if (isRealMode()) {
+    const paged = await apiFetch<PagedResponse<Post>>("/posts/saved", { query: { page, size } });
+    return paged.content;
+  }
+  const saves = readSaves();
+  const saved = readPosts().filter((p) => saves[p.id]);
+  return delay(saved.slice(page * size, page * size + size), 200);
+}
+
 export interface CreatePostInput {
   intentType: PostIntentType;
+  title?: string;
   body: string;
   locationText?: string;
   audience?: PostAudience;
@@ -125,7 +170,7 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
     return apiFetch<Post>("/posts", {
       method: "POST",
       body: {
-        intentType: input.intentType, body: input.body, locationText: input.locationText,
+        intentType: input.intentType, title: input.title, body: input.body, locationText: input.locationText,
         audience: input.audience ?? "global", visibility: input.visibility ?? "public",
         capacity: input.capacity, tags: input.tags ?? [],
         startsAt: input.startsAt, endsAt: input.endsAt, lat: input.lat, lng: input.lng,
@@ -142,6 +187,7 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
     authorName: me?.name ?? "You",
     authorEmoji: me?.avatarEmoji ?? "🧑🏽",
     intentType: input.intentType,
+    title: input.title,
     body: input.body,
     locationText: input.locationText,
     audience: input.audience ?? "global",

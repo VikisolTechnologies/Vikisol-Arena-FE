@@ -16,12 +16,18 @@ const INTENTS: { key: Post["intentType"]; label: string; hint: string }[] = [
   { key: "update", label: "Update", hint: "Just a post for the feed - no joining, no room" },
 ];
 
-export function PostComposer({ open, onOpenChange, onPublished }: {
+/** PART 7.5 "quick type chips ... open the composer preset to that type." `defaultIntent` only
+ *  applies as this component's initial state, so a caller that offers multiple quick-chip
+ *  presets (e.g. Home's trigger row) should render this with `key={defaultIntent}` to force a
+ *  fresh instance per preset rather than relying on a prop-sync effect. */
+export function PostComposer({ open, onOpenChange, onPublished, defaultIntent = "activity" }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPublished: () => void;
+  defaultIntent?: Post["intentType"];
 }) {
-  const [intent, setIntent] = useState<Post["intentType"]>("activity");
+  const [intent, setIntent] = useState<Post["intentType"]>(defaultIntent);
+  const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [location, setLocation] = useState("");
   const [visibility, setVisibility] = useState<PostVisibility>("public");
@@ -40,8 +46,8 @@ export function PostComposer({ open, onOpenChange, onPublished }: {
   const joinable = intent === "activity" || intent === "ask";
   const isActivity = intent === "activity";
 
-  const reset = () => {
-    setIntent("activity"); setBody(""); setLocation(""); setVisibility("public");
+  const reset = (nextIntent: Post["intentType"] = defaultIntent) => {
+    setIntent(nextIntent); setTitle(""); setBody(""); setLocation(""); setVisibility("public");
     setAudience("global"); setCapacity(""); setTags(""); setStartsAt(""); setMeetingPoint("");
     setRequiredVerification("basic"); setCoords(null); setLocateError(null); setError(null);
   };
@@ -77,6 +83,7 @@ export function PostComposer({ open, onOpenChange, onPublished }: {
     try {
       await createPost({
         intentType: intent,
+        title: title.trim() || undefined,
         body: body.trim(),
         locationText: location.trim() || undefined,
         audience,
@@ -124,6 +131,13 @@ export function PostComposer({ open, onOpenChange, onPublished }: {
             ))}
           </div>
           <p className="text-[11px] text-muted-foreground">{INTENTS.find((i) => i.key === intent)?.hint}</p>
+
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Title (optional)"
+            className="border-border bg-white/[0.03]"
+          />
 
           <Textarea
             value={body}

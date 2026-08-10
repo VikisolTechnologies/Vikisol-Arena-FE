@@ -432,6 +432,8 @@ export interface Post {
   /** Set only for intentType="company" - links the post's author straight to /companies/{id}. */
   authorCompanyId?: string;
   intentType: PostIntentType;
+  /** PART 7.5/7.6 (v3) - optional, most ASK/UPDATE posts stay title-less same as before. */
+  title?: string;
   body: string;
   locationText?: string;
   audience: PostAudience;
@@ -480,6 +482,65 @@ export interface PostJoinRequest {
   status: PostJoinStatus;
   createdAt: string;
 }
+
+// ---- v3: unified Home feed (ARENA-MASTER-ARCHITECTURE.md PART 6/7.5) ----
+
+/** JOB/PROJECT come from their own JobPosting/Project tables, not `posts` - see DECISIONS.md
+ *  "the feed unifies ... at the API response level." One flat shape either way, `itemType`
+ *  discriminates which per-variant fields are populated - field-for-field mirror of
+ *  arena-api's FeedItemResponse. */
+export type FeedItemType = "job" | "project" | "freelance" | PostIntentType;
+
+export interface FeedItem {
+  id: string;
+  itemType: FeedItemType;
+  authorUserId?: string;
+  authorName?: string;
+  authorEmoji?: string;
+  authorCompanyId?: string;
+  authorCompanyName?: string;
+  authorCompanyEmoji?: string;
+  title?: string;
+  body: string;
+  locationText?: string;
+  tags: string[];
+  mediaUrls: string[];
+  status: string;
+  createdAt: string;
+
+  // activity/ask/update/company (from Post) - undefined for job/project/freelance.
+  visibility?: PostVisibility;
+  capacity?: number;
+  spotsFilled?: number;
+  startsAt?: string;
+  endsAt?: string;
+  joinable?: boolean;
+  mine?: boolean;
+  myJoinStatus?: PostJoinStatus;
+  roomId?: string;
+  approxLat?: number;
+  approxLng?: number;
+  commentCount?: number;
+  reactionCount?: number;
+  myReacted?: boolean;
+  // §4 safety-audit trust signals - undefined for job/project (not applicable).
+  authorJoinCount?: number;
+  authorAccountAgeDays?: number;
+
+  // job only.
+  employmentType?: string;
+  remote?: boolean;
+  salaryMin?: number;
+  salaryMax?: number;
+
+  // project/freelance only.
+  budgetMin?: number;
+  budgetMax?: number;
+  durationWeeks?: number;
+  bidCount?: number;
+}
+
+export type FeedTab = "for-you" | "nearby" | "following";
 
 export type RoomMemberRole = "admin" | "member";
 
