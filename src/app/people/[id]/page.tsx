@@ -118,7 +118,7 @@ export default function PublicProfilePage() {
             </div>
           )}
 
-          <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl bg-ink p-4 text-white">
+          <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl bg-ink p-4 text-white shadow-[0_12px_32px_rgba(0,0,0,0.35)]">
             <div className="flex flex-col items-center gap-1 text-center">
               <span className="champagne-ring flex size-11 items-center justify-center rounded-full bg-ink-800 text-sm font-bold text-champagne">
                 {profile.careerHealth}
