@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -31,17 +31,17 @@ export default function CompaniesPage() {
 
   if (!profile) {
     return (
-      <CandidateAppShell title="Companies">
+      <AppShell title="Companies">
         <OrbLoader className="h-96" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
   return (
-    <CandidateAppShell title="Companies" profile={profile}>
+    <AppShell title="Companies" profile={profile}>
       <div className="relative mb-5 max-w-sm">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search companies..." className="border-border bg-white/[0.03] pl-9" />
+        <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search companies..." className="border-border bg-card pl-9" />
       </div>
 
       {!companies ? (
@@ -55,11 +55,18 @@ export default function CompaniesPage() {
               key={c.id}
               type="button"
               onClick={() => router.push(`/companies/${c.id}`)}
-              className="w-full rounded-[24px] border border-border bg-white/[0.03] p-5 text-left transition-transform hover:-translate-y-0.5"
+              className="w-full rounded-[24px] border border-border bg-card p-5 text-left transition-transform hover:-translate-y-0.5"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2.5">
-                  <span className="text-2xl">{c.emoji}</span>
+                  {/* R2 - company logo; seeded placeholder until real company logos exist. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element -- seeded placeholder, see PersonAvatar */}
+                  <img
+                    src={`https://picsum.photos/seed/${encodeURIComponent(c.id)}/80/80`}
+                    alt=""
+                    className="size-10 shrink-0 rounded-xl object-cover"
+                    loading="lazy"
+                  />
                   <div>
                     <p className="text-sm font-semibold">{c.name}</p>
                     <p className="text-xs text-muted-foreground">{c.industry} · {c.size}</p>
@@ -68,13 +75,13 @@ export default function CompaniesPage() {
                 <CompanyFollowButton companyId={c.id} initialFollowing={!!c.viewerFollows} />
               </div>
               <div className="mt-3.5 flex items-center gap-2">
-                <Badge variant="secondary" className="bg-white/5 text-[11px] text-muted-foreground">{c.openJobCount} open role{c.openJobCount === 1 ? "" : "s"}</Badge>
-                <Badge variant="secondary" className="bg-white/5 text-[11px] text-muted-foreground">{c.followerCount} follower{c.followerCount === 1 ? "" : "s"}</Badge>
+                <Badge variant="secondary" className="bg-secondary text-[11px] text-muted-foreground">{c.openJobCount} open role{c.openJobCount === 1 ? "" : "s"}</Badge>
+                <Badge variant="secondary" className="bg-secondary text-[11px] text-muted-foreground">{c.followerCount} follower{c.followerCount === 1 ? "" : "s"}</Badge>
               </div>
             </button>
           ))}
         </div>
       )}
-    </CandidateAppShell>
+    </AppShell>
   );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Briefcase, Users } from "lucide-react";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -30,21 +30,21 @@ export default function CompanyDetailPage() {
 
   if (company === undefined || !profile) {
     return (
-      <CandidateAppShell title="Company">
+      <AppShell title="Company">
         <OrbLoader className="h-96" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
   if (company === null) {
     return (
-      <CandidateAppShell title="Company">
+      <AppShell title="Company">
         <p className="text-sm text-muted-foreground">This company isn&apos;t available anymore.</p>
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
   return (
-    <CandidateAppShell profile={profile}>
+    <AppShell profile={profile}>
       <button
         type="button"
         onClick={() => router.push("/companies")}
@@ -56,7 +56,13 @@ export default function CompanyDetailPage() {
       <Card>
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="text-3xl">{company.emoji}</span>
+            {/* eslint-disable-next-line @next/next/no-img-element -- seeded placeholder, see PersonAvatar */}
+            <img
+              src={`https://picsum.photos/seed/${encodeURIComponent(company.id)}/96/96`}
+              alt=""
+              className="size-12 shrink-0 rounded-2xl object-cover"
+              loading="lazy"
+            />
             <div>
               <p className="font-display text-lg font-bold">{company.name}</p>
               <p className="text-xs text-muted-foreground">{company.industry} · {company.size} employees</p>
@@ -65,10 +71,10 @@ export default function CompanyDetailPage() {
           <CompanyFollowButton companyId={company.id} initialFollowing={!!company.viewerFollows} />
         </div>
         <div className="mt-4 flex items-center gap-3">
-          <Badge variant="secondary" className="gap-1 bg-white/5 text-[11px] text-muted-foreground">
+          <Badge variant="secondary" className="gap-1 bg-secondary text-[11px] text-muted-foreground">
             <Briefcase className="size-3" /> {company.openJobCount} open role{company.openJobCount === 1 ? "" : "s"}
           </Badge>
-          <Badge variant="secondary" className="gap-1 bg-white/5 text-[11px] text-muted-foreground">
+          <Badge variant="secondary" className="gap-1 bg-secondary text-[11px] text-muted-foreground">
             <Users className="size-3" /> {company.followerCount} follower{company.followerCount === 1 ? "" : "s"}
           </Badge>
         </div>
@@ -86,17 +92,17 @@ export default function CompanyDetailPage() {
               key={j.id}
               type="button"
               onClick={() => router.push(`/jobs/${j.id}`)}
-              className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-white/[0.02] px-4 py-3.5 text-left transition-colors hover:border-white/20"
+              className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-secondary px-4 py-3.5 text-left transition-colors hover:border-primary/40"
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">{j.title}</p>
                 <p className="text-xs text-muted-foreground">{j.location}{j.remote ? " · Remote" : ""} · {j.employmentType}</p>
               </div>
-              <Badge variant="secondary" className="shrink-0 bg-white/5 text-[11px] text-muted-foreground">₹{j.salaryMin}-{j.salaryMax}L</Badge>
+              <Badge variant="secondary" className="shrink-0 bg-secondary text-[11px] text-muted-foreground">₹{j.salaryMin}-{j.salaryMax}L</Badge>
             </button>
           ))}
         </div>
       )}
-    </CandidateAppShell>
+    </AppShell>
   );
 }
