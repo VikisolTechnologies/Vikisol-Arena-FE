@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { InterviewRoom } from "@/components/interview/InterviewRoom";
 import { getMyProfile } from "@/lib/api/profile";
@@ -37,21 +37,21 @@ export default function CandidateInterviewPage() {
 
   if (application === undefined || interview === undefined || !profile) {
     return (
-      <CandidateAppShell title="Interview">
+      <AppShell title="Interview">
         <OrbLoader className="h-96" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
   if (application === null || interview === null) {
     return (
-      <CandidateAppShell title="Interview">
+      <AppShell title="Interview">
         <p className="text-sm text-muted-foreground">No interview scheduled for this application yet.</p>
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
   return (
-    <CandidateAppShell profile={profile}>
+    <AppShell profile={profile}>
       <button
         type="button"
         onClick={() => router.push(`/applications/${application.id}`)}
@@ -67,6 +67,6 @@ export default function CandidateInterviewPage() {
         canGiveFeedback={false}
         onInterviewUpdate={setInterview}
       />
-    </CandidateAppShell>
+    </AppShell>
   );
 }

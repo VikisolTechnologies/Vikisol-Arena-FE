@@ -79,7 +79,7 @@ export function InterviewRoom({
 
   if (interview.status === "completed") {
     return (
-      <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+      <div className="rounded-[24px] border border-border bg-card p-6">
         <p className="mb-1 flex items-center gap-1.5 font-display text-sm font-bold">
           <CalendarCheck2 className="size-4 text-primary-soft" /> Interview completed
         </p>
@@ -128,14 +128,14 @@ export function InterviewRoom({
   return (
     <div className="space-y-4">
       {formattedSlot && (
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-white/[0.02] px-4 py-2.5 text-sm">
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-secondary px-4 py-2.5 text-sm">
           <CalendarCheck2 className="size-4 text-primary-soft" />
           {formattedSlot} · {confirmedSlot?.durationMinutes} min
         </div>
       )}
 
       {!joined ? (
-        <div className="rounded-[24px] border border-border bg-white/[0.03] p-6 text-center">
+        <div className="rounded-[24px] border border-border bg-card p-6 text-center">
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="flex flex-col items-center gap-1">
               <span className="flex size-12 items-center justify-center rounded-full bg-primary/15 text-xl">{me.avatarEmoji}</span>
@@ -143,7 +143,7 @@ export function InterviewRoom({
             </div>
             <div className="h-px w-8 bg-border" />
             <div className="flex flex-col items-center gap-1">
-              <span className="flex size-12 items-center justify-center rounded-full bg-white/5 text-xl">{counterpart.avatarEmoji}</span>
+              <span className="flex size-12 items-center justify-center rounded-full bg-secondary text-xl">{counterpart.avatarEmoji}</span>
               <p className="text-xs text-muted-foreground">{counterpart.name}</p>
             </div>
           </div>
@@ -153,7 +153,7 @@ export function InterviewRoom({
               <MeetingEmbed link={interview.meetingLink} compact />
             </div>
           )}
-          <Button variant="primary-gradient" size="cta" onClick={() => setJoined(true)}>
+          <Button variant="default" size="cta" onClick={() => setJoined(true)}>
             Join interview
           </Button>
         </div>
@@ -161,7 +161,7 @@ export function InterviewRoom({
         <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
           <div className="space-y-3">
             {interview.meetingLink && <MeetingEmbed link={interview.meetingLink} />}
-            <div className="rounded-2xl border border-border bg-white/[0.03] p-4">
+            <div className="rounded-2xl border border-border bg-card p-4">
               <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <StickyNote className="size-3.5" /> Notes
               </p>
@@ -170,14 +170,14 @@ export function InterviewRoom({
                 onChange={(e) => setNotes(e.target.value)}
                 onBlur={handleNotesBlur}
                 placeholder="Anything worth remembering from this conversation…"
-                className="min-h-24 border-border bg-white/[0.02]"
+                className="min-h-24 border-border bg-secondary"
               />
               {savingNotes && <p className="mt-1 text-[11px] text-muted-foreground">Saving…</p>}
             </div>
           </div>
 
           <div className="space-y-3">
-            <div className="rounded-2xl border border-border bg-white/[0.03] p-4">
+            <div className="rounded-2xl border border-border bg-card p-4">
               <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <Users className="size-3.5" /> Participants
               </p>
@@ -195,7 +195,7 @@ export function InterviewRoom({
             </div>
 
             {canGiveFeedback && !givingFeedback && (
-              <Button variant="primary-gradient" size="sm" className="w-full" onClick={() => setGivingFeedback(true)}>
+              <Button variant="default" size="sm" className="w-full" onClick={() => setGivingFeedback(true)}>
                 End &amp; give feedback
               </Button>
             )}
@@ -216,13 +216,13 @@ export function InterviewRoom({
             value={strengths}
             onChange={(e) => setStrengths(e.target.value)}
             placeholder="Strengths"
-            className="mb-2.5 border-border bg-white/[0.03]"
+            className="mb-2.5 border-border bg-card"
           />
           <Textarea
             value={concerns}
             onChange={(e) => setConcerns(e.target.value)}
             placeholder="Concerns"
-            className="mb-3 border-border bg-white/[0.03]"
+            className="mb-3 border-border bg-card"
           />
           <div className="mb-4 flex gap-2">
             {RECOMMENDATIONS.map((r) => (
@@ -239,7 +239,7 @@ export function InterviewRoom({
               </button>
             ))}
           </div>
-          <Button variant="primary-gradient" size="sm" className="w-full" disabled={submitting} onClick={handleSubmitFeedback}>
+          <Button variant="default" size="sm" className="w-full" disabled={submitting} onClick={handleSubmitFeedback}>
             {submitting ? "Submitting…" : "Submit feedback"}
           </Button>
         </div>
