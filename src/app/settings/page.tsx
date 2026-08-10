@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Bot, ShieldCheck, Sparkles, Eye, Waves, Bell, CalendarClock, DollarSign, Cog, Lock, Download, Trash2, MapPin, Phone, Cake } from "lucide-react";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -77,9 +77,9 @@ export default function SettingsPage() {
 
   if (!profile) {
     return (
-      <CandidateAppShell title="Settings">
+      <AppShell title="Settings">
         <OrbLoader className="h-96" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
@@ -215,7 +215,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <CandidateAppShell title="Settings" profile={profile}>
+    <AppShell title="Settings" profile={profile}>
       <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
         <div className="space-y-4">
           <Card>
@@ -226,7 +226,7 @@ export default function SettingsPage() {
                 const locked = key === "autopilot" && !isPro;
                 if (locked) {
                   return (
-                    <div key={key} className="flex w-full items-start gap-3 rounded-2xl border border-border bg-white/[0.01] px-4 py-3.5 opacity-60">
+                    <div key={key} className="flex w-full items-start gap-3 rounded-2xl border border-border bg-secondary/60 px-4 py-3.5 opacity-60">
                       <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-2 border-border" />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-1.5 text-sm font-semibold">
@@ -248,7 +248,7 @@ export default function SettingsPage() {
                     onClick={() => setAutonomy(key)}
                     className={cn(
                       "flex w-full items-start gap-3 rounded-2xl border px-4 py-3.5 text-left transition-colors",
-                      profile.autonomy === key ? "border-primary/60 bg-primary/10" : "border-border bg-white/[0.02] hover:border-white/20",
+                      profile.autonomy === key ? "border-primary/60 bg-primary/10" : "border-border bg-secondary hover:border-primary/40",
                     )}
                   >
                     <span className={cn("mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-2", profile.autonomy === key ? "border-primary-soft bg-primary-soft" : "border-border")} />
@@ -265,14 +265,14 @@ export default function SettingsPage() {
           <Card>
             <p className="mb-4 flex items-center gap-2 font-display text-sm font-bold"><ShieldCheck className="size-4 text-primary-soft" /> Consent</p>
             <div className="space-y-2.5">
-              <div className="flex items-center justify-between rounded-2xl border border-border bg-white/[0.02] px-4 py-3">
+              <div className="flex items-center justify-between rounded-2xl border border-border bg-secondary px-4 py-3">
                 <span>
                   <span className="flex items-center gap-1.5 text-sm font-medium"><Sparkles className="size-3.5 text-primary-soft" /> Auto-apply</span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">Let your agent apply to strong matches for you</span>
                 </span>
                 <Switch checked={profile.consent.autoApply} onCheckedChange={() => toggleConsent("autoApply")} disabled={saving} />
               </div>
-              <div className="flex items-center justify-between rounded-2xl border border-border bg-white/[0.02] px-4 py-3">
+              <div className="flex items-center justify-between rounded-2xl border border-border bg-secondary px-4 py-3">
                 <span>
                   <span className="flex items-center gap-1.5 text-sm font-medium"><Eye className="size-3.5 text-primary-soft" /> Visible to enterprises</span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">Show up in Talent Universe search results</span>
@@ -295,7 +295,7 @@ export default function SettingsPage() {
                     className={cn(
                       "flex w-full items-start gap-3 rounded-2xl border px-4 py-3.5 text-left transition-colors",
                       profile.locationConsent === key || (!profile.locationConsent && key === "off")
-                        ? "border-primary/60 bg-primary/10" : "border-border bg-white/[0.02] hover:border-white/20",
+                        ? "border-primary/60 bg-primary/10" : "border-border bg-secondary hover:border-primary/40",
                     )}
                   >
                     <span className={cn("mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-2", (profile.locationConsent ?? "off") === key ? "border-primary-soft bg-primary-soft" : "border-border")} />
@@ -309,7 +309,7 @@ export default function SettingsPage() {
                       value={cityInput || profile.homeCity || ""}
                       onChange={(e) => setCityInput(e.target.value)}
                       placeholder="e.g. Hyderabad"
-                      className="mt-1.5 ml-7 h-8 w-[calc(100%-1.75rem)] border-border bg-white/[0.03] text-xs"
+                      className="mt-1.5 ml-7 h-8 w-[calc(100%-1.75rem)] border-border bg-card text-xs"
                     />
                   )}
                 </div>
@@ -322,18 +322,18 @@ export default function SettingsPage() {
             <p className="mb-1 flex items-center gap-2 font-display text-sm font-bold"><ShieldCheck className="size-4 text-primary-soft" /> Verification &amp; safety</p>
             <p className="mb-4 text-xs text-muted-foreground">Required before joining or creating activities that meet up in person.</p>
             <div className="space-y-4">
-              <div className="rounded-2xl border border-border bg-white/[0.02] px-4 py-3.5">
+              <div className="rounded-2xl border border-border bg-secondary px-4 py-3.5">
                 <p className="flex items-center gap-1.5 text-sm font-medium"><Cake className="size-3.5 text-primary-soft" /> Date of birth</p>
                 <p className="mt-0.5 mb-2.5 text-xs text-muted-foreground">Self-declared, used only to block under-18s from activity meetups.</p>
                 <div className="flex items-center gap-2">
-                  <Input type="date" value={dobInput} onChange={(e) => { setDobInput(e.target.value); setDobSaved(false); }} className="h-8 border-border bg-white/[0.03] text-xs" />
-                  <Button variant="ghost-glass" size="sm" disabled={!dobInput || dobSaving} onClick={saveDob}>
+                  <Input type="date" value={dobInput} onChange={(e) => { setDobInput(e.target.value); setDobSaved(false); }} className="h-8 border-border bg-card text-xs" />
+                  <Button variant="outline" size="sm" disabled={!dobInput || dobSaving} onClick={saveDob}>
                     {dobSaving ? "Saving…" : dobSaved ? "Saved ✓" : "Save"}
                   </Button>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-border bg-white/[0.02] px-4 py-3.5">
+              <div className="rounded-2xl border border-border bg-secondary px-4 py-3.5">
                 <p className="flex items-center gap-1.5 text-sm font-medium">
                   <Phone className="size-3.5 text-primary-soft" /> Phone verification
                   {verification?.phoneVerified && <span className="text-[11px] font-normal text-emerald-400">· Verified</span>}
@@ -345,16 +345,16 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <p className="text-[11px] text-muted-foreground">Code sent to {verification.phoneNumber}. (Demo mode: the code is <span className="font-mono text-primary-soft">123456</span>.)</p>
                     <div className="flex items-center gap-2">
-                      <Input value={otpInput} onChange={(e) => setOtpInput(e.target.value)} placeholder="6-digit code" className="h-8 border-border bg-white/[0.03] text-xs" />
-                      <Button variant="primary-gradient" size="sm" disabled={!otpInput.trim() || phoneBusy} onClick={confirmOtp}>
+                      <Input value={otpInput} onChange={(e) => setOtpInput(e.target.value)} placeholder="6-digit code" className="h-8 border-border bg-card text-xs" />
+                      <Button variant="default" size="sm" disabled={!otpInput.trim() || phoneBusy} onClick={confirmOtp}>
                         {phoneBusy ? "Confirming…" : "Confirm"}
                       </Button>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <Input value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} placeholder="+91 98765 43210" className="h-8 border-border bg-white/[0.03] text-xs" />
-                    <Button variant="ghost-glass" size="sm" disabled={!phoneInput.trim() || phoneBusy} onClick={requestOtp}>
+                    <Input value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} placeholder="+91 98765 43210" className="h-8 border-border bg-card text-xs" />
+                    <Button variant="outline" size="sm" disabled={!phoneInput.trim() || phoneBusy} onClick={requestOtp}>
                       {phoneBusy ? "Sending…" : "Send code"}
                     </Button>
                   </div>
@@ -372,7 +372,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={handleExportData}
                 disabled={exporting}
-                className="flex items-center gap-1.5 rounded-full border border-border bg-white/[0.02] px-4 py-2 text-xs font-medium transition-colors hover:border-white/20 disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-full border border-border bg-secondary px-4 py-2 text-xs font-medium transition-colors hover:border-primary/40 disabled:opacity-50"
               >
                 <Download className="size-3.5" /> {exporting ? "Preparing…" : "Export my data"}
               </button>
@@ -400,7 +400,7 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => setShowDeleteConfirm(false)}
-                    className="rounded-full border border-border px-4 py-1.5 text-xs font-medium hover:border-white/20"
+                    className="rounded-full border border-border px-4 py-1.5 text-xs font-medium hover:border-primary/40"
                   >
                     Cancel
                   </button>
@@ -411,7 +411,7 @@ export default function SettingsPage() {
 
           <Card>
             <p className="mb-4 flex items-center gap-2 font-display text-sm font-bold"><Waves className="size-4 text-primary-soft" /> Accessibility</p>
-            <div className="flex items-center justify-between rounded-2xl border border-border bg-white/[0.02] px-4 py-3">
+            <div className="flex items-center justify-between rounded-2xl border border-border bg-secondary px-4 py-3">
               <span>
                 <span className="block text-sm font-medium">Reduce motion effects</span>
                 <span className="mt-0.5 block text-xs text-muted-foreground">Turns off the orb animation, particle nebula, and scroll reveals app-wide</span>
@@ -438,9 +438,9 @@ export default function SettingsPage() {
                   key={n.id}
                   type="button"
                   onClick={() => openNotification(n)}
-                  className={cn("flex w-full items-start gap-3 rounded-xl border border-border px-3.5 py-3 text-left transition-colors hover:border-white/20", !n.read && "bg-primary/[0.04]")}
+                  className={cn("flex w-full items-start gap-3 rounded-xl border border-border px-3.5 py-3 text-left transition-colors hover:border-primary/40", !n.read && "bg-primary/[0.04]")}
                 >
-                  <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-white/5 text-primary-soft"><Icon className="size-3.5" /></span>
+                  <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-primary-soft"><Icon className="size-3.5" /></span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">{n.title}</p>
                     <p className="text-xs text-muted-foreground">{n.body}</p>
@@ -453,6 +453,6 @@ export default function SettingsPage() {
           </div>
         </Card>
       </div>
-    </CandidateAppShell>
+    </AppShell>
   );
 }
