@@ -34,6 +34,50 @@ combined checkpoint, not one after every step — then pause there before Steps 
 specifically. Continuing to build and commit locally in the meantime; nothing gets deployed
 for review until that checkpoint is genuinely reached.
 
+**ARENA-VISUAL-RICHNESS.md (2026-08-10) — raised the bar on that same checkpoint before
+judging the look, now substantially met, still blocked on deploy:** the founder flagged the
+Step 2+5 state as "dull/flat/not unique" (only `/home` + a couple primitives were actually on
+the new ivory/champagne/gold system) and gave 8 concrete rules (R1 contrast blocks, R2
+mandatory photography, R3 intentional shadow scale, R4 one hero moment/screen, R5 gold as
+rare punctuation, R6 confident type contrast, R7 composed negative space, R8 signature
+details) plus a minimum bar: migrate every shared primitive and at least Home/Discover/
+Profile/Map/Inbox, with real photography and one contrast+hero moment each, before deploying
+for review. Shipped this session (all committed locally, `eslint`+`tsc --noEmit` clean on
+every commit — `next build`'s typecheck step OOMs on this dev machine's 5.85GB RAM
+independent of any of these changes, so `tsc --noEmit` is the verification of record here):
+- `EmptyState` (shared primitive, ~15 call sites) gained an illustrated icon-badge slot (R2),
+  built on `--primary`/`--primary-soft` rather than the new product-only tokens so it still
+  renders correctly on the ~40+ routes not yet migrated to `[data-theme="product"]`.
+- Migrated onto `AppShell`/the product theme, beyond the named minimum: `/work` (new, R1/R4's
+  named black "top match" hero card above the hub grid), `/marketplace` + its project-detail/
+  manage/bids sub-routes, `/companies` + its detail route, `/applications` + its detail
+  route, and `/people/[id]` (the public-profile view, given Identity's own cover-photo +
+  black stats-block hero treatment for consistency). Reasoning: these are all one tap from
+  the freshly-lit Work hub or are the same "Profile" screen type as Identity — leaving them
+  on the old dark theme would have been an accidental, not deliberate, contrast break.
+- R2 photography added to every card type touched: project/job/company thumbnails (seeded
+  `picsum.photos`, same convention as the existing FeedItemCard/SwipeCard pattern) and real
+  `PersonAvatar`s on every bidder/applicant/author row that still showed a bare emoji.
+- R8's champagne-hairline (previously only on `AppShell`'s active nav) applied to section
+  titles across every migrated screen (Home's right rail, Identity, Marketplace, Companies,
+  Applications, the public profile).
+- R3: the black stats block on Identity/public-profile — each screen's named hero element —
+  gained its own elevated shadow so it reads as the focal tier, not flush with the resting
+  ivory card around it.
+- R5/R6/R7 spot-checked across the migrated screens against the existing design-system
+  defaults (gold reserved for badges/rings/hairlines, `font-display` headings on
+  near-black text, the existing padding/gap scale) — consistent, no changes needed.
+- **Still open, explicitly deferred, not silently skipped:** notifications, settings, agent,
+  interviews, jobs detail, and the legacy `/feed`/`/dashboard`/`/messages` routes remain on
+  the old dark theme — the last three are slated for deletion/redirect (Steps 7's inbox
+  merge, `/dashboard`'s existing retirement) so styling them now would be wasted work; the
+  rest are lower-traffic than the Work-hub surfaces prioritized this pass and are queued for
+  the next visual pass. Room-message sender photos (per-message, not per-room) were also
+  deferred — noted in the original migration's commit too.
+- **The actual "deploy and tell me to look" step remains blocked** — same `git push`/
+  `railway up` blocker as everything else queued since 2026-08-10, see BLOCKED.md. Every
+  commit above is real, local, and verified; none of it is live.
+
 **Step 1 (auth/session rewrite) — mechanism shipped, real remaining scope still open:**
 - `arena-api`: `arena_session` HttpOnly cookie (`SessionCookieHelper`), issued alongside
   the existing access-token JSON response at every sign-in/signup/2FA-verify/invite-accept/
