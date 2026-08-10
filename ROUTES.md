@@ -17,7 +17,7 @@ Legend: ✅ done and verified · 🚧 in progress · ⬜ not started · ➡️ r
 | `/pricing` | 🚧 | exists today — needs plan/copy rework to PART 7.2 |
 | `/discover` | 🚧 | exists today — needs faceted rebuild to PART 7.8 |
 | `/p/[postId]` | ⬜ | new public permalink; today's `/feed/[id]` is auth-only |
-| `/people/[handle]` | 🚧 | exists as `/people/[id]` (uses id not handle — handle field doesn't exist on `users` yet, see PART 5 note below) |
+| `/people/[handle]` | 🚧 | exists as `/people/[id]` — `User.handle` now exists (Step 3) but this route still resolves by id, not handle; path/lookup move still open |
 | `/company/[handle]` | 🚧 | exists as `/companies/[id]` — same handle-vs-id gap |
 | `/legal/privacy` `/legal/terms` `/legal/acceptable-use` `/legal/cookies` | 🚧 | exist today as `/privacy` `/terms` `/aup` — need path move + a 4th (cookies) page |
 | `/auth` | 🚧 | exists — needs Individual/Company-only signup per PART 7.3, delete role chips |
@@ -29,20 +29,20 @@ Legend: ✅ done and verified · 🚧 in progress · ⬜ not started · ➡️ r
 
 | Route | Status | Migration note |
 |---|---|---|
-| `/home` | 🚧 | real route, new `AppShell` (PART 4), reuses existing feed data — not yet Step 5's full rebuild (composer row, Nearby rail, right rail). `/feed` now redirects here (307, `next.config.ts`); `/dashboard` also exists and is being fully retired |
+| `/home` | 🚧 | real route on `AppShell`, now calls the real unified `GET /feed` (Step 3) with composer trigger row/quick chips/For-you-Nearby-Following tabs/right rail (Step 5 v1) — not yet PART 7.6's full 6-type composer, `/p/[id]` detail, or Discover facets. `/feed` redirects here |
 | `/onboarding` | 🚧 | exists — needs the 8-step rebuild in PART 7.4 |
-| `/discover` | 🚧 | shared with public — auth adds actions |
-| `/map` | 🚧 | exists today but is NOT a real map (no MapLibre) — full rebuild per PART 7.9 |
+| `/discover` | 🚧 | migrated onto `AppShell`/product theme (ARENA-VISUAL-RICHNESS.md) — still today's job-swipe-deck, not yet PART 7.8's faceted rebuild |
+| `/map` | 🚧 | migrated onto `AppShell`/product theme — still the R3F radar scene, not yet real MapLibre tiles per PART 7.9 |
 | `/post/new` + modal | ⬜ | new unified composer; today's `PostComposer` only covers ACTIVITY/ASK/UPDATE, not JOB/PROJECT/FREELANCE |
 | `/p/[postId]` (auth view) | ⬜ | new |
-| `/inbox` `/inbox/[id]` | ⬜ | new — merges today's separate `/rooms` and `/messages` |
+| `/inbox` `/inbox/[id]` | ⬜ | new — merges today's separate `/rooms` and `/messages`; `/rooms` itself is now migrated onto `AppShell`/product theme in the meantime |
 | `/work` overview | 🚧 | exists today as a link hub, not a command centre — needs PART 7.11 rebuild |
 | `/work/applications` `/work/applications/[id]` | 🚧 | exist today as `/applications` — path move + rebuild |
 | `/work/bids` | 🚧 | exists as `/marketplace/bids` — path move |
 | `/work/projects` `/work/projects/[id]` | 🚧 | exist as `/marketplace` `/marketplace/[id]` — path move |
 | `/work/interviews` `/work/interviews/[id]` | 🚧 | exist as `/interviews` `/interviews/[applicationId]` — path move |
 | `/work/saved` | ⬜ | new — no save feature exists at all today |
-| `/me` `/me/edit` `/me/resume` | 🚧 | exists as `/identity` — path move + rebuild to PART 7.12 |
+| `/me` `/me/edit` `/me/resume` | 🚧 | exists as `/identity`, migrated onto `AppShell`/product theme with a cover photo + black stats block (ARENA-VISUAL-RICHNESS.md) — path move to `/me` + the rest of PART 7.12's rebuild still open |
 | `/people/[handle]` | see above | |
 | `/notifications` | 🚧 | backend exists, page needs PART 7.14 rebuild (grouping, filters) |
 | `/settings` | 🚧 | exists — needs tab rebuild to PART 7.15 (location/privacy/security tabs are new) |
