@@ -21,10 +21,10 @@ export function MeetingEmbed({ link, compact }: { link: string; compact?: boolea
           </div>
         </div>
       )}
-      <div className="flex items-center justify-between gap-2 border-t border-white/10 bg-white/[0.02] px-4 py-2.5">
+      <div className="flex items-center justify-between gap-2 border-t border-white/10 bg-secondary px-4 py-2.5">
         <p className="truncate text-xs text-muted-foreground">{link}</p>
         <Button
-          variant="ghost-glass"
+          variant="outline"
           size="icon-sm"
           aria-label="Copy meeting link"
           onClick={() => navigator.clipboard?.writeText(link)}

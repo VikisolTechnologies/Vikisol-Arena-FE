@@ -42,13 +42,13 @@ export function ActivityFeed({ initial }: { initial: AgentActivityEvent[] }) {
         const isExpanded = expanded === ev.id;
         const isUndone = undone.has(ev.id);
         return (
-          <div key={ev.id} className="rounded-2xl border border-border bg-white/[0.03]">
+          <div key={ev.id} className="rounded-2xl border border-border bg-card">
             <button
               type="button"
               onClick={() => setExpanded(isExpanded ? null : ev.id)}
               className="flex w-full items-start gap-3 px-4 py-3.5 text-left"
             >
-              <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-white/5 text-primary-soft">
+              <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-primary-soft">
                 <Icon className="size-4" />
               </span>
               <span className="min-w-0 flex-1">
@@ -69,7 +69,7 @@ export function ActivityFeed({ initial }: { initial: AgentActivityEvent[] }) {
                 {ev.rationale && <p className="text-xs text-muted-foreground">{ev.rationale}</p>}
                 {ev.undoable && !isUndone && (
                   <Button
-                    variant="ghost-glass"
+                    variant="outline"
                     size="sm"
                     className="shrink-0 gap-1.5"
                     onClick={() => setUndone((prev) => new Set(prev).add(ev.id))}

@@ -41,7 +41,7 @@ export function ResumeUpload({ profile, onDone }: { profile: CandidateProfile; o
 
   if (phase === "parsing") {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-[24px] border border-border bg-white/[0.03] px-6 py-10 text-center">
+      <div className="flex flex-col items-center gap-3 rounded-[24px] border border-border bg-card px-6 py-10 text-center">
         <span
           className="size-12 animate-pulse rounded-full"
           style={{ background: "radial-gradient(circle at 35% 30%, #FF8A5B, #FF6B35 70%)", boxShadow: "0 0 32px rgba(255,107,53,0.35)" }}
@@ -60,19 +60,19 @@ export function ResumeUpload({ profile, onDone }: { profile: CandidateProfile; o
         </p>
         <p className="mb-4 text-xs text-muted-foreground">Review before this becomes your standard Arena CV.</p>
         <div className="space-y-2 text-sm">
-          <div className="flex items-center justify-between rounded-xl border border-border bg-white/[0.02] px-3.5 py-2.5">
+          <div className="flex items-center justify-between rounded-xl border border-border bg-secondary px-3.5 py-2.5">
             <span className="text-muted-foreground">Title</span>
             <span className="font-medium">{profile.title}</span>
           </div>
-          <div className="flex items-center justify-between rounded-xl border border-border bg-white/[0.02] px-3.5 py-2.5">
+          <div className="flex items-center justify-between rounded-xl border border-border bg-secondary px-3.5 py-2.5">
             <span className="text-muted-foreground">Experience</span>
             <span className="font-medium">{profile.experienceYears} years</span>
           </div>
-          <div className="rounded-xl border border-border bg-white/[0.02] px-3.5 py-2.5">
+          <div className="rounded-xl border border-border bg-secondary px-3.5 py-2.5">
             <p className="mb-1.5 text-muted-foreground">Skills ({profile.skills.length})</p>
             <div className="flex flex-wrap gap-1.5">
               {profile.skills.map((s) => (
-                <span key={s.name} className="rounded-md bg-white/5 px-2 py-0.5 text-xs">
+                <span key={s.name} className="rounded-md bg-secondary px-2 py-0.5 text-xs">
                   {s.name}
                 </span>
               ))}
@@ -80,10 +80,10 @@ export function ResumeUpload({ profile, onDone }: { profile: CandidateProfile; o
           </div>
         </div>
         <div className="mt-4 flex gap-2">
-          <Button variant="ghost-glass" size="sm" onClick={() => setPhase("idle")}>
+          <Button variant="outline" size="sm" onClick={() => setPhase("idle")}>
             Cancel
           </Button>
-          <Button variant="primary-gradient" size="sm" className="flex-1 gap-1.5" disabled={saving} onClick={confirm}>
+          <Button variant="default" size="sm" className="flex-1 gap-1.5" disabled={saving} onClick={confirm}>
             <Check className="size-3.5" /> {saving ? "Saving…" : "Looks right — use this"}
           </Button>
         </div>
@@ -114,7 +114,7 @@ export function ResumeUpload({ profile, onDone }: { profile: CandidateProfile; o
           if (f) handleFile(f);
         }}
       />
-      <Button variant="ghost-glass" size="sm" className="mt-4 gap-1.5" onClick={() => inputRef.current?.click()}>
+      <Button variant="outline" size="sm" className="mt-4 gap-1.5" onClick={() => inputRef.current?.click()}>
         <Upload className="size-3.5" /> {profile.resumeFileName ? "Replace resume" : "Upload resume (PDF/DOCX)"}
       </Button>
     </div>

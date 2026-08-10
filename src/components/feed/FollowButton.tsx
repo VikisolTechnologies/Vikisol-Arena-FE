@@ -34,7 +34,7 @@ export function FollowButton({ userId, className }: { userId: string; className?
 
   return (
     <Button
-      variant={following ? "ghost-glass" : "primary-gradient"}
+      variant={following ? "outline" : "default"}
       size="sm"
       className={`gap-1.5 ${className ?? ""}`}
       disabled={busy}

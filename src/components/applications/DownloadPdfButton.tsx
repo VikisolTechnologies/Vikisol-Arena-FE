@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
  * globals.css scopes the printed page to just the CV element. */
 export function DownloadPdfButton({ label = "Download PDF" }: { label?: string }) {
   return (
-    <Button variant="ghost-glass" size="sm" className="gap-1.5" onClick={() => window.print()}>
+    <Button variant="outline" size="sm" className="gap-1.5" onClick={() => window.print()}>
       <Download className="size-3.5" /> {label}
     </Button>
   );

@@ -123,7 +123,7 @@ export function PostComposer({ open, onOpenChange, onPublished, defaultIntent = 
                 onClick={() => setIntent(key)}
                 className={cn(
                   "rounded-full border px-3 py-2 text-xs font-medium transition-colors",
-                  intent === key ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-white/[0.02] text-muted-foreground hover:border-white/20",
+                  intent === key ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground hover:border-primary/40",
                 )}
               >
                 {label}
@@ -136,14 +136,14 @@ export function PostComposer({ open, onOpenChange, onPublished, defaultIntent = 
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Title (optional)"
-            className="border-border bg-white/[0.03]"
+            className="border-border bg-card"
           />
 
           <Textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder={intent === "activity" ? "e.g. Badminton at 6pm today, need 2 more for doubles" : intent === "ask" ? "e.g. Anyone used a good invoicing tool for freelance work?" : "What's on your mind?"}
-            className="min-h-24 border-border bg-white/[0.03]"
+            className="min-h-24 border-border bg-card"
           />
 
           {isActivity && (
@@ -153,7 +153,7 @@ export function PostComposer({ open, onOpenChange, onPublished, defaultIntent = 
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="Where (e.g. Gachibowli) - kept general, no exact address"
-                  className="border-border bg-white/[0.03]"
+                  className="border-border bg-card"
                 />
                 <button
                   type="button"
@@ -161,7 +161,7 @@ export function PostComposer({ open, onOpenChange, onPublished, defaultIntent = 
                   disabled={locating}
                   className={cn(
                     "flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[11px] font-medium transition-colors disabled:opacity-60",
-                    coords ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-white/[0.02] text-muted-foreground hover:border-white/20",
+                    coords ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground hover:border-primary/40",
                   )}
                 >
                   <LocateFixed className="size-3.5" /> {locating ? "Locating…" : coords ? "Located" : "Use my location"}
@@ -178,14 +178,14 @@ export function PostComposer({ open, onOpenChange, onPublished, defaultIntent = 
                 type="datetime-local"
                 value={startsAt}
                 onChange={(e) => setStartsAt(e.target.value)}
-                className="border-border bg-white/[0.03] text-xs"
+                className="border-border bg-card text-xs"
               />
 
               <Input
                 value={meetingPoint}
                 onChange={(e) => setMeetingPoint(e.target.value)}
                 placeholder="Exact meeting point (optional) - shown only inside the room to approved joiners"
-                className="border-border bg-white/[0.03]"
+                className="border-border bg-card"
               />
 
               <div className="flex items-center gap-1.5">
@@ -197,7 +197,7 @@ export function PostComposer({ open, onOpenChange, onPublished, defaultIntent = 
                     onClick={() => setRequiredVerification(v)}
                     className={cn(
                       "rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
-                      requiredVerification === v ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-white/[0.02] text-muted-foreground",
+                      requiredVerification === v ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground",
                     )}
                   >
                     {v === "basic" ? "No extra check" : "Phone-verified"}
@@ -218,7 +218,7 @@ export function PostComposer({ open, onOpenChange, onPublished, defaultIntent = 
                     onClick={() => setVisibility(v)}
                     className={cn(
                       "rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
-                      visibility === v ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-white/[0.02] text-muted-foreground",
+                      visibility === v ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground",
                     )}
                   >
                     {v === "public" ? "Anyone" : "I approve"}
@@ -232,7 +232,7 @@ export function PostComposer({ open, onOpenChange, onPublished, defaultIntent = 
                   value={capacity}
                   onChange={(e) => setCapacity(e.target.value)}
                   placeholder="Spots (optional)"
-                  className="h-8 w-28 border-border bg-white/[0.03] text-xs"
+                  className="h-8 w-28 border-border bg-card text-xs"
                 />
               )}
             </div>
@@ -247,7 +247,7 @@ export function PostComposer({ open, onOpenChange, onPublished, defaultIntent = 
                 onClick={() => setAudience(a)}
                 className={cn(
                   "rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
-                  audience === a ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-white/[0.02] text-muted-foreground",
+                  audience === a ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground",
                 )}
               >
                 {a === "global" ? "Everyone" : "Followers only"}
@@ -259,12 +259,12 @@ export function PostComposer({ open, onOpenChange, onPublished, defaultIntent = 
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             placeholder="Tags, comma-separated (optional)"
-            className="border-border bg-white/[0.03]"
+            className="border-border bg-card"
           />
 
           {error && <p className="text-xs text-red-400">{error}</p>}
 
-          <Button variant="primary-gradient" size="sm" className="w-full gap-1.5" disabled={!body.trim() || publishing} onClick={publish}>
+          <Button variant="default" size="sm" className="w-full gap-1.5" disabled={!body.trim() || publishing} onClick={publish}>
             <Sparkles className="size-3.5" /> {publishing ? "Publishing…" : "Publish"}
           </Button>
         </div>

@@ -35,7 +35,7 @@ export function BlockButton({ userId, className }: { userId: string; className?:
 
   return (
     <Button
-      variant="ghost-glass"
+      variant="outline"
       size="icon-sm"
       className={className}
       disabled={busy}

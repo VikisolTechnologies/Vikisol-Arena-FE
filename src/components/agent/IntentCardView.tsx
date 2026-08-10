@@ -32,17 +32,17 @@ export function IntentCardView({
 
       {card.status === "pending" ? (
         <div className="mt-3 flex gap-2">
-          <Button variant="primary-gradient" size="sm" className="flex-1 gap-1.5" onClick={() => onApprove(card)}>
+          <Button variant="default" size="sm" className="flex-1 gap-1.5" onClick={() => onApprove(card)}>
             <Check className="size-3.5" /> Approve
           </Button>
-          <Button variant="ghost-glass" size="sm" className="flex-1 gap-1.5" onClick={() => onReject(card)}>
+          <Button variant="outline" size="sm" className="flex-1 gap-1.5" onClick={() => onReject(card)}>
             <X className="size-3.5" /> Not now
           </Button>
         </div>
       ) : (
         <Badge
           variant="secondary"
-          className={`mt-3 ${card.status === "approved" ? "bg-emerald-500/15 text-emerald-400" : "bg-white/10"}`}
+          className={`mt-3 ${card.status === "approved" ? "bg-emerald-500/15 text-emerald-400" : "bg-secondary"}`}
         >
           {card.status === "approved" ? "Done ✓" : "Skipped"}
         </Badge>

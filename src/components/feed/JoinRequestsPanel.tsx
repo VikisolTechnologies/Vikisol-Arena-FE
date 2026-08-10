@@ -35,13 +35,13 @@ export function JoinRequestsPanel({ postId, onDecided }: { postId: string; onDec
         <EmptyState title="No join requests yet" className="py-8" />
       )}
       {pending.map((r) => (
-        <div key={r.id} className="flex items-center gap-3 rounded-xl border border-border bg-white/[0.02] px-3.5 py-2.5">
+        <div key={r.id} className="flex items-center gap-3 rounded-xl border border-border bg-secondary px-3.5 py-2.5">
           <span className="text-lg">{r.userEmoji}</span>
           <span className="min-w-0 flex-1 truncate text-sm font-medium">{r.userName}</span>
-          <Button variant="ghost-glass" size="icon-sm" disabled={deciding === r.id} onClick={() => decide(r.id, false)} aria-label="Decline">
+          <Button variant="outline" size="icon-sm" disabled={deciding === r.id} onClick={() => decide(r.id, false)} aria-label="Decline">
             <X className="size-3.5" />
           </Button>
-          <Button variant="primary-gradient" size="icon-sm" disabled={deciding === r.id} onClick={() => decide(r.id, true)} aria-label="Approve">
+          <Button variant="default" size="icon-sm" disabled={deciding === r.id} onClick={() => decide(r.id, true)} aria-label="Approve">
             <Check className="size-3.5" />
           </Button>
         </div>
