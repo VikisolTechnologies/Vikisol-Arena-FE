@@ -214,6 +214,27 @@ body {
   transform: translateY(36px);
 }
 
+/* ARENA-VISUAL-RICHNESS.md R8 — "ONE recognizable signature repeated tastefully": a 1px gold
+   hairline under section titles / along the active nav item, and a champagne "ring" motif
+   around nearby avatars / the Arena Score / a featured card. Only meaningful inside the product
+   theme (uses §2's gold/champagne tokens) - harmless no-ops elsewhere since --gold/--champagne
+   are undefined outside [data-theme="product"]. */
+.champagne-hairline {
+  position: relative;
+}
+.champagne-hairline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 32px;
+  height: 1px;
+  background: var(--gold);
+}
+.champagne-ring {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--champagne);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

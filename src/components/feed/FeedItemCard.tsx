@@ -12,6 +12,7 @@ import {
   Users,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { PersonAvatar } from "@/components/ui/person-avatar";
 import { ReactionButton } from "@/components/feed/ReactionButton";
 import { formatFriendlyDateTime } from "@/lib/format";
 import { savePost, unsavePost } from "@/lib/api/posts";
@@ -62,9 +63,19 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   const isProjectLike = item.itemType === "project" || item.itemType === "freelance";
 
   const authorName = item.authorCompanyName ?? item.authorName ?? "Someone";
-  const authorEmoji = item.authorCompanyEmoji ?? item.authorEmoji ?? "🙂";
+  const avatarSeed = item.authorCompanyId ?? item.authorUserId ?? item.id;
 
   const href = isJob ? `/jobs/${item.id}` : isProjectLike ? `/marketplace/${item.id}` : `/feed/${item.id}`;
+
+  // R2 "every job/project a relevant thumbnail... every activity a place photo or map image" -
+  // no real media-upload pipeline exists yet for jobs/projects (Step 4), so a deterministic
+  // picsum.photos image (same item id -> same photo, every time) stands in exactly the way
+  // PersonAvatar's placeholder photos do - see that component's own comment for the same
+  // "ship real images now, not after" reasoning. A real uploaded post image (item.mediaUrls[0])
+  // always takes priority over this when one exists.
+  const thumbnailUrl = item.mediaUrls[0] ?? ((isJob || isProjectLike || item.itemType === "activity")
+    ? `https://picsum.photos/seed/${encodeURIComponent(item.id)}/640/360`
+    : null);
 
   async function toggleSave(e: React.MouseEvent) {
     e.stopPropagation();
@@ -87,7 +98,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-lg">{authorEmoji}</span>
+          <PersonAvatar seed={avatarSeed} name={authorName} size="sm" />
           <span className="text-sm font-semibold">{authorName}</span>
           {item.mine && <Badge variant="secondary" className="bg-primary/12 text-[11px] text-primary-soft">You</Badge>}
         </div>
@@ -107,6 +118,19 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
       <p className={cn("line-clamp-3 text-sm leading-relaxed text-foreground/90", item.title ? "mt-1" : "mt-3")}>
         {item.body}
       </p>
+
+      {/* R2/§5 "images sit at radius 16 with a 1px --line inset" - the imagery layer that
+          removes the "empty" feeling; see thumbnailUrl's own comment for the placeholder-photo
+          reasoning until Step 4's real media pipeline exists. */}
+      {thumbnailUrl && (
+        <div className="mt-3 overflow-hidden rounded-2xl border border-border">
+          {/* eslint-disable-next-line @next/next/no-img-element -- external, per-item seeded
+              placeholder URL (picsum/user media) - not a static local asset next/image can
+              usefully optimize, and this keeps the card free of a Next image-domain allowlist
+              dependency for a URL scheme that's going away once Step 4 lands. */}
+          <img src={thumbnailUrl} alt="" width={640} height={360} className="aspect-[16/9] w-full object-cover" loading="lazy" />
+        </div>
+      )}
 
       {item.tags.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">

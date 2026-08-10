@@ -62,13 +62,18 @@ const MOBILE_TAB_ITEMS = [
   { href: "/work", label: "Work", icon: Briefcase },
 ];
 
+// ARENA-DESIGN-SYSTEM.md §6 "Navigation": selected item = --surface-sunk fill + 1px gold left
+// indicator + black icon (the champagne-hairline signature repeated as a nav rule, not just a
+// section-title rule - see R8).
 function NavRow({ href, label, icon: Icon, active }: { href: string; label: string; icon: typeof Home; active: boolean }) {
   return (
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-        active ? "bg-primary/12 text-primary-soft" : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
+        "relative flex items-center gap-3 rounded-xl py-2.5 pr-3 pl-4 text-sm font-medium transition-colors",
+        active
+          ? "bg-secondary text-foreground before:absolute before:top-1.5 before:bottom-1.5 before:left-0 before:w-[2px] before:rounded-full before:bg-gold"
+          : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
       )}
     >
       <Icon className="size-[18px] shrink-0" />
