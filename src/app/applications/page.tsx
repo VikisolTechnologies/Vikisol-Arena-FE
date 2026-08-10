@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarClock, Check, Lock } from "lucide-react";
 import { useGSAP } from "@gsap/react";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -78,14 +78,14 @@ export default function ApplicationsPage() {
 
   if (!profile) {
     return (
-      <CandidateAppShell title="Applications">
+      <AppShell title="Applications">
         <OrbLoader className="h-96" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
   return (
-    <CandidateAppShell title="Applications" profile={profile}>
+    <AppShell title="Applications" profile={profile}>
       <div className="flex gap-4 overflow-x-auto pb-4">
         {COLUMNS.map(({ stage, label }) => {
           const items = apps.filter((a) => a.stage === stage);
@@ -93,7 +93,7 @@ export default function ApplicationsPage() {
             <div key={stage} className="w-[260px] shrink-0">
               <div className="mb-3 flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-                <Badge variant="secondary" className="bg-white/5">{items.length}</Badge>
+                <Badge variant="secondary" className="bg-secondary">{items.length}</Badge>
               </div>
               <div className="space-y-2.5">
                 {items.map((app) => {
@@ -103,11 +103,17 @@ export default function ApplicationsPage() {
                   return (
                     <div
                       key={app.id}
-                      className="cursor-pointer rounded-2xl border border-border bg-white/[0.03] p-3.5 transition-colors hover:border-primary/40"
+                      className="cursor-pointer rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-primary/40"
                       onClick={() => router.push(`/applications/${app.id}`)}
                     >
                       <div className="flex items-start gap-2.5">
-                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/5 text-base">{job.companyEmoji}</span>
+                        {/* eslint-disable-next-line @next/next/no-img-element -- seeded placeholder, see PersonAvatar */}
+                        <img
+                          src={`https://picsum.photos/seed/${encodeURIComponent(job.id)}/64/64`}
+                          alt=""
+                          className="size-8 shrink-0 rounded-lg object-cover"
+                          loading="lazy"
+                        />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{job.title}</p>
                           <p className="truncate text-xs text-muted-foreground">{job.company}</p>
@@ -116,7 +122,7 @@ export default function ApplicationsPage() {
                       <p className="mt-2 text-[11px] text-muted-foreground">Applied {daysAgo(app.appliedAt)}d ago</p>
                       {stage === "interview" && (
                         <Button
-                          variant="ghost-glass"
+                          variant="outline"
                           size="sm"
                           className="mt-2.5 w-full gap-1.5"
                           onClick={(e) => { e.stopPropagation(); openScheduler(app); }}
@@ -159,11 +165,11 @@ export default function ApplicationsPage() {
                   )}
               </p>
               <div className="flex gap-2">
-                <Button variant="ghost-glass" size="sm" onClick={() => setSchedulingApp(null)}>
+                <Button variant="outline" size="sm" onClick={() => setSchedulingApp(null)}>
                   Done
                 </Button>
                 {schedulingApp && (
-                  <Button variant="primary-gradient" size="sm" onClick={() => router.push(`/interviews/${schedulingApp.id}`)}>
+                  <Button variant="default" size="sm" onClick={() => router.push(`/interviews/${schedulingApp.id}`)}>
                     Go to interview room
                   </Button>
                 )}
@@ -177,7 +183,7 @@ export default function ApplicationsPage() {
                   type="button"
                   disabled={confirming}
                   onClick={() => confirmSlot(slot.id)}
-                  className="flex w-full items-center justify-between rounded-xl border border-border bg-white/[0.03] px-4 py-3 text-left text-sm transition-colors hover:border-primary/50 disabled:opacity-50"
+                  className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-left text-sm transition-colors hover:border-primary/50 disabled:opacity-50"
                 >
                   {formatFriendlyDateTime(slot.start)}
                   <Check className="size-4 text-primary-soft opacity-0 transition-opacity group-hover:opacity-100" />
@@ -187,6 +193,6 @@ export default function ApplicationsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </CandidateAppShell>
+    </AppShell>
   );
 }

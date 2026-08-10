@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Search, Send, Eye, CalendarCheck2, Trash2 } from "lucide-react";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { TailoredResume } from "@/components/applications/TailoredResume";
 import { Badge } from "@/components/ui/badge";
@@ -44,23 +44,23 @@ export default function ApplicationDetailPage() {
 
   if (app === undefined || !profile || (app && job === undefined)) {
     return (
-      <CandidateAppShell title="Application">
+      <AppShell title="Application">
         <OrbLoader className="h-96" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
   if (app === null) {
     return (
-      <CandidateAppShell title="Application">
+      <AppShell title="Application">
         <p className="text-sm text-muted-foreground">This application isn&apos;t here anymore.</p>
-      </CandidateAppShell>
+      </AppShell>
     );
   }
   if (!job) {
     return (
-      <CandidateAppShell title="Application">
+      <AppShell title="Application">
         <p className="text-sm text-muted-foreground">This opportunity is no longer available.</p>
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
@@ -74,7 +74,7 @@ export default function ApplicationDetailPage() {
   };
 
   return (
-    <CandidateAppShell profile={profile}>
+    <AppShell profile={profile}>
       <button
         type="button"
         onClick={() => router.push("/applications")}
@@ -83,9 +83,15 @@ export default function ApplicationDetailPage() {
         <ArrowLeft className="size-4" /> Back to Applications
       </button>
 
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border bg-white/[0.03] p-5">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-border bg-card p-5">
         <div className="flex items-center gap-3">
-          <span className="flex size-11 items-center justify-center rounded-xl bg-white/5 text-xl">{job.companyEmoji}</span>
+          {/* eslint-disable-next-line @next/next/no-img-element -- seeded placeholder, see PersonAvatar */}
+          <img
+            src={`https://picsum.photos/seed/${encodeURIComponent(job.id)}/88/88`}
+            alt=""
+            className="size-11 shrink-0 rounded-xl object-cover"
+            loading="lazy"
+          />
           <div>
             <p className="font-display text-lg font-bold">{job.title}</p>
             <p className="text-sm text-muted-foreground">{job.company} · {job.location}</p>
@@ -94,14 +100,14 @@ export default function ApplicationDetailPage() {
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="bg-primary/12 text-primary-soft capitalize">{app.stage}</Badge>
           {app.stage === "interview" && (
-            <Button variant="primary-gradient" size="sm" onClick={() => router.push(`/interviews/${app.id}`)}>
+            <Button variant="default" size="sm" onClick={() => router.push(`/interviews/${app.id}`)}>
               Interview room
             </Button>
           )}
         </div>
       </div>
 
-      <div className="mb-5 rounded-[24px] border border-border bg-white/[0.03] p-5">
+      <div className="mb-5 rounded-[24px] border border-border bg-card p-5">
         <div className="flex flex-wrap gap-4 sm:gap-0">
           {TIMELINE.map((step, i) => (
             <div key={step.key} className="flex flex-1 items-center gap-2">
@@ -109,7 +115,7 @@ export default function ApplicationDetailPage() {
                 <span
                   className={cn(
                     "flex size-8 shrink-0 items-center justify-center rounded-full",
-                    i <= reachedIndex ? "bg-primary/15 text-primary-soft" : "bg-white/5 text-muted-foreground",
+                    i <= reachedIndex ? "bg-primary/15 text-primary-soft" : "bg-secondary text-muted-foreground",
                   )}
                 >
                   <step.icon className="size-4" />
@@ -139,7 +145,7 @@ export default function ApplicationDetailPage() {
       <TailoredResume profile={profile} job={job} />
 
       <Button
-        variant="ghost-glass"
+        variant="outline"
         size="sm"
         className="mt-5 gap-1.5 text-red-400 hover:text-red-300"
         disabled={withdrawing}
@@ -147,6 +153,6 @@ export default function ApplicationDetailPage() {
       >
         <Trash2 className="size-3.5" /> {withdrawing ? "Withdrawing…" : "Withdraw application"}
       </Button>
-    </CandidateAppShell>
+    </AppShell>
   );
 }
