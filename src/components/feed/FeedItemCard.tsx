@@ -191,7 +191,10 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           <button
             type="button"
             onClick={toggleSave}
-            className={cn("ml-auto flex items-center gap-1 text-xs transition-colors", saved ? "text-gold" : "text-muted-foreground hover:text-foreground")}
+            className={cn(
+              "relative ml-auto flex items-center gap-1 text-xs transition-colors before:absolute before:inset-[-13px] before:content-['']",
+              saved ? "text-gold" : "text-muted-foreground hover:text-foreground",
+            )}
             aria-label={saved ? "Unsave" : "Save"}
           >
             <Bookmark className="size-3.5" fill={saved ? "currentColor" : "none"} />

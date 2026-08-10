@@ -38,7 +38,14 @@ export function ReactionButton({
     <button
       type="button"
       onClick={toggle}
-      className={cn("flex items-center gap-1 text-xs transition-colors", myReacted ? "text-primary-soft" : "text-muted-foreground hover:text-foreground", className)}
+      // ARENA-PERF-AND-MOBILE-FIX.md Track A - the visible icon+count stays small (matches the
+      // rest of the card footer), but the tappable area expands to ~44px via this invisible
+      // pseudo-element hit-area rather than adding real padding that would bulk up the row.
+      className={cn(
+        "relative flex items-center gap-1 text-xs transition-colors before:absolute before:inset-[-13px] before:content-['']",
+        myReacted ? "text-primary-soft" : "text-muted-foreground hover:text-foreground",
+        className,
+      )}
       aria-label={myReacted ? "Remove reaction" : "React"}
     >
       <Heart className={cn("size-3.5", myReacted && "fill-current")} /> {reactionCount > 0 ? reactionCount : ""}
