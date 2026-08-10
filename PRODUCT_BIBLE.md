@@ -74,9 +74,30 @@ independent of any of these changes, so `tsc --noEmit` is the verification of re
   rest are lower-traffic than the Work-hub surfaces prioritized this pass and are queued for
   the next visual pass. Room-message sender photos (per-message, not per-room) were also
   deferred — noted in the original migration's commit too.
-- **The actual "deploy and tell me to look" step remains blocked** — same `git push`/
-  `railway up` blocker as everything else queued since 2026-08-10, see BLOCKED.md. Every
-  commit above is real, local, and verified; none of it is live.
+- **UPDATE — arena-web deployed 2026-08-10, checked live against the brief's own done-test:**
+  the founder pushed by hand; verified via Railway deployment history (arena-web's latest
+  deployment 22:08, superseding the prior one from 19:51) rather than trusting the claim
+  alone. Screenshotted Home/Discover/Profile/Map/Inbox/Work at 1440px and 390px, logged in as
+  the talent demo account — full report published as an artifact this session. Every R1–R8
+  item confirmed rendering as designed: black contrast blocks, real photography, the
+  elevated-shadow focal tier, gold used sparingly, champagne hairlines and rings all live.
+  Two things surfaced by actually looking instead of just trusting the push:
+  - **Home's feed is broken in production** — `GET /feed` 500s
+    (`NoResourceFoundException: No static resource feed`) because **arena-api was never
+    redeployed** — its live deployment is still from 00:29 that morning, before Step 3's
+    unified-feed endpoint was even committed. arena-web's push landed and deployed; arena-api's
+    did not. This is a backend deploy gap, not a visual-richness defect — needs its own
+    `git push`/deploy from arena-api specifically.
+  - One seeded placeholder photo failed to load mid-screenshot-run (Discover's card
+    background) while others from the same host loaded fine in the same run — read as a
+    transient hiccup in the automated test session, not a code defect; flagged for a manual
+    glance, not fixed blind.
+  - Continued past the checkpoint per the founder's explicit "continuous, no stopping":
+    migrated `/notifications` (built for the first time — the nav bell has 404'd since Step 1
+    since no page existed), `/settings`, `/agent`, `/interviews/[applicationId]` (+ the shared
+    `InterviewRoom` component, carefully — it's also used by the still-unmigrated enterprise
+    interview route, so only the dual-theme-safe token fixes went in there, not
+    `PersonAvatar`), and `/jobs/[id]` onto `AppShell`/the product theme.
 
 **Step 1 (auth/session rewrite) — mechanism shipped, real remaining scope still open:**
 - `arena-api`: `arena_session` HttpOnly cookie (`SessionCookieHelper`), issued alongside
