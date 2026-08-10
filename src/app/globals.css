@@ -36,6 +36,11 @@
   --ring: var(--primary-soft);
 
   --radius: 1rem;
+  /* ARENA-DESIGN-SYSTEM.md §4/§6 card radius (20px) only applies inside the product theme -
+     the existing dark surfaces (marketing, every unmigrated page) keep their current 24px. */
+  --radius-card: 24px;
+  --shadow-card-rest: none;
+  --shadow-card-hover: none;
 }
 
 /*
@@ -109,6 +114,19 @@
   --border: var(--line);
   --input: var(--line);
   --ring: var(--gold);
+
+  /* §4 "Radii" / "Shadows (soft and expensive, never heavy)" - card is the only primitive
+     given a real geometry change here (20px vs the dark theme's 24px); Button/Input/Sheet/
+     Toast/Skeleton/EmptyState's own exact height/shadow specs are real remaining Step 2 scope
+     (see PRODUCT_BIBLE.md) - those are shared globally by ~50+ still-unmigrated pages, so a
+     blind global change would break the "nothing currently working changes" guarantee this
+     whole scoping strategy exists for. Card's shadow-on-hover is applied by callers (FeedItemCard,
+     PostCard, ...) via their own hover:-translate-y - not baked into Card itself, since Card
+     is also used in plenty of non-interactive/static contexts.
+   */
+  --radius-card: 20px;
+  --shadow-card-rest: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.06);
 }
 
 @theme inline {

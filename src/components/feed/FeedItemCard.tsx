@@ -83,7 +83,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     <button
       type="button"
       onClick={() => router.push(href)}
-      className="w-full rounded-[24px] border border-border bg-card p-5 text-left transition-transform hover:-translate-y-0.5"
+      className="w-full rounded-[var(--radius-card)] border border-border bg-card p-5 text-left shadow-[var(--shadow-card-rest)] transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)]"
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
