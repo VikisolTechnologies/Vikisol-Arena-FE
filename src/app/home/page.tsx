@@ -42,7 +42,7 @@ function TrendingTagsRail({ items }: { items: FeedItem[] }) {
   if (tags.length === 0) return null;
   return (
     <div>
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Trending tags</h3>
+      <h3 className="mb-2 champagne-hairline text-xs font-semibold uppercase tracking-wide text-muted-foreground">Trending tags</h3>
       <div className="flex flex-wrap gap-1.5">
         {tags.map((t) => (
           <Badge key={t} variant="secondary" className="bg-white/5 text-[11px] text-muted-foreground">#{t}</Badge>
@@ -56,7 +56,7 @@ function NearbyNowRail({ posts }: { posts: Post[] }) {
   if (posts.length === 0) return null;
   return (
     <div>
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nearby now</h3>
+      <h3 className="mb-2 champagne-hairline text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nearby now</h3>
       <div className="flex flex-col gap-2">
         {posts.slice(0, 3).map((p) => (
           <a key={p.id} href={`/feed/${p.id}`} className="rounded-xl border border-border bg-white/[0.03] px-3 py-2.5 text-xs transition-colors hover:bg-white/[0.06]">
@@ -87,7 +87,7 @@ function RightRail({ items, profile }: { items: FeedItem[]; profile: CandidatePr
       {/* PART 7.5 "one Promoted slot" - honest empty state until Step 10 (promotions) ships a
           real campaign to show here; PRODUCT_BIBLE.md principle #2: no fabricated content. */}
       <div>
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Promoted</h3>
+        <h3 className="mb-2 champagne-hairline text-xs font-semibold uppercase tracking-wide text-muted-foreground">Promoted</h3>
         <div className="rounded-xl border border-dashed border-border px-3 py-4 text-center text-[11px] text-muted-foreground">
           Promotions launch with Step 10 - nothing to show yet.
         </div>

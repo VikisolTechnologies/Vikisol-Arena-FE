@@ -252,7 +252,7 @@ export default function IdentityPage() {
 
           {mode === "edit" && (
             <div className="rounded-[24px] border border-border bg-card p-5">
-              <p className="mb-3 font-display text-sm font-bold">Edit skills</p>
+              <p className="mb-3 champagne-hairline font-display text-sm font-bold">Edit skills</p>
               <SkillPicker selected={draftSkills} onChange={setDraftSkills} />
               <Button variant="default" size="sm" className="mt-3 w-full" disabled={saving} onClick={saveSkills}>
                 {saving ? "Saving…" : "Save changes"}

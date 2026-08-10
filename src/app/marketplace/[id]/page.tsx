@@ -160,7 +160,7 @@ export default function ProjectDetailPage() {
         </div>
 
         <div className="rounded-[24px] border border-border bg-card p-5">
-          <p className="mb-3 font-display text-sm font-bold">Live bids ({project.bids.length})</p>
+          <p className="mb-3 champagne-hairline font-display text-sm font-bold">Live bids ({project.bids.length})</p>
           <div ref={bidsListRef} className="space-y-2.5">
             {project.bids.map((bid, i) => (
               <div

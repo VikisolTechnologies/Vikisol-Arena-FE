@@ -137,7 +137,7 @@ export default function PublicProfilePage() {
         </div>
       </div>
 
-      <p className="mb-3 mt-6 font-display text-sm font-bold">Activity</p>
+      <p className="mb-3 mt-6 champagne-hairline font-display text-sm font-bold">Activity</p>
       {!posts ? (
         <OrbLoader className="h-48" />
       ) : posts.length === 0 ? (

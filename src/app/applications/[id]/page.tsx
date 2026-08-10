@@ -141,7 +141,7 @@ export default function ApplicationDetailPage() {
         </p>
       </div>
 
-      <p className="mb-3 font-display text-sm font-bold">The resume your agent submitted</p>
+      <p className="mb-3 champagne-hairline font-display text-sm font-bold">The resume your agent submitted</p>
       <TailoredResume profile={profile} job={job} />
 
       <Button

@@ -80,7 +80,7 @@ export default function CompanyDetailPage() {
         </div>
       </Card>
 
-      <p className="mb-3 mt-6 font-display text-sm font-bold">Open roles</p>
+      <p className="mb-3 mt-6 champagne-hairline font-display text-sm font-bold">Open roles</p>
       {!jobs ? (
         <OrbLoader className="h-48" />
       ) : jobs.length === 0 ? (

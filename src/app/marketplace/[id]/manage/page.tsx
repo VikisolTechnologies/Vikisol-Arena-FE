@@ -148,7 +148,7 @@ export default function ProjectManagePage() {
 
       {project.status === "open" && (
         <>
-          <p className="mb-3 font-display text-sm font-bold">Compare bids</p>
+          <p className="mb-3 champagne-hairline font-display text-sm font-bold">Compare bids</p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {project.bids.map((bid, i) => (
               <div key={bid.id} className={cn("rounded-[24px] border p-5", i === 0 ? "border-primary/40 bg-primary/[0.05]" : "border-border bg-card")}>
