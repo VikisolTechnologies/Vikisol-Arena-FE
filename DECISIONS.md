@@ -3,6 +3,35 @@
 Per the mission's standing rule: decisions get logged here instead of interrupting the
 user. Each entry says what was decided, why, and what it costs/defers.
 
+## Step 3 built: unified `/feed` API, User.handle, Post.title, Save, Project.kind — Share deferred (2026-08-10)
+
+Implemented the resolution below (`arena-api` commit `ebd8db3`). `FeedAggregationService`
+queries `Post` (via a newly-exposed `FeedRankingService.scoredWindow`, unpaged), `JobPosting`,
+and `Project` independently, maps each to `FeedItemResponse`, merges+ranks, and
+`GET /feed?tab=for-you|nearby|following` serves it. Job/Project don't have Post's full
+embedding-based relevance score yet — they get recency+follow+deadline-urgency using the
+SAME constants as `FeedRankingService`'s own terms, so all three sources interleave fairly
+instead of one silently dominating. Real, documented gap (Job/Project relevance-to-viewer
+ranking), not fake sophistication — revisit once those are embedded too.
+
+Also shipped, all needed for PART 7.5's PostCard/composer: `User.handle` (generated at every
+signup/invite/seed path, backfilled for existing rows), `Post.title`, `PostSave` (`POST|DELETE
+/posts/{id}/save`, `GET /posts/saved` — kept under `/posts` rather than the spec's literal
+`/me/saved`, matching where every other post-interaction endpoint already lives), and
+`Project.kind` (PROJECT|FREELANCE, the sub-classification decided below).
+
+**Deferred, not silently dropped: PART 6's `POST /posts/{id}/share` (REPOST/QUOTE).** Sharing
+means creating a new post that references another — a real composer-flow feature (what does
+a quote-post's own composer look like, does it need its own moderation pass, how does it
+thread in `/p/[id]`'s CommentThread), not a quick join-table add like Save was. Not required
+for the Home feed to render or for Step 5's checkpoint — ReactionBar's Share action ships as
+copy-link/external-share only for now; repost/quote is real remaining Step 3/5 scope.
+
+Verified with more than a compile: booted the app locally against the real dev Postgres/Redis
+specifically to catch any `ddl-auto: validate` mismatch in the new migration
+(`V8__v3_unified_feed.sql`) before it could surface as a Railway boot failure — Flyway applied
+it cleanly, Hibernate validated with zero errors, the app served traffic normally.
+
 ## Step 3: the feed unifies JOB/PROJECT/FREELANCE/ACTIVITY/ASK/UPDATE at the API response
 ## level, not by merging JobPosting/Project into the `posts` table (2026-08-10)
 
