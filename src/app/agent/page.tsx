@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Sparkles } from "lucide-react";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { AgentOrbAvatar } from "@/components/agent/AgentOrbAvatar";
 import { IntentCardView } from "@/components/agent/IntentCardView";
@@ -40,7 +40,7 @@ function AgentBubble({ message, onApprove, onReject }: {
     <div className="flex items-start gap-2.5">
       <AgentOrbAvatar state="idle" size="sm" />
       <div className="min-w-0">
-        <div className="max-w-md rounded-2xl rounded-tl-sm border border-border bg-white/[0.04] px-3.5 py-2.5 text-sm leading-relaxed">
+        <div className="max-w-md rounded-2xl rounded-tl-sm border border-border bg-secondary px-3.5 py-2.5 text-sm leading-relaxed">
           {shown}
         </div>
         {message.intentCard && (
@@ -232,16 +232,16 @@ export default function AgentPage() {
 
   if (!profile) {
     return (
-      <CandidateAppShell title="Agent">
+      <AppShell title="Agent">
         <OrbLoader className="h-64" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
   return (
-    <CandidateAppShell title="Agent" profile={profile}>
+    <AppShell title="Agent" profile={profile}>
       <Tabs defaultValue="chat">
-        <TabsList className="mb-4 inline-flex w-auto rounded-full bg-white/5 p-1">
+        <TabsList className="mb-4 inline-flex w-auto rounded-full bg-secondary p-1">
           <TabsTrigger value="chat" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Chat
           </TabsTrigger>
@@ -251,7 +251,7 @@ export default function AgentPage() {
         </TabsList>
 
         <TabsContent value="chat">
-          <div className="flex h-[min(70vh,640px)] flex-col rounded-2xl border border-border bg-white/[0.02]">
+          <div className="flex h-[min(70vh,640px)] flex-col rounded-2xl border border-border bg-secondary">
             <div className="flex items-center gap-2.5 border-b border-border px-4 py-3">
               <AgentOrbAvatar state={orbState} size="lg" />
               <div>
@@ -263,7 +263,7 @@ export default function AgentPage() {
                 rephrases facts already in your profile - never invents experience - and always
                 asks before applying or bidding on your behalf, unless you've turned on
                 Autopilot in Settings. */}
-            <p className="border-b border-border bg-white/[0.02] px-4 py-2 text-[11px] text-muted-foreground">
+            <p className="border-b border-border bg-secondary px-4 py-2 text-[11px] text-muted-foreground">
               Matching and drafting here are algorithmic, not a live human — every application or bid still needs your approval below unless Autopilot is on.
             </p>
 
@@ -294,7 +294,7 @@ export default function AgentPage() {
                     key={s}
                     type="button"
                     onClick={() => send(s)}
-                    className="rounded-full border border-border bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary-soft"
+                    className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary-soft"
                   >
                     {s}
                   </button>
@@ -308,9 +308,9 @@ export default function AgentPage() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Ask your agent anything…"
-                  className="h-11 rounded-full border-border bg-white/[0.03]"
+                  className="h-11 rounded-full border-border bg-card"
                 />
-                <Button type="submit" variant="primary-gradient" size="icon" className="size-11 shrink-0 rounded-full" aria-label="Send">
+                <Button type="submit" variant="default" size="icon" className="size-11 shrink-0 rounded-full" aria-label="Send">
                   <Send className="size-4" />
                 </Button>
               </form>
@@ -319,7 +319,7 @@ export default function AgentPage() {
         </TabsContent>
 
         <TabsContent value="journal">
-          <div className="rounded-2xl border border-border bg-white/[0.03] p-6">
+          <div className="rounded-2xl border border-border bg-card p-6">
             <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
               <Sparkles className="size-4 text-primary-soft" /> Everything your agent has done autonomously.
             </div>
@@ -327,6 +327,6 @@ export default function AgentPage() {
           </div>
         </TabsContent>
       </Tabs>
-    </CandidateAppShell>
+    </AppShell>
   );
 }
