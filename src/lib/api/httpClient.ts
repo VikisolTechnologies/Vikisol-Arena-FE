@@ -24,6 +24,14 @@ export class ApiError extends Error {
   }
 }
 
+// SERVER-PERF.md - the original symptom ("home 30s, sign-in 7s, then a long blank wait before
+// anything showed") wasn't the backend actually taking that long once warm (see SERVER-PERF.md's
+// cold-curl numbers); it was that `fetch()` had NO timeout at all, so a slow/stalled connection
+// just sat there indefinitely with nothing telling the user anything was wrong. The
+// `reportApiUnreachable()` banner mechanism (ApiDownBanner.tsx) already existed - it just never
+// fired for "slow," only for "fully failed." A hard 5s timeout closes that gap.
+const REQUEST_TIMEOUT_MS = 5000;
+
 interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
@@ -55,7 +63,10 @@ async function refreshAccessToken(): Promise<string | null> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/auth/refresh`, { method: "POST", credentials: "include" });
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+        const res = await fetch(`${API_BASE_URL}/auth/refresh`, { method: "POST", credentials: "include", signal: controller.signal })
+          .finally(() => clearTimeout(timeout));
         if (!res.ok) return null;
         const json = (await res.json()) as { data?: { token?: string } };
         const token = json?.data?.token;
@@ -84,22 +95,25 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     const headers: Record<string, string> = {};
     if (!formData) headers["Content-Type"] = "application/json";
     if (auth && token) headers.Authorization = `Bearer ${token}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
     return fetch(`${API_BASE_URL}${path}${buildQuery(query)}`, {
       method,
       headers,
       credentials: "include",
       body: formData ?? (body !== undefined ? JSON.stringify(body) : undefined),
-    });
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeout));
   };
 
   let res: Response;
   try {
     res = await doFetch(getToken());
   } catch {
-    // fetch() itself throwing (not a 4xx/5xx response) means the request never reached the
-    // server at all - connection refused, DNS failure, offline. Distinct from a normal API
-    // error, and worth surfacing globally rather than leaving every page's loading skeleton
-    // spinning forever with nothing but a silent unhandled rejection in the console.
+    // Either fetch() failed outright (connection refused, DNS failure, offline) or the
+    // REQUEST_TIMEOUT_MS abort fired - both mean "the user is looking at nothing happening,"
+    // so both get the same global "having trouble reaching Arena" treatment rather than a
+    // silently-hanging or console-only failure.
     reportApiUnreachable();
     throw new ApiError(0, "Can't reach the Arena backend right now.");
   }
