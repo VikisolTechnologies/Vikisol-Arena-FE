@@ -40,12 +40,12 @@ Legend: ✅ done and verified · 🚧 in progress · ⬜ not started · ➡️ r
 | `/work/applications` `/work/applications/[id]` | 🚧 | exist today as `/applications`, migrated onto `AppShell`/product theme with company-photo thumbnails (ARENA-VISUAL-RICHNESS.md) — path move + rebuild |
 | `/work/bids` | 🚧 | exists as `/marketplace/bids`, migrated onto `AppShell`/product theme — path move |
 | `/work/projects` `/work/projects/[id]` | 🚧 | exist as `/marketplace` `/marketplace/[id]` (+ `/manage`), migrated onto `AppShell`/product theme with project thumbnails + bidder photos (ARENA-VISUAL-RICHNESS.md) — path move |
-| `/work/interviews` `/work/interviews/[id]` | 🚧 | exist as `/interviews` `/interviews/[applicationId]` — path move |
+| `/work/interviews` `/work/interviews/[id]` | 🚧 | exist as `/interviews` `/interviews/[applicationId]`, migrated onto `AppShell`/product theme (ARENA-VISUAL-RICHNESS.md) — path move |
 | `/work/saved` | ⬜ | new — no save feature exists at all today |
 | `/me` `/me/edit` `/me/resume` | 🚧 | exists as `/identity`, migrated onto `AppShell`/product theme with a cover photo + black stats block (ARENA-VISUAL-RICHNESS.md) — path move to `/me` + the rest of PART 7.12's rebuild still open |
 | `/people/[handle]` | see above | |
-| `/notifications` | 🚧 | backend exists, page needs PART 7.14 rebuild (grouping, filters) |
-| `/settings` | 🚧 | exists — needs tab rebuild to PART 7.15 (location/privacy/security tabs are new) |
+| `/notifications` | 🚧 | now exists — AppShell's nav bell 404'd until this pass built a real page on `AppShell`/product theme (type icons, unread state, mark-all-read); still needs PART 7.14's grouping/filters |
+| `/settings` | 🚧 | migrated onto `AppShell`/product theme (ARENA-VISUAL-RICHNESS.md) — needs tab rebuild to PART 7.15 (location/privacy/security tabs are new) |
 
 ## Company workspace (COMPANY_ADMIN, RECRUITER)
 
