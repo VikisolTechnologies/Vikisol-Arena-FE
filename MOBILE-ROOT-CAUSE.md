@@ -117,4 +117,27 @@ prior pass's finding.
 awareness, not a same-pass fix per the mission's own instruction to say so with numbers instead
 of code-thrashing.
 
-See "Before → after" below for the re-measurement.
+## Before → after (identical methodology, live, commit `f050237`)
+
+| Metric (`/` logged-out, cold) | Before | After | Change |
+|---|---|---|---|
+| TTFB | 2842ms | 2785ms | -57ms (noise — unrelated to this fix, see contributor #2) |
+| FCP | 5888ms | 5468ms | **-420ms (-7%)** |
+| LCP | 7140ms | 6732ms | **-408ms (-6%)** |
+| Approx. TBT | 1425ms | 1191ms | **-234ms (-16%)** |
+| Long task count | 9 | 6 | **-3 (-33%)** |
+| JS transferred | 299 KB | 316 KB | flat (expected — deferred *execution*, not code removed) |
+
+`/home` (logged-in) was already meeting every target before this fix and stayed there — no
+regression, numbers move within normal run-to-run noise (FCP 492→444ms, feed visible
+1476→1356ms).
+
+**Honest read**: this is a real, verified improvement — fewer and shorter long tasks, measurably
+earlier paint — but it is not close to closing the gap to the <1.8s FCP target on landing's cold
+load, because it only ever addressed the *client-work* half of contributor #1, and TTFB
+(contributor #2, ~2.8s, infra-attributed) is untouched and now the clear majority of the
+remaining time-to-FCP. Two things are still on the table for a genuine future pass, neither
+attempted here: (a) further bundle-splitting of the landing page's framework/GSAP chunks — the
+970 KB uncompressed total didn't shrink, only Starfield's *execution* moved later — and
+(b) whatever infra lever (CDN edge, connection reuse) would address the TTFB delta. Both logged
+here rather than the fix being oversold as "solved."
