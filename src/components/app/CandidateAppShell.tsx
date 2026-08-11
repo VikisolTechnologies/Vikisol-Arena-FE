@@ -131,13 +131,33 @@ export function CandidateAppShell({
         {mobileOpen && (
           <div className="fixed inset-0 z-40 lg:hidden">
             <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
-            <div className="absolute left-0 top-0 flex h-full w-[260px] flex-col border-r border-border bg-background py-5">
+            <div
+              className="absolute left-0 top-0 flex h-full w-[260px] flex-col border-r border-border bg-background py-5"
+              style={cookieBannerVisible ? { paddingBottom: "var(--cookie-banner-h, 88px)" } : undefined}
+            >
               <Link href="/feed" className="mb-6 flex items-center gap-2.5 px-4">
                 <span className="font-display text-sm font-bold tracking-wide">
                   ARENA<span className="text-primary">.</span>
                 </span>
               </Link>
               <NavLinks pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+              {/* ARENA-STABILIZE.md Phase 2, G9 - found live: this drawer never had an account
+                  block at all, so there was NO way to sign out on a mobile viewport - the
+                  Log out button only existed in the lg:flex desktop sidebar above. Mirrors it. */}
+              <div className="mx-3 mt-3 flex items-center gap-3 rounded-xl border border-border bg-white/[0.03] px-3 py-3">
+                <Avatar className="size-9">
+                  <AvatarFallback className="bg-primary/15 text-primary-soft">
+                    {profile?.name?.slice(0, 1) ?? "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{profile?.name ?? "Loading…"}</p>
+                  <p className="truncate text-xs text-muted-foreground">{profile?.title ?? ""}</p>
+                </div>
+                <Button variant="ghost" size="icon-sm" onClick={handleLogout} aria-label="Log out">
+                  <LogOut className="size-4" />
+                </Button>
+              </div>
             </div>
           </div>
         )}

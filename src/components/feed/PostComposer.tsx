@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { LocateFixed, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ export function PostComposer({ open, onOpenChange, onPublished, defaultIntent = 
   onPublished: () => void;
   defaultIntent?: Post["intentType"];
 }) {
+  const router = useRouter();
   const [intent, setIntent] = useState<Post["intentType"]>(defaultIntent);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -262,7 +264,26 @@ export function PostComposer({ open, onOpenChange, onPublished, defaultIntent = 
             className="border-border bg-card"
           />
 
-          {error && <p className="text-xs text-red-400">{error}</p>}
+          {error && (
+            <p className="text-xs text-red-400">
+              {error}
+              {/* ARENA-STABILIZE.md Phase 2, G5 - same fix as the post-detail join error: a
+                  fresh signup has no date of birth on file, so publishing an Activity 400s with
+                  a message pointing at Settings - give them a real way to get there. */}
+              {error.toLowerCase().includes("settings") && (
+                <>
+                  {" "}
+                  <button
+                    type="button"
+                    onClick={() => { onOpenChange(false); router.push("/settings"); }}
+                    className="font-medium text-primary-soft hover:underline"
+                  >
+                    Go to Settings
+                  </button>
+                </>
+              )}
+            </p>
+          )}
 
           <Button variant="default" size="sm" className="w-full gap-1.5" disabled={!body.trim() || publishing} onClick={publish}>
             <Sparkles className="size-3.5" /> {publishing ? "Publishing…" : "Publish"}

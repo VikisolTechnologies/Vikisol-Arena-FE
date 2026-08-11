@@ -262,7 +262,18 @@ export default function PostDetailPage() {
                 <Button variant="primary-gradient" size="cta" className="w-full" disabled={joining} onClick={join}>
                   {joining ? "Requesting…" : post.visibility === "public" ? "Join" : "Request to join"}
                 </Button>
-                {joinError && <p className="mt-2 text-xs text-red-400">{joinError}</p>}
+                {joinError && (
+                  <p className="mt-2 text-xs text-red-400">
+                    {joinError}
+                    {/* ARENA-STABILIZE.md Phase 2, G5 - found live: a fresh signup has no date
+                        of birth on file (onboarding never asks), so joining/creating an
+                        Activity 400s with a message pointing at Settings - but nothing actually
+                        got them there. Same treatment as PostComposer's identical error. */}
+                    {joinError.toLowerCase().includes("settings") && (
+                      <> <button type="button" onClick={() => router.push("/settings")} className="font-medium text-primary-soft hover:underline">Go to Settings</button></>
+                    )}
+                  </p>
+                )}
               </>
             )}
           </Card>
