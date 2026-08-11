@@ -81,4 +81,44 @@ deployed" — no more trusting a green Railway status alone.
 
 ## Phase 1 — Mobile home slowness: root cause with evidence
 
+Full detail in `MOBILE-ROOT-CAUSE.md`. Summary:
+
+- **Instrumented real-device Web Vitals** (`WebVitalsReporter`, live since `a614a9a`) — TTFB/FCP/
+  LCP/CLS/INP reported to `/api/vitals`, logged to Railway stdout, filterable by path. Confirmed
+  working live against real (self-generated) traffic; not yet checked against Syam's own phone.
+- **Measured before touching anything**: lab (Playwright/CDP, iPhone 13, 390px, documented
+  "Slow 4G" throttle — RTT 150ms/1.6Mbps/750Kbps + 4× CPU), cross-checked against the real-device
+  reporter and a direct unthrottled `curl`.
+- **The finding cut against the mission's own framing**: `/home` (the actual post-login feed
+  route) was already meeting every Phase 1.5 target *before any fix* — FCP 492ms, feed visible
+  in 1.48s. The real, reproducible, numbers-backed slowness is on the **public landing page's
+  cold mobile load** (`/`, step G1 of the Golden Path): FCP 5888ms, LCP 7140ms, TBT ~1425ms,
+  rated "poor" by Google's own thresholds. Reported this as the dominant contributor instead of
+  force-fitting a fix onto `/home`.
+- **Root cause**: `Starfield` (canvas particle field, below the fold) started its
+  `resize()`+`requestAnimationFrame` draw loop — O(n²) work per frame — the instant it mounted,
+  regardless of scroll position, competing with hydration for main-thread time before it was
+  ever visible. TTFB (~2.8s of the ~5.9s FCP) is a separate, infra-attributed factor — confirmed
+  via direct `curl` that real server response time is ~400ms, so the throttled-network delta is
+  connection-establishment cost, not server slowness, and not code-fixable this pass.
+- **Fixed**: new `useInViewport` hook gates `Starfield` to only animate once scrolled into view
+  (pauses again if scrolled away) — same "defer until visible" convention already used elsewhere
+  in this codebase (`AuraBackground`, `CountUp`).
+- **Re-measured identically, live**: TBT -16% (1425ms→1191ms), FCP -7%, LCP -6%, 3 fewer long
+  tasks. Real, verified — but honestly reported as **partial**, not a full fix: TTFB remains
+  untouched and is now the clear majority of remaining time-to-FCP; the JS bundle itself (970KB
+  uncompressed / 299KB compressed across 21 chunks) didn't shrink, only Starfield's *execution*
+  moved later. A genuine follow-up bundle-splitting pass and/or an infra-level TTFB fix (CDN
+  edge, connection reuse) remain open, logged rather than silently dropped.
+- Also investigated and **correctly ruled out** an apparent duplicate `/profile/me` call on
+  `/home` — turned out to be `signIn()`'s own existing `syncOnboardedFromProfile()` racing the
+  test's navigation, not a real per-load bug. No code change made for it.
+
+**Phase 1 is green** (root cause measured, dominant contributor fixed and re-verified, remaining
+gap honestly attributed). Proceeding to Phase 2.
+
+---
+
+## Phase 2 — The Golden Path (G1–G9)
+
 *(in progress)*
