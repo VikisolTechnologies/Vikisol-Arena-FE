@@ -185,7 +185,10 @@ export function AppShell({
         {mobileNavOpen && (
           <div className="fixed inset-0 z-40 lg:hidden">
             <div className="absolute inset-0 bg-black/60" onClick={() => setMobileNavOpen(false)} />
-            <div className="absolute right-0 top-0 flex h-full w-[280px] flex-col border-l border-border bg-background py-5">
+            <div
+              className="absolute right-0 top-0 flex h-full w-[280px] flex-col border-l border-border bg-background py-5"
+              style={cookieBannerVisible ? { paddingBottom: "var(--cookie-banner-h, 88px)" } : undefined}
+            >
               <div className="mb-6 flex items-center justify-between px-4">
                 <span className="font-display text-sm font-bold tracking-wide">
                   ARENA<span className="text-primary">.</span>
