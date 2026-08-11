@@ -129,7 +129,10 @@ export function CandidateAppShell({
 
         {/* mobile nav */}
         {mobileOpen && (
-          <div className="fixed inset-0 z-40 lg:hidden">
+          // ARENA-STABILIZE.md Phase 2, G9 - same fix as AppShell.tsx: was z-40, sitting below
+          // BottomTabBar's z-[890], so the tab bar covered/intercepted taps on the drawer's own
+          // lower content (the account block added above).
+          <div className="fixed inset-0 z-[895] lg:hidden">
             <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
             <div
               className="absolute left-0 top-0 flex h-full w-[260px] flex-col border-r border-border bg-background py-5"

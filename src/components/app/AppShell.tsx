@@ -183,7 +183,13 @@ export function AppShell({
             Saved/Notifications/account, since the bottom tab bar only has room for 5 items
             per PART 4's own spec ("Inbox and Profile live in the TopBar/account sheet") */}
         {mobileNavOpen && (
-          <div className="fixed inset-0 z-40 lg:hidden">
+          // ARENA-STABILIZE.md Phase 2, G9 - was z-40, sitting BELOW the bottom tab bar's
+          // z-[890] (rendered unconditionally, further down this file) - the tab bar's icons
+          // physically covered and intercepted taps on the drawer's own lower content (the
+          // account block/Log out button). Between the tab bar (890) and CookieConsentBanner
+          // (900) so both existing reservations (padding for the banner, out-ranking the tab
+          // bar) still hold.
+          <div className="fixed inset-0 z-[895] lg:hidden">
             <div className="absolute inset-0 bg-black/60" onClick={() => setMobileNavOpen(false)} />
             <div
               className="absolute right-0 top-0 flex h-full w-[280px] flex-col border-l border-border bg-background py-5"
