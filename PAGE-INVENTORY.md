@@ -1,5 +1,12 @@
 # PAGE-INVENTORY.md — live route/page inventory across all five roles
 
+**Update, 2026-08-11**: findings #1–#4 below (the P0/P1 items) were fixed per
+`ARENA-INVENTORY-FIXES.md`, verified live at 1440px+390px, and the table rows below are updated
+in place with **FIXED (2026-08-11)** — original finding text kept intact so the "before" state
+stays on record. Full reasoning per fix is in `DECISIONS.md`; the fix pass itself (what changed,
+what was verified, what's still uncertain) is in `SLEEP-REPORT.md`. Findings #5–#10 (P2) are
+untouched — out of scope for that pass.
+
 Reporting pass only — nothing in this document is a change to the app. Every route below was
 visited on the **live production site** (`https://arena.vikisol.in` / `https://api-arena.vikisol.in`),
 not local dev, using Playwright signed in as each of the five staging demo accounts from
@@ -42,44 +49,44 @@ doesn't resolve at all · **Misrouted** = resolved to a different, wrong-looking
 |---|---|---|---|---|---|
 | Public (no auth) | Landing | `/` | 200 | **OK** | Rendered as expected |
 | Public (no auth) | Pricing | `/pricing` | 200 | **OK** | Rendered as expected |
-| Public (no auth) | Discover (public, logged out) | `/discover` → `/auth` | 200 | **Auth wall** | Redirected to sign-in — not actually reachable without login |
-| Public (no auth) | People detail (public route per ROUTES.md) | `/people/a566d5f6-66b4-464f-adb2-2c8c35761f87` → `/auth` | 200 | **Auth wall** | Redirected to sign-in — not actually reachable without login |
-| Public (no auth) | Company detail (public route per ROUTES.md) | `/companies/6decddec-22bb-4330-b6ae-dde6af04f223` → `/auth` | 200 | **Auth wall** | Redirected to sign-in — not actually reachable without login |
+| Public (no auth) | Discover (public, logged out) | `/discover` | 200 | **FIXED (2026-08-11)** | Was auth-walled; now renders real job listings logged-out. Re-verified live at 1440px+390px. |
+| Public (no auth) | People detail (public route per ROUTES.md) | `/people/2a3a291e-a232-49a6-8441-450dec4150ea` | 200 | **FIXED (2026-08-11)** | Was auth-walled; now renders real profile data logged-out. Re-verified live at 1440px+390px. |
+| Public (no auth) | Company detail (public route per ROUTES.md) | `/companies/6decddec-22bb-4330-b6ae-dde6af04f223` | 200 | **FIXED (2026-08-11)** | Was auth-walled; now renders real company data logged-out. Re-verified live at 1440px+390px. |
 | Public (no auth) | Privacy | `/privacy` | 200 | **OK** | Rendered as expected |
 | Public (no auth) | Terms | `/terms` | 200 | **OK** | Rendered as expected |
 | Public (no auth) | Acceptable Use | `/aup` | 200 | **OK** | Rendered as expected |
 | Public (no auth) | Sign in / Sign up | `/auth` | 200 | **OK** | Rendered as expected |
 | Public (no auth) | Branded 404 | `/this-route-does-not-exist-xyz-12345` | 404 | **OK** | Expected — this was a deliberate 404-handler check, not a real route. Branded 404 page rendered correctly. |
-| Talent (candidate) | Home (feed) | `/home` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
+| Talent (candidate) | Home (feed) | `/home` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
 | Talent (candidate) | Onboarding (revisit while already onboarded) | `/onboarding` | 200 | **OK** | Rendered as expected |
-| Talent (candidate) | Discover | `/discover` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Talent (candidate) | Map | `/map` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Talent (candidate) | Rooms (inbox) | `/rooms` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Talent (candidate) | Work hub | `/work` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Talent (candidate) | Applications list | `/applications` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Talent (candidate) | Application detail | `/applications/46434d37-a139-4cbc-9dc6-393a4b8ee20e` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Talent (candidate) | Marketplace bids | `/marketplace/bids` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Talent (candidate) | Marketplace (projects) | `/marketplace` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Talent (candidate) | Marketplace project detail | `/marketplace/9042a537-0823-4592-b14a-67e8088e2464` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Talent (candidate) | Interviews list (expected per ROUTES.md) | `/interviews` | 404 | **404 Not Found** | 404 — route does not exist |
-| Talent (candidate) | Interview detail (direct-access, no page.tsx for /interviews list) | `/interviews/e6284f3a-85ab-4b01-8f10-25583ddb6b34` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Talent (candidate) | Identity (profile) | `/identity` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Talent (candidate) | Notifications | `/notifications` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Talent (candidate) | Settings | `/settings` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Talent (candidate) | Companies list | `/companies` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Talent (candidate) | Company detail | `/companies/6decddec-22bb-4330-b6ae-dde6af04f223` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Talent (candidate) | Work / Saved (nav links here but ROUTES.md says unbuilt) | `/work/saved` | 404 | **404 Not Found** | 404 — route does not exist |
-| Talent (candidate) | Agent (not in ROUTES.md table but exists + nav-linked) | `/agent` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
+| Talent (candidate) | Discover | `/discover` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Talent (candidate) | Map | `/map` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Talent (candidate) | Rooms (inbox) | `/rooms` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Talent (candidate) | Work hub | `/work` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Talent (candidate) | Applications list | `/applications` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Talent (candidate) | Application detail | `/applications/46434d37-a139-4cbc-9dc6-393a4b8ee20e` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Talent (candidate) | Marketplace bids | `/marketplace/bids` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Talent (candidate) | Marketplace (projects) | `/marketplace` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Talent (candidate) | Marketplace project detail | `/marketplace/9042a537-0823-4592-b14a-67e8088e2464` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Talent (candidate) | Interviews list (expected per ROUTES.md) | `/interviews` → `/applications` | 200 | **FIXED (2026-08-11)** | Was 404; now redirects to /applications (real backend list endpoint doesn't exist for this, see DECISIONS.md). Re-verified live at 1440px+390px. |
+| Talent (candidate) | Interview detail (direct-access, no page.tsx for /interviews list) | `/interviews/e6284f3a-85ab-4b01-8f10-25583ddb6b34` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Talent (candidate) | Identity (profile) | `/identity` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Talent (candidate) | Notifications | `/notifications` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Talent (candidate) | Settings | `/settings` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Talent (candidate) | Companies list | `/companies` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Talent (candidate) | Company detail | `/companies/6decddec-22bb-4330-b6ae-dde6af04f223` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Talent (candidate) | Work / Saved (nav links here but ROUTES.md says unbuilt) | `/work/saved` | 200 | **FIXED (2026-08-11)** | Built the page — save/unsave was already fully wired backend-side. Full save→list→unsave flow re-verified live at 1440px+390px. |
+| Talent (candidate) | Agent (not in ROUTES.md table but exists + nav-linked) | `/agent` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
 | Recruiter | Enterprise dashboard (closest to /workspace) | `/enterprise/dashboard` | 200 | **OK** | Rendered as expected |
 | Recruiter | Enterprise posts (workspace/posts) | `/enterprise/posts` | 200 | **OK** | Rendered as expected |
 | Recruiter | Enterprise postings list (workspace/jobs) | `/enterprise/postings` | 200 | **OK** | Rendered as expected |
 | Recruiter | Talent Universe search (workspace/talent) | `/enterprise/talent` | 200 | **OK** | Rendered as expected |
 | Recruiter | Candidate detail (workspace/talent/[id]) | `/enterprise/talent/a566d5f6-66b4-464f-adb2-2c8c35761f87` | 200 | **OK** | Rendered as expected |
-| Recruiter | Candidate public profile via /people/[id] (should be viewable, testing enterprise-session behavior) | `/people/a566d5f6-66b4-464f-adb2-2c8c35761f87` | 200 | **OK (console error)** | 1 console error(s): Failed to load resource: the server responded with a status of 404 () |
-| Recruiter | Interviews list (workspace/interviews - expected per ROUTES.md) | `/enterprise/interviews` | 404 | **404 Not Found** | 404 — route does not exist |
+| Recruiter | Candidate public profile via /people/[id] (should be viewable, testing enterprise-session behavior) | `/people/a566d5f6-66b4-464f-adb2-2c8c35761f87` | 200 | **FIXED (2026-08-11)** | Was 1 console error (the /work/saved nav-prefetch 404, see finding #4) on every load — gone now that /work/saved is a real page. Re-verified: zero failed requests on /home. |
+| Recruiter | Interviews list (workspace/interviews - expected per ROUTES.md) | `/enterprise/interviews` → `/enterprise/postings` | 200 | **FIXED (2026-08-11)** | Was 404; now redirects to /enterprise/postings (real backend list endpoint doesn't exist for this, see DECISIONS.md). Re-verified live at 1440px+390px. |
 | Recruiter | Enterprise messages (not in ROUTES.md workspace table) | `/enterprise/messages` | 200 | **OK** | Rendered as expected |
-| Recruiter | Enterprise interviews/mine (recruiter, not HM - expect 403/restricted) | `/enterprise/interviews/mine` → `/onboarding` | 200 | **Misrouted** | Redirected to candidate /onboarding instead of an access-denied state (requested /enterprise/interviews/mine) |
-| Recruiter | Admin: Team (should be denied - recruiter, not admin) | `/enterprise/admin/team` → `/onboarding` | 200 | **Misrouted** | Redirected to candidate /onboarding instead of an access-denied state (requested /enterprise/admin/team) |
+| Recruiter | Enterprise interviews/mine (recruiter, not HM - expect 403/restricted) | `/enterprise/interviews/mine` → `/access-denied` | 200 | **FIXED (2026-08-11)** | Now shows the branded 404/access-denied, never onboarding. Re-verified live at 1440px+390px. |
+| Recruiter | Admin: Team (should be denied - recruiter, not admin) | `/enterprise/admin/team` → `/access-denied`* | 200 | **FIXED (2026-08-11)** | Now shows the branded 404/access-denied in place, never onboarding/`/dashboard`. Re-verified live at 1440px+390px. *`CompanyAdminShell` renders it directly rather than redirecting — final URL stays `/enterprise/admin/team`. |
 | Company Admin | Enterprise dashboard (CA1 - sales-pitch surface) | `/enterprise/dashboard` | 200 | **OK** | Rendered as expected |
 | Company Admin | Admin: Team (CA - 3 members seeded) | `/enterprise/admin/team` | 200 | **OK** | Rendered as expected |
 | Company Admin | Admin: Billing | `/enterprise/admin/billing` | 200 | **OK** | Rendered as expected |
@@ -89,15 +96,15 @@ doesn't resolve at all · **Misrouted** = resolved to a different, wrong-looking
 | Company Admin | Enterprise posts (workspace/posts, CA7: CA can enter recruiter workspace) | `/enterprise/posts` | 200 | **OK** | Rendered as expected |
 | Company Admin | Enterprise postings list (workspace/jobs) | `/enterprise/postings` | 200 | **OK** | Rendered as expected |
 | Company Admin | Talent Universe search (workspace/talent) | `/enterprise/talent` | 200 | **OK** | Rendered as expected |
-| Company Admin | Interviews list (workspace/interviews - expect 404, same as recruiter) | `/enterprise/interviews` | 404 | **404 Not Found** | 404 — route does not exist |
+| Company Admin | Interviews list (workspace/interviews - expect 404, same as recruiter) | `/enterprise/interviews` → `/enterprise/postings` | 200 | **FIXED (2026-08-11)** | Was 404; now redirects to /enterprise/postings (real backend list endpoint doesn't exist for this, see DECISIONS.md). Re-verified live at 1440px+390px. |
 | Company Admin | Enterprise messages | `/enterprise/messages` | 200 | **OK** | Rendered as expected |
-| Company Admin | Enterprise interviews/mine (CA, not HM - expect restricted/redirect) | `/enterprise/interviews/mine` → `/dashboard` | 200 | **Misrouted** | Redirected to retired /dashboard route instead of an access-denied state (requested /enterprise/interviews/mine) |
+| Company Admin | Enterprise interviews/mine (CA, not HM - expect restricted/redirect) | `/enterprise/interviews/mine` → `/access-denied` | 200 | **FIXED (2026-08-11)** | Now shows the branded 404/access-denied, never `/dashboard` (which no longer exists — deleted, see finding #2). |
 | Hiring Manager | HM landing (whatever they land on post-login) | `/enterprise/interviews/mine` | 200 | **OK** | Rendered as expected |
 | Hiring Manager | HM: My interviews (documented landing per TEST-LOGINS.md) | `/enterprise/interviews/mine` | 200 | **OK** | Rendered as expected |
-| Hiring Manager | HM attempting Talent Universe (should be denied per TEST-LOGINS.md) | `/enterprise/talent` → `/enterprise/onboarding` | 200 | **Misrouted** | Redirected to /enterprise/onboarding instead of an access-denied state (requested /enterprise/talent) |
-| Hiring Manager | HM attempting Postings (should be denied per TEST-LOGINS.md) | `/enterprise/postings` → `/enterprise/onboarding` | 200 | **Misrouted** | Redirected to /enterprise/onboarding instead of an access-denied state (requested /enterprise/postings) |
-| Hiring Manager | HM attempting Admin Team (should be denied) | `/enterprise/admin/team` → `/dashboard` | 200 | **Misrouted** | Redirected to retired /dashboard route instead of an access-denied state (requested /enterprise/admin/team) |
-| Hiring Manager | HM: Enterprise dashboard | `/enterprise/dashboard` → `/enterprise/onboarding` | 200 | **Misrouted** | Redirected to /enterprise/onboarding instead of an access-denied state (requested /enterprise/dashboard) |
+| Hiring Manager | HM attempting Talent Universe (should be denied per TEST-LOGINS.md) | `/enterprise/talent` → `/access-denied` | 200 | **FIXED (2026-08-11)** | Now shows the branded 404/access-denied, never /enterprise/onboarding. |
+| Hiring Manager | HM attempting Postings (should be denied per TEST-LOGINS.md) | `/enterprise/postings` → `/access-denied` | 200 | **FIXED (2026-08-11)** | Now shows the branded 404/access-denied, never /enterprise/onboarding. |
+| Hiring Manager | HM attempting Admin Team (should be denied) | `/enterprise/admin/team`* | 200 | **FIXED (2026-08-11)** | Now shows the branded 404/access-denied in place, never `/dashboard` (deleted). *`CompanyAdminShell` renders it directly — final URL unchanged. |
+| Hiring Manager | HM: Enterprise dashboard | `/enterprise/dashboard` → `/access-denied` | 200 | **FIXED (2026-08-11)** | Now shows the branded 404/access-denied, never /enterprise/onboarding. |
 | Platform Admin | Admin overview | `/admin` | 200 | **OK** | Rendered as expected |
 | Platform Admin | Admin: Tenants | `/admin/tenants` | 200 | **OK** | Rendered as expected |
 | Platform Admin | Admin: Users | `/admin/users` | 200 | **OK** | Rendered as expected |
@@ -111,7 +118,7 @@ doesn't resolve at all · **Misrouted** = resolved to a different, wrong-looking
 Ranked by how many real users it affects and how confusing the failure is, not by how hard it'd
 be to fix.
 
-### 1. The three routes `ROUTES.md` documents as public actually require login
+### 1. ✅ FIXED (2026-08-11) — The three routes `ROUTES.md` documents as public actually require login
 `/discover`, `/people/[id]`, and `/companies/[id]` are all listed under `ROUTES.md`'s "Public (no
 auth)" section — the whole point being that a prospective candidate or company can browse before
 signing up, and a shared profile/company link works for anyone. Live-tested logged out: all three
@@ -119,7 +126,7 @@ redirect straight to `/auth` instead of rendering. Anyone sharing an Arena profi
 link today is effectively sharing a login wall. This is the single highest-impact finding in this
 pass — it cuts against the core "browse before you commit" positioning, not just one screen.
 
-### 2. Wrong-role access strands users in the candidate onboarding flow instead of showing "access denied"
+### 2. ✅ FIXED (2026-08-11) — Wrong-role access strands users in the candidate onboarding flow instead of showing "access denied"
 Confirmed three separate ways, all live:
 - **Recruiter** → `/enterprise/admin/team` (company-admin-only) → silently lands on `/dashboard`
   → which itself bounces to `/onboarding` (the *candidate* "What should we call you?" flow).
@@ -139,7 +146,7 @@ on mismatch — and `/dashboard` is a route `ROUTES.md` itself documents as **"d
 fully retired"**, yet it's still live and still runs the candidate `requireOnboarded()` check,
 which is what actually produces the `/onboarding` bounce.
 
-### 3. `/interviews` and `/enterprise/interviews` — the list pages — don't exist
+### 3. ✅ FIXED (2026-08-11) — `/interviews` and `/enterprise/interviews` — the list pages — don't exist
 `ROUTES.md` states both "exist today." Live-tested: both 404. Checked the codebase directly:
 `src/app/interviews/` has no `page.tsx` of its own, only an `[applicationId]` subfolder — the
 detail route was built, the list route never was. The detail page itself works correctly when
@@ -149,7 +156,7 @@ The Applications page's interview-stage row and its "Schedule" button both stay 
 `/applications/[id]` instead. A talent user with a real scheduled interview currently has no way
 to reach the interview page from the UI at all.
 
-### 4. The app's own nav prefetches a route that doesn't exist yet, on almost every page load
+### 4. ✅ FIXED (2026-08-11) — The app's own nav prefetches a route that doesn't exist yet, on almost every page load
 18 of the 65 captures in this pass show the identical console error: a 404 fetching
 `/work/saved?_rsc=...`. `/work/saved` is `ROUTES.md`-documented as ⬜ not built — but the
 candidate nav bar links to it anyway, so Next.js's router prefetches it in the background on
