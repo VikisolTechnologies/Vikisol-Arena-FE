@@ -8,6 +8,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { ApiDownBanner } from "@/components/ApiDownBanner";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { BuildStamp } from "@/components/BuildStamp";
+import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -71,6 +72,7 @@ export default function RootLayout({
         <CommandPalette />
         <CookieConsentBanner />
         <BuildStamp />
+        <WebVitalsReporter />
       </body>
     </html>
   );
