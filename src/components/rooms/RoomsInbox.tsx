@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Bell, BellOff, Flag, Search, Send, UserMinus, Users } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,7 @@ function timeAgo(iso: string) {
 const INTENT_LABEL: Record<Room["postIntentType"], string> = { activity: "Activity", ask: "Ask", update: "Update", company: "Company" };
 
 export function RoomsInbox() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const openParam = searchParams.get("open");
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -169,8 +170,16 @@ export function RoomsInbox() {
               <div className="max-h-40 space-y-1.5 overflow-y-auto border-b border-border p-3">
                 {members.map((m) => (
                   <div key={m.userId} className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-secondary">
-                    <span className="text-base">{m.emoji}</span>
-                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{m.name}</span>
+                    {/* ARENA-STABILIZE.md Phase 2, G7 - members used to be plain unclickable
+                        text, no way to reach a room member's profile from the room at all. */}
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/people/${m.userId}`)}
+                      className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                    >
+                      <span className="text-base">{m.emoji}</span>
+                      <span className="min-w-0 flex-1 truncate text-xs font-medium hover:underline">{m.name}</span>
+                    </button>
                     {m.role === "admin" && <Badge variant="secondary" className="bg-secondary text-[10px] text-muted-foreground">Host</Badge>}
                     {iAmAdmin && m.role !== "admin" && m.userId !== myUserId && (
                       <button
