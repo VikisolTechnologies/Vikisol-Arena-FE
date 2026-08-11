@@ -127,12 +127,17 @@ export default function PostDetailPage() {
 
   return (
     <AppShell title="Post" profile={profile}>
+      {/* ARENA-STABILIZE.md Phase 3 - this page moved onto AppShell (Home/Discover/Map/Work/
+          Inbox nav) in Phase 2's public-post-detail fix, but "back" still pointed at /feed - the
+          older, now-orphaned CandidateAppShell-based list page, a jarring shell switch mid-flow.
+          /home is this page's actual parent surface now (that's where every post link on the
+          Golden Path originates from). */}
       <button
         type="button"
-        onClick={() => router.push("/feed")}
+        onClick={() => router.push("/home")}
         className="mb-4 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="size-4" /> Back to Feed
+        <ArrowLeft className="size-4" /> Back to Home
       </button>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
