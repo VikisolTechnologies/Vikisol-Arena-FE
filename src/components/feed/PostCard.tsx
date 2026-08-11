@@ -1,4 +1,4 @@
-import { Briefcase, CalendarClock, MapPin, MessageCircle, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Bookmark, Briefcase, CalendarClock, MapPin, MessageCircle, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ReactionButton } from "@/components/feed/ReactionButton";
 import { formatFriendlyDateTime } from "@/lib/format";
@@ -23,7 +23,22 @@ const INTENT_ICON: Record<Post["intentType"], typeof Sparkles> = {
 // it only renders for the two intent types that actually involve meeting a stranger.
 const NEW_ACCOUNT_THRESHOLD_DAYS = 14;
 
-export function PostCard({ post, onClick }: { post: Post; onClick: () => void }) {
+// ARENA-INVENTORY-FIXES.md FIX 4 - onToggleSave is optional so existing callers (/people/[id]'s
+// Activity section) are unaffected; only /work/saved passes it, to let a post be unsaved
+// straight from the list it's rendered in. Nested inside the card's own outer <button> the same
+// way FeedItemCard's ReactionButton/save-toggle already nest inside its outer button elsewhere
+// in this codebase - not introducing a new pattern, matching the existing one.
+export function PostCard({
+  post,
+  onClick,
+  showSaveToggle,
+  onToggleSave,
+}: {
+  post: Post;
+  onClick: () => void;
+  showSaveToggle?: boolean;
+  onToggleSave?: () => void;
+}) {
   const Icon = INTENT_ICON[post.intentType];
   return (
     <button
@@ -90,6 +105,16 @@ export function PostCard({ post, onClick }: { post: Post; onClick: () => void })
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
           <MessageCircle className="size-3.5" /> {post.commentCount > 0 ? post.commentCount : ""}
         </span>
+        {showSaveToggle && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onToggleSave?.(); }}
+            className="relative ml-auto flex items-center gap-1 text-xs text-gold before:absolute before:inset-[-8px] before:content-['']"
+            aria-label="Unsave"
+          >
+            <Bookmark className="size-3.5" fill="currentColor" /> Saved
+          </button>
+        )}
       </div>
 
       {post.myJoinStatus && (

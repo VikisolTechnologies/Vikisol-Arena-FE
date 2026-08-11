@@ -15,7 +15,9 @@ import { getSession } from "@/lib/session";
 import type { Job } from "@/lib/types";
 
 const CANDIDATE_NAV = [
-  { href: "/dashboard", label: "Home", icon: Home },
+  // ARENA-INVENTORY-FIXES.md FIX 2 - was /dashboard, a route ROUTES.md itself calls fully
+  // retired in favor of /home.
+  { href: "/home", label: "Home", icon: Home },
   { href: "/discover", label: "Discover", icon: Compass },
   { href: "/agent", label: "Agent", icon: MessageSquare },
   { href: "/identity", label: "Identity", icon: Fingerprint },

@@ -16,8 +16,9 @@ import { getMyProfile } from "@/lib/api/profile";
 import { getJobs, getPassedJobIds, passOnJob } from "@/lib/api/jobs";
 import { applyToJob } from "@/lib/api/applications";
 import { agentRealtime } from "@/lib/realtime";
-import { requireOnboarded } from "@/lib/auth-guard";
+import { getSession } from "@/lib/session";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import type { CandidateProfile, Job, Industry } from "@/lib/types";
 
 const INDUSTRIES: Industry[] = ["Engineering", "Design", "Sales", "Healthcare", "Logistics"];
@@ -26,9 +27,11 @@ export default function DiscoverPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobsLoaded, setJobsLoaded] = useState(false);
   const [passed, setPassed] = useState<string[]>([]);
   const [cursor, setCursor] = useState(0);
   const [lastAction, setLastAction] = useState<{ job: Job; direction: SwipeDirection } | null>(null);
+  const [signInPromptOpen, setSignInPromptOpen] = useState(false);
 
   const [industries, setIndustries] = useState<Industry[]>(INDUSTRIES);
   const [remoteOnly, setRemoteOnly] = useState(false);
@@ -38,14 +41,18 @@ export default function DiscoverPage() {
 
   const cardRef = useRef<SwipeCardHandle>(null);
 
+  // ARENA-INVENTORY-FIXES.md FIX 1 - documented-public route (ROUTES.md); must render
+  // logged-out. getMyProfile() (AppShell's sidebar account block) only fires when a session
+  // exists - GET /jobs itself is now permitAll'd and degrades gracefully with no personalized
+  // match scoring for an anonymous viewer (see JobService.getOpenJobs).
   useEffect(() => {
-    if (!requireOnboarded(router)) return;
-    getMyProfile().then(setProfile);
     getJobs().then((j) => {
       setJobs(j);
       setPassed(getPassedJobIds());
+      setJobsLoaded(true);
     });
-  }, [router]);
+    if (getSession()) getMyProfile().then(setProfile);
+  }, []);
 
   const queue = useMemo(() => {
     return jobs.filter(
@@ -61,6 +68,16 @@ export default function DiscoverPage() {
   const current = visible[0];
 
   const handleResolved = (job: Job, direction: SwipeDirection) => {
+    // ARENA-INVENTORY-FIXES.md FIX 1 - Apply is the one swipe action that actually needs an
+    // account (Pass is local-only, "tell me more" routes to the already-gated /agent). The
+    // swipe gesture itself still completes (SwipeCard's drag can't be un-animated mid-flight);
+    // what's gated is the real mutation, with a sign-in prompt taking the place of the usual
+    // "Applied ✓" toast.
+    if (direction === "right" && !getSession()) {
+      setSignInPromptOpen(true);
+      setCursor((c) => c + 1);
+      return;
+    }
     setLastAction({ job, direction });
     if (direction === "right") {
       applyToJob(job.id);
@@ -86,7 +103,7 @@ export default function DiscoverPage() {
   const toggleIndustry = (ind: Industry) =>
     setIndustries((prev) => (prev.includes(ind) ? prev.filter((i) => i !== ind) : [...prev, ind]));
 
-  if (!profile) {
+  if (!jobsLoaded) {
     return (
       <AppShell title="Discover">
         <OrbLoader className="h-96" />
@@ -193,6 +210,7 @@ export default function DiscoverPage() {
           </div>
         )}
       </div>
+      <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action="apply to jobs" />
     </AppShell>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -22,10 +22,12 @@ import { CommandDialog, CommandInput, CommandList, CommandEmpty } from "@/compon
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PostComposer } from "@/components/feed/PostComposer";
+import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import type { CandidateProfile } from "@/lib/types";
 import { signOut } from "@/lib/api/auth";
 import { getUnreadCount } from "@/lib/api/notifications";
 import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
+import { getSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
 /**
@@ -100,9 +102,22 @@ export function AppShell({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [signInPromptOpen, setSignInPromptOpen] = useState(false);
   // Same cookie-banner-overlap fix CandidateAppShell already carries - see its own comment.
   const cookieBannerVisible = useCookieConsentVisible();
   const hasUnread = getUnreadCount() > 0;
+  // ARENA-INVENTORY-FIXES.md FIX 1 - /discover, /people/[id], /companies/[id] now render this
+  // shell for logged-out visitors too, so "profile hasn't loaded yet" and "there's no session
+  // at all" need to look different here instead of both showing "Loading…" forever. Starts
+  // false on both server and first client paint (SSR has no localStorage to read a session
+  // from) and only flips post-hydration - a lazy getSession() read straight into render caused
+  // exactly this class of hydration mismatch the first time it was tried elsewhere in this
+  // codebase (see CandidateAppShell's own comment).
+  const [loggedIn, setLoggedIn] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only auth-gate flip
+    setLoggedIn(!!getSession());
+  }, []);
 
   const handleLogout = async () => {
     await signOut();
@@ -139,20 +154,29 @@ export function AppShell({
               <NavRow key={item.href} {...item} active={pathname === item.href} />
             ))}
           </nav>
-          <div className="mx-3 mt-3 flex items-center gap-3 rounded-xl border border-border bg-white/[0.03] px-3 py-3">
-            <Avatar className="size-9">
-              <AvatarFallback className="bg-primary/15 text-primary-soft">
-                {profile?.name?.slice(0, 1) ?? "?"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{profile?.name ?? "Loading…"}</p>
-              <p className="truncate text-xs text-muted-foreground">{profile?.title ?? ""}</p>
+          {loggedIn ? (
+            <div className="mx-3 mt-3 flex items-center gap-3 rounded-xl border border-border bg-white/[0.03] px-3 py-3">
+              <Avatar className="size-9">
+                <AvatarFallback className="bg-primary/15 text-primary-soft">
+                  {profile?.name?.slice(0, 1) ?? "?"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{profile?.name ?? "Loading…"}</p>
+                <p className="truncate text-xs text-muted-foreground">{profile?.title ?? ""}</p>
+              </div>
+              <Button variant="ghost" size="icon-sm" onClick={handleLogout} aria-label="Log out">
+                <LogOut className="size-4" />
+              </Button>
             </div>
-            <Button variant="ghost" size="icon-sm" onClick={handleLogout} aria-label="Log out">
-              <LogOut className="size-4" />
-            </Button>
-          </div>
+          ) : (
+            <div className="mx-3 mt-3 rounded-xl border border-border bg-white/[0.03] p-3">
+              <p className="mb-2 text-xs text-muted-foreground">Viewing without an account</p>
+              <Button size="sm" className="w-full" render={<Link href="/auth" />} nativeButton={false}>
+                Sign in
+              </Button>
+            </div>
+          )}
         </aside>
 
         {/* mobile side nav sheet - reachable from the TopBar's menu button, carries Inbox/
@@ -175,19 +199,28 @@ export function AppShell({
                   <NavRow key={item.href} {...item} active={pathname === item.href} />
                 ))}
               </nav>
-              <div className="mx-3 mt-auto flex items-center gap-3 rounded-xl border border-border bg-white/[0.03] px-3 py-3">
-                <Avatar className="size-9">
-                  <AvatarFallback className="bg-primary/15 text-primary-soft">
-                    {profile?.name?.slice(0, 1) ?? "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{profile?.name ?? "Loading…"}</p>
+              {loggedIn ? (
+                <div className="mx-3 mt-auto flex items-center gap-3 rounded-xl border border-border bg-white/[0.03] px-3 py-3">
+                  <Avatar className="size-9">
+                    <AvatarFallback className="bg-primary/15 text-primary-soft">
+                      {profile?.name?.slice(0, 1) ?? "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{profile?.name ?? "Loading…"}</p>
+                  </div>
+                  <Button variant="ghost" size="icon-sm" onClick={handleLogout} aria-label="Log out">
+                    <LogOut className="size-4" />
+                  </Button>
                 </div>
-                <Button variant="ghost" size="icon-sm" onClick={handleLogout} aria-label="Log out">
-                  <LogOut className="size-4" />
-                </Button>
-              </div>
+              ) : (
+                <div className="mx-3 mt-auto rounded-xl border border-border bg-white/[0.03] p-3">
+                  <p className="mb-2 text-xs text-muted-foreground">Viewing without an account</p>
+                  <Button size="sm" className="w-full" render={<Link href="/auth" />} nativeButton={false}>
+                    Sign in
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -216,7 +249,7 @@ export function AppShell({
                 variant="default"
                 size="sm"
                 className="hidden gap-1.5 lg:inline-flex"
-                onClick={() => setComposerOpen(true)}
+                onClick={() => (loggedIn ? setComposerOpen(true) : setSignInPromptOpen(true))}
               >
                 <Plus className="size-3.5" /> Post
               </Button>
@@ -274,7 +307,7 @@ export function AppShell({
               <button
                 key="post"
                 type="button"
-                onClick={() => setComposerOpen(true)}
+                onClick={() => (loggedIn ? setComposerOpen(true) : setSignInPromptOpen(true))}
                 aria-label="New post"
                 className="relative flex flex-1 items-center justify-center py-2"
               >
@@ -304,6 +337,7 @@ export function AppShell({
 
       <PersistentOrb />
       <PostComposer open={composerOpen} onOpenChange={setComposerOpen} onPublished={() => router.refresh()} />
+      <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action="post" />
       <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
         <CommandInput placeholder="Search posts, people, companies…" />
         <CommandList>

@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { CompanyFollowButton } from "@/components/companies/CompanyFollowButton";
 import { getMyProfile } from "@/lib/api/profile";
 import { getCompany, getCompanyJobs } from "@/lib/api/companies";
-import { requireOnboarded } from "@/lib/auth-guard";
+import { getSession } from "@/lib/session";
 import type { CandidateProfile, Company, Job } from "@/lib/types";
 
 export default function CompanyDetailPage() {
@@ -21,14 +21,16 @@ export default function CompanyDetailPage() {
   const [company, setCompany] = useState<Company | null | undefined>(undefined);
   const [jobs, setJobs] = useState<Job[] | null>(null);
 
+  // ARENA-INVENTORY-FIXES.md FIX 1 - documented-public route (ROUTES.md); must render
+  // logged-out, not bounce to onboarding. getMyProfile() (AppShell's sidebar account block)
+  // only fires when a session exists.
   useEffect(() => {
-    if (!requireOnboarded(router)) return;
-    getMyProfile().then(setProfile);
     getCompany(params.id).then((c) => setCompany(c ?? null));
     getCompanyJobs(params.id).then((p) => setJobs(p.content));
-  }, [params.id, router]);
+    if (getSession()) getMyProfile().then(setProfile);
+  }, [params.id]);
 
-  if (company === undefined || !profile) {
+  if (company === undefined) {
     return (
       <AppShell title="Company">
         <OrbLoader className="h-96" />

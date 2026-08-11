@@ -7,6 +7,7 @@ import { CalendarClock, LogOut } from "lucide-react";
 import { AuraBackground } from "@/components/landing/AuraBackground";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import NotFound from "@/app/not-found";
 import { signOut } from "@/lib/api/auth";
 import { getSession } from "@/lib/session";
 
@@ -25,14 +26,17 @@ export function HiringManagerShell({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
+  const [state, setState] = useState<"checking" | "ready" | "denied">("checking");
 
   useEffect(() => {
     const session = getSession();
     if (!session) { router.replace("/auth"); return; }
-    if (session.role !== "hiring_manager") { router.replace("/dashboard"); return; }
+    // ARENA-INVENTORY-FIXES.md FIX 2 - was router.replace("/dashboard"), which bounced any
+    // non-HM session (retired route -> its own requireOnboarded() check) into the candidate
+    // onboarding wizard. Renders the branded 404 in place instead, same pattern as
+    // PlatformAdminShell/CompanyAdminShell.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate client-only auth gate flip
-    setReady(true);
+    setState(session.role === "hiring_manager" ? "ready" : "denied");
   }, [router]);
 
   const handleLogout = async () => {
@@ -40,7 +44,8 @@ export function HiringManagerShell({
     router.push("/auth");
   };
 
-  if (!ready) return null;
+  if (state === "checking") return null;
+  if (state === "denied") return <NotFound />;
 
   return (
     <div className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">

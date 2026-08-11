@@ -3,6 +3,73 @@
 Per the mission's standing rule: decisions get logged here instead of interrupting the
 user. Each entry says what was decided, why, and what it costs/defers.
 
+## ARENA-INVENTORY-FIXES.md fix pass — P0/P1 (2026-08-11)
+
+Fixed the 4 P0/P1 findings from the live PAGE-INVENTORY.md audit (commit `5fa15d1`). P2 items
+not touched this pass (out of scope per the mission doc's own priority order).
+
+**FIX 1 — public routes.** `/discover`, `/people/[id]`, `/companies/[id]` were gated by
+`requireOnboarded()` client-side, and (found while fixing it) the backend independently
+blocked them too: `ProfileController`/`CompanyController`/`PostController` all carry a
+class-level `@PreAuthorize("hasRole('TALENT')")`, and `Spring Security`'s filter chain had no
+`permitAll()` for any of `GET /profile/{id}`, `GET /companies/{id}`, `GET /companies/{id}/jobs`,
+`GET /jobs` (list), or `GET /posts/by-user/{id}` - `.anyRequest().authenticated()` caught all of
+them. Fixing only the frontend guard would have swapped a 404-via-redirect for a 401. Widened
+both layers (method-level `@PreAuthorize("permitAll()")` overrides + filter-chain `permitAll()`
+rules, ordered so the `/profile/{id}` wildcard can't shadow `/profile/me`) - the service layer
+underneath was already null-viewer-tolerant everywhere touched (`getPublicProfile`,
+`getCompany`, `getOpenJobs`, `getUserPosts` all already treated a null `viewingUserId` as
+"anonymous"), so this was a controller/security-layer fix, not a data-model one. Account-only
+actions (Follow, Block, Apply, Post) gate on `getSession()` at click/effect time and show a new
+shared `SignInPrompt` dialog instead of silently 401ing or being hidden - built as its own small
+component since nothing like it existed. Added `generateMetadata` via sibling `layout.tsx`
+files (client `page.tsx` files can't export metadata themselves) so shared links preview
+correctly, and `metadataBase` on the root layout so those OG image URLs resolve absolute.
+
+**FIX 2 — wrong-role redirects.** Traced to two independent mechanisms: (1) `CompanyAdminShell`/
+`HiringManagerShell` explicitly `router.replace("/dashboard")` on a role mismatch, and `/dashboard`
+itself ran the candidate `requireOnboarded()` check, which then bounced anyone without the
+candidate-only `arena_onboarded` localStorage flag into `/onboarding`; (2) `requireOnboarded()`/
+`requireEnterpriseOnboarded()` (the two guard functions ~34 pages share) check an
+onboarding-*completion* flag, not role - any non-candidate session reads as "not onboarded" and
+gets the same wrong bounce, no shell involved at all. Fixed both mechanisms rather than just the
+shell-level one, since the second is the one actually reachable from most of the app. Centralized
+the fix in `auth-guard.ts` (one place, ~34 call sites benefit) rather than converting every page
+to a shell-owned gate matching `PlatformAdminShell`'s existing pattern - that pattern was already
+proven correct in this codebase (see its own PA7 comment on why a 404 beats a redirect here), just
+not reachable from a plain `.ts` guard function without a real navigable target, hence the new
+`/access-denied` route that renders the identical `<NotFound/>`. `CompanyAdminShell`/
+`HiringManagerShell` converted to render `<NotFound/>` directly (matching `PlatformAdminShell`
+exactly) since they can. `/dashboard` itself is deleted (ROUTES.md already called it fully
+retired) with a redirect to `/home` for any stray bookmark/link - it was always the
+candidate-specific predecessor to `/home`, never a real shared multi-role landing, so that's
+directionally correct even for a non-candidate hitting the redirect (they land on `/home`, which
+now correctly shows THEM access-denied instead of a confusing second onboarding bounce).
+`not-found.tsx`'s own recovery button also pointed at `/dashboard` - made it role-aware instead
+(`/home`, `/enterprise/dashboard`, `/enterprise/interviews/mine`, `/admin` per session role).
+
+**FIX 3 — `/interviews` and `/enterprise/interviews` list pages 404.** Chose the "remove/redirect,
+don't build" branch the mission doc explicitly allows, for a reason the mission doc's own
+audit got wrong: re-tested the "orphaned detail route" claim and found the candidate detail
+route ISN'T actually orphaned - `/applications`' "Schedule" flow reaches `/interviews/[id]` via a
+confirm-slot dialog → "Go to interview room" button, not a direct link, which is why the earlier
+click-only test missed it. What's real is that the bare list paths 404 and nothing links to
+them (grepped, confirmed). Checked whether "build the list" was actually viable: it isn't without
+new backend work - `InterviewController` has no candidate-facing or recruiter/company_admin-facing
+list endpoint at all, only hiring-manager's own `/interviews/mine`. Building two new aggregate
+endpoints plus two new pages is real, unscoped feature work, not a bug fix. Redirected
+`/interviews` → `/applications` and `/enterprise/interviews` → `/enterprise/postings` (each
+role's existing nearest equivalent) instead - satisfies "no route may 404" without inventing an
+endpoint that doesn't exist. Left both `[applicationId]` detail routes completely untouched
+since they work and are genuinely reachable.
+
+**FIX 4 — `/work/saved` 404 + nav prefetch noise.** Built it, per the mission doc's stated
+preference. Turned out to be small: save/unsave (`FeedItemCard`'s bookmark toggle) and
+`GET /posts/saved` were already fully wired and working - only the list page itself was
+missing. Added an optional `showSaveToggle`/`onToggleSave` pair to the existing `PostCard`
+(used by `/people/[id]`'s Activity section too) rather than forking a new card component -
+opt-in, so that existing call site is unaffected.
+
 ## Step 3 built: unified `/feed` API, User.handle, Post.title, Save, Project.kind — Share deferred (2026-08-10)
 
 Implemented the resolution below (`arena-api` commit `ebd8db3`). `FeedAggregationService`

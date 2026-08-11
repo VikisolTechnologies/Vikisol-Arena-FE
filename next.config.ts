@@ -37,8 +37,31 @@ const nextConfig: NextConfig = {
   // ARENA-MASTER-ARCHITECTURE.md PART 2/15 - /home replaces /feed as the default landing.
   // Only the exact list route redirects; /feed/[id] (post detail) keeps working as-is until
   // Step 5 migrates it to /p/[postId] - not bundling an unrelated route rename into this one.
+  //
+  // ARENA-INVENTORY-FIXES.md FIX 2 - /dashboard's own page.tsx is deleted (ROUTES.md has called
+  // it fully retired since the Phase A nav reposition); this catches any stray bookmark/external
+  // link instead of letting it 404. /dashboard was always the candidate-specific predecessor to
+  // /home (see CandidateAppShell's own PART 2/15 comment), never a shared multi-role landing, so
+  // redirecting everyone there is directionally correct - a wrong-role visitor gets /home's own
+  // (now-fixed, see auth-guard.ts) access-denied handling instead of a second hop.
+  // ARENA-INVENTORY-FIXES.md FIX 3 - /interviews and /enterprise/interviews (the bare list
+  // routes) 404 - only their [applicationId] detail sub-route was ever built. No nav item or
+  // in-app link points at either bare path (grepped), and - unlike the audit's original
+  // finding - the detail route ISN'T actually orphaned: /applications' "Schedule" flow does
+  // reach it, via a confirm-slot dialog -> "Go to interview room" button, not a direct link
+  // (why the earlier click-test missed it). Building a real aggregate list needs a backend
+  // endpoint neither role has today (InterviewController has no candidate-facing or
+  // recruiter/company_admin-facing list, only HM's own /interviews/mine) - real, scoped
+  // follow-up work, not something to improvise in a bug-fix pass. Redirecting to where each
+  // role already sees interview-stage info today satisfies "no route may 404" without that.
+  // See DECISIONS.md.
   async redirects() {
-    return [{ source: "/feed", destination: "/home", permanent: false }];
+    return [
+      { source: "/feed", destination: "/home", permanent: false },
+      { source: "/dashboard", destination: "/home", permanent: false },
+      { source: "/interviews", destination: "/applications", permanent: false },
+      { source: "/enterprise/interviews", destination: "/enterprise/postings", permanent: false },
+    ];
   },
 };
 

@@ -5,7 +5,7 @@ const TEMPLATES: Record<NotificationType, () => { title: string; body: string; l
   agent: () => ({ title: "Your agent found 3 new matches", body: "Above your 90% threshold — worth a look.", link: "/discover" }),
   interview: () => ({ title: "Interview reminder", body: "Your interview is tomorrow at 3:00 PM.", link: "/applications" }),
   bid: () => ({ title: "New bid received", body: "A new bid landed on your open project.", link: "/marketplace/bids" }),
-  system: () => ({ title: "Weekly summary ready", body: "See how your Career Health score changed this week.", link: "/dashboard" }),
+  system: () => ({ title: "Weekly summary ready", body: "See how your Career Health score changed this week.", link: "/home" }),
 };
 
 function buildNotification(hoursAgo: number): AppNotification {

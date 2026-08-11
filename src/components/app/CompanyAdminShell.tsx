@@ -7,6 +7,7 @@ import { LayoutDashboard, Users, ScrollText, CreditCard, Building2, ShieldCheck,
 import { AuraBackground } from "@/components/landing/AuraBackground";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import NotFound from "@/app/not-found";
 import { signOut } from "@/lib/api/auth";
 import { getSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -35,19 +36,22 @@ export function CompanyAdminShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  // Starts false on both server and client so the first client render matches the SSR-ed
+  // Starts "checking" on both server and client so the first client render matches the SSR-ed
   // output (a lazy `typeof window` initializer was tried here first and caused a genuine
   // hydration mismatch - the server always renders null, so the client's first paint has to
   // as well). Only flips after the effect below runs, which happens post-hydration.
-  const [ready, setReady] = useState(false);
+  const [state, setState] = useState<"checking" | "ready" | "denied">("checking");
 
   useEffect(() => {
     const session = getSession();
     if (!session) { router.replace("/auth"); return; }
-    if (session.role !== "company_admin") { router.replace("/dashboard"); return; }
-    // Deliberate: this is the client-only auth-gate flip itself, not a data sync side-effect.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setReady(true);
+    // ARENA-INVENTORY-FIXES.md FIX 2 - was router.replace("/dashboard"), a route ROUTES.md
+    // itself calls fully retired, which then bounced non-candidate sessions into the candidate
+    // onboarding wizard via /dashboard's own requireOnboarded() check. Renders the branded 404
+    // in place instead, matching PlatformAdminShell's already-proven pattern for this exact
+    // problem (see its own PA7 comment for why 404 over a redirect).
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only auth-gate flip
+    setState(session.role === "company_admin" ? "ready" : "denied");
   }, [router]);
 
   const handleLogout = async () => {
@@ -55,7 +59,8 @@ export function CompanyAdminShell({
     router.push("/auth");
   };
 
-  if (!ready) return null;
+  if (state === "checking") return null;
+  if (state === "denied") return <NotFound />;
 
   return (
     <div className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">

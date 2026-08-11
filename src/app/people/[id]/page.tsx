@@ -13,7 +13,6 @@ import { FollowButton } from "@/components/feed/FollowButton";
 import { BlockButton } from "@/components/feed/BlockButton";
 import { getMyProfile, getPublicProfile } from "@/lib/api/profile";
 import { getUserPosts } from "@/lib/api/posts";
-import { requireOnboarded } from "@/lib/auth-guard";
 import { getSession } from "@/lib/session";
 import type { CandidateProfile, Post, PublicCandidateProfile } from "@/lib/types";
 
@@ -26,12 +25,15 @@ export default function PublicProfilePage() {
   const [profile, setProfile] = useState<PublicCandidateProfile | null | undefined>(undefined);
   const [posts, setPosts] = useState<Post[] | null>(null);
 
+  // ARENA-INVENTORY-FIXES.md FIX 1 - this is a documented-public route (ROUTES.md); it must
+  // render for a logged-out visitor, not bounce them to onboarding. getMyProfile() (the
+  // AppShell sidebar's own account block) is only fetched when a session actually exists -
+  // no point firing a call that would just 401 for an anonymous visitor.
   useEffect(() => {
-    if (!requireOnboarded(router)) return;
-    getMyProfile().then(setMyProfile);
     getPublicProfile(params.id).then((p) => setProfile(p ?? null));
     getUserPosts(params.id).then((page) => setPosts(page.content));
-  }, [params.id, router]);
+    if (getSession()) getMyProfile().then(setMyProfile);
+  }, [params.id]);
 
   const myUserId = getSession()?.candidateId;
 
@@ -40,7 +42,7 @@ export default function PublicProfilePage() {
     if (myUserId && myUserId === params.id) router.replace("/identity");
   }, [myUserId, params.id, router]);
 
-  if (profile === undefined || !myProfile) {
+  if (profile === undefined) {
     return (
       <AppShell title="Profile">
         <OrbLoader className="h-96" />

@@ -38,6 +38,10 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  // ARENA-INVENTORY-FIXES.md FIX 1 - needed so the new per-page OG tags on the now-public
+  // profile/company routes resolve to absolute https://arena.vikisol.in URLs instead of
+  // silently falling back to Next's http://localhost:3000 default when shared links preview.
+  metadataBase: new URL("https://arena.vikisol.in"),
   title: "Arena — It works while you sleep",
   description:
     "Arena is a Talent Operating System. A 24/7 AI agent hunts openings across every industry, applies with a tailored resume, and books your interviews — day and night.",
