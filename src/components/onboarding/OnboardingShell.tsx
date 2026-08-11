@@ -5,6 +5,7 @@ import { useGSAP } from "@gsap/react";
 import { ArrowLeft } from "lucide-react";
 import { useGsap } from "@/lib/gsap";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
 import { AuraBackground } from "@/components/landing/AuraBackground";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,12 @@ export function OnboardingShell({
   const contentRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
   const gsap = useGsap();
+  // ARENA-STABILIZE.md Phase 2, G2 - found live: the Continue/Enter Arena button sits at the
+  // bottom of a min-h-svh flex column, so on first run (cookie banner not yet dismissed) it
+  // lands directly under CookieConsentBanner's fixed z-[900] bar and is completely untappable -
+  // a dead end in the middle of signup. Same reservation pattern already used by every app
+  // shell's sidebar (see use-cookie-consent-visible.ts), just missing here.
+  const cookieBannerVisible = useCookieConsentVisible();
 
   useGSAP(
     () => {
@@ -85,7 +92,10 @@ export function OnboardingShell({
       </div>
 
       {!hideFooter && (
-        <div className="relative z-10 flex justify-center px-6 pb-10 sm:px-10">
+        <div
+          className="relative z-10 flex justify-center px-6 pb-10 sm:px-10"
+          style={cookieBannerVisible ? { paddingBottom: "calc(var(--cookie-banner-h, 88px) + 2.5rem)" } : undefined}
+        >
           <Button
             variant="primary-gradient"
             size="cta-lg"
