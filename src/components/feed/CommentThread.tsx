@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import { getComments, addComment, deleteComment } from "@/lib/api/posts";
 import { formatFriendlyDateTime } from "@/lib/format";
 import { getSession } from "@/lib/session";
@@ -17,6 +18,7 @@ export function CommentThread({ postId, postAuthorUserId }: { postId: string; po
   const [comments, setComments] = useState<PostComment[] | null>(null);
   const [draft, setDraft] = useState("");
   const [posting, setPosting] = useState(false);
+  const [signInPromptOpen, setSignInPromptOpen] = useState(false);
   const myUserId = getSession()?.candidateId;
 
   const load = () => { getComments(postId).then(setComments); };
@@ -25,6 +27,9 @@ export function CommentThread({ postId, postAuthorUserId }: { postId: string; po
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!draft.trim() || posting) return;
+    // ARENA-STABILIZE.md Phase 2, G9 - the post itself is now viewable logged-out; commenting
+    // still needs an account, same treatment as Join/Follow/Report on this same page.
+    if (!getSession()) { setSignInPromptOpen(true); return; }
     setPosting(true);
     try {
       await addComment(postId, draft.trim());
@@ -93,6 +98,7 @@ export function CommentThread({ postId, postAuthorUserId }: { postId: string; po
           })}
         </div>
       )}
+      <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action="comment" />
     </div>
   );
 }

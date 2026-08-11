@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AlertTriangle, ArrowLeft, Flag, MapPin, MessageCircle, Share2, ShieldCheck, Users, XCircle } from "lucide-react";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,9 @@ import { BlockButton } from "@/components/feed/BlockButton";
 import { ReactionButton } from "@/components/feed/ReactionButton";
 import { CommentThread } from "@/components/feed/CommentThread";
 import { JoinRequestsPanel } from "@/components/feed/JoinRequestsPanel";
+import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import { getMyProfile } from "@/lib/api/profile";
 import { getPost, requestJoin, cancelPost, reportPost } from "@/lib/api/posts";
-import { requireOnboarded } from "@/lib/auth-guard";
 import { formatFriendlyDateTime } from "@/lib/format";
 import { getSession } from "@/lib/session";
 import type { CandidateProfile, Post } from "@/lib/types";
@@ -33,32 +33,43 @@ export default function PostDetailPage() {
   const [joinError, setJoinError] = useState<string | null>(null);
   const [reported, setReported] = useState(false);
   const [shared, setShared] = useState(false);
+  const [signInPromptOpen, setSignInPromptOpen] = useState(false);
+  const [signInAction, setSignInAction] = useState("do that");
 
   const load = () => { getPost(params.id).then((p) => setPost(p ?? null)); };
 
+  // ARENA-STABILIZE.md Phase 2, G9 - shared post links are the growth loop; a logged-out
+  // visitor must see the real post, not bounce to onboarding. getMyProfile() (AppShell's
+  // sidebar account block) only fires when a session exists - GET /posts/{id} itself is now
+  // permitAll'd and null-viewer-tolerant end to end (see PostController/PostMapper).
   useEffect(() => {
-    if (!requireOnboarded(router)) return;
-    getMyProfile().then(setProfile);
+    if (getSession()) getMyProfile().then(setProfile);
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id, router]);
+  }, [params.id]);
 
-  if (post === undefined || !profile) {
+  const requireSignIn = (action: string) => {
+    setSignInAction(action);
+    setSignInPromptOpen(true);
+  };
+
+  if (post === undefined) {
     return (
-      <CandidateAppShell title="Post">
+      <AppShell title="Post">
         <OrbLoader className="h-96" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
   if (post === null) {
     return (
-      <CandidateAppShell title="Post">
+      <AppShell title="Post">
         <p className="text-sm text-muted-foreground">This post isn&apos;t available anymore.</p>
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
   const join = async () => {
+    if (!getSession()) { requireSignIn(post.visibility === "public" ? "join" : "request to join"); return; }
     setJoining(true);
     setJoinError(null);
     try {
@@ -84,6 +95,7 @@ export default function PostDetailPage() {
   // §4 safety-audit fix: "report ... everywhere" - posts are directly reportable now, not just
   // via a Room (which UPDATE posts and not-yet-joined ACTIVITY/ASK posts never had at all).
   const report = async () => {
+    if (!getSession()) { requireSignIn("report a post"); return; }
     await reportPost(post.id, "Reported from the post");
     setReported(true);
   };
@@ -114,7 +126,7 @@ export default function PostDetailPage() {
   const spotsLeft = post.capacity ? Math.max(0, post.capacity - post.spotsFilled) : undefined;
 
   return (
-    <CandidateAppShell profile={profile}>
+    <AppShell title="Post" profile={profile}>
       <button
         type="button"
         onClick={() => router.push("/feed")}
@@ -284,6 +296,7 @@ export default function PostDetailPage() {
         <p className="mb-3 font-display text-sm font-bold">Comments</p>
         <CommentThread postId={post.id} postAuthorUserId={post.authorUserId} />
       </Card>
-    </CandidateAppShell>
+      <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action={signInAction} />
+    </AppShell>
   );
 }
