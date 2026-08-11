@@ -127,44 +127,6 @@ export function CandidateAppShell({
           </div>
         </aside>
 
-        {/* mobile nav */}
-        {mobileOpen && (
-          // ARENA-STABILIZE.md Phase 2, G9 - same fix as AppShell.tsx: was z-40, sitting below
-          // BottomTabBar's z-[890], so the tab bar covered/intercepted taps on the drawer's own
-          // lower content (the account block added above).
-          <div className="fixed inset-0 z-[895] lg:hidden">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
-            <div
-              className="absolute left-0 top-0 flex h-full w-[260px] flex-col border-r border-border bg-background py-5"
-              style={cookieBannerVisible ? { paddingBottom: "var(--cookie-banner-h, 88px)" } : undefined}
-            >
-              <Link href="/feed" className="mb-6 flex items-center gap-2.5 px-4">
-                <span className="font-display text-sm font-bold tracking-wide">
-                  ARENA<span className="text-primary">.</span>
-                </span>
-              </Link>
-              <NavLinks pathname={pathname} onNavigate={() => setMobileOpen(false)} />
-              {/* ARENA-STABILIZE.md Phase 2, G9 - found live: this drawer never had an account
-                  block at all, so there was NO way to sign out on a mobile viewport - the
-                  Log out button only existed in the lg:flex desktop sidebar above. Mirrors it. */}
-              <div className="mx-3 mt-3 flex items-center gap-3 rounded-xl border border-border bg-white/[0.03] px-3 py-3">
-                <Avatar className="size-9">
-                  <AvatarFallback className="bg-primary/15 text-primary-soft">
-                    {profile?.name?.slice(0, 1) ?? "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{profile?.name ?? "Loading…"}</p>
-                  <p className="truncate text-xs text-muted-foreground">{profile?.title ?? ""}</p>
-                </div>
-                <Button variant="ghost" size="icon-sm" onClick={handleLogout} aria-label="Log out">
-                  <LogOut className="size-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="flex min-h-svh min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 flex min-w-0 items-center gap-3 border-b border-border bg-background/70 px-4 py-3 backdrop-blur-xl sm:px-6">
             <button
@@ -192,6 +154,44 @@ export function CandidateAppShell({
           <main className="min-w-0 flex-1 px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-6">{children}</main>
         </div>
       </div>
+
+      {/* mobile nav - deliberately a SIBLING of the z-10 wrapper above and of BottomTabBar
+          below, not nested inside the wrapper: that wrapper is `relative z-10`, which creates
+          its own stacking context, so a z-index set on something nested inside it is compared
+          against BottomTabBar's z-[890] as "z-10 vs z-890" - the nested drawer's own higher
+          z-index never actually won. Same real bug as AppShell.tsx, same fix (see its comment
+          for the full stacking-context explanation). */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-[895] lg:hidden">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
+          <div
+            className="absolute left-0 top-0 flex h-full w-[260px] flex-col border-r border-border bg-background py-5"
+            style={cookieBannerVisible ? { paddingBottom: "var(--cookie-banner-h, 88px)" } : undefined}
+          >
+            <Link href="/feed" className="mb-6 flex items-center gap-2.5 px-4">
+              <span className="font-display text-sm font-bold tracking-wide">
+                ARENA<span className="text-primary">.</span>
+              </span>
+            </Link>
+            <NavLinks pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+            <div className="mx-3 mt-3 flex items-center gap-3 rounded-xl border border-border bg-white/[0.03] px-3 py-3">
+              <Avatar className="size-9">
+                <AvatarFallback className="bg-primary/15 text-primary-soft">
+                  {profile?.name?.slice(0, 1) ?? "?"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{profile?.name ?? "Loading…"}</p>
+                <p className="truncate text-xs text-muted-foreground">{profile?.title ?? ""}</p>
+              </div>
+              <Button variant="ghost" size="icon-sm" onClick={handleLogout} aria-label="Log out">
+                <LogOut className="size-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <BottomTabBar />
       <PersistentOrb />
     </div>

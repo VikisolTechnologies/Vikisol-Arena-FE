@@ -179,61 +179,6 @@ export function AppShell({
           )}
         </aside>
 
-        {/* mobile side nav sheet - reachable from the TopBar's menu button, carries Inbox/
-            Saved/Notifications/account, since the bottom tab bar only has room for 5 items
-            per PART 4's own spec ("Inbox and Profile live in the TopBar/account sheet") */}
-        {mobileNavOpen && (
-          // ARENA-STABILIZE.md Phase 2, G9 - was z-40, sitting BELOW the bottom tab bar's
-          // z-[890] (rendered unconditionally, further down this file) - the tab bar's icons
-          // physically covered and intercepted taps on the drawer's own lower content (the
-          // account block/Log out button). Between the tab bar (890) and CookieConsentBanner
-          // (900) so both existing reservations (padding for the banner, out-ranking the tab
-          // bar) still hold.
-          <div className="fixed inset-0 z-[895] lg:hidden">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setMobileNavOpen(false)} />
-            <div
-              className="absolute right-0 top-0 flex h-full w-[280px] flex-col border-l border-border bg-background py-5"
-              style={cookieBannerVisible ? { paddingBottom: "var(--cookie-banner-h, 88px)" } : undefined}
-            >
-              <div className="mb-6 flex items-center justify-between px-4">
-                <span className="font-display text-sm font-bold tracking-wide">
-                  ARENA<span className="text-primary">.</span>
-                </span>
-                <button type="button" onClick={() => setMobileNavOpen(false)} aria-label="Close menu">
-                  <X className="size-4" />
-                </button>
-              </div>
-              <nav className="flex flex-col gap-1 px-3">
-                {[...SIDE_NAV_ITEMS, ...SECONDARY_NAV_ITEMS].map((item) => (
-                  <NavRow key={item.href} {...item} active={pathname === item.href} />
-                ))}
-              </nav>
-              {loggedIn ? (
-                <div className="mx-3 mt-auto flex items-center gap-3 rounded-xl border border-border bg-white/[0.03] px-3 py-3">
-                  <Avatar className="size-9">
-                    <AvatarFallback className="bg-primary/15 text-primary-soft">
-                      {profile?.name?.slice(0, 1) ?? "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{profile?.name ?? "Loading…"}</p>
-                  </div>
-                  <Button variant="ghost" size="icon-sm" onClick={handleLogout} aria-label="Log out">
-                    <LogOut className="size-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="mx-3 mt-auto rounded-xl border border-border bg-white/[0.03] p-3">
-                  <p className="mb-2 text-xs text-muted-foreground">Viewing without an account</p>
-                  <Button size="sm" className="w-full" render={<Link href="/auth" />} nativeButton={false}>
-                    Sign in
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         <div className="flex min-h-svh min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 flex min-w-0 items-center gap-3 border-b border-border bg-background/70 px-4 py-3 backdrop-blur-xl sm:px-6">
             {title && (
@@ -294,6 +239,61 @@ export function AppShell({
           </div>
         </div>
       </div>
+
+      {/* mobile side nav sheet - reachable from the TopBar's menu button, carries Inbox/
+          Saved/Notifications/account, since the bottom tab bar only has room for 5 items
+          per PART 4's own spec ("Inbox and Profile live in the TopBar/account sheet").
+          ARENA-STABILIZE.md Phase 2, G9 - deliberately a SIBLING of the z-10 wrapper above,
+          not nested inside it: that wrapper is `relative z-10`, which creates its own
+          stacking context, so a z-index set on something nested inside it (this drawer used
+          to live there) is compared against z-890 as "z-10 vs z-890" - the nested drawer's own
+          higher z-index never mattered. Rendering it here, alongside the z-[890] tab bar below,
+          in the same stacking context, is what makes z-[895] actually win. */}
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-[895] lg:hidden">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileNavOpen(false)} />
+          <div
+            className="absolute right-0 top-0 flex h-full w-[280px] flex-col border-l border-border bg-background py-5"
+            style={cookieBannerVisible ? { paddingBottom: "var(--cookie-banner-h, 88px)" } : undefined}
+          >
+            <div className="mb-6 flex items-center justify-between px-4">
+              <span className="font-display text-sm font-bold tracking-wide">
+                ARENA<span className="text-primary">.</span>
+              </span>
+              <button type="button" onClick={() => setMobileNavOpen(false)} aria-label="Close menu">
+                <X className="size-4" />
+              </button>
+            </div>
+            <nav className="flex flex-col gap-1 px-3">
+              {[...SIDE_NAV_ITEMS, ...SECONDARY_NAV_ITEMS].map((item) => (
+                <NavRow key={item.href} {...item} active={pathname === item.href} />
+              ))}
+            </nav>
+            {loggedIn ? (
+              <div className="mx-3 mt-auto flex items-center gap-3 rounded-xl border border-border bg-white/[0.03] px-3 py-3">
+                <Avatar className="size-9">
+                  <AvatarFallback className="bg-primary/15 text-primary-soft">
+                    {profile?.name?.slice(0, 1) ?? "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{profile?.name ?? "Loading…"}</p>
+                </div>
+                <Button variant="ghost" size="icon-sm" onClick={handleLogout} aria-label="Log out">
+                  <LogOut className="size-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="mx-3 mt-auto rounded-xl border border-border bg-white/[0.03] p-3">
+                <p className="mb-2 text-xs text-muted-foreground">Viewing without an account</p>
+                <Button size="sm" className="w-full" render={<Link href="/auth" />} nativeButton={false}>
+                  Sign in
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* mobile bottom tab bar - Home/Discover/+/Map/Work per PART 4, distinct from the
           legacy BottomTabBar (Feed/Post/Rooms/Profile) which CandidateAppShell still uses -
