@@ -121,4 +121,73 @@ gap honestly attributed). Proceeding to Phase 2.
 
 ## Phase 2 — The Golden Path (G1–G9)
 
-*(in progress)*
+Walked end to end on a real 390px viewport against the live site, twice for stability (both
+clean 23/23 passes) — Playwright driving two real accounts through the actual product surfaces
+(taps, form fills, real navigation), not a synthetic API test. **Fixed six real, live-confirmed
+dead ends along the way**, each found by the walk itself, not guessed in advance:
+
+1. **Every `Dialog`/`Sheet` was untappable behind the cookie banner.** `dialog.tsx`/`sheet.tsx`
+   used `z-50`, far below `CookieConsentBanner`'s `z-[900]`. Any modal opened before the banner
+   was dismissed — first hit was `PostComposer`'s Publish button during signup — had its own
+   controls physically covered. Bumped both to `z-[950]`. App-wide fix: every `Dialog`/`Sheet`
+   call site, including `CommandDialog`.
+2. **Onboarding's Continue button, same root cause, different element.** `OnboardingShell`'s
+   footer isn't a Dialog — a fresh signup landed on `/onboarding` with the Continue button
+   pinned under the still-showing cookie banner, no way to finish signing up. Applied the same
+   space-reservation pattern every app shell's sidebar already uses
+   (`use-cookie-consent-visible.ts`).
+3. **No way to reach a room member's profile from a room.** `RoomsInbox`'s member list rendered
+   plain, unclickable text — G7 ("open the other person's profile from the room, follow them")
+   was structurally impossible. Member rows now navigate to `/people/[userId]`.
+4. **Fresh signups can't join or create an Activity — DOB is required, never collected.**
+   `PostService.requireAdult()` 400s with "Add your date of birth in Settings," but candidate
+   onboarding never asks for it, and nothing in the UI got the user there. Added a "Go to
+   Settings" link to both the post-detail join error and `PostComposer`'s create error whenever
+   the backend message points at Settings. (Intentionally not fixed: whether DOB belongs in
+   onboarding itself is a real product/schema question, out of scope for this pass.)
+5. **Mobile sign-out was flat-out unreachable on `/home` and most of the app**, and unreachable
+   a second, different way on `/feed`/`/messages`. Two distinct bugs, same symptom:
+   - `AppShell` (used by `/home`, `/discover`, `/notifications`, `/rooms`, `/settings`, etc.):
+     its mobile drawer already had a Log Out button, but — like finding #1/#2 — it never
+     reserved space for the cookie banner, so the banner covered it.
+   - `CandidateAppShell` (used by `/feed`, `/feed/[id]`, `/messages`): its mobile drawer had
+     **no account block or Log Out button at all** — only the desktop sidebar did. Mirrored the
+     desktop block into the drawer.
+   - Fixing both then exposed a **third, subtler bug**: both drawers sat under the bottom tab
+     bar (`z-[890]`) despite being *numbered* higher (first attempt: `z-[895]`) — because both
+     drawers were nested inside a `relative z-10` ancestor, which creates its own stacking
+     context. A nested element's z-index is compared against outside siblings using the
+     *ancestor's* z-index (10), not its own — so `z-895` inside a `z-10` box still loses to a
+     sibling's `z-890`. Fixed for real by moving both drawers out to be true siblings of their
+     tab bars, not by renumbering again.
+6. **Shared post links didn't work logged-out at all — 404/login-wall, not a graceful public
+   view.** `/feed/[id]` used `CandidateAppShell` (hard-redirects any anonymous visitor to
+   `/auth`) and `GET /posts/{id}` required auth server-side. This is the exact class of bug
+   `ARENA-INVENTORY-FIXES.md` FIX 1 already fixed for profiles/companies/discover — posts were
+   missed, and the Golden Path's own G9 step calls it out explicitly. Fixed both layers:
+   backend (`PostController.getPost`/`getComments` now `permitAll()`, null-viewer-tolerant
+   service layer was already in place; `SecurityConfig` lists `/posts/feed|mine|saved|nearby|
+   trending` explicitly before the new `/posts/*` wildcard, same specific-before-wildcard
+   ordering as the `/profile/me` vs `/profile/*` precedent) and frontend (swapped to `AppShell`;
+   Join/Report/React/Comment now show a sign-in prompt instead of silently 401ing or leaving
+   stuck optimistic UI state).
+
+**Investigated and correctly ruled out** (would have been wasted fixes for things that weren't
+actually broken): an apparent duplicate `/profile/me` call on `/home` (test-timing artifact, see
+Phase 1); "0 applications after applying" (test used the wrong selector — cards are `div
+onClick`, not `<a>`, see next paragraph); a `/rooms` member-click failure and a `/settings`
+DOB-save failure that both turned out to be my own test script's stale state after a
+`page.reload()`, not product bugs.
+
+**Found, logged, not fixed — genuinely out of scope for this pass:**
+- A `404 /follows/{id}` fires in the background after following someone from a room (id
+  `a566d5f6-...`) — this is the same `CandidateProfile.id` vs `User.id` mismatch flagged as a
+  loose end in the earlier `SLEEP-REPORT.md`. Doesn't block the action (follow itself succeeds);
+  not re-investigated here.
+- Application cards on `/applications` (and similar list cards elsewhere) are `div onClick`, not
+  real `<a>` tags — not keyboard-operable, no native "open in new tab." This is the same
+  "non-semantic list-card links" item `PAGE-INVENTORY.md` already scoped out as P2; left that
+  way rather than re-opening a previously deliberate scope decision.
+
+**Phase 2 is green** — G1 through G9 walked clean, twice, on live production, 390px, with
+screenshots at every step. Proceeding to Phase 3.
