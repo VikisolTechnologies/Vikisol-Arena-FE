@@ -22,6 +22,13 @@ ENV NEXT_PUBLIC_API_MODE=$NEXT_PUBLIC_API_MODE
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 ENV NODE_OPTIONS="--max-old-space-size=3584"
+
+# ARENA-STABILIZE.md Phase 0.2 - build stamp so a stale deploy is visible in 5 seconds
+# (footer + /version). RAILWAY_GIT_COMMIT_SHA is auto-forwarded as a build arg by Railway's
+# Dockerfile builder for git-connected services; falls back to "local" outside Railway.
+ARG RAILWAY_GIT_COMMIT_SHA=local
+RUN echo "NEXT_PUBLIC_BUILD_COMMIT=${RAILWAY_GIT_COMMIT_SHA}" >> .env.production.local && \
+    echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> .env.production.local
 RUN npm run build
 
 FROM node:20-alpine AS runner
