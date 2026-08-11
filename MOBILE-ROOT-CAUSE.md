@@ -72,11 +72,14 @@ any visitor or reopening user sees) is where the real, reproducible problem live
 route. Reporting this plainly rather than force-fitting a fix onto a route that isn't the
 bottleneck.
 
-**Minor, secondary observation — not chased to a root cause, flagged for Phase 1.4/2:**
-`/home`'s cold load fires `GET /profile/me` **twice** (255ms and 1127ms) for one page view,
-alongside one `GET /feed`. Not the dominant cost (both calls are fast individually, `/home`'s
-totals already meet target), but it's a real duplicate network round-trip worth folding into the
-"one batched feed request" checklist item in 1.4 rather than a separate investigation.
+**Minor observation, investigated and resolved as a non-issue:** the cold `/home` run initially
+looked like it fired `GET /profile/me` twice for one page view. Comparing against the warm
+run (a second, clean navigation to `/home` well after login had settled) showed only one
+`/profile/me` call there — so the second cold-run call isn't a per-load `/home` bug. It's
+`signIn()`'s existing, already-documented `syncOnboardedFromProfile()` (`lib/api/auth.ts`), a
+legitimate one-time post-login profile check that was still in flight when the test's response
+listener attached, arriving late on the same page object after the client-side route change to
+`/home`. No code change made for this — would have been fixing something that isn't broken.
 
 ## What this doesn't yet cover
 
@@ -88,17 +91,30 @@ arena-web | grep web-vitals` will show real numbers within seconds, filterable b
 Until then, this report's confidence is "strong lab evidence, cross-checked two ways," not "field
 confirmed."
 
-## Fix plan (Phase 1.4, next)
+## Fix plan (Phase 1.4)
 
-In impact order, targeting contributor #1 (the only code-addressable one):
-1. Bundle-split the landing page: defer below-the-fold sections' JS (keep their HTML server-
-   rendered, load their interactivity/animation JS on viewport-entry or `requestIdleCallback`
-   rather than in the critical initial bundle).
-2. Re-check GSAP's import scope (152 KB uncompressed across 2 chunks) — confirm it's still
-   submodule-narrow per the prior pass's finding, not a regression.
-3. Fold the duplicate `/profile/me` call on `/home` into the existing "one batched feed request"
-   checklist item.
-4. Re-measure identically (same throttle profile, same scenarios) and report before/after here.
+Targeting contributor #1, the only code-addressable one. Chunk inspection found the actual
+mechanism: `Starfield` (the canvas particle field behind the landing page's Talent Universe
+section, below the fold) was starting its `resize()` + `requestAnimationFrame` draw loop —
+O(n²) pairwise distance checks across up to 130 points, every frame — the instant it mounted,
+regardless of scroll position. Pure wasted main-thread work competing with hydration before
+it's ever visible, directly matching this mission's own Phase 1.4 checklist item ("canvases
+mount post-paint, tier on mobile, pause off-screen/hidden").
 
-Not attempting #2 (connection-latency) as code work — infra-only, noted for awareness, not a
-same-pass fix per the mission's own instruction to say so with numbers instead of code-thrashing.
+**Fix**: new `useInViewport` hook (`src/hooks/use-in-viewport.ts`, IntersectionObserver-based,
+same convention as the existing `usePageVisible`) gates `Starfield`'s draw loop to only run
+once actually scrolled into view, and pause again if scrolled away. Zero visual change once
+visible; the codebase already uses this exact "defer until interacted/visible" pattern
+elsewhere (`AuraBackground`'s mousemove-gated dynamic import, `CountUp`'s ScrollTrigger
+`onEnter`) — this closes the one component that didn't have it.
+
+**Not changed**: GSAP itself (152 KB uncompressed) stays — `Hero.tsx` uses it directly for the
+above-the-fold entrance stagger, so it's a genuine critical-path dependency, not dead weight to
+strip in this pass. Re-checked its import scope; still submodule-narrow, no regression from the
+prior pass's finding.
+
+**Not attempting contributor #2** (connection-latency) as code work — infra-only, noted for
+awareness, not a same-pass fix per the mission's own instruction to say so with numbers instead
+of code-thrashing.
+
+See "Before → after" below for the re-measurement.

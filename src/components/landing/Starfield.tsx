@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { useInViewport } from "@/hooks/use-in-viewport";
 
 type Star = { x: number; y: number; r: number; o: number; vx: number; vy: number; orange: boolean; cluster: number };
 
@@ -38,7 +39,12 @@ function clusterCount(resultCount: number) {
  * them frame over frame, so nothing teleports.
  */
 export function Starfield({ active = false, resultCount = 0, seed = "" }: { active?: boolean; resultCount?: number; seed?: string }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // ARENA-STABILIZE.md Phase 1.4 - this canvas used to start its resize+draw rAF loop the
+  // instant it mounted, even though it sits below the fold on the landing page (behind the
+  // Talent Universe section) - pure wasted main-thread work competing with hydration before
+  // anyone could see it. Gated to only run once actually scrolled into view, and paused again
+  // if scrolled away (see use-in-viewport.ts).
+  const { ref: canvasRef, inViewport } = useInViewport<HTMLCanvasElement>();
   const reduced = useReducedMotion();
   const stateRef = useRef({ active, resultCount, seed });
   const sizeRef = useRef({ w: 0, h: 0 });
@@ -69,7 +75,7 @@ export function Starfield({ active = false, resultCount = 0, seed = "" }: { acti
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
+    if (!canvas || !ctx || !inViewport) return;
 
     let stars: Star[] = [];
     let raf = 0;
@@ -145,7 +151,7 @@ export function Starfield({ active = false, resultCount = 0, seed = "" }: { acti
       window.removeEventListener("resize", resize);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, [reduced]);
+  }, [reduced, inViewport, canvasRef]);
 
   return <canvas ref={canvasRef} aria-hidden className="absolute inset-0 h-full w-full" />;
 }
