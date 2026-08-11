@@ -1,5 +1,12 @@
 # PAGE-INVENTORY.md — live route/page inventory across all five roles
 
+**Update, 2026-08-12**: `ARENA-STABILIZE.md`'s Phase 3 re-walked navigation coherence on top of
+this table (deploy pipeline fixed, mobile perf root-caused, the full G1–G9 candidate Golden Path
+verified twice live). One more real nav gap found and fixed (`/feed/[id]`'s "Back" button pointed
+at an orphaned page); `/map` was checked live as a possible "unfinished feature" hide-candidate
+and confirmed genuinely working, not hidden. Full detail in `STABILIZE-REPORT.md`. Findings #5,
+#7–#10 below remain untouched (#6's onboarding-revisit bug is unrelated to this pass's scope).
+
 **Update, 2026-08-11**: findings #1–#4 below (the P0/P1 items) were fixed per
 `ARENA-INVENTORY-FIXES.md`, verified live at 1440px+390px, and the table rows below are updated
 in place with **FIXED (2026-08-11)** — original finding text kept intact so the "before" state

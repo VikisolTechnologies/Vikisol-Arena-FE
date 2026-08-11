@@ -191,3 +191,93 @@ DOB-save failure that both turned out to be my own test script's stale state aft
 
 **Phase 2 is green** — G1 through G9 walked clean, twice, on live production, 390px, with
 screenshots at every step. Proceeding to Phase 3.
+
+---
+
+## Phase 3 — Trim to coherence
+
+Inventoried against `PAGE-INVENTORY.md`'s 65-route audit (updated 2026-08-11, all P0/P1 findings
+already fixed as of that pass) and this session's own live checks. Honest finding: **there wasn't
+a large hidden-broken surface left to trim.** Phases 0–2 already closed the real dead-ends this
+mission cared about (public routes, wrong-role redirects, dead taps, the join/apply/message/
+follow/notify loop). What Phase 3 actually found:
+
+- **`/map` was the obvious HIDE candidate by this mission's own description ("unfinished map
+  tiles view") — checked live and kept it.** First look (default 5km radius, this session's test
+  coordinates) showed an empty radar with no markers, which looked exactly like the unfinished
+  placeholder the mission predicted. Before hiding a real feature on a hunch, widened the radius
+  to 25km (where a real nearby post existed per a direct API check) and re-tested: a real marker
+  rendered correctly, filters work, the geolocation-consent gate works, zero console errors, no
+  visual bugs, ivory system applied throughout. It's an abstract radar rather than literal map
+  tiles (matches `ROUTES.md`'s own honest self-description), but it is a genuinely working
+  feature, not a placeholder. Trusting the live evidence over the mission text's own prediction —
+  hiding a working feature would be a real mistake, not a trim.
+- **`/admin/promotions`** — confirmed 404 (`ROUTES.md` marks it ⬜, not built), but it is **not
+  linked from `PlatformAdminShell`'s nav at all** — grepped to confirm. No dead tap exists today;
+  nothing to hide because nothing visible points at it.
+- **One real, live-found nav-coherence gap, fixed**: `/feed/[id]`'s "Back to Feed" button (moved
+  onto `AppShell`'s Home/Discover/Map/Work/Inbox nav during Phase 2's public-post-detail fix)
+  still targeted `/feed` — the older, `CandidateAppShell`-based list page. An existing
+  `next.config.ts` redirect already sends `/feed` → `/home`, so this wasn't actually broken, just
+  a wasted redirect hop with a label that no longer described its destination. Pointed directly
+  at `/home`, relabeled "Back to Home."
+- **Found and deliberately NOT touched**: two parallel, overlapping app shells currently coexist
+  — `AppShell` (newer, PART 4 nav: Home · Discover · Map · Work · Inbox · Saved · Notifications;
+  serves `/home`, `/discover`, `/notifications`, `/rooms`, `/settings`) and `CandidateAppShell`
+  (older nav: Feed · Map · Rooms · Work · Identity · Messages · Settings; serves `/feed/[id]`
+  before Phase 2, still serves `/messages`). This is real, and it is exactly the kind of
+  incoherence Phase 3's brief describes — but it's a pre-existing, *acknowledged-in-code*
+  transitional state (`AppShell`'s own top comment: "CandidateAppShell is untouched and still
+  serves every route not yet migrated... this is additive, not a replacement"), tracked as
+  ongoing migration work in `ROUTES.md`/`PART 15`, not a hidden bug this pass discovered. Fully
+  unifying it means deciding which shell every remaining `CandidateAppShell` route (`/messages`
+  primarily, now that `/feed/[id]` moved) should migrate to — a real structural call, not a
+  "hide what's broken" trim, and explicitly the kind of spec/PART-15 work this mission says not
+  to start. Flagging it clearly here rather than silently accepting it or quietly attempting it.
+
+**No pages were hidden this pass** — the honest result of actually checking, not a skipped step.
+Every visible nav item, on both shells, leads to a real, working page; nothing 404s from a
+visible tap (confirmed across Phases 0–3, live, both viewports).
+
+**Phase 3 is green.**
+
+---
+
+## Definition of done — checked against ARENA-STABILIZE.md's own bar
+
+> "Syam can pick up his phone, cold-open arena.vikisol.in, and walk G1–G9 himself with zero dead
+> taps, zero blank screens, no lag that makes him wait — on a build whose footer hash matches
+> origin/main."
+
+- **Build hash matches origin/main, checkable in 5 seconds**: `/version` on both services,
+  footer stamp on every page — confirmed live throughout this pass (see Phase 0).
+- **G1–G9, zero dead taps**: walked clean twice on live production at 390px (Phase 2) — six real
+  dead-end/dead-tap bugs found and fixed along the way, not assumed away.
+- **No lag that makes him wait**: root cause measured before any fix, dominant contributor
+  (landing page cold-load JS/CPU work) fixed and re-verified with real before/after numbers,
+  remaining gap (network/TTFB, infra-level) honestly attributed rather than hidden (Phase 1).
+- **Not yet field-confirmed**: the real-device `WebVitalsReporter` is live and correctly
+  reporting (confirmed via Railway logs), but no traffic from Syam's own phone has hit it yet —
+  this report's confidence is "strong lab + live-account evidence," not "confirmed on his exact
+  device." Recommend he open the site once; `railway logs --service arena-web | grep web-vitals`
+  will show real numbers within seconds.
+
+**Loose ends carried forward, not silently dropped:**
+- Landing page's JS bundle (970KB uncompressed / 299KB compressed) didn't shrink this pass, only
+  Starfield's execution moved later — a genuine bundle-splitting pass remains open (Phase 1).
+- TTFB on cold mobile connections (~2.8s) is infra-attributed (connection-establishment latency
+  under Slow 4G), not code-fixable this pass — a CDN edge or similar would be the real lever.
+- The `CandidateProfile.id` vs `User.id` mismatch (causes a background 404 after following
+  someone reached via a room) — pre-existing, documented in the earlier `SLEEP-REPORT.md`, not
+  re-investigated here.
+- Non-semantic `div onClick` list cards (`/applications` and similar) — pre-existing, already
+  scoped out as P2 in `PAGE-INVENTORY.md`, left that way.
+- The `AppShell`/`CandidateAppShell` dual-nav situation (Phase 3) — real, flagged, deliberately
+  not attempted here; it's structural migration work, not a trim.
+- The DOB-for-Activities requirement surfaces via an error message with a "Go to Settings" link
+  now, rather than being silent — but whether DOB belongs in onboarding itself is a real product
+  question, not decided here.
+
+Feature work (Phase 4's three UI upgrades, and anything beyond) resumes only after this report is
+read — per the mission's own closing instruction, five items at a time from real usage notes,
+not another full rebuild.

@@ -1,3 +1,12 @@
+**Note, 2026-08-12 (`ARENA-STABILIZE.md` Phase 3)**: confirmed live that `AppShell` and
+`CandidateAppShell` still coexist exactly as this file's migration notes describe — `AppShell`
+serves `/home`, `/discover`, `/notifications`, `/rooms`, `/settings`, `/feed/[id]` (moved during
+Phase 2); `CandidateAppShell` still serves `/messages` (its last remaining route) with its own,
+different nav set. This is real, user-visible incoherence, not fixed here — completing this
+migration (deciding `/messages`' target shell, or finishing the `/inbox` merge this file already
+plans) is genuine PART 15 structural work, out of scope for a stabilization pass. Full reasoning
+in `STABILIZE-REPORT.md`.
+
 # ROUTES.md — the v3 route contract (ARENA-MASTER-ARCHITECTURE.md PART 2)
 
 Tracks every route the master spec requires, against what actually exists. Updated as the
