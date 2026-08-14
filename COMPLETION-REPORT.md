@@ -5,6 +5,12 @@ instruction, but **not claiming completion of items not actually attempted** —
 pass beats a fabricated full sweep. This session's actual scope and why is stated plainly at each
 checkpoint rather than silently assumed.
 
+**Where this session actually got to**: P0 (all four items) and P1's five originally-catalogued
+violations (1.1/1.2/1.4) plus half of P6 (6.1, CI wiring — needs secrets set to actually run) are
+done and live-verified. P1.3 (contrast token) and P1.5 (full a11y sweep) are real, scoped,
+explicitly not attempted. **P2 through P5 were not started this pass** — see the honest reason
+for each below, not silence.
+
 ---
 
 ## P0 — Speed
@@ -233,5 +239,74 @@ refactor and a component restructure. Flagged as the next P1 item, not silently 
 **Not attempted**: 1.5 (full axe sweep beyond the current 8 pages) — mechanical extension of the
 existing suite, real but not done this pass.
 
-Build clean (`tsc`/`next build`) after these changes. Full live re-verification (deploy, re-run
-a11y suite + full smoke sweep for the `FeedItemCard` restructure specifically) below.
+Build clean (`tsc`/`next build`) after these changes.
+
+**A real deploy hiccup, investigated before assuming anything about the cause**: the first deploy
+attempt (commit `84643fa`) showed `railway status` reporting "Deploy failed" while the live site
+kept serving the previous commit. Traced properly rather than guessed at: `railway status`'s own
+"deployment ID" field points at the *last successful* deployment, not the one the status message
+is actually about - `railway deployment list` was the command that surfaced the real failed
+deployment's own ID. Its build log showed the actual cause: `next/font/google` (fetching Manrope)
+hit repeated 404s against `fonts.gstatic.com` at build time (`Module not found:
+@vercel/turbopack-next/internal/font/google/font`, 18 errors, one per weight). Nothing in this
+session's changes touches fonts - confirmed by checking the diff - and the immediately-prior build
+(the GSAP fix, same font config) succeeded cleanly, so this reads as a transient Google
+Fonts CDN or Railway-network blip, not a real regression (this project's own `BLOCKED.md` has a
+prior, unrelated note about the exact same class of `next/font/google` build-time fetch fragility).
+`railway redeploy` (no code change) succeeded on the first retry, confirmed live via `/version`.
+
+**Live re-verification, ✅ clean**: full smoke sweep (51 routes × role) + the candidate journey
+suite — 55/55 passed, confirming the `FeedItemCard` restructure didn't break `/home` rendering,
+navigation, or any nested interaction. Re-ran the full a11y suite against the live deploy:
+**all 6 originally-catalogued violations are confirmed gone** (critical labels ×2, the 3 Switch
+`aria-toggle-field-name` issues, nested-interactive ×12, link-in-text-block). The only remaining
+axe failures on any page are color-contrast — exactly, and only, the ones already named above as
+deliberately not attempted this pass. Nothing unexpected surfaced.
+
+---
+
+## P6 — Keep it honest
+
+### 6.1 — CI — 🟡 half done: workflow real and committed, needs secrets to actually run
+
+`.github/workflows/e2e.yml` added: smoke + accessibility on every push/PR to `main`, full
+auth/access-control/journey regression on `main` pushes. **Cannot pass yet** — needs 5 repo
+secrets (`ARENA_*_PASSWORD` per role) that this session has no way to set (`gh` CLI isn't
+installed in this environment, confirmed by trying it — consistent with `BLOCKED.md`'s existing
+notes on this environment's git/GitHub tooling limits). Exact secret names, and where the values
+come from (`TEST-LOGINS.md`), are in the workflow file's own trailing comment — a 2-minute manual
+step once someone with repo admin access does it. Also does not yet block Railway's deploy on a
+red run (Railway's auto-deploy isn't wired to GitHub Actions status) — real follow-up, stated
+plainly rather than implied as done.
+
+### 6.2/6.3 — visual baselines, remaining journeys, signup test
+
+Not started — see `TESTING.md`'s own ranked backlog, unchanged by this pass except where P1's
+fixes touched it directly (noted inline there).
+
+---
+
+## P2 — P5 — not started this pass, and why
+
+Read in full before assuming any of this is close: **P2** (consolidate two overlapping nav
+shells, finish theme migration across every screen, photography/media completeness, loading/
+empty/error-state audit, a mobile app-feel pack) is real UI/UX work across dozens of screens.
+**P3** is a *backend* audit (`CandidateProfile.id`/`User.id` mismatch, API contract audit,
+pagination/N+1 sweep, error-contract consistency, WebSocket reconnect behavior, media-pipeline
+durability) — it lives in a **separate repo** (`arena-api`) this session never opened. **P4** is a
+security re-verification pass (IDOR suite, secret-in-bundle audit, rate-limit confirmation,
+security-header/CORS check, DPDP consent/export/deletion flows, a real backup-restore drill) —
+each of those needs to be *re-run live*, not assumed still true from `SECURITY-AUDIT.md`'s last
+pass, and a botched backup-restore drill is not something to rush. **P5** (nav-completeness walk,
+end-to-end core-loop confirmation, company-side loop confirmation, seed-data refresh) depends on
+P2's shell consolidation being done first to mean anything.
+
+None of these were touched. Not because they're unimportant — P3's backend audit and P4's security
+re-verification are arguably higher-stakes than anything in P0/P1 — but because this session
+already covered a full GSAP architecture change, a component restructure, and 6 real a11y fixes,
+each shipped and live-verified rather than rushed. Per this project's own standing rule (and this
+report's own opening line): an honest "not started, here's exactly why" beats a rushed pass through
+five more phases that would need to be re-verified from scratch anyway. **Recommended next
+session's scope: P2's shell consolidation first** (it's the one item P5 is blocked on), **or P4's
+security re-verification** if that's the higher priority — both are real, scoped, ready to start
+cold from this document.

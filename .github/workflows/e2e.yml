@@ -1,0 +1,111 @@
+name: E2E Tests
+
+# P6.1 (COMPLETION-REPORT.md): runs the Playwright suite (built 2026-08-14, see TESTING.md) on
+# every push and PR against main. Requires five repo secrets before it can pass - see this
+# file's own final comment block for exactly which ones and where the values come from
+# (TEST-LOGINS.md). Without them, every job fails at the "Run smoke + auth" step with a clear
+# "Missing ARENA_*" error (see tests/fixtures/accounts.ts) rather than a confusing one.
+#
+# Honest scope note: this makes failures VISIBLE (red check on the commit/PR, GitHub's own
+# branch-protection can require it before merge if turned on in repo settings) - it does not by
+# itself stop Railway from deploying on a red run, since Railway's auto-deploy watches pushes to
+# `main` directly and isn't wired to GitHub Actions status. Gating that too is a real follow-up
+# (Railway supports waiting on GitHub check runs; needs enabling on the Railway side), not
+# something a workflow file alone accomplishes - flagged, not silently implied.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  ARENA_BASE_URL: https://arena.vikisol.in
+  ARENA_TALENT_EMAIL: demo.talent@vikisol.dev
+  ARENA_TALENT_PASSWORD: ${{ secrets.ARENA_TALENT_PASSWORD }}
+  ARENA_COMPANY_ADMIN_EMAIL: demo.enterprise@vikisol.dev
+  ARENA_COMPANY_ADMIN_PASSWORD: ${{ secrets.ARENA_COMPANY_ADMIN_PASSWORD }}
+  ARENA_RECRUITER_EMAIL: demo.recruiter@vikisol.dev
+  ARENA_RECRUITER_PASSWORD: ${{ secrets.ARENA_RECRUITER_PASSWORD }}
+  ARENA_HIRING_MANAGER_EMAIL: demo.hiringmanager@vikisol.dev
+  ARENA_HIRING_MANAGER_PASSWORD: ${{ secrets.ARENA_HIRING_MANAGER_PASSWORD }}
+  ARENA_PLATFORM_ADMIN_EMAIL: admin@vikisol.dev
+  ARENA_PLATFORM_ADMIN_PASSWORD: ${{ secrets.ARENA_PLATFORM_ADMIN_PASSWORD }}
+
+jobs:
+  smoke-and-a11y:
+    name: Smoke + Accessibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run smoke (routes + auth)
+        run: npx playwright test tests/e2e/smoke tests/e2e/auth/login.spec.ts --project=desktop-chromium
+
+      - name: Run accessibility
+        run: npx playwright test tests/e2e/accessibility --project=desktop-chromium
+        if: always()
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+  full-regression:
+    name: Full regression (auth, access-control, journeys)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run full regression
+        run: npx playwright test tests/e2e/auth tests/e2e/journeys --project=desktop-chromium
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-full
+          path: playwright-report/
+          retention-days: 14
+
+# ── Setup required before this workflow can pass ──────────────────────────────────────────────
+# Add these as repository secrets (Settings → Secrets and variables → Actions → New repository
+# secret). Values are the shared demo-account password documented in TEST-LOGINS.md - all five
+# secrets currently hold the same value (`Demo@12345`), listed separately so each account's
+# credential can be rotated independently later without touching this file:
+#   ARENA_TALENT_PASSWORD
+#   ARENA_COMPANY_ADMIN_PASSWORD
+#   ARENA_RECRUITER_PASSWORD
+#   ARENA_HIRING_MANAGER_PASSWORD
+#   ARENA_PLATFORM_ADMIN_PASSWORD
+# Not something this workflow file can set for itself - GitHub Actions secrets require repo
+# write/admin access via the GitHub UI or `gh secret set`, neither available from this session.

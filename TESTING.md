@@ -2,8 +2,8 @@
 
 Playwright + TypeScript. Built 2026-08-14, against currently-live `arena.vikisol.in` — there is
 one real deployment today (verified: the custom domain and `arena-web-production-f1f4.up.railway.app`
-serve the identical build, matching `/version` commit hash on both). No CI wiring yet — see
-"What's not covered yet" below.
+serve the identical build, matching `/version` commit hash on both). CI wiring added 2026-08-14 —
+see "CI" below.
 
 This suite doesn't replace the manual audit trail already in this repo (`BUGS.md`,
 `PAGE-INVENTORY.md`, `PERF-REPORT.md`, `SAFETY-STATUS.md`, `E2E-STATUS.md`, `SECURITY-AUDIT.md`
@@ -145,30 +145,41 @@ target, not loosened to "pass by default." A regression ceiling (hard fail well 
 baseline) still catches anything that makes this measurably *worse*. When the bundle-splitting or
 infra work above ships, this test turning green is the actual proof it worked.
 
+## CI
+
+`.github/workflows/e2e.yml` (added 2026-08-14, see `COMPLETION-REPORT.md` P6.1) runs smoke +
+accessibility on every push/PR to `main`, plus full auth/access-control/journey regression on
+`main` pushes specifically. **Needs five repo secrets set before it can pass** — `gh` CLI isn't
+available in this environment, so this wasn't something this session could finish alone; exact
+secret names and where the values come from are in the workflow file's own trailing comment.
+Does not yet block Railway's deploy on a red run (Railway's auto-deploy isn't wired to GitHub
+Actions status) — real follow-up, not silently claimed as done.
+
 ## What's NOT covered yet — honest backlog, ranked
 
-1. **CI wiring.** No GitHub Actions workflow yet. Needs `ARENA_*_EMAIL`/`ARENA_*_PASSWORD` as
-   repo secrets before it can run unattended — a credentials decision, not just YAML.
-2. **Visual regression baselines** (`toHaveScreenshot()`). The route sweep captures screenshots
+1. **Visual regression baselines** (`toHaveScreenshot()`). The route sweep captures screenshots
    today but doesn't diff them against a baseline yet — spec §16/§35's own instruction is to
    audit the current UI for real defects *before* freezing it as the "correct" baseline, which
    hasn't happened. Recommend a dedicated visual-audit pass first, then baseline.
-3. **CRUD/mutation coverage for Feed, Map filters, Rooms/messaging send, Marketplace bid/award,
+2. **CRUD/mutation coverage for Feed, Map filters, Rooms/messaging send, Marketplace bid/award,
    Interview scheduling, full Settings (autonomy dial, consent toggles, location tiers, account
    deletion).** This pass built the infrastructure and one deep proof-of-pattern journey; extending
    it to the other 9 journeys named in the QA spec's §34 is real, mechanical work on top of what's
    here now, not a redesign.
-4. **Signup/registration flow.** Deliberately not built this pass — see "Data safety" above.
-5. **Dynamic-route coverage in the plain route sweep** (job detail, candidate detail, company
+3. **Signup/registration flow.** Deliberately not built this pass — see "Data safety" above.
+4. **Dynamic-route coverage in the plain route sweep** (job detail, candidate detail, company
    detail by ID) — partially covered via the one journey test's live-discovered application
    detail; not swept systematically across every dynamic route yet.
-6. **Full accessibility sweep** across all ~45 routes (today: 8 representative pages) and a
-   keyboard-only navigation pass specifically for the non-semantic `div onClick` list cards
-   (`PAGE-INVENTORY.md` finding #5 — a real, already-documented, unfixed gap).
-7. **Load/stress testing.** `PERF-REPORT.md` already has a real (if self-acknowledged partial)
+5. **Full accessibility sweep** across all ~45 routes (today: 8 representative pages, all clean
+   except the still-open color-contrast findings — see `COMPLETION-REPORT.md` P1) and a
+   keyboard-only navigation pass specifically for non-semantic `div onClick` list cards
+   (`PAGE-INVENTORY.md` finding #5 — `FeedItemCard` fixed 2026-08-14 as a side effect of the
+   nested-interactive a11y fix; `Applications`/`Marketplace`/`Companies` list cards from the
+   original finding are still unfixed).
+6. **Load/stress testing.** `PERF-REPORT.md` already has a real (if self-acknowledged partial)
    load-test methodology and result against this same backend; not re-implemented in Playwright,
    which isn't the right tool for concurrent-user load generation anyway.
-8. **BrowserStack / mabl.** Named in the original ask as complementary tools — both are paid
+7. **BrowserStack / mabl.** Named in the original ask as complementary tools — both are paid
    third-party SaaS requiring an account/billing decision this session can't make unilaterally.
    The Playwright suite here is free, fully self-hosted, and was the option explicitly called
    "permanent" — that's why it's what got built. If cross-device cloud coverage (BrowserStack) or
