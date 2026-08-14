@@ -12,6 +12,16 @@ name: E2E Tests
 # `main` directly and isn't wired to GitHub Actions status. Gating that too is a real follow-up
 # (Railway supports waiting on GitHub check runs; needs enabling on the Railway side), not
 # something a workflow file alone accomplishes - flagged, not silently implied.
+#
+# 2026-08-15: this workflow's first three real (post-secrets) runs all failed with the same
+# reproducible pattern - chunk-file 404s mid-test ("Refused to execute script ... MIME type
+# 'text/plain'"). Diagnosed by re-running the identical command locally against the identical
+# live URL seconds later (56/56 clean) - not a product bug, a race between this same push's
+# Railway/Vercel redeploy swapping out .next/static/chunks/* and this workflow's own test run
+# starting before that swap finished, so an in-flight page held references to chunk files that
+# no longer existed server-side. The "Wait for live deployment to match this commit" step below
+# polls /version and blocks on the exact commit showing up live (up to 5 min) before any test
+# runs, so this workflow no longer races its own trigger.
 
 on:
   push:
@@ -52,6 +62,19 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium webkit
 
+      - name: Wait for live deployment to match this commit
+        run: |
+          for i in $(seq 1 30); do
+            live_commit="$(curl -fsS "$ARENA_BASE_URL/version" 2>/dev/null | sed -n 's/.*"commit":"\([^"]*\)".*/\1/p')"
+            if [ "$live_commit" = "$GITHUB_SHA" ]; then
+              echo "Live deployment matches $GITHUB_SHA (attempt $i)"
+              exit 0
+            fi
+            echo "Attempt $i/30: live=$live_commit expected=$GITHUB_SHA - waiting 10s..."
+            sleep 10
+          done
+          echo "::warning::Live deployment never matched $GITHUB_SHA after 5 minutes - proceeding anyway, tests may hit a stale build (see e2e.yml comment on why this step exists)."
+
       - name: Run smoke (routes + auth)
         run: npx playwright test tests/e2e/smoke tests/e2e/auth/login.spec.ts --project=desktop-chromium
 
@@ -85,6 +108,19 @@ jobs:
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium webkit
+
+      - name: Wait for live deployment to match this commit
+        run: |
+          for i in $(seq 1 30); do
+            live_commit="$(curl -fsS "$ARENA_BASE_URL/version" 2>/dev/null | sed -n 's/.*"commit":"\([^"]*\)".*/\1/p')"
+            if [ "$live_commit" = "$GITHUB_SHA" ]; then
+              echo "Live deployment matches $GITHUB_SHA (attempt $i)"
+              exit 0
+            fi
+            echo "Attempt $i/30: live=$live_commit expected=$GITHUB_SHA - waiting 10s..."
+            sleep 10
+          done
+          echo "::warning::Live deployment never matched $GITHUB_SHA after 5 minutes - proceeding anyway, tests may hit a stale build (see e2e.yml comment on why this step exists)."
 
       - name: Run full regression
         run: npx playwright test tests/e2e/auth tests/e2e/journeys --project=desktop-chromium
