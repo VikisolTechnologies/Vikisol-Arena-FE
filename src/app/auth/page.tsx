@@ -15,6 +15,7 @@ import { signIn, signUp, verifyMfa } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/httpClient";
 import { isRealMode } from "@/lib/api/mode";
 import { isOnboarded } from "@/lib/session";
+import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
 import type { Role } from "@/lib/types";
 
 // Public signup only ever creates "talent" or a brand-new tenant's "company_admin" (see
@@ -35,6 +36,15 @@ export default function AuthPage() {
   // non-null value swaps the form below to the code-entry step instead of email/password.
   const [mfaPendingToken, setMfaPendingToken] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
+  // Same fixed-bottom-banner-covers-a-real-control bug already fixed on every app shell's
+  // sidebar (see use-cookie-consent-visible.ts) - CookieConsentBanner is a fixed, bottom-of-
+  // viewport overlay (z-[900]) and this page's own submit button can land directly under it for
+  // any first-time visitor, since nothing here previously reserved space for it (found via a
+  // real, reproducible signInAs() timeout: "button[type=submit] ... subtree intercepts pointer
+  // events" from CookieConsentBanner's own class). This is the ONE page every visitor hits
+  // before any shell exists to protect them, so it was the highest-severity instance of this
+  // bug class in the app - it could block sign-in entirely, not just a secondary nav action.
+  const cookieBannerVisible = useCookieConsentVisible();
 
   // Redirect off the session's *actual* role, not the tab the user clicked - real mode's
   // sign-in ignores the selected role entirely (any account can sign in from either tab) and
@@ -109,7 +119,10 @@ export default function AuthPage() {
     <div className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
       <AuraBackground />
 
-      <div className="relative z-10 mx-auto grid min-h-svh w-full max-w-[1240px] items-center gap-8 px-5 py-16 sm:px-6 lg:grid-cols-2">
+      <div
+        className="relative z-10 mx-auto grid min-h-svh w-full max-w-[1240px] items-center gap-8 px-5 py-16 sm:px-6 lg:grid-cols-2"
+        style={cookieBannerVisible ? { paddingBottom: "var(--cookie-banner-h, 88px)" } : undefined}
+      >
         {/* Branding panel */}
         <div className="order-2 hidden flex-col items-center text-center lg:order-1 lg:flex">
           <AgentOrb />
