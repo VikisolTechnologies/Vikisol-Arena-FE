@@ -270,14 +270,14 @@ export default function SettingsPage() {
                   <span className="flex items-center gap-1.5 text-sm font-medium"><Sparkles className="size-3.5 text-primary-soft" /> Auto-apply</span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">Let your agent apply to strong matches for you</span>
                 </span>
-                <Switch checked={profile.consent.autoApply} onCheckedChange={() => toggleConsent("autoApply")} disabled={saving} />
+                <Switch aria-label="Auto-apply" checked={profile.consent.autoApply} onCheckedChange={() => toggleConsent("autoApply")} disabled={saving} />
               </div>
               <div className="flex items-center justify-between rounded-2xl border border-border bg-secondary px-4 py-3">
                 <span>
                   <span className="flex items-center gap-1.5 text-sm font-medium"><Eye className="size-3.5 text-primary-soft" /> Visible to enterprises</span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">Show up in Talent Universe search results</span>
                 </span>
-                <Switch checked={profile.consent.searchableByEnterprises} onCheckedChange={() => toggleConsent("searchableByEnterprises")} disabled={saving} />
+                <Switch aria-label="Visible to enterprises" checked={profile.consent.searchableByEnterprises} onCheckedChange={() => toggleConsent("searchableByEnterprises")} disabled={saving} />
               </div>
             </div>
           </Card>
@@ -326,7 +326,7 @@ export default function SettingsPage() {
                 <p className="flex items-center gap-1.5 text-sm font-medium"><Cake className="size-3.5 text-primary-soft" /> Date of birth</p>
                 <p className="mt-0.5 mb-2.5 text-xs text-muted-foreground">Self-declared, used only to block under-18s from activity meetups.</p>
                 <div className="flex items-center gap-2">
-                  <Input type="date" value={dobInput} onChange={(e) => { setDobInput(e.target.value); setDobSaved(false); }} className="h-8 border-border bg-card text-xs" />
+                  <Input aria-label="Date of birth" type="date" value={dobInput} onChange={(e) => { setDobInput(e.target.value); setDobSaved(false); }} className="h-8 border-border bg-card text-xs" />
                   <Button variant="outline" size="sm" disabled={!dobInput || dobSaving} onClick={saveDob}>
                     {dobSaving ? "Saving…" : dobSaved ? "Saved ✓" : "Save"}
                   </Button>
@@ -416,7 +416,7 @@ export default function SettingsPage() {
                 <span className="block text-sm font-medium">Reduce motion effects</span>
                 <span className="mt-0.5 block text-xs text-muted-foreground">Turns off the orb animation, particle nebula, and scroll reveals app-wide</span>
               </span>
-              <Switch checked={reducedEffects} onCheckedChange={toggleReducedEffects} />
+              <Switch aria-label="Reduce motion effects" checked={reducedEffects} onCheckedChange={toggleReducedEffects} />
             </div>
           </Card>
         </div>

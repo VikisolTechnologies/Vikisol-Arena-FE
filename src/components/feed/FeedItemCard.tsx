@@ -1,4 +1,4 @@
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
 import {
   Bookmark,
@@ -55,7 +55,6 @@ function formatComp(min?: number, max?: number): string | null {
 }
 
 export function FeedItemCard({ item }: { item: FeedItem }) {
-  const router = useRouter();
   const [saved, setSaved] = useState(false);
   const Icon = TYPE_ICON[item.itemType] ?? Sparkles;
   const isPostOrigin = ["activity", "ask", "update", "company"].includes(item.itemType);
@@ -90,12 +89,19 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
     }
   }
 
+  // Nested-interactive fix (axe: 12 instances on /home) - this card used to be a single
+  // <button> wrapping ReactionButton and the Save button, which is invalid HTML (buttons can't
+  // contain buttons) and unreliable for keyboard/screen-reader users. Standard "stretched link"
+  // pattern instead: a real <Link> covers the card (native Tab/Enter navigation, a real href -
+  // also closes the "cards aren't real links" gap PAGE-INVENTORY.md finding #5 already flagged
+  // for this same component family), positioned behind the actual content so nested controls
+  // (ReactionButton, Save) stay independently clickable/focusable on top of it.
   return (
-    <button
-      type="button"
-      onClick={() => router.push(href)}
-      className="w-full rounded-[var(--radius-card)] border border-border bg-card p-5 text-left shadow-[var(--shadow-card-rest)] transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)]"
-    >
+    <div className="relative w-full rounded-[var(--radius-card)] border border-border bg-card p-5 shadow-[var(--shadow-card-rest)] transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)]">
+      <Link href={href} className="absolute inset-0 z-0 rounded-[var(--radius-card)]">
+        <span className="sr-only">{item.title || `Open ${TYPE_LABEL[item.itemType] ?? "post"} from ${authorName}`}</span>
+      </Link>
+      <div className="relative z-10">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <PersonAvatar seed={avatarSeed} name={authorName} size="sm" />
@@ -207,6 +213,7 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           {item.myJoinStatus === "approved" ? "You're in" : item.myJoinStatus === "pending" ? "Request pending" : "Request declined"}
         </p>
       )}
-    </button>
+      </div>
+    </div>
   );
 }

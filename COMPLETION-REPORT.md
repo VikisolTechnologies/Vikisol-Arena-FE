@@ -138,14 +138,100 @@ broken.
 Before/after FCP measurement: see 0.4 below (measured after deploying, against the live site, not
 the local build).
 
-### 0.3 — Cold `/home` (bookmarked entry)
+### 0.3 — Cold `/home` (bookmarked entry) — assessed, deliberately deferred, not attempted
 
-Not started this pass — see assessment below once reached.
+The backlog's own suggested fix — "server-render/stream above-the-fold with skeletons" — is the
+SSR + HttpOnly-cookie session rewrite. This was already investigated in real depth in a prior
+session (`MOBILE-PERF-BASELINE.md`'s "The SSR + HttpOnly-cookie rewrite" section) and explicitly
+declined for that pass, with the real scope quantified: **32 pages** share the identical
+client-side auth-guard pattern this app's whole data-fetching model is built on; **23 of ~30**
+API modules branch on mock/real mode; the JWT lives in `localStorage` at 10+ call sites with no
+abstraction layer; and the existing refresh-token cookie is scoped to `api-arena.vikisol.in`
+specifically — arena-web's own server can't see it today, so this needs a *new*
+`Domain=.vikisol.in` cookie issued by the backend, not a frontend-only change. That prior session's
+stated reason for not attempting even a scoped slice was "no browser automation to verify a change
+to the mechanism that decides who's logged in" — **that specific blocker no longer applies** (this
+session's Playwright suite is real, live-verified browser automation). But the scope itself
+didn't shrink: this is still a genuine session/auth-model migration touching every authenticated
+route in the app, correctly named by that prior session as "its own dedicated pass," not a
+same-session addition on top of an already-large GSAP refactor and an a11y pass. Attempting it
+here, rushed, right after this session's other changes, without a focused pass of its own, is not
+a responsible trade — flagged as the top P0 follow-up, now genuinely unblocked (the browser-
+automation gap is closed), not attempted.
 
-### 0.4 — Before/after numbers
+### 0.4 — Before/after numbers — ✅ measured, reported honestly (mixed/inconclusive on FCP)
 
-Pending 0.2/0.3.
+Methodology: this suite's own `tests/e2e/performance/landing-load.spec.ts` (iPhone 13, Slow 4G,
+4× CPU throttle — same profile as `MOBILE-ROOT-CAUSE.md`), against the live site, deployed commit
+confirmed via `/version` before each measurement.
+
+| Run | TTFB | FCP | Approx. TBT | Long tasks | JS (initial) |
+|---|---|---|---|---|---|
+| Before fix (this session, pre-deploy) | 355ms | 3176ms | 230ms | 4 | 290KB |
+| After fix, run 1 | 714ms | 3484ms | 327ms | 5 | 292KB |
+| After fix, run 2 | 410ms | **2796ms** | **202ms** | 4 | 310KB |
+
+**Honest read, not cherry-picked**: run 1 alone would read as a regression; run 2 alone would read
+as a clear win (-380ms FCP, -12%). TTFB swung ~300ms between the two *post-fix* runs on
+byte-identical code — TTFB is a server/network metric a client-side bundling change cannot affect,
+so that swing is real-world network variance on a live server several hundred ms away, not a
+result of anything shipped (the exact caveat `PERF-REPORT.md`'s own prior passes flagged for the
+same reason). Two samples isn't enough to report a confident percentage either direction — what
+*is* confirmed, independent of network noise, is the structural fix itself (0.2's clean-rebuild
+bundle measurement: gsap genuinely absent from the initial script list). The honest verdict on
+FCP/TBT specifically: **trending flat-to-slightly-positive, not proven, not regressed** — a proper
+answer needs 5-10 repeated runs and a median, which this pass didn't have budget for. Flagged as
+follow-up rather than reported as a number this session didn't actually earn.
+
+JS bytes staying flat (~290-310KB) across all three rows is expected, not a bug: the gsap code
+still downloads, just later (fetched once the dynamic import fires post-hydration, well within
+this test's 1500ms post-load measurement window) — "deferred" was always the goal, not "deleted."
 
 ---
 
-*(Sections below filled in as reached.)*
+## P1 — Accessibility + visual quality
+
+### 1.1/1.2/1.4 — the 6 originally-catalogued violations — ✅ fixed, pending live re-verification
+
+Got exact node-level detail via axe-core (`node.html`/`target`/`failureSummary`, not guessed from
+source) before touching anything:
+
+- **`/` critical `label`**: the Talent Universe section's decorative example-search `<Input readOnly>`
+  ("Try 'senior React developer...'") had no accessible name. Fixed: `aria-label="Example search
+  query"` (`TalentUniverse.tsx`).
+- **`/settings` critical `label`**: the Date-of-birth `<Input type="date">` had no accessible name
+  (its visible label is a sibling `<p>`, not programmatically associated). Fixed: `aria-label="Date
+  of birth"`.
+- **`/settings` serious `aria-toggle-field-name`** (found during this deeper pass, not in the
+  original 6-row summary — same root cause as the labels above, worth fixing alongside them): all
+  three `Switch` toggles (Auto-apply, Visible to enterprises, Reduce motion effects) had no
+  accessible name for the same reason — visible label text lives in a sibling `<span>`. Fixed with
+  matching `aria-label`s on each.
+- **`/home` serious `nested-interactive`, 12 instances**: confirmed the predicted "one repeated
+  pattern" — `FeedItemCard` wrapped its entire card in a `<button onClick={router.push}>` that also
+  contained `ReactionButton` and a Save `<button>`. This is invalid HTML (a `<button>` cannot
+  contain another `<button>`) and unreliable for keyboard/screen-reader users regardless of the
+  axe rule. Fixed with the standard "stretched link" pattern: a real `<Link href>` covers the card
+  (native Tab/Enter navigation, a real crawlable href — this also closes the "list cards aren't
+  real links" gap `PAGE-INVENTORY.md` finding #5 already flagged for this component family),
+  positioned behind the actual content so `ReactionButton`/Save stay independently
+  clickable/focusable on top of it. Not a cosmetic change — verify the card still looks and
+  navigates identically before trusting this, see the live re-check below.
+- **`/enterprise/dashboard` serious `link-in-text-block`**: the empty-postings message ("No
+  postings yet — create one.") had its inline link distinguished from surrounding text only by
+  color, underlined on hover only — the exact WCAG 1.4.1 pattern. Fixed: permanent `underline`
+  instead of `hover:underline`.
+
+**Not attempted**: the broader color-contrast token question (multiple `text-muted-foreground`
+instances failing 4.5:1 across `/settings`, `/home`, `/identity`, `/discover`, plus a very-low-
+contrast build-stamp badge on every authenticated page) — this is a real, catalogued set of
+findings, but per the backlog's own framing (P1.3: "treat this as a design fix, not just
+compliance... very likely part of why the ivory theme reads as washed out") it's a design-token
+decision affecting the whole app's visual identity, not a same-pass touch-up alongside a GSAP
+refactor and a component restructure. Flagged as the next P1 item, not silently dropped.
+
+**Not attempted**: 1.5 (full axe sweep beyond the current 8 pages) — mechanical extension of the
+existing suite, real but not done this pass.
+
+Build clean (`tsc`/`next build`) after these changes. Full live re-verification (deploy, re-run
+a11y suite + full smoke sweep for the `FeedItemCard` restructure specifically) below.

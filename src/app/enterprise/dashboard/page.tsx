@@ -78,7 +78,7 @@ export default function EnterpriseDashboardPage() {
             ))}
             {postings.length === 0 && (
               <EmptyState
-                title={<>No postings yet — <Link href="/enterprise/postings" className="text-primary-soft hover:underline">create one</Link>.</>}
+                title={<>No postings yet — <Link href="/enterprise/postings" className="text-primary-soft underline">create one</Link>.</>}
                 className="rounded-xl px-4 py-8 text-xs"
               />
             )}

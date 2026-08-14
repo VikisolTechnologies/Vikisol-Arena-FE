@@ -40,6 +40,7 @@ export function TalentUniverse() {
 
           <Reveal delay={0.15} className="mx-auto mb-5.5 flex max-w-[640px] items-center gap-3 rounded-full border border-border bg-white/5 py-1.5 pl-5.5 pr-1.5 backdrop-blur-xl">
             <Input
+              aria-label="Example search query"
               defaultValue='Try "senior React developer · contract · Hyderabad"'
               readOnly
               className="h-auto flex-1 border-0 bg-transparent p-0 text-[#8b8b93] shadow-none focus-visible:ring-0"
