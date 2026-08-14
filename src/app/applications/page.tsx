@@ -103,6 +103,7 @@ export default function ApplicationsPage() {
                   return (
                     <div
                       key={app.id}
+                      data-testid="application-card"
                       className="cursor-pointer rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-primary/40"
                       onClick={() => router.push(`/applications/${app.id}`)}
                     >
