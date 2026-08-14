@@ -1,9 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Standalone output for the Docker runtime image - bundles only the traced production
-  // dependencies into .next/standalone instead of shipping the full node_modules tree.
-  output: "standalone",
+  // Standalone output for the Docker runtime image on Railway - bundles only the traced
+  // production dependencies into .next/standalone instead of shipping the full node_modules
+  // tree. Vercel's own build pipeline doesn't want this and sets process.env.VERCEL on every
+  // build it runs, so this stays conditional while both platforms build from the same source
+  // during the migration window - Railway's build (no VERCEL env var present) is unaffected.
+  output: process.env.VERCEL ? undefined : "standalone",
   // ARENA-DEEP-AUDIT.md Phase 5: this used to unconditionally set X-Robots-Tag: noindex,
   // nofollow here, which meant the header shipped on the live production domain too (found by
   // curl-checking prod response headers directly) - Google was never going to index the site
