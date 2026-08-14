@@ -12,6 +12,45 @@ rather than re-derived. What didn't exist before this suite: anything **re-runna
 pass was a one-off script, run once in a session and discarded. This is the first version of this
 suite that persists.
 
+## First real run (2026-08-14) — findings
+
+The suite was built, deployed against (one testid fix), and actually executed against the live
+app the same session it was written — not just committed and left unrun. Full results:
+
+- **Route sweep**: 51/51 passed (all static routes × correct role, desktop-chromium). Zero
+  unexpected console/network errors, zero horizontal overflow, real content everywhere.
+- **Auth + access control**: 26/26 passed, including the wrong-role-denial regression guards.
+- **Candidate journey**: 4/4 passed, including the Settings reload-persistence check.
+- **Performance**: confirms the already-known landing-page gap (this session's numbers: FCP
+  3176ms, TBT ~230ms, JS 290KB — same ballpark as MOBILE-ROOT-CAUSE.md's 2026-08-12 figures, no
+  new regression). Also surfaced a genuinely new, previously-uncleanly-isolated data point: a
+  **fresh direct load** of `/home` (not the warm client-side-transition scenario prior docs
+  measured) costs FCP ~2.6-2.9s — nearly as much as the landing page — because it inherits the
+  same ~97%-shared JS floor MOBILE-PERF-BASELINE.md's §3 already documented. Someone opening a
+  bookmarked/shared `/home` link cold pays close to the full landing-page cost, not the 492ms
+  figure. LCP isn't reliably captured in this environment under 4× CPU throttle (same limitation
+  PERF-BASELINE.md's own Pass 1 hit) — reported as unavailable, not asserted on.
+- **Accessibility**: 7/13 pages clean (`/auth`, `/pricing`, `/marketplace`+overlap not yet swept,
+  etc.); **6 real violations found**, all axe-core `critical`/`serious`:
+
+  | Page | Role | Severity | Rule | What |
+  |---|---|---|---|---|
+  | `/` (landing) | public | critical | `label` | A form element has no accessible label (1 node) |
+  | `/settings` | talent | critical | `label` | A form element has no accessible label (1 node) |
+  | `/home` | talent | serious | `nested-interactive` | An interactive control is nested inside another interactive control, 12 separate instances on one page — likely a repeated pattern (e.g. a link/button inside a card that's itself a click target), not 12 unrelated bugs |
+  | `/home` | talent | serious | `color-contrast` | Text/background contrast below WCAG threshold (1 node) |
+  | `/identity` | talent | serious | `color-contrast` | Same rule, 1 node |
+  | `/discover` | talent | serious | `color-contrast` | Same rule, 1 node |
+  | `/enterprise/dashboard` | recruiter | serious | `link-in-text-block` | A link inside a text block isn't distinguishable without relying on color alone (1 node) |
+
+  Exact element details for each are in `npx playwright show-trace` / the HTML report
+  (`npm run test:e2e:report`) for the corresponding test — not duplicated here since traces
+  include the real DOM path and a screenshot, which this table can't.
+
+None of the above were fixed as part of building this suite — per this project's own testing
+rule (and the QA spec's §33/§40), a test suite's job is to report real defects, not silently patch
+application code to make itself pass. These are reported findings, triaged by severity below.
+
 ## Data safety — read this before running anything that mutates data
 
 - All tests run against the app's one existing deployment, using the five seeded demo accounts
