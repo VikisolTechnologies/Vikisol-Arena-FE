@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { ArrowLeft, Clock3, Sparkles, Settings2 } from "lucide-react";
-import { useGSAP } from "@gsap/react";
 import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
@@ -17,11 +17,12 @@ import { getMyProfile } from "@/lib/api/profile";
 import { getProject, placeBid, submitMyDeliverable } from "@/lib/api/market";
 import { getMyProject, addBidToMyProject } from "@/lib/api/myProjects";
 import { recordMyBid, getMyBids } from "@/lib/api/myBids";
-import { useGsap } from "@/lib/gsap";
 import { requireOnboarded } from "@/lib/auth-guard";
 import { formatINR, formatINRRange } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CandidateProfile, Project, Bid } from "@/lib/types";
+
+const Animator = dynamic(() => import("./BidsListAnimator").then((m) => m.BidsListAnimator), { ssr: false });
 
 function formatTimer(ms: number) {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -44,7 +45,6 @@ export default function ProjectDetailPage() {
   const [bidding, setBidding] = useState(false);
   const [amount, setAmount] = useState("");
   const bidsListRef = useRef<HTMLDivElement>(null);
-  const gsap = useGsap();
 
   const load = () => {
     getMyProject(params.id).then((mine) => {
@@ -73,10 +73,6 @@ export default function ProjectDetailPage() {
     return () => clearInterval(id);
   }, []);
 
-  useGSAP(() => {
-    if (!bidsListRef.current) return;
-    gsap.from(bidsListRef.current.children, { opacity: 0, x: 24, duration: 0.5, stagger: 0.06, ease: "power2.out" });
-  }, [project?.bids.length]);
 
   if (project === undefined || !profile) {
     return (
@@ -187,6 +183,7 @@ export default function ProjectDetailPage() {
             ))}
             {project.bids.length === 0 && <p className="text-sm text-muted-foreground">No bids yet — be the first.</p>}
           </div>
+          <Animator bidsListRef={bidsListRef} bidsCount={project.bids.length} />
         </div>
       </div>
 

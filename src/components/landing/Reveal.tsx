@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
-import { useGSAP } from "@gsap/react";
-import { useGsap } from "@/lib/gsap";
+import dynamic from "next/dynamic";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
+
+const Animator = dynamic(() => import("./RevealAnimator").then((m) => m.RevealAnimator), { ssr: false });
 
 type Tag = "div" | "h2" | "p";
 
@@ -27,25 +28,29 @@ export function Reveal({
 }) {
   const ref = useRef<HTMLElement>(null);
   const reduced = useReducedMotion();
-  const gsap = useGsap();
 
-  useGSAP(() => {
-    if (!ref.current || reduced) return;
-    gsap.to(ref.current, {
-      opacity: 1,
-      y: 0,
-      duration: 0.9,
-      delay,
-      ease: "power3.out",
-      scrollTrigger: { trigger: ref.current, start: "top 86%" },
-    });
-  }, [reduced]);
+  const animator = !reduced && <Animator elRef={ref} delay={delay} />;
 
   if (as === "h2") {
-    return <h2 ref={ref as React.Ref<HTMLHeadingElement>} className={cn(!reduced && "reveal", className)}>{children}</h2>;
+    return (
+      <h2 ref={ref as React.Ref<HTMLHeadingElement>} className={cn(!reduced && "reveal", className)}>
+        {children}
+        {animator}
+      </h2>
+    );
   }
   if (as === "p") {
-    return <p ref={ref as React.Ref<HTMLParagraphElement>} className={cn(!reduced && "reveal", className)}>{children}</p>;
+    return (
+      <p ref={ref as React.Ref<HTMLParagraphElement>} className={cn(!reduced && "reveal", className)}>
+        {children}
+        {animator}
+      </p>
+    );
   }
-  return <div ref={ref as React.Ref<HTMLDivElement>} className={cn(!reduced && "reveal", className)}>{children}</div>;
+  return (
+    <div ref={ref as React.Ref<HTMLDivElement>} className={cn(!reduced && "reveal", className)}>
+      {children}
+      {animator}
+    </div>
+  );
 }

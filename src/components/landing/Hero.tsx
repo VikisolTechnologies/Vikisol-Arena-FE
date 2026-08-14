@@ -1,9 +1,8 @@
 "use client";
 
 import { useRef } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useGSAP } from "@gsap/react";
-import { useGsap } from "@/lib/gsap";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,25 +10,11 @@ import { Input } from "@/components/ui/input";
 import { AgentOrb } from "./AgentOrb";
 import { cn } from "@/lib/utils";
 
+const Animator = dynamic(() => import("./HeroAnimator").then((m) => m.HeroAnimator), { ssr: false });
+
 export function Hero() {
   const scopeRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
-  const gsap = useGsap();
-
-  useGSAP(
-    () => {
-      if (reduced) return;
-      gsap.to("[data-hero]", {
-        opacity: 1,
-        y: 0,
-        duration: 0.9,
-        ease: "power3.out",
-        stagger: 0.12,
-        delay: 0.15,
-      });
-    },
-    { scope: scopeRef, dependencies: [reduced] },
-  );
 
   const revealProps = (extra?: string) => ({
     "data-hero": reduced ? undefined : true,
@@ -80,6 +65,7 @@ export function Hero() {
       </div>
 
       <AgentOrb />
+      {!reduced && <Animator scopeRef={scopeRef} />}
     </section>
   );
 }

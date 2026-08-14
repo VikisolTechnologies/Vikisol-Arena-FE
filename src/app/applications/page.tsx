@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { CalendarClock, Check, Lock } from "lucide-react";
-import { useGSAP } from "@gsap/react";
 import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
@@ -13,10 +13,13 @@ import { getMyProfile } from "@/lib/api/profile";
 import { getMyApplications } from "@/lib/api/applications";
 import { getJob } from "@/lib/api/jobs";
 import { proposeInterview, confirmInterviewSlot, getInterviewForApplication } from "@/lib/api/interviews";
-import { useGsap } from "@/lib/gsap";
 import { requireOnboarded } from "@/lib/auth-guard";
 import { formatFriendlyDateTime } from "@/lib/format";
 import type { CandidateProfile, Application, ApplicationStage, Interview, Job } from "@/lib/types";
+
+const Animator = dynamic(() => import("./ApplicationsLockAnimator").then((m) => m.ApplicationsLockAnimator), {
+  ssr: false,
+});
 
 const COLUMNS: { stage: ApplicationStage; label: string }[] = [
   { stage: "applied", label: "Applied" },
@@ -40,7 +43,6 @@ export default function ApplicationsPage() {
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const lockRef = useRef<HTMLDivElement>(null);
-  const gsap = useGsap();
 
   useEffect(() => {
     if (!requireOnboarded(router)) return;
@@ -54,11 +56,6 @@ export default function ApplicationsPage() {
       setJobsById(map);
     });
   }, [router]);
-
-  useGSAP(() => {
-    if (!confirmed || !lockRef.current) return;
-    gsap.fromTo(lockRef.current, { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(2)" });
-  }, [confirmed]);
 
   const openScheduler = async (app: Application) => {
     setSchedulingApp(app);
@@ -175,6 +172,7 @@ export default function ApplicationsPage() {
                   </Button>
                 )}
               </div>
+              <Animator lockRef={lockRef} />
             </div>
           ) : (
             <div className="space-y-2">

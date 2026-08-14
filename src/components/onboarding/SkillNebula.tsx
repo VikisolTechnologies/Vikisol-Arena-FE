@@ -1,15 +1,15 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { useGSAP } from "@gsap/react";
-import { useGsap } from "@/lib/gsap";
+import dynamic from "next/dynamic";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+
+const Animator = dynamic(() => import("./SkillNebulaAnimator").then((m) => m.SkillNebulaAnimator), { ssr: false });
 
 /** Background particle nebula that grows a glowing dot per selected skill (mulberry32-free — pure Math.random is fine here, purely decorative). */
 export function SkillNebula({ count }: { count: number }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
-  const gsap = useGsap();
 
   const dots = useMemo(
     () =>
@@ -21,24 +21,6 @@ export function SkillNebula({ count }: { count: number }) {
         delay: (i % 7) * 0.3,
       })),
     [],
-  );
-
-  useGSAP(
-    () => {
-      if (reduced || !containerRef.current) return;
-      gsap.utils.toArray<HTMLElement>(".arena-nebula-dot").forEach((dot, i) => {
-        gsap.to(dot, {
-          y: i % 2 ? -14 : 14,
-          x: i % 3 ? 8 : -8,
-          duration: 3 + (i % 5),
-          delay: dots[i]?.delay ?? 0,
-          yoyo: true,
-          repeat: -1,
-          ease: "sine.inOut",
-        });
-      });
-    },
-    { scope: containerRef, dependencies: [reduced, count] },
   );
 
   return (
@@ -58,6 +40,7 @@ export function SkillNebula({ count }: { count: number }) {
           }}
         />
       ))}
+      {!reduced && <Animator containerRef={containerRef} delays={dots.map((d) => d.delay)} />}
     </div>
   );
 }

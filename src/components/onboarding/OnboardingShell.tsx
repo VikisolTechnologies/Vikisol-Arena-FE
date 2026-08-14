@@ -1,14 +1,17 @@
 "use client";
 
 import { type ReactNode, useRef } from "react";
-import { useGSAP } from "@gsap/react";
+import dynamic from "next/dynamic";
 import { ArrowLeft } from "lucide-react";
-import { useGsap } from "@/lib/gsap";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
 import { AuraBackground } from "@/components/landing/AuraBackground";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+const Animator = dynamic(() => import("./OnboardingShellAnimator").then((m) => m.OnboardingShellAnimator), {
+  ssr: false,
+});
 
 export function OnboardingShell({
   step,
@@ -33,25 +36,12 @@ export function OnboardingShell({
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
-  const gsap = useGsap();
   // ARENA-STABILIZE.md Phase 2, G2 - found live: the Continue/Enter Arena button sits at the
   // bottom of a min-h-svh flex column, so on first run (cookie banner not yet dismissed) it
   // lands directly under CookieConsentBanner's fixed z-[900] bar and is completely untappable -
   // a dead end in the middle of signup. Same reservation pattern already used by every app
   // shell's sidebar (see use-cookie-consent-visible.ts), just missing here.
   const cookieBannerVisible = useCookieConsentVisible();
-
-  useGSAP(
-    () => {
-      if (reduced || !contentRef.current) return;
-      gsap.fromTo(
-        contentRef.current,
-        { opacity: 0, y: 24 },
-        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
-      );
-    },
-    { dependencies: [step, reduced] },
-  );
 
   return (
     <div className="relative isolate flex min-h-svh w-full flex-col overflow-hidden bg-background text-foreground">
@@ -88,6 +78,7 @@ export function OnboardingShell({
       <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-10 sm:px-10">
         <div ref={contentRef} className="w-full max-w-xl">
           {children}
+          {!reduced && <Animator contentRef={contentRef} step={step} />}
         </div>
       </div>
 

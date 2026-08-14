@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useGSAP } from "@gsap/react";
 import { AuraBackground } from "@/components/landing/AuraBackground";
 import { AgentOrb } from "@/components/landing/AgentOrb";
 import { Button } from "@/components/ui/button";
-import { useGsap } from "@/lib/gsap";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { getSession } from "@/lib/session";
 import type { Role } from "@/lib/types";
+
+const Animator = dynamic(() => import("@/components/NotFoundBeamAnimator").then((m) => m.NotFoundBeamAnimator), {
+  ssr: false,
+});
 
 // ARENA-INVENTORY-FIXES.md FIX 2 - was a hardcoded "Dashboard" -> /dashboard, a route ROUTES.md
 // itself calls fully retired. Now rendered both for genuine 404s and (via /access-denied) for
@@ -26,7 +29,6 @@ const ROLE_LANDING: Record<Role, string> = {
 
 export default function NotFound() {
   const beamRef = useRef<HTMLDivElement>(null);
-  const gsap = useGsap();
   const reduced = useReducedMotion();
   // A genuinely-unmatched URL (or a hard load of /access-denied) is real SSR + hydration, not a
   // client-side transition - reading getSession() straight into render would return null on the
@@ -34,11 +36,6 @@ export default function NotFound() {
   // already hit and fixed once (see its own comment). Starts at the session-less default on both
   // server and first client paint, only flips after the effect below runs post-hydration.
   const [secondary, setSecondary] = useState<{ href: string; label: string }>({ href: "/auth", label: "Sign in" });
-
-  useGSAP(() => {
-    if (reduced || !beamRef.current) return;
-    gsap.to(beamRef.current, { rotate: 360, duration: 8, repeat: -1, ease: "none", transformOrigin: "center" });
-  }, [reduced]);
 
   useEffect(() => {
     document.title = "Lost in the universe — Arena";
@@ -59,6 +56,7 @@ export default function NotFound() {
             style={{ background: "conic-gradient(from 0deg, transparent 0deg, rgba(255,138,91,0.25) 20deg, transparent 40deg)" }}
           />
           <AgentOrb />
+          {!reduced && <Animator beamRef={beamRef} />}
         </div>
         <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">This page isn&apos;t in my database.</h1>
         <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">Want me to find you something better?</p>

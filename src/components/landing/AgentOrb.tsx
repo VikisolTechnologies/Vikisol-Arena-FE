@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useGSAP } from "@gsap/react";
-import { useGsap } from "@/lib/gsap";
+import { useRef } from "react";
+import dynamic from "next/dynamic";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
+
+const Animator = dynamic(() => import("./AgentOrbAnimator").then((m) => m.AgentOrbAnimator), { ssr: false });
 
 const CHIPS = [
   { className: "left-[-4%] top-[6%] rotate-[-5deg]", icon: "✓", label: "Applied", value: "3 jobs tonight" },
@@ -15,80 +16,6 @@ const CHIPS = [
 export function AgentOrb() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
-  const gsap = useGsap();
-
-  useGSAP(
-    () => {
-      if (reduced || !wrapRef.current) return;
-
-      gsap.from(wrapRef.current, {
-        scale: 0.6,
-        opacity: 0,
-        duration: 1.2,
-        ease: "back.out(1.4)",
-        delay: 0.2,
-      });
-      gsap.to(wrapRef.current, {
-        y: -18,
-        duration: 2.6,
-        yoyo: true,
-        repeat: -1,
-        ease: "sine.inOut",
-      });
-      gsap.to(".arena-ring-1", {
-        rotate: 344,
-        duration: 26,
-        repeat: -1,
-        ease: "none",
-        transformOrigin: "center",
-      });
-      gsap.to(".arena-ring-2", {
-        rotate: -338,
-        duration: 34,
-        repeat: -1,
-        ease: "none",
-        transformOrigin: "center",
-      });
-      gsap.utils.toArray<HTMLElement>(".arena-chip").forEach((c, i) => {
-        gsap.to(c, {
-          y: i % 2 ? -12 : 12,
-          duration: 2.2 + i * 0.4,
-          yoyo: true,
-          repeat: -1,
-          ease: "sine.inOut",
-        });
-      });
-
-      const blink = () => {
-        gsap.to(".arena-eye", {
-          scaleY: 0.08,
-          duration: 0.07,
-          yoyo: true,
-          repeat: 1,
-          transformOrigin: "center",
-          onComplete: () => gsap.delayedCall(1.6 + Math.random() * 3, blink),
-        });
-      };
-      gsap.delayedCall(1.8, blink);
-    },
-    { scope: wrapRef, dependencies: [reduced] },
-  );
-
-  // Mouse-parallax tilt — separate from the loop/entrance animations above since it's
-  // event-driven, not a self-running timeline.
-  useEffect(() => {
-    if (reduced) return;
-    const onMove = (e: MouseEvent) => {
-      const x = e.clientX / window.innerWidth - 0.5;
-      const y = e.clientY / window.innerHeight - 0.5;
-      if (wrapRef.current) {
-        gsap.to(wrapRef.current, { rotateY: x * 10, rotateX: -y * 8, duration: 0.6, overwrite: "auto" });
-      }
-      gsap.to(".arena-eyes", { x: x * 16, y: y * 10, duration: 0.5 });
-    };
-    window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
-  }, [reduced, gsap]);
 
   return (
     <div className="order-first grid h-auto place-items-center lg:order-none lg:h-[min(620px,70vw)]">
@@ -148,6 +75,7 @@ export function AgentOrb() {
           </div>
         ))}
       </div>
+      {!reduced && <Animator wrapRef={wrapRef} />}
     </div>
   );
 }

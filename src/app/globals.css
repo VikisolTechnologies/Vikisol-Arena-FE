@@ -208,10 +208,24 @@ body {
 }
 
 /* Scroll-reveal initial state — GSAP animates elements with this class into view.
-   useReducedMotion() skips adding the class at all when the user prefers reduced motion. */
+   useReducedMotion() skips adding the class at all when the user prefers reduced motion.
+   The `animation` below is a pure-CSS safety net, added when gsap's own reveal tweens moved
+   behind a next/dynamic code-split boundary (COMPLETION-REPORT.md P0.2): if that JS chunk is
+   slow or fails to load, this guarantees the element becomes visible within ~2.4s regardless of
+   JS state. Defined with only a `to` keyframe (no `from`) so it's a genuine no-op in the normal
+   case — by the time it would fire, gsap has almost always already set opacity/transform to
+   these exact same target values via inline style, so the CSS animation has nothing left to do. */
 .reveal {
   opacity: 0;
   transform: translateY(36px);
+  animation: reveal-fallback 0.6s ease-out 2.4s forwards;
+}
+
+@keyframes reveal-fallback {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ARENA-VISUAL-RICHNESS.md R8 — "ONE recognizable signature repeated tastefully": a 1px gold

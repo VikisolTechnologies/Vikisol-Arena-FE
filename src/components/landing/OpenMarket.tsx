@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useGSAP } from "@gsap/react";
-import { useGsap } from "@/lib/gsap";
+import dynamic from "next/dynamic";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "./Reveal";
+
+const Animator = dynamic(() => import("./OpenMarketAnimator").then((m) => m.OpenMarketAnimator), { ssr: false });
 
 const BIDS = [
   { amount: "₹ 3,80,000", who: "Ravi K. · 96% match", top: true },
@@ -24,27 +25,11 @@ export function OpenMarket() {
   const [seconds, setSeconds] = useState(4 * 3600 + 12 * 60 + 36);
   const cardRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
-  const gsap = useGsap();
 
   useEffect(() => {
     const id = setInterval(() => setSeconds((t) => t - 1), 1000);
     return () => clearInterval(id);
   }, []);
-
-  useGSAP(
-    () => {
-      if (reduced || !cardRef.current) return;
-      gsap.from(cardRef.current.querySelectorAll(".arena-bid-row"), {
-        x: 40,
-        opacity: 0,
-        duration: 0.7,
-        stagger: 0.12,
-        ease: "power3.out",
-        scrollTrigger: { trigger: cardRef.current, start: "top 80%" },
-      });
-    },
-    { scope: cardRef, dependencies: [reduced] },
-  );
 
   return (
     <section id="market" className="relative z-10 mx-auto w-full max-w-[1240px] px-5 sm:px-6">
@@ -105,6 +90,7 @@ export function OpenMarket() {
           <Button variant="primary-gradient" size="cta" className="mt-2.5 w-full">
             Place a bid
           </Button>
+          {!reduced && <Animator cardRef={cardRef} />}
         </div>
       </div>
     </section>
