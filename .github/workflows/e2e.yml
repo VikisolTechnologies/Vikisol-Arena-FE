@@ -51,6 +51,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify required secrets are present
+        run: |
+          missing=""
+          for var in ARENA_TALENT_PASSWORD ARENA_COMPANY_ADMIN_PASSWORD ARENA_RECRUITER_PASSWORD ARENA_HIRING_MANAGER_PASSWORD ARENA_PLATFORM_ADMIN_PASSWORD; do
+            if [ -z "${!var}" ]; then
+              missing="$missing $var"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Missing or empty repository secret(s):$missing — set these under Settings > Secrets and variables > Actions (see this file's final comment for the expected value). Failing fast here instead of after a 90s browser install, and instead of tests/fixtures/accounts.ts's own generic-looking 1-second import-time crash."
+            exit 1
+          fi
+          echo "All 5 required password secrets are present (values not shown)."
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -97,6 +111,20 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
+
+      - name: Verify required secrets are present
+        run: |
+          missing=""
+          for var in ARENA_TALENT_PASSWORD ARENA_COMPANY_ADMIN_PASSWORD ARENA_RECRUITER_PASSWORD ARENA_HIRING_MANAGER_PASSWORD ARENA_PLATFORM_ADMIN_PASSWORD; do
+            if [ -z "${!var}" ]; then
+              missing="$missing $var"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Missing or empty repository secret(s):$missing — set these under Settings > Secrets and variables > Actions (see this file's final comment for the expected value). Failing fast here instead of after a 90s browser install, and instead of tests/fixtures/accounts.ts's own generic-looking 1-second import-time crash."
+            exit 1
+          fi
+          echo "All 5 required password secrets are present (values not shown)."
 
       - uses: actions/setup-node@v4
         with:
