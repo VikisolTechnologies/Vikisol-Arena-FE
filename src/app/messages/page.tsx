@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CandidateAppShell } from "@/components/app/CandidateAppShell";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { MessagesInbox } from "@/components/messages/MessagesInbox";
 import { getMyProfile } from "@/lib/api/profile";
@@ -20,17 +20,17 @@ export default function MessagesPage() {
 
   if (!profile) {
     return (
-      <CandidateAppShell title="Messages">
+      <AppShell title="Messages">
         <OrbLoader className="h-96" />
-      </CandidateAppShell>
+      </AppShell>
     );
   }
 
   return (
-    <CandidateAppShell title="Messages" profile={profile}>
+    <AppShell title="Messages" profile={profile}>
       <Suspense fallback={<OrbLoader className="h-96" />}>
         <MessagesInbox />
       </Suspense>
-    </CandidateAppShell>
+    </AppShell>
   );
 }
