@@ -11,6 +11,13 @@ done and live-verified. P1.3 (contrast token) and P1.5 (full a11y sweep) are rea
 explicitly not attempted. **P2 through P5 were not started this pass** — see the honest reason
 for each below, not silence.
 
+**2026-08-15 continuation**: CI secrets set by Syam; arena-web's Vercel migration executed through
+step 3 (new project, config, env vars, CORS, 56/56 smoke tests green on the live Vercel deployment)
+with the exact DNS record handed off for step 4 — see 0.1's update. `arena-api`'s Railway region
+investigated and NOT executed, with a specific reason — see 0.1b. P0.4's flagged
+5-10-run follow-up done — see 0.4's update. P2 (nav shell consolidation, then theme migration)
+started next.
+
 ---
 
 ## P0 — Speed
@@ -93,11 +100,94 @@ backlog's own three). Reasoning:
 7. Re-run this session's Playwright suite (`npm run test:e2e:smoke`) against the new URL before
    cutting DNS over for real, and the perf spec after, to get a genuine before/after.
 
-I have not done any of this — it's a real DNS/hosting change with real (if small) risk, and per
-this project's own standing rule, infra changes like this get your explicit go-ahead rather than
-being executed unilaterally. Say the word and I'll execute steps 1–3 (fully reversible, nothing
-user-facing changes until DNS is repointed in step 4) and stop right before step 4 for your
-confirmation.
+**Update 2026-08-15 — steps 1–3 executed, DNS record ready, step 4 is Syam's.** Explicit go-ahead
+received; executed everything short of the actual DNS cutover:
+
+- Found the linked-by-default Vercel project (`vikisol-arena-fe`) was the **old pre-pivot project**
+  with `VITE_*` env vars and a documented history of silently serving a stale build for 35 days
+  (`BLOCKED.md`'s 2026-08-09 entry, `DECISIONS.md` same date) — the actual reason `arena.vikisol.in`
+  was moved onto Railway in the first place was *deploy-pipeline reliability*, not a performance
+  finding; nothing in that history conflicts with moving back for the (now-measured) latency reason.
+  Also found that old project is **still connected via GitHub integration and has been silently
+  auto-deploying every push this whole session** to its own unused `*.vercel.app` URL — never
+  serving live traffic (DNS pointed at Railway throughout), but a genuine leftover from the original
+  cutover's Step 5 ("retire the old Vercel project") never actually being completed. Left it alone —
+  dashboard deletions are Syam-only per this repo's own standing rule (`ARENA-FINAL-CUTOVER.md`) —
+  but flagging it: worth deleting once this migration is confirmed, same as originally planned.
+- Created a **new**, clean Vercel project (`arena-web`) instead of reusing the stale one, connected
+  it to `VikisolTechnologies/Vikisol-Arena-FE` via git integration (auto-deploys on every push now,
+  same as Railway).
+- `next.config.ts`: `output: "standalone"` is now conditional on `process.env.VERCEL` (present on
+  Vercel's build machines, absent on Railway's) — both platforms build correctly from the exact same
+  source during this dual-running window; nothing about Railway's build changed.
+- `vercel.json`: added a `buildCommand` that stamps `NEXT_PUBLIC_BUILD_COMMIT`/`_BUILD_TIME` from
+  `git rev-parse HEAD` before `next build`, replicating what the Dockerfile does for Railway (with a
+  `local` fallback for git-less builds). Verified live: `arena-web-wheat.vercel.app/version` returns
+  the exact commit it was built from.
+- Copied `arena-web`'s Railway env vars (`NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_API_MODE`,
+  `JWT_AUDIENCE`, `JWT_ISSUER`, `JWT_SECRET`) into Vercel (production + preview), read via Railway's
+  `--kv` raw-value output and piped directly into `vercel env add` — never printed to any log.
+- Temporarily widened `arena-api`'s `CORS_ORIGINS` to include the Vercel preview URL alongside the
+  production domain (additive, not a replacement) so the deployment could be tested for real before
+  any DNS change.
+- **Full smoke + auth suite (56 tests, all 5 roles, every route) run against
+  `https://arena-web-wheat.vercel.app` live — 56/56 passed.** Login, session, and every role's route
+  sweep work correctly on Vercel, API calls included.
+- Reassigned the `arena.vikisol.in` hostname from the old Vercel project to the new one
+  (`vercel domains add … --force`, confirmed via `vercel domains verify` — `project.attached: true,
+  verified: true` for `arena-web`) so Vercel is ready to serve it the moment DNS points there.
+
+**The exact DNS change for Syam to make** (GoDaddy, per the account's current nameservers) — this is
+a same-record-type update, not a record-type change, since the current record is already a CNAME:
+
+| Field | Current | New |
+|---|---|---|
+| Type | CNAME | CNAME |
+| Host | `arena` | `arena` |
+| Value | `55amzai3.up.railway.app.` | `c90d75ae3224d553.vercel-dns-017.com.` |
+
+Sourced directly from Vercel's own `vercel domains verify` output for this exact domain+project
+pairing (not a generic guess) — its top-ranked recommendation. I have not touched DNS and won't;
+Railway keeps serving `arena.vikisol.in` unchanged until Syam makes this change. Once it's live,
+say so and I'll run the full suite against the real domain, then Step 5 (old-project retirement,
+also Syam-only) can happen for both the stale Vercel project and the Railway `arena-web` service.
+
+### 0.1b — `arena-api`'s Railway region — investigated, not executed (Syam's call)
+
+Confirmed via `railway status` (switching linked service): `arena-web`, `arena-api`, and `Postgres`
+are **all** `sfo` — same project, same region, no partial multi-region setup already in place. This
+matters directly for the question asked:
+
+**Is it a setting or a migration?** A setting, for `arena-api` alone — Railway's own docs: "The
+region of a service can be changed at any time, without any changes to your domain, private
+networking, etc. There will be no downtime when changing the region of a service, **except if it
+has a volume attached to it**." `arena-api` itself has no volume — a region change would be a
+same-day dashboard/CLI setting, no rebuild-from-scratch migration. **Postgres and Redis do have
+volumes** (`postgres-volume`, `redis-volume`) — moving *those* would mean real downtime while data
+migrates, a materially bigger and riskier operation than moving `arena-api` alone.
+
+**Which region?** Only **Singapore** (`asia-southeast1-eqsg3a`) is available near India — Railway's
+four regions are US West, US East, EU West, and Southeast Asia. **Mumbai is not a Railway region**;
+Singapore is the closest offering, real but not as close as Mumbai would be (P0.1's own table: ~50–
+70ms to Hyderabad from Singapore vs. ~10–25ms from Mumbai).
+
+**What it costs:** Railway's published pricing (`$/GB·s` memory, `$/vCPU·s` compute) shows no
+regional price difference anywhere in their pricing page — same rate in every region. Moving
+`arena-api` to Singapore should be cost-neutral.
+
+**The honest catch, and why I'm not recommending doing this yet:** moving `arena-api` alone to
+Singapore while `Postgres`/`Redis` stay in `sfo` **doesn't just move the latency, it relocates
+which leg pays it** — every one of `arena-api`'s own database round trips (not the user's) would
+newly cross the Singapore↔`sfo` distance (~150–180ms) instead of being same-region (~1–2ms). An
+endpoint that makes several sequential queries could plausibly get *worse* for users, not better,
+exactly the kind of N+1-shaped risk `COMPLETION-REPORT.md`'s own P3 section already flags as
+unaudited in `arena-api`. Moving `arena-api` + `Postgres` + `Redis` together to Singapore would be
+the version that actually helps (client↔api drops from ~250ms to ~50–70ms, api↔db stays ~1–2ms,
+same-region) — but that's the operation with real downtime, on the two services with attached
+volumes, and needs a maintenance window, not a same-session flip. **Recommendation: hold off until
+the Vercel side is confirmed live and stable; if this is still wanted after that, it should be
+scoped as its own maintenance-window task (move all three together), not a quick single-service
+region flip.** Say the word when ready and I'll draft the exact migration/maintenance-window plan.
 
 ### 0.2 — The ~300KB shared JS floor (GSAP) — ✅ done, verified working
 
@@ -192,6 +282,42 @@ follow-up rather than reported as a number this session didn't actually earn.
 JS bytes staying flat (~290-310KB) across all three rows is expected, not a bug: the gsap code
 still downloads, just later (fetched once the dynamic import fires post-hydration, well within
 this test's 1500ms post-load measurement window) — "deferred" was always the goal, not "deleted."
+
+**Update 2026-08-15 — the flagged 5-10 run follow-up, done, but as a deliberately different
+measurement, not a repeat of the table above.** New file:
+`tests/e2e/performance/india-latency-sample.spec.ts`. This does NOT re-run the Slow-4G+4×CPU
+scenario more times — it isolates one variable at a time: no CPU throttle, decent bandwidth
+(10Mbps down), only the documented SFO↔Hyderabad RTT (250ms, P0.1's range's midpoint) added as
+raw latency, 8 runs per page, against the live (still-Railway) production site:
+
+| Page | Metric | min | median | p95 | max | mean |
+|---|---|---|---|---|---|---|
+| `/` (landing) | TTFB | 340ms | 354ms | 457ms | 457ms | 364ms |
+| `/` (landing) | FCP | 928ms | 1092ms | 1560ms | 1560ms | 1112ms |
+| `/home` (fresh, session) | TTFB | 338ms | 378ms | 429ms | 429ms | 377ms |
+| `/home` (fresh, session) | FCP | 844ms | 992ms | 1080ms | 1080ms | 974ms |
+
+Tight spread this time (min-to-max within ~120-630ms, not the ~2800ms-vs-3484ms noise from the
+two-sample table above) — 8 runs actually resolves a stable median where 2 runs couldn't.
+
+**This refines P0.1's original framing, and the refinement matters for expectations:** TTFB lands
+right around 1 RTT above baseline (~350-380ms under a 250ms tax), confirming the connection/TTFB
+cost genuinely *is* latency-bound, exactly what moving to Vercel's edge fixes. But FCP's gap above
+TTFB (~740ms for `/`, ~615ms for `/home`) is JS-download/parse/execute cost — CPU/bandwidth-bound,
+not distance-bound, and distance alone won't touch it (that's what P0.2's GSAP work targets
+instead). So the realistic Vercel win is closer to **the ~200-300ms TTFB delta between a 250ms tax
+and Mumbai-edge's real ~10-25ms** — genuinely worth having, free, and zero code risk, but smaller
+and more specific than the original "~2.8s of our load is connection latency" framing implied.
+That earlier figure was measured as part of *total* cold-load time, which bundles the
+latency-bound and compute-bound portions together; this pass separates them for the first time.
+
+Two honest limits of this method, stated plainly rather than glossed over: (1) this is still a
+flat added-latency emulation, not a real India-based client — the same limit P0.1 already flagged,
+now just repeated 8× instead of guessed once; (2) it can UNDERSTATE Vercel's real advantage too,
+because a single flat latency parameter doesn't model paying that RTT tax repeatedly across a
+whole waterfall of separate asset fetches the way a truly distant origin can — only a genuine
+before/after from an actual India vantage point (e.g. WebPageTest's Mumbai location) resolves both
+limits at once. Flagged as a real follow-up, not attempted this pass.
 
 ---
 
