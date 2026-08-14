@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Search, Briefcase, LogOut, Bell, Mail, Newspaper } from "lucide-react";
-import { AuraBackground } from "@/components/landing/AuraBackground";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/api/auth";
@@ -38,13 +37,12 @@ export function EnterpriseAppShell({
   };
 
   return (
-    <div className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
-      <AuraBackground />
+    <div data-theme="product" className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
       <nav className="sticky top-0 z-20 border-b border-border bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6">
           <Link href="/enterprise/dashboard" className="flex items-center gap-2">
             <span className="font-display text-sm font-bold tracking-wide">ARENA<span className="text-primary">.</span></span>
-            <Badge variant="secondary" className="bg-white/5 text-[10px] text-muted-foreground">Enterprise</Badge>
+            <Badge variant="secondary" className="text-[10px] text-muted-foreground">Enterprise</Badge>
           </Link>
           <div className="ml-4 hidden gap-1 md:flex">
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
@@ -62,7 +60,7 @@ export function EnterpriseAppShell({
           </div>
           <div className="ml-auto flex items-center gap-2">
             {profile && (
-              <span className="hidden items-center gap-1.5 rounded-full border border-border bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground sm:flex">
+              <span className="hidden items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1.5 text-xs text-muted-foreground sm:flex">
                 {profile.logoEmoji} {profile.companyName}
               </span>
             )}

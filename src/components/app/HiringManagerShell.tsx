@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CalendarClock, LogOut } from "lucide-react";
-import { AuraBackground } from "@/components/landing/AuraBackground";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import NotFound from "@/app/not-found";
@@ -48,13 +47,12 @@ export function HiringManagerShell({
   if (state === "denied") return <NotFound />;
 
   return (
-    <div className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
-      <AuraBackground />
+    <div data-theme="product" className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
       <nav className="sticky top-0 z-20 border-b border-border bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6">
           <Link href="/enterprise/interviews/mine" className="flex items-center gap-2">
             <span className="font-display text-sm font-bold tracking-wide">ARENA<span className="text-primary">.</span></span>
-            <Badge variant="secondary" className="bg-white/5 text-[10px] text-muted-foreground">Hiring Manager</Badge>
+            <Badge variant="secondary" className="text-[10px] text-muted-foreground">Hiring Manager</Badge>
           </Link>
           <div className="ml-4 hidden gap-1 sm:flex">
             <span className="flex items-center gap-1.5 rounded-full bg-primary/12 px-3.5 py-2 text-sm font-medium text-primary-soft">
