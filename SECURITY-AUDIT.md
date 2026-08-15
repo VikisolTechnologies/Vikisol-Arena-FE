@@ -156,3 +156,113 @@ because Phase 5's upload-validation check surfaced it directly.
 - CSP for arena-web (see finding #2) — needs its own dedicated pass with report-only verification
   across every route before enforcing.
 - Spring Boot version upgrade (see finding #3) — needs its own dedicated, separately-tested pass.
+
+---
+
+## 2026-08-15 — P4 re-verification pass
+
+Per the completion backlog's own instruction: re-ran every check above *live*, not assumed still
+true from the prior pass, plus the two items the prior pass explicitly scoped out (DPDP self-
+service flows, a real backup-restore drill). Test-account discipline: all mutation-risk checks
+(cross-candidate delete, consent withdrawal, account deletion) used a **fresh throwaway account**
+(`security-drill-throwaway@vikisol.dev`, signed up and deleted within this pass) — none of the 5
+shared demo accounts were mutated. Read-only checks (IDOR reads, export) safely reused the real
+demo accounts.
+
+### Re-verified clean, live, today
+
+- **IDOR/cross-tenant** — `scripts/idor-check.sh` against production: **9/9 passed** (1 skip, data-
+  dependent — no application with an interview existed at run time, not a failure). Same result as
+  the prior pass.
+- **Extended candidate-side IDOR** — signed up a second real talent account (the throwaway) and
+  attempted `DELETE /applications/{id}` against `demo.talent`'s own application: correctly **403**.
+  Confirmed `demo.talent`'s application was untouched afterward (re-fetched, unchanged).
+- **Rate limiting** — 13 rapid sign-in attempts against a nonexistent account: first 10 return
+  `401`, attempts 11-13 return `429`. Identical to the prior pass's finding.
+- **Headers** — `arena.vikisol.in`: `nosniff`, `X-Frame-Options: DENY`, HSTS, referrer-policy all
+  present. `api-arena.vikisol.in`: same plus a Spring-default CSP (`default-src 'none'`). Both
+  unchanged from the prior pass.
+- **CORS** — preflight from `evil-attacker.example.com` → `403`. Preflight from the real origin →
+  `200` with `access-control-allow-origin` scoped to that exact origin, credentials allowed. Same
+  as before.
+- **Bundle secrets** — re-ran the source-level grep (clean), then went further than the prior pass:
+  fetched and grepped the **actual deployed client JS** — every chunk referenced from the live
+  landing page, on **both** platforms now in play (Railway: 18 chunks / 893KB; Vercel: 19 chunks /
+  1.1MB) — for `JWT_SECRET`, `sk_live_`, `AKIA...`, PEM private-key headers. Zero matches on either
+  platform. Specifically relevant this pass because `JWT_SECRET`/`JWT_AUDIENCE`/`JWT_ISSUER` were
+  copied into Vercel's env vars during the migration (0.1's update) — confirmed they're read only
+  by `src/lib/serverSession.ts`, imported only by `middleware.ts` (Edge/server-only, never bundled
+  client-side), and empirically absent from both bundles.
+
+### New this pass — DPDP self-service rights, tested end-to-end with real, observable effects
+
+The prior pass didn't cover these at all. All three tested live against production, not just
+"did the endpoint return 200":
+
+- **Consent withdrawal** — gave the throwaway candidate a distinctive title and set
+  `searchableByEnterprises: true`; searched Talent Universe as `demo.recruiter` for that exact
+  string — **found, 1 result**. Withdrew consent (`searchableByEnterprises: false`) via
+  `PUT /profile/me/consent`. Re-ran the identical search — **0 results**. Withdrawal has a real,
+  immediate, verifiable effect on enterprise search visibility, not just a stored flag.
+- **Data export** — `GET /profile/me/export` against `demo.talent` (real account, real history):
+  returned email, full profile (15 fields), and **all 7 real applications** with job title/stage/
+  date. Genuinely complete, not a stub. **One gap worth flagging**: the export DTO
+  (`CandidateDataExport`) includes profile + application metadata but not the uploaded **resume/CV
+  file itself** — that's personal data too under a strict DPDP reading. Not fixed this pass (real
+  scope, not a quick add — needs a signed-download-link or base64-embed decision), flagged for a
+  follow-up.
+- **Account deletion** — `DELETE /profile/me` on the throwaway account: `200`, profile anonymized
+  server-side (name → "Deleted user", bio/skills/CV cleared, consent revoked — read directly from
+  `CandidateProfileService.deleteMyAccount`). Verified three real effects, not just the response
+  code: (1) the **exact token used to delete** was immediately denylisted — reusing it for another
+  call returned `401`; (2) attempting to **sign back in** with the deleted account's credentials
+  returned `401 "Invalid email or password"` (not a distinguishing message — doesn't leak that the
+  account specifically existed-then-was-deleted vs. never existed at all, good enumeration
+  hygiene). Traced why: `AuthService.signIn` explicitly checks `user.getDeletedAt() != null` and
+  rejects before any password check even runs. Side note, not a live bug: `UserPrincipal`'s
+  `isEnabled()`/`isAccountNonExpired()`/`isAccountNonLocked()` are all hardcoded `true` and never
+  actually consult `deletedAt` — the explicit `AuthService` gate is what's doing the real work here,
+  not the `UserDetails` contract. Not currently exploitable (verified: the gate fires before that
+  code is ever reached on every path that matters — signin, and refresh tokens are separately
+  revoked on deletion) — but it's a single point of enforcement rather than defense-in-depth.
+  Worth hardening `isEnabled()` to also check `deletedAt` directly, cheap and more robust against
+  a future new auth path that doesn't happen to call `AuthService.signIn`.
+
+### Backup restore drill — investigated thoroughly, genuinely blocked, not faked
+
+Railway's own docs: database backups are dashboard-only (a service's "Backups" tab) — restoring
+creates a **new volume** (doesn't overwrite the original in place; the original is retained,
+unmounted, until a reviewed "Deploy" click confirms the swap) and can be scheduled or triggered
+manually. There is **no CLI or API path** for this — confirmed via `railway --help` (no `backup`
+subcommand exists) and `railway connect --help` (interactive `psql` shell only, dashboard/browser
+territory either way).
+
+Tried every route available from this terminal-only session before concluding this: no local
+`pg_dump`/`psql`/`pg_restore` binary; Docker Desktop is installed but its daemon isn't running
+(`docker ps` fails to reach the engine, and starting it via PowerShell failed — executable not
+found at the expected path); `winget` itself is inaccessible in this environment
+(`Program 'winget.exe' failed to run: The file cannot be accessed by the system`); the Postgres
+service's `PGHOST` (`postgres.railway.internal`) is Railway's **private-network-only** hostname —
+not reachable from outside Railway at all, by design (a real, good security property: this
+database has no public endpoint to attack). `railway connect --ssh` can tunnel to it, but still
+requires a local `psql` binary to actually drive the session, which isn't available here either.
+
+**Not working around this with something that only looks like a drill** — a real restore drill
+needs to prove Railway's actual backup artifacts are intact and restorable, which is exactly the
+one thing only the dashboard can do. Instead, here's the exact procedure for Syam to run (~5
+minutes, low-risk by Railway's own design since the original volume is retained until a manual
+Deploy confirms the swap):
+
+1. Railway dashboard → `arena-staging` project → `Postgres` service → **Backups** tab.
+2. Confirm at least one backup exists (if none do — **that's the actual finding**: no backup has
+   ever been taken, worse than an unverified restore). If scheduled backups aren't already
+   enabled, turn them on here first.
+3. Pick a backup, click **Restore** — Railway stages a new volume, retains the original.
+4. Review the staged change, click **Deploy**.
+5. Once live, spot-check: sign in as `demo.talent`, confirm profile/application data still there
+   and correct; check `/admin/tenants` as `platform_admin` for the expected tenant list.
+6. Report back pass/fail — if anything looks wrong, the original volume is still retained per
+   Railway's own docs and this is recoverable.
+
+Flagged rather than skipped silently, and rather than substituting a lower-effort check that
+wouldn't actually answer the question asked.
