@@ -517,20 +517,35 @@ shell (`/enterprise/dashboard`, `/enterprise/admin`, `/enterprise/interviews/min
 `/admin/tenants`, `/enterprise/postings`) — all render cleanly against the ivory background, no
 literal-white artifacts, badges/cards/borders all legible. **P2 is fully done.**
 
-## P3 — P5 — not started this pass, and why
+## P4 — ✅ done (see `SECURITY-AUDIT.md`'s 2026-08-15 section for the full writeup)
+
+IDOR/rate-limit/headers/CORS/bundle-secrets all re-verified live against production, still clean.
+Bundle-secrets check extended to the actual deployed JS on both Railway and Vercel now that
+`JWT_SECRET`/`JWT_AUDIENCE`/`JWT_ISSUER` live in Vercel's env too — zero matches on either. New
+this pass: DPDP consent withdrawal, data export, and account deletion all tested end-to-end with
+real observable effects (search-visibility change, a genuine 7-application export, token
+denylist + signin rejection post-delete), using a throwaway account created and destroyed within
+the pass — no shared demo account touched destructively. Two real, non-urgent gaps flagged: the
+data export doesn't include the uploaded resume file, and `UserPrincipal`'s `isEnabled()`/etc. are
+hardcoded `true` rather than checking `deletedAt` (not currently exploitable — `AuthService.signIn`
+gates deleted accounts explicitly before that code runs — but single-point-of-enforcement, not
+defense-in-depth). **Backup restore drill: genuinely blocked from this session**, not faked —
+Railway's restore is dashboard-only with no CLI/API path, and this environment has no local
+`psql`/`pg_dump`, a non-running Docker daemon, and an inaccessible `winget`; exact 5-minute,
+low-risk dashboard procedure handed to Syam instead.
+
+## P3 & P5 — not started this pass, and why
 
 **P3** is a *backend* audit (`CandidateProfile.id`/`User.id` mismatch, API contract audit,
 pagination/N+1 sweep, error-contract consistency, WebSocket reconnect behavior, media-pipeline
-durability) — it lives in a **separate repo** (`arena-api`) this session never opened. **P4** is a
-security re-verification pass (IDOR suite, secret-in-bundle audit, rate-limit confirmation,
-security-header/CORS check, DPDP consent/export/deletion flows, a real backup-restore drill) —
-each of those needs to be *re-run live*, not assumed still true from `SECURITY-AUDIT.md`'s last
-pass, and a botched backup-restore drill is not something to rush. **P5** (nav-completeness walk,
-end-to-end core-loop confirmation, company-side loop confirmation, seed-data refresh) depends on
-P2 to mean anything — P2 is now fully done, so P5 is genuinely unblocked, just not started.
+durability) — it lives in a **separate repo** (`arena-api`) this session never opened, and per
+Syam's own sequencing it's next. **P5** (nav-completeness walk, end-to-end core-loop confirmation,
+company-side loop confirmation, seed-data refresh) depends on P2 to mean anything — P2 is fully
+done, so P5 is genuinely unblocked, just not started.
 
-Not because P3/P4 are unimportant — arguably higher-stakes than anything in P0/P1/P2 — but because
-this session already covered a full GSAP architecture change, a production infra migration, two
-real live bugs found and fixed, and a shell consolidation, each shipped and live-verified rather
-than rushed. **Recommended next session's scope: finish P2's theme migration** (unblocks P5), **or
-start P4's security re-verification** — both real, scoped, ready to start cold from this document.
+Not because P3 is unimportant — arguably higher-stakes than anything in P0/P1/P2 — but because this
+session already covered a full GSAP architecture change, a production infra migration, two real
+live bugs found and fixed, a shell consolidation, a full theme migration, and P4's security
+re-verification, each shipped and live-verified rather than rushed. **Recommended next session's
+scope: P3's backend audit**, per Syam's own stated sequencing — real, scoped, ready to start cold
+from this document once arena-api's own repo is open.
