@@ -69,13 +69,13 @@ export default function TalentUniversePage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder='Try "React developer" or "Hyderabad"'
-                className="border-border bg-white/[0.05] pl-9 backdrop-blur-xl"
+                className="border-border bg-secondary pl-9 backdrop-blur-xl"
               />
             </div>
             <select
               value={industry}
               onChange={(e) => setIndustry(e.target.value)}
-              className="h-9 rounded-md border border-border bg-white/[0.05] px-3 text-sm text-foreground outline-none backdrop-blur-xl"
+              className="h-9 rounded-md border border-border bg-secondary px-3 text-sm text-foreground outline-none backdrop-blur-xl"
             >
               <option value="All">All industries</option>
               {INDUSTRIES.map((ind) => <option key={ind} value={ind}>{ind}</option>)}
@@ -85,7 +85,7 @@ export default function TalentUniversePage() {
               onClick={() => setRemoteOnly((v) => !v)}
               className={cn(
                 "shrink-0 rounded-md border px-3.5 py-2 text-sm transition-colors",
-                remoteOnly ? "border-primary/50 bg-primary/10 text-primary-soft" : "border-border bg-white/[0.05] text-muted-foreground",
+                remoteOnly ? "border-primary/50 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground",
               )}
             >
               Remote only
@@ -99,7 +99,7 @@ export default function TalentUniversePage() {
         {results.map(({ candidate, matchPercentage, fitBlurb, availability }) => {
           const saved = shortlist.includes(candidate.id);
           return (
-            <div key={candidate.id} className="rounded-[24px] border border-border bg-white/[0.03] p-5">
+            <div key={candidate.id} className="rounded-[24px] border border-border bg-secondary p-5">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2.5">
                   <span className="text-2xl">{candidate.avatarEmoji}</span>
@@ -121,7 +121,7 @@ export default function TalentUniversePage() {
               </div>
               <p className="mt-2.5 text-xs italic text-muted-foreground">&ldquo;{fitBlurb}&rdquo;</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {candidate.skills.slice(0, 3).map((s) => <Badge key={s.name} variant="secondary" className="bg-white/5 text-[11px] text-muted-foreground">{s.name}</Badge>)}
+                {candidate.skills.slice(0, 3).map((s) => <Badge key={s.name} variant="secondary" className="bg-secondary text-[11px] text-muted-foreground">{s.name}</Badge>)}
               </div>
               <div className="mt-3 flex items-center justify-between">
                 <Badge variant="secondary" className="gap-1 bg-primary/12 text-primary-soft"><Sparkles className="size-3" /> {matchPercentage}%</Badge>

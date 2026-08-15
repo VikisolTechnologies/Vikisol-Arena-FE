@@ -87,29 +87,29 @@ export default function CandidateDetailPage() {
 
           <div className="mt-4 flex flex-wrap gap-1.5">
             {candidate.skills.map((s) => (
-              <Badge key={s.name} variant="secondary" className="gap-1 bg-white/5 text-muted-foreground">
+              <Badge key={s.name} variant="secondary" className="gap-1 bg-secondary text-muted-foreground">
                 {s.name} {s.verified && <ShieldCheck className="size-3 text-emerald-400" />}
               </Badge>
             ))}
           </div>
 
           <div className="mt-5 grid grid-cols-3 gap-2.5">
-            <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5 text-center">
+            <div className="rounded-xl border border-border bg-secondary px-3 py-2.5 text-center">
               <p className="font-display text-lg font-bold">{candidate.experienceYears}</p>
               <p className="text-[11px] text-muted-foreground">Years exp.</p>
             </div>
-            <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5 text-center">
+            <div className="rounded-xl border border-border bg-secondary px-3 py-2.5 text-center">
               <p className="font-display text-lg font-bold">{formatINR(candidate.rateFloor)}</p>
               <p className="text-[11px] text-muted-foreground">LPA floor</p>
             </div>
-            <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5 text-center">
+            <div className="rounded-xl border border-border bg-secondary px-3 py-2.5 text-center">
               <p className="font-display text-lg font-bold">{candidate.careerHealth}%</p>
               <p className="text-[11px] text-muted-foreground">Career health</p>
             </div>
           </div>
         </Card>
 
-        <div className="rounded-[24px] border border-border bg-white/[0.03] p-5">
+        <div className="rounded-[24px] border border-border bg-secondary p-5">
           {unlocked ? (
             <>
               <p className="mb-3 flex items-center gap-1.5 font-display text-sm font-bold text-emerald-400">

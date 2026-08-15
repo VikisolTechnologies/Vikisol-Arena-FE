@@ -74,11 +74,11 @@ export default function ApplicantPipelinePage() {
             <div key={stage} className="w-[260px] shrink-0">
               <div className="mb-3 flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground capitalize">{stage}</p>
-                <Badge variant="secondary" className="bg-white/5">{items.length}</Badge>
+                <Badge variant="secondary" className="bg-secondary">{items.length}</Badge>
               </div>
               <div className="space-y-2.5">
                 {items.map((applicant) => (
-                  <div key={applicant.id} className="rounded-2xl border border-border bg-white/[0.03] p-3.5">
+                  <div key={applicant.id} className="rounded-2xl border border-border bg-secondary p-3.5">
                     <button
                       type="button"
                       className="flex w-full items-center gap-2.5 text-left"

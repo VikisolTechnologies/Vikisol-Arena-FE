@@ -69,7 +69,7 @@ export default function CompanyProfilePage() {
       <div className="max-w-lg space-y-4">
         <div>
           <Label htmlFor="companyName">Company name</Label>
-          <Input id="companyName" value={profile.companyName} onChange={(e) => update("companyName", e.target.value)} className="mt-1.5 border-border bg-white/[0.03]" />
+          <Input id="companyName" value={profile.companyName} onChange={(e) => update("companyName", e.target.value)} className="mt-1.5 border-border bg-secondary" />
         </div>
 
         <div>
@@ -82,7 +82,7 @@ export default function CompanyProfilePage() {
                 onClick={() => update("logoEmoji", emoji)}
                 className={cn(
                   "flex size-11 items-center justify-center rounded-xl border text-lg transition-colors",
-                  profile.logoEmoji === emoji ? "border-primary/60 bg-primary/10" : "border-border bg-white/[0.02]",
+                  profile.logoEmoji === emoji ? "border-primary/60 bg-primary/10" : "border-border bg-secondary",
                 )}
               >
                 {emoji}
@@ -97,7 +97,7 @@ export default function CompanyProfilePage() {
             <select
               value={profile.industry}
               onChange={(e) => update("industry", e.target.value as Industry)}
-              className="mt-1.5 flex h-9 w-full rounded-md border border-border bg-white/[0.03] px-3 text-sm outline-none"
+              className="mt-1.5 flex h-9 w-full rounded-md border border-border bg-secondary px-3 text-sm outline-none"
             >
               {INDUSTRIES.map((ind) => <option key={ind} value={ind}>{ind}</option>)}
             </select>
@@ -107,7 +107,7 @@ export default function CompanyProfilePage() {
             <select
               value={profile.size}
               onChange={(e) => update("size", e.target.value as CompanySize)}
-              className="mt-1.5 flex h-9 w-full rounded-md border border-border bg-white/[0.03] px-3 text-sm outline-none"
+              className="mt-1.5 flex h-9 w-full rounded-md border border-border bg-secondary px-3 text-sm outline-none"
             >
               {SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s} employees</option>)}
             </select>
@@ -134,7 +134,7 @@ export default function CompanyProfilePage() {
               onChange={(e) => setDraftRole(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addRole(); } }}
               placeholder="e.g. Senior React Developer"
-              className="border-border bg-white/[0.03]"
+              className="border-border bg-secondary"
             />
             <Button type="button" variant="ghost-glass" size="sm" onClick={addRole}>Add</Button>
           </div>

@@ -79,7 +79,7 @@ export default function EnterpriseInterviewPage() {
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-xl font-bold tracking-tight">Interview with {candidate?.name ?? "candidate"}</h1>
         {hiringManagers.length > 0 && (
-          <div className="flex items-center gap-2 rounded-full border border-border bg-white/[0.03] px-3 py-1.5">
+          <div className="flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1.5">
             <UserPlus className="size-3.5 text-muted-foreground" />
             {assignedName ? (
               <span className="flex items-center gap-1 text-xs text-primary-soft"><Check className="size-3" /> Assigned to {assignedName}</span>

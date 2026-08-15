@@ -86,13 +86,13 @@ export default function CompanyPostsPage() {
       ) : (
         <div className="space-y-3">
           {visiblePosts.map((p) => (
-            <div key={p.id} className="rounded-2xl border border-border bg-white/[0.02] px-4 py-3.5">
+            <div key={p.id} className="rounded-2xl border border-border bg-secondary px-4 py-3.5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="whitespace-pre-wrap text-sm text-foreground/90">{p.body}</p>
                   {p.tags.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      {p.tags.map((t) => <Badge key={t} variant="secondary" className="bg-white/5 text-[11px] text-muted-foreground">#{t}</Badge>)}
+                      {p.tags.map((t) => <Badge key={t} variant="secondary" className="bg-secondary text-[11px] text-muted-foreground">#{t}</Badge>)}
                     </div>
                   )}
                   <div className="mt-2.5 flex items-center gap-3 text-xs text-muted-foreground">
@@ -121,9 +121,9 @@ export default function CompanyPostsPage() {
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder="e.g. We're hiring senior backend engineers - remote-friendly, apply in comments or check our postings."
-              className="min-h-24 border-border bg-white/[0.03]"
+              className="min-h-24 border-border bg-secondary"
             />
-            <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags, comma-separated (optional)" className="border-border bg-white/[0.03]" />
+            <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags, comma-separated (optional)" className="border-border bg-secondary" />
             <Button variant="primary-gradient" size="sm" className="w-full" disabled={!body.trim() || publishing} onClick={publish}>
               {publishing ? "Publishing…" : "Publish"}
             </Button>

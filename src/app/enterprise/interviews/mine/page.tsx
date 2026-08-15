@@ -36,7 +36,7 @@ export default function MyInterviewsPage() {
                 key={iv.id}
                 type="button"
                 onClick={() => router.push(`/enterprise/interviews/mine/${iv.id}`)}
-                className="flex w-full flex-wrap items-center gap-3 rounded-2xl border border-border bg-white/[0.03] px-4 py-3.5 text-left transition-transform hover:-translate-y-0.5"
+                className="flex w-full flex-wrap items-center gap-3 rounded-2xl border border-border bg-secondary px-4 py-3.5 text-left transition-transform hover:-translate-y-0.5"
               >
                 <span className="text-xl">{iv.candidateEmoji}</span>
                 <div className="min-w-0 flex-1">
@@ -50,7 +50,7 @@ export default function MyInterviewsPage() {
                     <CalendarClock className="size-3" /> {new Date(confirmedSlot.start).toLocaleDateString([], { month: "short", day: "numeric" })}
                   </span>
                 )}
-                <Badge variant="secondary" className={`capitalize ${STATUS_TONE[iv.status] ?? "bg-white/5 text-muted-foreground"}`}>
+                <Badge variant="secondary" className={`capitalize ${STATUS_TONE[iv.status] ?? "bg-secondary text-muted-foreground"}`}>
                   {iv.status}
                 </Badge>
               </button>

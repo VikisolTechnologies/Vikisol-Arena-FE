@@ -60,7 +60,7 @@ export default function EnterpriseOnboardingPage() {
   return (
     <div className="relative isolate flex min-h-svh w-full items-center justify-center overflow-hidden bg-background px-5 py-16 text-foreground">
       <AuraBackground />
-      <div className="relative z-10 w-full max-w-lg rounded-[24px] border border-border bg-white/[0.03] p-7 backdrop-blur-xl">
+      <div className="relative z-10 w-full max-w-lg rounded-[24px] border border-border bg-secondary p-7 backdrop-blur-xl">
         <div className="mb-5 flex items-center gap-2">
           <Building2 className="size-5 text-primary-soft" />
           <h1 className="font-display text-xl font-bold tracking-tight">Set up your company</h1>
@@ -69,7 +69,7 @@ export default function EnterpriseOnboardingPage() {
         <div className="space-y-4">
           <div>
             <Label htmlFor="companyName">Company name</Label>
-            <Input id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="mt-1.5 border-border bg-white/[0.03]" />
+            <Input id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="mt-1.5 border-border bg-secondary" />
           </div>
 
           <div>
@@ -82,7 +82,7 @@ export default function EnterpriseOnboardingPage() {
                   onClick={() => setLogoEmoji(emoji)}
                   className={cn(
                     "flex size-11 items-center justify-center rounded-xl border text-lg transition-colors",
-                    logoEmoji === emoji ? "border-primary/60 bg-primary/10" : "border-border bg-white/[0.02]",
+                    logoEmoji === emoji ? "border-primary/60 bg-primary/10" : "border-border bg-secondary",
                   )}
                 >
                   {emoji}
@@ -97,7 +97,7 @@ export default function EnterpriseOnboardingPage() {
               <select
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value as Industry)}
-                className="mt-1.5 flex h-9 w-full rounded-md border border-border bg-white/[0.03] px-3 text-sm outline-none"
+                className="mt-1.5 flex h-9 w-full rounded-md border border-border bg-secondary px-3 text-sm outline-none"
               >
                 {INDUSTRIES.map((ind) => <option key={ind} value={ind}>{ind}</option>)}
               </select>
@@ -107,7 +107,7 @@ export default function EnterpriseOnboardingPage() {
               <select
                 value={size}
                 onChange={(e) => setSize(e.target.value as CompanySize)}
-                className="mt-1.5 flex h-9 w-full rounded-md border border-border bg-white/[0.03] px-3 text-sm outline-none"
+                className="mt-1.5 flex h-9 w-full rounded-md border border-border bg-secondary px-3 text-sm outline-none"
               >
                 {SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s} employees</option>)}
               </select>
@@ -134,7 +134,7 @@ export default function EnterpriseOnboardingPage() {
                 onChange={(e) => setDraftRole(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addRole(); } }}
                 placeholder="e.g. Senior React Developer"
-                className="border-border bg-white/[0.03]"
+                className="border-border bg-secondary"
               />
               <Button type="button" variant="ghost-glass" size="sm" onClick={addRole}>Add</Button>
             </div>

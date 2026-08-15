@@ -62,7 +62,7 @@ export default function AuditLogPage() {
         <select
           value={action}
           onChange={(e) => { setAction(e.target.value); setPage(0); }}
-          className="rounded-full border border-border bg-white/[0.03] px-3 py-1.5 text-xs"
+          className="rounded-full border border-border bg-secondary px-3 py-1.5 text-xs"
         >
           <option value="">All actions</option>
           {ACTIONS.filter(Boolean).map((a) => <option key={a} value={a}>{a}</option>)}
@@ -73,7 +73,7 @@ export default function AuditLogPage() {
             type="button"
             onClick={() => { setSinceDays(sinceDays === d ? undefined : d); setPage(0); }}
             className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              sinceDays === d ? "bg-primary/15 text-primary-soft" : "border border-border bg-white/[0.03] text-muted-foreground"
+              sinceDays === d ? "bg-primary/15 text-primary-soft" : "border border-border bg-secondary text-muted-foreground"
             }`}
           >
             Last {d}d
@@ -87,10 +87,10 @@ export default function AuditLogPage() {
         <>
           <div className="space-y-2">
             {events.map((e) => (
-              <div key={e.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-white/[0.02] px-4 py-3 text-sm">
+              <div key={e.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-secondary px-4 py-3 text-sm">
                 <span className="w-40 shrink-0 text-xs text-muted-foreground">{formatDateTime(e.createdAt)}</span>
                 <span className="font-medium">{e.actorName}</span>
-                <span className="rounded-full bg-white/5 px-2 py-0.5 text-[11px] text-muted-foreground">{e.action}</span>
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground">{e.action}</span>
                 {e.target && <span className="text-muted-foreground">{e.target}</span>}
               </div>
             ))}

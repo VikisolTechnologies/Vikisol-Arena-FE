@@ -33,7 +33,7 @@ export default function PlatformDashboardPage() {
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {METRICS.map(({ key, label, icon: Icon }) => (
-              <div key={key} className="rounded-[24px] border border-border bg-white/[0.03] p-5">
+              <div key={key} className="rounded-[24px] border border-border bg-secondary p-5">
                 <Icon className="size-4 text-primary-soft" />
                 <p className="mt-3 font-display text-2xl font-bold">{dashboard[key]}</p>
                 <p className="text-xs text-muted-foreground">{label}</p>
@@ -47,7 +47,7 @@ export default function PlatformDashboardPage() {
             <p className="mb-3 font-display text-sm font-bold">Recent activity across every tenant</p>
             <div className="space-y-2">
               {dashboard.recentActivity.map((e) => (
-                <div key={e.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-white/[0.02] px-4 py-3 text-sm">
+                <div key={e.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-secondary px-4 py-3 text-sm">
                   <span className="font-medium">{e.actorName}</span>
                   <span className="text-muted-foreground">{e.action}</span>
                   {e.target && <span className="truncate text-muted-foreground">— {e.target}</span>}

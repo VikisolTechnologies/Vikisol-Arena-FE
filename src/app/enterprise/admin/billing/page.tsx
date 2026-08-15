@@ -43,11 +43,11 @@ export default function BillingPage() {
   return (
     <CompanyAdminShell title="Billing & plan">
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-white/[0.02] p-4">
+        <div className="rounded-2xl border border-border bg-secondary p-4">
           <p className="text-xs text-muted-foreground">Seats</p>
           <p className="mt-1 font-display text-xl font-bold">{billing.seatsUsed}/{billing.seatsTotal}</p>
         </div>
-        <div className="rounded-2xl border border-border bg-white/[0.02] p-4">
+        <div className="rounded-2xl border border-border bg-secondary p-4">
           <p className="text-xs text-muted-foreground">Unlock credits</p>
           <p className="mt-1 font-display text-xl font-bold">{billing.creditsTotal - billing.creditsUsed}/{billing.creditsTotal}</p>
         </div>
@@ -58,7 +58,7 @@ export default function BillingPage() {
         {PLANS.map((p) => {
           const isCurrent = billing.plan === p.key;
           return (
-            <div key={p.key} className={`rounded-[24px] border p-5 ${isCurrent ? "border-primary/50 bg-primary/[0.05]" : "border-border bg-white/[0.03]"}`}>
+            <div key={p.key} className={`rounded-[24px] border p-5 ${isCurrent ? "border-primary/50 bg-primary/[0.05]" : "border-border bg-secondary"}`}>
               <div className="flex items-center justify-between">
                 <p className="font-display text-lg font-bold">{p.name}</p>
                 {isCurrent && <Badge variant="secondary" className="gap-1 bg-primary/15 text-primary-soft"><Check className="size-3" /> Current</Badge>}
@@ -82,7 +82,7 @@ export default function BillingPage() {
       <p className="mb-3 font-display text-sm font-bold">Invoices</p>
       <div className="space-y-2">
         {billing.invoices.map((inv) => (
-          <div key={inv.id} className="flex items-center justify-between rounded-2xl border border-border bg-white/[0.02] px-4 py-3 text-sm">
+          <div key={inv.id} className="flex items-center justify-between rounded-2xl border border-border bg-secondary px-4 py-3 text-sm">
             <span className="text-muted-foreground">{inv.date}</span>
             <span className="font-mono text-xs">{inv.id}</span>
             <span className="font-semibold">{inv.amount}</span>

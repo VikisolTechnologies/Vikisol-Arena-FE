@@ -17,7 +17,7 @@ import type { EnterpriseProfile, JobPosting } from "@/lib/types";
 
 function StatCard({ icon: Icon, value, label }: { icon: typeof Briefcase; value: string | number; label: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-white/[0.03] p-4">
+    <div className="rounded-2xl border border-border bg-secondary p-4">
       <div className="flex size-9 items-center justify-center rounded-lg bg-primary/12 text-primary-soft"><Icon className="size-[18px]" /></div>
       <p className="mt-3 font-display text-2xl font-bold tracking-tight">{value}</p>
       <p className="text-xs text-muted-foreground">{label}</p>
@@ -64,16 +64,16 @@ export default function EnterpriseDashboardPage() {
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+        <div className="rounded-[24px] border border-border bg-secondary p-6">
           <div className="mb-4 flex items-center justify-between">
             <p className="font-display text-sm font-bold">Your postings</p>
             <Link href="/enterprise/postings" className="text-xs font-medium text-primary-soft hover:underline">Manage all</Link>
           </div>
           <div className="space-y-2.5">
             {postings.slice(0, 4).map((p) => (
-              <Link key={p.id} href={`/enterprise/postings/${p.id}`} className="flex items-center justify-between rounded-xl border border-border bg-white/[0.02] px-3.5 py-2.5 text-sm">
+              <Link key={p.id} href={`/enterprise/postings/${p.id}`} className="flex items-center justify-between rounded-xl border border-border bg-secondary px-3.5 py-2.5 text-sm">
                 <span className="truncate">{p.title}</span>
-                <Badge variant="secondary" className="shrink-0 bg-white/5 capitalize">{p.status}</Badge>
+                <Badge variant="secondary" className="shrink-0 bg-secondary capitalize">{p.status}</Badge>
               </Link>
             ))}
             {postings.length === 0 && (
@@ -85,7 +85,7 @@ export default function EnterpriseDashboardPage() {
           </div>
         </div>
 
-        <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+        <div className="rounded-[24px] border border-border bg-secondary p-6">
           <div className="mb-4 flex items-center justify-between">
             <p className="font-display text-sm font-bold">Recent Talent Universe activity</p>
             <Link href="/enterprise/talent" className="flex items-center gap-1 text-xs font-medium text-primary-soft hover:underline">
@@ -97,7 +97,7 @@ export default function EnterpriseDashboardPage() {
               const c = getCandidateById(id);
               if (!c) return null;
               return (
-                <Link key={id} href={`/enterprise/talent/${id}`} className="flex items-center gap-3 rounded-xl border border-border bg-white/[0.02] px-3.5 py-2.5">
+                <Link key={id} href={`/enterprise/talent/${id}`} className="flex items-center gap-3 rounded-xl border border-border bg-secondary px-3.5 py-2.5">
                   <span className="text-lg">{c.avatarEmoji}</span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{c.name}</p>
@@ -114,13 +114,13 @@ export default function EnterpriseDashboardPage() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-[24px] border border-border bg-white/[0.03] p-6">
+      <div className="mt-6 rounded-[24px] border border-border bg-secondary p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="font-display text-sm font-bold capitalize">{profile.plan} plan</p>
             <p className="text-xs text-muted-foreground">{profile.seatsUsed} of {profile.seatsTotal} seats used</p>
           </div>
-          <div className="h-2 w-40 overflow-hidden rounded-full bg-white/5">
+          <div className="h-2 w-40 overflow-hidden rounded-full bg-secondary">
             <div className="h-full rounded-full bg-primary" style={{ width: `${(profile.seatsUsed / profile.seatsTotal) * 100}%` }} />
           </div>
           <Button variant="ghost-glass" size="sm" render={<Link href="/pricing" />} nativeButton={false}>Upgrade plan</Button>

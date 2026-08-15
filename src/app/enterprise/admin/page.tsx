@@ -26,7 +26,7 @@ export default function AdminDashboardPage() {
     <CompanyAdminShell
       title="Admin dashboard"
       actions={
-        <div className="flex gap-1 rounded-full border border-border bg-white/[0.03] p-1">
+        <div className="flex gap-1 rounded-full border border-border bg-secondary p-1">
           {RANGES.map((r) => (
             <button
               key={r}
@@ -50,7 +50,7 @@ export default function AdminDashboardPage() {
             {(Object.entries(dashboard.totals) as [keyof typeof METRIC_ICONS, number][]).map(([key, value]) => {
               const Icon = METRIC_ICONS[key];
               return (
-                <div key={key} className="rounded-[24px] border border-border bg-white/[0.03] p-5">
+                <div key={key} className="rounded-[24px] border border-border bg-secondary p-5">
                   <Icon className="size-4 text-primary-soft" />
                   <p className="mt-3 font-display text-2xl font-bold">{value}</p>
                   <p className="text-xs capitalize text-muted-foreground">{key.replace(/([A-Z])/g, " $1")}</p>
@@ -59,7 +59,7 @@ export default function AdminDashboardPage() {
             })}
           </div>
 
-          <div className="rounded-[24px] border border-border bg-white/[0.03] p-6">
+          <div className="rounded-[24px] border border-border bg-secondary p-6">
             <div className="mb-4 flex items-center justify-between">
               <p className="flex items-center gap-1.5 font-display text-sm font-bold">
                 <CreditCard className="size-4 text-primary-soft" /> Unlock credits
@@ -68,7 +68,7 @@ export default function AdminDashboardPage() {
                 {dashboard.creditsBalance}/{dashboard.creditsTotal} left · {dashboard.creditsSpentInRange} spent in range
               </span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-primary-soft to-primary"
                 style={{ width: `${Math.min(100, (dashboard.creditsBalance / Math.max(1, dashboard.creditsTotal)) * 100)}%` }}
@@ -80,10 +80,10 @@ export default function AdminDashboardPage() {
             <p className="mb-3 font-display text-sm font-bold">Per-recruiter activity</p>
             <div className="space-y-2.5">
               {dashboard.recruiterActivity.map((r) => (
-                <div key={r.userId} className="flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-white/[0.02] px-4 py-3.5">
+                <div key={r.userId} className="flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-secondary px-4 py-3.5">
                   <div className="min-w-[140px]">
                     <p className="text-sm font-semibold">{r.name}</p>
-                    <Badge variant="secondary" className="mt-0.5 bg-white/5 text-[10px] capitalize text-muted-foreground">{r.role.replace("_", " ")}</Badge>
+                    <Badge variant="secondary" className="mt-0.5 bg-secondary text-[10px] capitalize text-muted-foreground">{r.role.replace("_", " ")}</Badge>
                   </div>
                   <div className="ml-auto flex flex-wrap gap-4 text-xs text-muted-foreground">
                     <span>{r.postings} postings</span>

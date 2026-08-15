@@ -27,7 +27,7 @@ export default function ConsentPage() {
       ) : (
         <div className="space-y-2">
           {entries.map((e) => (
-            <div key={e.candidateId} className="flex items-center gap-3 rounded-2xl border border-border bg-white/[0.02] px-4 py-3.5">
+            <div key={e.candidateId} className="flex items-center gap-3 rounded-2xl border border-border bg-secondary px-4 py-3.5">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium">{e.candidateName}</p>
                 <p className="text-xs text-muted-foreground">Unlocked {formatDate(e.unlockedAt)}</p>

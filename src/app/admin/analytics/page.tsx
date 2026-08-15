@@ -29,7 +29,7 @@ function Breakdown({ title, data }: { title: string; data: Record<string, number
               <span className="capitalize text-muted-foreground">{label.replace("_", " ")}</span>
               <span className="font-semibold">{value}</span>
             </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
               <div className="h-full rounded-full bg-gradient-to-r from-primary-soft to-primary" style={{ width: `${(value / max) * 100}%` }} />
             </div>
           </div>
@@ -55,7 +55,7 @@ export default function PlatformAnalyticsPage() {
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {TOP_METRICS.map(({ key, label, icon: Icon }) => (
-              <div key={key} className="rounded-[24px] border border-border bg-white/[0.03] p-5">
+              <div key={key} className="rounded-[24px] border border-border bg-secondary p-5">
                 <Icon className="size-4 text-primary-soft" />
                 <p className="mt-3 font-display text-2xl font-bold">{data[key]}</p>
                 <p className="text-xs text-muted-foreground">{label}</p>

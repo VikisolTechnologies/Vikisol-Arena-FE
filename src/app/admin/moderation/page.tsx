@@ -39,7 +39,7 @@ export default function ModerationPage() {
 
   return (
     <PlatformAdminShell title="Moderation queue">
-      <div className="mb-5 flex gap-1 rounded-full border border-border bg-white/[0.03] p-1">
+      <div className="mb-5 flex gap-1 rounded-full border border-border bg-secondary p-1">
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -59,7 +59,7 @@ export default function ModerationPage() {
       ) : (
         <div className="space-y-2.5">
           {items.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-border bg-white/[0.02] px-4 py-3.5">
+            <div key={item.id} className="rounded-2xl border border-border bg-secondary px-4 py-3.5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="flex items-center gap-1.5 truncate text-sm font-semibold">

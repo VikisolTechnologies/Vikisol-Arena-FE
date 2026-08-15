@@ -86,7 +86,7 @@ export default function TeamPage() {
         </Button>
       }
     >
-      <div className="mb-5 flex items-center justify-between rounded-2xl border border-border bg-white/[0.02] px-4 py-3 text-sm">
+      <div className="mb-5 flex items-center justify-between rounded-2xl border border-border bg-secondary px-4 py-3 text-sm">
         <span className="text-muted-foreground">Seats used</span>
         <span className={atLimit ? "font-semibold text-amber-400" : "font-semibold"}>
           {seatsUsed}/{seatsTotal || "—"}
@@ -99,7 +99,7 @@ export default function TeamPage() {
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pending invitations</p>
           <div className="space-y-2">
             {invitations.map((inv) => (
-              <div key={inv.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-white/[0.02] px-4 py-3">
+              <div key={inv.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-secondary px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{inv.email}</p>
                   <p className="text-xs capitalize text-muted-foreground">{inv.role.replace("_", " ")}</p>
@@ -119,7 +119,7 @@ export default function TeamPage() {
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Members</p>
       <div className="space-y-2">
         {team.map((m) => (
-          <div key={m.membershipId} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-white/[0.02] px-4 py-3">
+          <div key={m.membershipId} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-secondary px-4 py-3">
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{m.name}</p>
               <p className="truncate text-xs text-muted-foreground">{m.email}</p>
@@ -127,7 +127,7 @@ export default function TeamPage() {
             <select
               value={m.role}
               onChange={(e) => changeMemberRole(m.membershipId, e.target.value as Role).then(load)}
-              className="rounded-full border border-border bg-white/[0.03] px-3 py-1.5 text-xs capitalize"
+              className="rounded-full border border-border bg-secondary px-3 py-1.5 text-xs capitalize"
             >
               {INVITABLE_ROLES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
             </select>
@@ -155,7 +155,7 @@ export default function TeamPage() {
             <DialogDescription>No email provider is configured yet, so you&apos;ll get a link to share directly.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="teammate@company.com" className="border-border bg-white/[0.03]" />
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="teammate@company.com" className="border-border bg-secondary" />
             <div className="flex gap-2">
               {INVITABLE_ROLES.map((r) => (
                 <button
@@ -163,7 +163,7 @@ export default function TeamPage() {
                   type="button"
                   onClick={() => setRole(r.key)}
                   className={`flex-1 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
-                    role === r.key ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-white/[0.03] text-muted-foreground"
+                    role === r.key ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground"
                   }`}
                 >
                   {r.label}

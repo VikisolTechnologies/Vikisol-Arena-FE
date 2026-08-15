@@ -63,7 +63,7 @@ export default function FeatureFlagsPage() {
     >
       <div className="space-y-2.5">
         {flags.map((f) => (
-          <div key={f.id} className="flex items-center gap-4 rounded-2xl border border-border bg-white/[0.02] px-4 py-3.5">
+          <div key={f.id} className="flex items-center gap-4 rounded-2xl border border-border bg-secondary px-4 py-3.5">
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{f.label}</p>
               <p className="truncate font-mono text-xs text-muted-foreground">{f.key}</p>
@@ -84,15 +84,15 @@ export default function FeatureFlagsPage() {
           <div className="space-y-3">
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Key</label>
-              <Input value={form.key} onChange={(e) => setForm((f) => ({ ...f, key: e.target.value }))} placeholder="e.g. new_pricing_page" className="border-border bg-white/[0.03] font-mono" />
+              <Input value={form.key} onChange={(e) => setForm((f) => ({ ...f, key: e.target.value }))} placeholder="e.g. new_pricing_page" className="border-border bg-secondary font-mono" />
             </div>
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Label</label>
-              <Input value={form.label} onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} placeholder="e.g. New pricing page" className="border-border bg-white/[0.03]" />
+              <Input value={form.label} onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} placeholder="e.g. New pricing page" className="border-border bg-secondary" />
             </div>
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Description (optional)</label>
-              <Input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} className="border-border bg-white/[0.03]" />
+              <Input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} className="border-border bg-secondary" />
             </div>
             {error && <p className="text-xs text-red-400">{error}</p>}
             <Button variant="primary-gradient" size="sm" className="w-full" onClick={submitCreate} disabled={saving}>

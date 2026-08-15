@@ -107,16 +107,16 @@ export default function PostingsPage() {
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {postings.map((p) => (
-          <div key={p.id} className="rounded-[24px] border border-border bg-white/[0.03] p-5">
+          <div key={p.id} className="rounded-[24px] border border-border bg-secondary p-5">
             <div className="flex items-start justify-between gap-2">
               <p className="font-display text-sm font-bold leading-snug">{p.title}</p>
-              <Badge variant="secondary" className={cn("shrink-0 capitalize", p.status === "open" ? "bg-emerald-500/15 text-emerald-400" : "bg-white/5 text-muted-foreground")}>
+              <Badge variant="secondary" className={cn("shrink-0 capitalize", p.status === "open" ? "bg-emerald-500/15 text-emerald-400" : "bg-secondary text-muted-foreground")}>
                 {p.status}
               </Badge>
             </div>
             <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3" /> {p.location}{p.remote && " · Remote"}</p>
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {p.skills.slice(0, 3).map((s) => <Badge key={s} variant="secondary" className="bg-white/5 text-[11px] text-muted-foreground">{s}</Badge>)}
+              {p.skills.slice(0, 3).map((s) => <Badge key={s} variant="secondary" className="bg-secondary text-[11px] text-muted-foreground">{s}</Badge>)}
             </div>
             <div className="mt-4 flex gap-2">
               <Button variant="ghost-glass" size="sm" className="flex-1 gap-1.5" onClick={() => router.push(`/enterprise/postings/${p.id}`)}>
@@ -157,15 +157,15 @@ export default function PostingsPage() {
               <p className="rounded-lg border border-red-500/30 bg-red-500/[0.06] px-3 py-2 text-xs text-red-400">{limitError}</p>
             )}
             <div className="flex gap-2">
-              <Input value={oneLiner} onChange={(e) => setOneLiner(e.target.value)} placeholder="e.g. Senior backend engineer for our payments team" className="border-border bg-white/[0.03]" />
+              <Input value={oneLiner} onChange={(e) => setOneLiner(e.target.value)} placeholder="e.g. Senior backend engineer for our payments team" className="border-border bg-secondary" />
               <Button variant="primary-gradient" size="sm" disabled={drafting} onClick={draftPosting} className="shrink-0 gap-1.5">
                 <Sparkles className="size-3.5" /> {drafting ? "Drafting…" : "Draft"}
               </Button>
             </div>
             {drafted && (
-              <div className="space-y-3 rounded-2xl border border-border bg-white/[0.02] p-4">
-                <Input value={drafted.title} onChange={(e) => setDrafted({ ...drafted, title: e.target.value })} className="border-border bg-white/[0.03]" />
-                <Textarea value={drafted.description} onChange={(e) => setDrafted({ ...drafted, description: e.target.value })} rows={3} className="border-border bg-white/[0.03]" />
+              <div className="space-y-3 rounded-2xl border border-border bg-secondary p-4">
+                <Input value={drafted.title} onChange={(e) => setDrafted({ ...drafted, title: e.target.value })} className="border-border bg-secondary" />
+                <Textarea value={drafted.description} onChange={(e) => setDrafted({ ...drafted, description: e.target.value })} rows={3} className="border-border bg-secondary" />
                 <div className="flex flex-wrap gap-1.5">
                   {drafted.skills.map((s) => <Badge key={s} variant="secondary" className="bg-primary/10 text-primary-soft">{s}</Badge>)}
                 </div>
