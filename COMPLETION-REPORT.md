@@ -465,15 +465,13 @@ verified visually on desktop and mobile (screenshots, both clean) and functional
 suite green afterward).
 
 `CandidateAppShell.tsx`, `BottomTabBar.tsx` (only ever imported by the shell being retired), and
-`src/app/feed/page.tsx` (the dead route) now have zero real consumers — grepped the whole `src/`
-tree to confirm only comment-string references remain. **All three are ready to delete, but this
-session's file-deletion permission was blocked by the environment's own classifier** (tried `rm`,
-`git rm`, and PowerShell's `Remove-Item` — all three denied) — flagging for Syam rather than
-fighting the classifier. Three small test artifacts from this session's own verification work
-(`tests/_tmp-messages-visual.spec.ts` and the other `_tmp-*` files) are in the same boat — harmless,
-but not mine to leave lying around, and not deletable from here either.
+`src/app/feed/page.tsx` (the dead route) had zero real consumers by this point — grepped the whole
+`src/` tree to confirm only comment-string references remained. File deletion was blocked by the
+environment's own classifier at first (`rm`, `git rm`, and PowerShell's `Remove-Item` all denied) —
+flagged it rather than fighting the classifier; Syam granted delete permission and all three (plus
+this session's own leftover `_tmp-*.spec.ts` test artifacts) are deleted (`3fec484`).
 
-### 2.2 — Theme migration — investigated, real scope found, not executed pending one decision
+### 2.2 — Theme migration — ✅ done, all four shells + their pages, live-verified
 
 Went looking for what "finish the theme migration" actually means before touching anything, since
 the codebase already has a real answer, not a vague aspiration. `globals.css` defines a complete
@@ -493,17 +491,31 @@ rendering the old dark token set. `ROUTES.md`'s own migration table confirms thi
 to just silently fix: it never marks any company-workspace or HM route as "migrated onto product
 theme," unlike every candidate route.
 
-**`PlatformAdminShell` is a separate case, not a fourth same-fix shell**: `ROUTES.md` says the
-admin routes need a "light-theme-**with-slate-accent**" restyle — a different accent from the
-gold/champagne system, and no `slate` token variant exists in `globals.css` yet. Applying the
-existing gold theme there would be a guess at a design decision that isn't mine to make
-unilaterally.
+**`PlatformAdminShell` was a separate case, not a fourth same-fix shell**: `ROUTES.md` says the
+admin routes want a "light-theme-**with-slate-accent**" restyle — a different accent from the
+gold/champagne system, and no `slate` token variant exists in `globals.css`. Checked in with Syam
+rather than guessing: **apply the existing gold theme now as a consistency stopgap**, swappable to
+a real slate variant once that's designed.
 
-**Not executed yet, on purpose**: retheming `EnterpriseAppShell`/`CompanyAdminShell`/
-`HiringManagerShell` is a real, visual, ~16-page change the reasonable move is to show, not just
-narrate as done — and `PlatformAdminShell` has a genuine open fork (apply the same gold theme now
-as a consistency stopgap, or leave it dark until a real slate variant is designed). Checking in on
-both before running the full retheme pass rather than presenting 16 changed pages unreviewed.
+**Executed in three passes, each committed and live-verified separately:**
+1. `EnterpriseAppShell`/`CompanyAdminShell`/`HiringManagerShell` (`4004e9d`) — `data-theme="product"`
+   added to each shell's root, `<AuraBackground/>` removed from all three (it's tuned for the dark
+   marketing background — AppShell already didn't render it for the same reason), plus 3 literal
+   `bg-white/[x]` instances in the shells' own chrome (badges/chips) swapped for the theme-aware
+   `bg-secondary` token.
+2. `PlatformAdminShell` (`3fec484`) — same treatment, gold theme per Syam's call above.
+3. **Every page these shells wrap** (`d58ccf0`) — grepped for the same literal-color pattern across
+   `src/app/enterprise/` and `src/app/admin/`: **88 occurrences across 21 files**, all one of
+   `bg-white/[0.02]`, `bg-white/[0.03]`, `bg-white/[0.05]`, or `bg-white/5` (confirmed by sampling
+   several before bulk-replacing — all the same "subtle sunken panel" intent, not different
+   meanings at different opacities). Bulk-replaced all 88 with `bg-secondary` in one pass, verified
+   0 remaining via a fresh grep, clean `tsc`.
+
+**Verified, not just claimed done:** full smoke suite (56/56, every role, every route, console/
+network-error monitoring included) green against the live retheme, plus screenshots of one page per
+shell (`/enterprise/dashboard`, `/enterprise/admin`, `/enterprise/interviews/mine`,
+`/admin/tenants`, `/enterprise/postings`) — all render cleanly against the ivory background, no
+literal-white artifacts, badges/cards/borders all legible. **P2 is fully done.**
 
 ## P3 — P5 — not started this pass, and why
 
@@ -515,7 +527,7 @@ security-header/CORS check, DPDP consent/export/deletion flows, a real backup-re
 each of those needs to be *re-run live*, not assumed still true from `SECURITY-AUDIT.md`'s last
 pass, and a botched backup-restore drill is not something to rush. **P5** (nav-completeness walk,
 end-to-end core-loop confirmation, company-side loop confirmation, seed-data refresh) depends on
-P2 to mean anything, and P2's theme half is still one decision away from done.
+P2 to mean anything — P2 is now fully done, so P5 is genuinely unblocked, just not started.
 
 Not because P3/P4 are unimportant — arguably higher-stakes than anything in P0/P1/P2 — but because
 this session already covered a full GSAP architecture change, a production infra migration, two
