@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LayoutDashboard, Building2, Users, ShieldAlert, BarChart3, ToggleLeft, LogOut } from "lucide-react";
-import { AuraBackground } from "@/components/landing/AuraBackground";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import NotFound from "@/app/not-found";
@@ -69,8 +68,7 @@ export function PlatformAdminShell({
   if (state === "denied") return <NotFound />;
 
   return (
-    <div className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
-      <AuraBackground />
+    <div data-theme="product" className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
       <nav className="sticky top-0 z-20 border-b border-border bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6">
           <Link href="/admin" className="flex items-center gap-2">
