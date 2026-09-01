@@ -850,3 +850,15 @@ Syam's ask: test the whole app carefully, forgot-password still isn't visibly wo
   - **Net finding**: no confirmed new regression from this pass's own changes (`layout.tsx`,
     `Hero.tsx`, `GoogleMapView.tsx` all `tsc --noEmit` clean); the mass failure was real but was the
     test run's own resource/timing envelope, not the product.
+- **`Msg91PhoneOtpProvider`** (`arena-api`) - the real SMS-OTP implementation `PhoneOtpProvider`'s
+  own class comment always said would be "a pure drop-in" - chosen over Twilio for being far
+  cheaper per-SMS to Indian numbers, which is the only kind this product's phone auth targets.
+  Same interface→Noop→real pattern as `ResendEmailProvider`, wired into
+  `IntegrationProviderConfig` alongside it. `./mvnw compile` clean. **Dormant, not yet live** - two
+  things Syam still needs to get from MSG91's dashboard, not just an API key: `MSG91_AUTH_KEY`,
+  and a **DLT-approved SMS template** (`MSG91_TEMPLATE_ID`) - Indian telecom regulation (TRAI's
+  DLT framework) rejects any transactional SMS whose wording wasn't pre-registered, so this code
+  cannot skip that step, only send through whichever template gets approved. The template's one
+  variable must be named to match `MSG91_OTP_VARIABLE_NAME` (default `OTP`), and its approved
+  copy should itself end with the WebOTP suffix (`@arena.vikisol.in #<code>`) for Chrome auto-read
+  to keep working once this is live.
