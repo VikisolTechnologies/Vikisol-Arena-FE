@@ -733,6 +733,53 @@ username change"). Built for real, not scaffolded-and-left:
    once credentials exist (see `PhoneOtpProvider`'s own class comment). Until then, phone sign-
    in/signup work correctly end-to-end but the code only reaches Railway's logs, not a real phone.
 
-**Scoped out of this pass, on purpose**: a "forgot password" flow (no password-reset mechanism
-exists at all in this codebase yet, for any account) - a real, separate gap, flagged here rather
-than silently bundled in or silently ignored.
+**2026-09-01 follow-up, same day - forgot password, WebOTP auto-read, Google Maps, and P3's
+N+1 fixes, all built and live-verified:**
+
+- **Forgot/reset password** (`POST /auth/forgot-password`, `/auth/reset-password`) - the gap
+  explicitly flagged above as scoped out. Hashed reset token + 60-minute expiry (V10 migration),
+  identical response whether or not the email exists (no user-enumeration leak). **Live-verified
+  end to end** with a disposable account: wrong token rejected, correct token resets the password,
+  old password stops working, new one works, and the token can't be replayed a second time.
+- **A real bug found live-testing this, not before**: the reset link (and, it turned out, the
+  pre-existing invite link) pointed at `http://localhost:3000` in production regardless of the
+  `FRONTEND_URL` env var, which Railway genuinely has set to `https://arena.vikisol.in`. Root
+  cause: `@Value("${app.frontend.url:...}")` (dotted) never matched `application.yml`'s actual
+  `app.frontend-url` (hyphenated) key, so it silently fell back to the inline default instead of
+  erroring. Fixed in both `AuthService` (new) and `TeamService` (pre-existing - invite emails had
+  been generating broken links this whole time, just never noticed since `NoopEmailProvider` never
+  actually delivers anything to a real inbox). Also improved `NoopEmailProvider` to log the full
+  body, not just subject/recipient, matching `NoopPhoneOtpProvider`'s own testability - this is
+  exactly what surfaced the bug.
+- **WebOTP auto-read** - `PhoneOtpProvider.buildOtpMessage()` now produces the domain-bound
+  `@arena.vikisol.in #<code>` suffix WebOTP requires; `PhoneAuthForm.tsx` calls
+  `navigator.credentials.get({otp:...})` (Chrome/Android auto-fills the code from the incoming SMS,
+  zero copy-paste) and every OTP input across the app now has `autoComplete="one-time-code"` for
+  the OS/keyboard-level fallback everywhere else. **Live-verified**: the Noop-logged message now
+  shows the exact required format.
+- **Mobile verified for real**, not assumed: ran the phone signup/sign-in flow against the live
+  site on both `mobile-chromium` (Pixel 7) and `mobile-webkit` (iPhone 13) Playwright projects -
+  phone entry, code entry, the `autocomplete="one-time-code"` attribute, and error handling all
+  render and work correctly on both engines.
+- **Google Maps for `/map`** (Syam's explicit call, after flagging the trade-off) - `GoogleMapView`
+  renders real Google Maps tiles, dormant unless `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set (falls
+  back to the existing stylized radar otherwise - nothing regresses for anyone who hasn't
+  provisioned a key). **Not actually a privacy regression**: it plots the exact same already-
+  geohash-quantized `approxLat`/`approxLng` the radar view already uses - a different renderer for
+  identically privacy-safe data, not more precise pins.
+- **P3's N+1/unbounded-query findings - all fixed and live-verified** (created a real tagged post
+  and real comments to confirm the *batched* code paths return correct data, not just the trivial
+  empty-list case):
+  - `RoomService.getMyRooms`: was loading a room's entire message history + every member row, per
+    room, just to read the last message and count members - `findTopByRoomIdOrderByCreatedAtDesc`
+    + `countByRoomId` instead.
+  - `RoomService.getMessages` / `ConversationService.getMessages`: had no limit at all - capped at
+    the 100 most recent.
+  - `RoomService`/`PostCommentService`: per-row `CandidateProfile` lookups batched via the
+    existing `findByUserIdIn` IN-query (same shape `CandidateProfileRepository.search()` already
+    established elsewhere in this codebase).
+  - `PostCommentService.getComments`: also had no limit - capped at 200 most recent.
+  - `PostMapper.toResponse`: `post.getTags()`/`getMediaUrls()` were read directly, 2 lazy loads per
+    post per feed page - two new IN-query projections grouped into per-post maps instead, right
+    next to the comment/reaction-count batching that already existed there.
+  - DB indexes were already confirmed solid in the original P3 pass - no changes needed there.
