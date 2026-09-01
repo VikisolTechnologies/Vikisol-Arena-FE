@@ -154,6 +154,25 @@ Railway keeps serving `arena.vikisol.in` unchanged until Syam makes this change.
 say so and I'll run the full suite against the real domain, then Step 5 (old-project retirement,
 also Syam-only) can happen for both the stale Vercel project and the Railway `arena-web` service.
 
+**2026-09-01 — full production outage, found and resolved same day, root cause was Railway
+billing, not code.** Syam reported `arena.vikisol.in` showing Railway's "train has not arrived at
+the station" page. Investigated via `railway status`/`railway logs` per service rather than
+guessing: **all four services in `arena-staging`** — `arena-web`, `arena-api`, Postgres, and Redis
+— were down simultaneously. Postgres's own log showed the tell: it started cleanly ("database
+system is ready to accept connections"), then Railway itself sent `SIGTERM` ~5 minutes later, and
+its startup message showed it had been "interrupted" and down continuously since **2026-08-19**
+(13 days). `arena-api`'s log showed it couldn't even resolve `redis.railway.internal` — Redis
+wasn't running. Every service getting started-then-killed by the platform itself, across app
+services and both databases at once, isn't a code bug — that signature is a Railway
+account/billing suspension (trial credit exhausted from 2 services + 2 databases running 24/7 for
+weeks), not something fixable from the CLI or by touching code. Flagged this plainly to Syam
+instead of guessing at a code fix; Syam resolved the Railway billing issue directly. Re-verified
+after: all four services `● Online`, live site `200`, `/version` matches `HEAD` (`e84b4b0`), API
+`/actuator/health` → `UP`, and a real DB-backed endpoint (`/public/jobs`) responds correctly
+(auth-required JSON, not a 500) — confirming the whole request path through Postgres/Redis works
+again, not just that the containers are up. **No data loss expected** — Postgres's own recovery
+log shows a clean WAL replay from its last checkpoint, not a corrupt/reinitialized volume.
+
 **Update 2026-09-01 — re-verified from a fresh laptop/session: DNS still NOT changed.** Authoritative
 nameserver query (`ns69.domaincontrol.com`) still returns `arena.vikisol.in → 55amzai3.up.railway.app`
 — Railway, not Vercel. Live site confirmed serving current code either way (`/version` returns
