@@ -18,11 +18,15 @@ import type { Session } from "@/lib/types";
 // there). The two only differ in which pair of endpoints they call and whether a name is needed
 // once the code step is reached - not worth two near-duplicate components.
 export function PhoneAuthForm({
-  mode, onSignInResult, onSignUpResult,
+  mode, onSignInResult, onSignUpResult, onSwitchToSignup,
 }: {
   mode: "signin" | "signup";
   onSignInResult?: (result: SignInResult) => void;
   onSignUpResult?: (session: Session) => void;
+  // Syam's explicit call (2026-09-02) - same "offer signup instead of a dead end" treatment as
+  // the email form's accountNotFound state; requestPhoneSigninOtp already threw this exact
+  // message before today, just never had a frontend affordance pointing anywhere.
+  onSwitchToSignup?: () => void;
 }) {
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -30,6 +34,7 @@ export function PhoneAuthForm({
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [accountNotFound, setAccountNotFound] = useState(false);
 
   // WebOTP API (see PhoneOtpProvider.buildOtpMessage's own comment on the required SMS format) -
   // Chrome on Android reads the incoming SMS itself and hands the code straight to this page,
@@ -59,13 +64,18 @@ export function PhoneAuthForm({
     e.preventDefault();
     if (!phoneNumber.trim()) { setError("Phone number is required"); return; }
     setError("");
+    setAccountNotFound(false);
     setSubmitting(true);
     try {
       if (mode === "signin") await requestPhoneSigninOtp(phoneNumber.trim());
       else await requestPhoneSignupOtp(phoneNumber.trim());
       setStep("code");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong — please try again.");
+      if (mode === "signin" && err instanceof ApiError && err.message === "No account found for this phone number") {
+        setAccountNotFound(true);
+      } else {
+        setError(err instanceof ApiError ? err.message : "Something went wrong — please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -103,11 +113,30 @@ export function PhoneAuthForm({
             inputMode="tel"
             placeholder="+91 90000 00000"
             value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
+            onChange={(e) => { setPhoneNumber(e.target.value); setAccountNotFound(false); }}
             className="h-11 rounded-xl border-border bg-white/[0.03]"
           />
         </div>
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {accountNotFound ? (
+          <div className="rounded-xl border border-border bg-white/[0.03] p-4">
+            <p className="text-sm text-muted-foreground">No account found with that number.</p>
+            <div className="mt-3 flex gap-2">
+              <Button
+                type="button"
+                variant="primary-gradient"
+                size="sm"
+                onClick={() => { onSwitchToSignup?.(); setAccountNotFound(false); }}
+              >
+                Create an account
+              </Button>
+              <Button type="button" variant="ghost-glass" size="sm" onClick={() => setAccountNotFound(false)}>
+                Try a different number
+              </Button>
+            </div>
+          </div>
+        ) : (
+          error && <p className="text-sm text-red-400">{error}</p>
+        )}
         <Button type="submit" variant="primary-gradient" size="cta" className="w-full" disabled={submitting}>
           {submitting && <Loader2 className="size-4 animate-spin" />}
           {submitting ? "Sending…" : "Send code"}

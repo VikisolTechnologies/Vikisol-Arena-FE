@@ -44,6 +44,11 @@ export default function AuthPage() {
   // stays the only method for the enterprise/recruiter/hiring-manager/platform-admin tabs.
   const [method, setMethod] = useState<"email" | "phone">("email");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  // Syam's explicit call (2026-09-02): sign-in against an unknown email used to just show the
+  // same generic "Invalid email or password" as a wrong password - a dead end for someone who
+  // simply never signed up. AuthService.signIn now reveals this one specific case (see its own
+  // comment on the enumeration trade-off), so this offers the obvious next step instead.
+  const [accountNotFound, setAccountNotFound] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
@@ -83,6 +88,7 @@ export default function AuthPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setAccountNotFound(false);
     if (!form.email || !form.password) {
       setError("Email and password are required");
       return;
@@ -105,7 +111,11 @@ export default function AuthPage() {
         redirectForRole(session.role);
       }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong — please try again.");
+      if (mode === "signin" && err instanceof ApiError && err.message === "No account found with this email") {
+        setAccountNotFound(true);
+      } else {
+        setError(err instanceof ApiError ? err.message : "Something went wrong — please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -269,7 +279,7 @@ export default function AuthPage() {
               </form>
             ) : (
               <>
-            <Tabs value={mode} onValueChange={(v) => setMode(v as "signin" | "signup")}>
+            <Tabs value={mode} onValueChange={(v) => { setMode(v as "signin" | "signup"); setAccountNotFound(false); setError(""); }}>
               <TabsList className="mb-6 grid w-full grid-cols-2 rounded-full bg-white/5 p-1">
                 <TabsTrigger value="signin" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   Sign in
@@ -285,7 +295,7 @@ export default function AuthPage() {
                 <button
                   key={key}
                   type="button"
-                  onClick={() => { setRole(key); setMethod("email"); }}
+                  onClick={() => { setRole(key); setMethod("email"); setAccountNotFound(false); }}
                   className={cn(
                     "flex flex-col items-center gap-1.5 rounded-2xl border px-3 py-3.5 text-center transition-colors",
                     role === key
@@ -310,7 +320,7 @@ export default function AuthPage() {
                   <button
                     key={key}
                     type="button"
-                    onClick={() => { setRole(key); setMethod("email"); }}
+                    onClick={() => { setRole(key); setMethod("email"); setAccountNotFound(false); }}
                     className={cn(
                       "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                       role === key
@@ -330,6 +340,7 @@ export default function AuthPage() {
                   mode={mode}
                   onSignInResult={handlePhoneSignInResult}
                   onSignUpResult={handlePhoneSignUpResult}
+                  onSwitchToSignup={() => setMode("signup")}
                 />
                 <button
                   type="button"
@@ -358,7 +369,7 @@ export default function AuthPage() {
                   id="email"
                   type="email"
                   value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  onChange={(e) => { setForm((f) => ({ ...f, email: e.target.value })); setAccountNotFound(false); }}
                   className="h-11 rounded-xl border-border bg-white/[0.03]"
                 />
               </div>
@@ -384,7 +395,31 @@ export default function AuthPage() {
                 />
               </div>
 
-              {error && <p className="text-sm text-red-400">{error}</p>}
+              {accountNotFound ? (
+                <div className="rounded-xl border border-border bg-white/[0.03] p-4">
+                  <p className="text-sm text-muted-foreground">No account found with that email.</p>
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      type="button"
+                      variant="primary-gradient"
+                      size="sm"
+                      onClick={() => { setMode("signup"); setAccountNotFound(false); }}
+                    >
+                      Create an account
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost-glass"
+                      size="sm"
+                      onClick={() => setAccountNotFound(false)}
+                    >
+                      Try a different email
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                error && <p className="text-sm text-red-400">{error}</p>
+              )}
 
               <Button type="submit" variant="primary-gradient" size="cta" className="w-full" disabled={submitting}>
                 {submitting && <Loader2 className="size-4 animate-spin" />}
