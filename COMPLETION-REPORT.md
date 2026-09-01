@@ -919,3 +919,21 @@ significant infra discovery: `arena-web` was quietly deploying to two different 
 - **All three of Syam's credentials are now fully live**: Resend (email), Google Client ID (sign-
   in), Google Maps API key. Only MSG91 (SMS/phone OTP) remains dormant, on hold at Syam's request
   pending the DLT template registration.
+
+**Same night, next ask - "no account found" should offer signup, not a dead end.**
+
+- `AuthService.signIn()` used to return the identical generic "Invalid email or password" for
+  both a wrong password AND an email that never signed up - a deliberate anti-enumeration choice.
+  Phone sign-in (`requestPhoneSigninOtp`) already broke from that months ago (`"No account found
+  for this phone number"`), just never got a frontend affordance pointing anywhere - Syam
+  confirmed extending the same trade-off to email explicitly, so this pass made both consistent:
+  `signIn()` now throws `"No account found with this email"` when the email genuinely doesn't
+  exist, distinct from the still-generic message a wrong password or a DPDP-erased account gets.
+- Frontend (`auth/page.tsx`, `PhoneAuthForm.tsx`): both sign-in paths detect that exact message and
+  show "No account found with that email/number" plus two clear actions - **Create an account**
+  (switches to signup mode, carries over whatever was already typed) or **Try a different
+  email/number** (dismisses, stays on sign-in). Reset on every relevant state change (typing a new
+  email/number, switching tabs/role/method manually) so it never lingers stale.
+- **Live-verified with a real browser**, both paths: a genuinely nonexistent email/phone number
+  hits the real backend, gets the real message, the button click genuinely switches the form to
+  signup mode with the typed value intact.
