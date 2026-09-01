@@ -10,18 +10,8 @@ import Script from "next/script";
 // signInWithGoogle) - the Client ID itself is meant to be public, safe to ship in the bundle.
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (config: { client_id: string; callback: (resp: { credential: string }) => void }) => void;
-          renderButton: (parent: HTMLElement, options: Record<string, unknown>) => void;
-        };
-      };
-    };
-  }
-}
+// Ambient window.google shape lives in lib/google-global.d.ts - shared with GoogleMapView so the
+// two components' `declare global` blocks don't conflict with each other.
 
 export function GoogleSignInButton({ onCredential, disabled }: { onCredential: (idToken: string) => void; disabled?: boolean }) {
   const divRef = useRef<HTMLDivElement>(null);

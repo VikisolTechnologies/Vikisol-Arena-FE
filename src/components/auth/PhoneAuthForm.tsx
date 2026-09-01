@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,30 @@ export function PhoneAuthForm({
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // WebOTP API (see PhoneOtpProvider.buildOtpMessage's own comment on the required SMS format) -
+  // Chrome on Android reads the incoming SMS itself and hands the code straight to this page,
+  // no copy-paste, no switching apps. Feature-detected (`'OTPCredential' in window`) - a no-op
+  // everywhere else (iOS Safari/desktop instead rely on the input's own autoComplete="one-time-
+  // code" for the OS/keyboard-level autofill suggestion, set below). Aborted on unmount/step
+  // change so a stale credentials.get() call from a previous phone number can't fill this one.
+  useEffect(() => {
+    if (step !== "code" || typeof window === "undefined" || !("OTPCredential" in window)) return;
+    const controller = new AbortController();
+    navigator.credentials
+      .get({
+        otp: { transport: ["sms"] },
+        signal: controller.signal,
+      } as CredentialRequestOptions)
+      .then((cred) => {
+        const otp = cred as unknown as { code?: string } | null;
+        if (otp?.code) setCode(otp.code.replace(/\D/g, "").slice(0, 6));
+      })
+      .catch(() => {
+        // AbortError on unmount, or no matching SMS arrived - neither is worth surfacing.
+      });
+    return () => controller.abort();
+  }, [step]);
 
   const requestCode = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,6 +135,7 @@ export function PhoneAuthForm({
         <Input
           id="phoneCode"
           inputMode="numeric"
+          autoComplete="one-time-code"
           autoFocus
           maxLength={6}
           value={code}

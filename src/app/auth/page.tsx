@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { signIn, signUp, verifyMfa } from "@/lib/api/auth";
+import { signIn, signUp, verifyMfa, forgotPassword } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/httpClient";
 import { isRealMode } from "@/lib/api/mode";
 import { isOnboarded } from "@/lib/session";
@@ -43,6 +43,10 @@ export default function AuthPage() {
   // Phone/Google are talent-only entry points (see PhoneSignupVerifyRequest's comment) - "email"
   // stays the only method for the enterprise/recruiter/hiring-manager/platform-admin tabs.
   const [method, setMethod] = useState<"email" | "phone">("email");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotSubmitting, setForgotSubmitting] = useState(false);
   // Same fixed-bottom-banner-covers-a-real-control bug already fixed on every app shell's
   // sidebar (see use-cookie-consent-visible.ts) - CookieConsentBanner is a fixed, bottom-of-
   // viewport overlay (z-[900]) and this page's own submit button can land directly under it for
@@ -136,6 +140,21 @@ export default function AuthPage() {
     redirectForRole(session.role);
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) return;
+    setError("");
+    setForgotSubmitting(true);
+    try {
+      await forgotPassword(forgotEmail.trim());
+      setForgotSent(true);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Something went wrong — please try again.");
+    } finally {
+      setForgotSubmitting(false);
+    }
+  };
+
   const handleVerifyMfa = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!mfaPendingToken) return;
@@ -179,7 +198,45 @@ export default function AuthPage() {
           </Link>
 
           <div className="rounded-[24px] border border-border bg-white/5 p-7 backdrop-blur-[18px]">
-            {mfaPendingToken ? (
+            {showForgotPassword ? (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="font-display text-lg font-bold tracking-tight">Reset your password</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Enter your email and we&apos;ll send you a reset link.</p>
+                </div>
+                {forgotSent ? (
+                  <p className="rounded-xl border border-border bg-white/[0.03] p-4 text-sm text-muted-foreground">
+                    If <span className="text-foreground">{forgotEmail}</span> has an account, a reset link is on its way — check your inbox.
+                  </p>
+                ) : (
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="forgotEmail">Email</Label>
+                      <Input
+                        id="forgotEmail"
+                        type="email"
+                        autoFocus
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        className="h-11 rounded-xl border-border bg-white/[0.03]"
+                      />
+                    </div>
+                    {error && <p className="text-sm text-red-400">{error}</p>}
+                    <Button type="submit" variant="primary-gradient" size="cta" className="w-full" disabled={forgotSubmitting}>
+                      {forgotSubmitting && <Loader2 className="size-4 animate-spin" />}
+                      {forgotSubmitting ? "Sending…" : "Send reset link"}
+                    </Button>
+                  </form>
+                )}
+                <button
+                  type="button"
+                  onClick={() => { setShowForgotPassword(false); setForgotSent(false); setForgotEmail(""); setError(""); }}
+                  className="w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Back to sign in
+                </button>
+              </div>
+            ) : mfaPendingToken ? (
               <form onSubmit={handleVerifyMfa} className="space-y-4">
                 <div>
                   <h2 className="font-display text-lg font-bold tracking-tight">Two-factor verification</h2>
@@ -306,7 +363,18 @@ export default function AuthPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="password">Password</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  {mode === "signin" && (
+                    <button
+                      type="button"
+                      onClick={() => { setShowForgotPassword(true); setForgotEmail(form.email); setError(""); }}
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
                 <Input
                   id="password"
                   type="password"

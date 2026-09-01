@@ -14,6 +14,7 @@ import { PersonAvatar } from "@/components/ui/person-avatar";
 import { getMyProfile } from "@/lib/api/profile";
 import { getNearby, requestJoin } from "@/lib/api/posts";
 import { requireOnboarded } from "@/lib/auth-guard";
+import { GoogleMapView, googleMapsConfigured } from "@/components/map/GoogleMapView";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { formatFriendlyDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -180,6 +181,19 @@ export default function MapPage() {
             <div className="glass-panel overflow-hidden rounded-[24px] border border-border bg-secondary" style={{ height: "min(480px, 60vh)" }}>
               {posts === null ? (
                 <OrbLoader className="h-full" />
+              ) : googleMapsConfigured() ? (
+                // Real Google Maps tiles, plotting the exact same already-jittered
+                // approxLat/approxLng the radar view uses below - not a precision regression,
+                // just a different renderer for identically privacy-safe data (see
+                // GoogleMapView's own comment).
+                <GoogleMapView
+                  posts={posts}
+                  centerLat={center.lat}
+                  centerLng={center.lng}
+                  radiusKm={radiusKm}
+                  selectedId={selectedId}
+                  onSelect={(id) => setSelectedId(id || null)}
+                />
               ) : (
                 <MapRadarScene
                   posts={posts}

@@ -396,7 +396,7 @@ export default function SettingsPage() {
                   <div className="space-y-2">
                     <p className="text-[11px] text-muted-foreground">Code sent to {verification.phoneNumber}. (Demo mode: the code is <span className="font-mono text-primary-soft">123456</span>.)</p>
                     <div className="flex items-center gap-2">
-                      <Input value={otpInput} onChange={(e) => setOtpInput(e.target.value)} placeholder="6-digit code" className="h-8 border-border bg-card text-xs" />
+                      <Input value={otpInput} onChange={(e) => setOtpInput(e.target.value)} placeholder="6-digit code" autoComplete="one-time-code" inputMode="numeric" className="h-8 border-border bg-card text-xs" />
                       <Button variant="default" size="sm" disabled={!otpInput.trim() || phoneBusy} onClick={confirmOtp}>
                         {phoneBusy ? "Confirming…" : "Confirm"}
                       </Button>

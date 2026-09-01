@@ -203,6 +203,24 @@ export async function changeEmail(newEmail: string, currentPassword: string): Pr
   return updated;
 }
 
+// --- Forgot password ---
+
+export async function forgotPassword(email: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch<void>("/auth/forgot-password", { method: "POST", auth: false, body: { email } });
+    return;
+  }
+  await delay(undefined, 400);
+}
+
+export async function resetPassword(email: string, token: string, newPassword: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch<void>("/auth/reset-password", { method: "POST", auth: false, body: { email, token, newPassword } });
+    return;
+  }
+  await delay(undefined, 400);
+}
+
 export async function signOut(): Promise<void> {
   if (isRealMode()) {
     // Was client-discard-only - the access token stayed valid server-side until its natural
