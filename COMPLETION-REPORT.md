@@ -905,3 +905,17 @@ significant infra discovery: `arena-web` was quietly deploying to two different 
   Vercel is the one and only frontend host going forward, closing off this exact class of
   "which platform actually has the latest env var" confusion for good. Re-verified landing page,
   `/auth`, and the backend all healthy immediately after removal.
+- **Google Maps activated too, same night** - Syam provisioned a Maps JavaScript API key
+  (restricted to `arena.vikisol.in/*` + Maps JavaScript API only, on his own initiative). Set as
+  `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` on Vercel (not Railway - see above), `vercel --prod`, confirmed
+  present in the live compiled bundle. **Fully live-verified with a real browser**, not just a
+  bundle grep this time: granted+mocked geolocation (Hyderabad), clicked "Use my location for this
+  visit" (the demo talent account has location consent off, so this is the real first-time-user
+  path, not a shortcut), and got a real rendered Google Map - actual roadmap tiles, a real marker
+  at a real nearby seeded post, zoom controls, `.gm-style` present, every `maps.googleapis.com`
+  tile/viewport request returning 200. Only console output was Google's own harmless deprecation
+  notices (`google.maps.Marker` → `AdvancedMarkerElement`, `loading=async` recommendation) - real
+  but low-priority, not urgent (12+ months notice before Google actually removes `Marker`).
+- **All three of Syam's credentials are now fully live**: Resend (email), Google Client ID (sign-
+  in), Google Maps API key. Only MSG91 (SMS/phone OTP) remains dormant, on hold at Syam's request
+  pending the DLT template registration.
