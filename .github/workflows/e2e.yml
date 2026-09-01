@@ -52,6 +52,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Verify required secrets are present
+        id: check-secrets
         run: |
           missing=""
           for var in ARENA_TALENT_PASSWORD ARENA_COMPANY_ADMIN_PASSWORD ARENA_RECRUITER_PASSWORD ARENA_HIRING_MANAGER_PASSWORD ARENA_PLATFORM_ADMIN_PASSWORD; do
@@ -71,6 +72,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
+        id: install
         run: npm ci
 
       - name: Install Playwright browsers
@@ -92,9 +94,14 @@ jobs:
       - name: Run smoke (routes + auth)
         run: npx playwright test tests/e2e/smoke tests/e2e/auth/login.spec.ts --project=desktop-chromium
 
+      # `if: always()` here means "still show the a11y result even if the smoke step above
+      # failed" - but it must NOT run when `npm ci` itself never happened (e.g. the secrets
+      # check failed and skipped everything after it), or this reports a confusing unrelated
+      # "Cannot find module '@playwright/test'" on top of the real error. Gate on the install
+      # step's own outcome, not just "always."
       - name: Run accessibility
         run: npx playwright test tests/e2e/accessibility --project=desktop-chromium
-        if: always()
+        if: always() && steps.install.outcome == 'success'
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
