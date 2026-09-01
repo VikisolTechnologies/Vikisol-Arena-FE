@@ -862,3 +862,46 @@ Syam's ask: test the whole app carefully, forgot-password still isn't visibly wo
   variable must be named to match `MSG91_OTP_VARIABLE_NAME` (default `OTP`), and its approved
   copy should itself end with the WebOTP suffix (`@arena.vikisol.in #<code>`) for Chrome auto-read
   to keep working once this is live.
+
+**2026-09-01/02, same night - activating Resend + Google sign-in for real, and a genuinely
+significant infra discovery: `arena-web` was quietly deploying to two different places.**
+
+- **Resend fully live, not just configured** - Syam provisioned a real API key and `vikisol.in`
+  turned out to already be a fully verified sending domain on Resend (done 2026-07-03, before this
+  session, discovered via `GET /domains`). Switched `RESEND_FROM` off the sandbox address to
+  `no-reply@vikisol.in`, then proved real delivery two ways: created a disposable throwaway
+  account with Syam's own inbox, triggered both the welcome email and forgot-password, confirmed
+  `"last_event":"delivered"` on both via Resend's own `/emails` API, and Syam independently
+  confirmed receipt. Throwaway account erased afterward via the DPDP endpoint.
+  - **Side finding, not Arena's**: while reading Resend's send log, noticed a *different* Vikisol
+    product's onboarding emails (`connect@vikisol.in`, "Vikisol Technologies - Activate Your
+    Account") repeatedly bouncing and now suppressed by Resend - flagged to Syam, out of scope to
+    fix here.
+- **Google Sign-In - the real bug wasn't Google Cloud Console, it was the deploy pipeline.**
+  Syam created an OAuth Client ID; setting it as `NEXT_PUBLIC_GOOGLE_CLIENT_ID` +
+  `GOOGLE_CLIENT_ID` on Railway and redeploying produced zero requests to
+  `accounts.google.com` at all - the button's own `!CLIENT_ID` guard was firing, meaning the
+  build-time value was still empty. Root cause, found by inspecting compiled JS chunks directly
+  rather than trusting the Railway "Online" status: **`arena-web`'s `Dockerfile` never declared
+  `ARG`/`ENV` lines for `NEXT_PUBLIC_GOOGLE_CLIENT_ID`/`NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`** - Next.js
+  bakes `NEXT_PUBLIC_*` vars in at `next build` time, and this Dockerfile only ever forwarded three
+  specific vars into that build stage; anything else set as a Railway variable silently never
+  reached the compiled bundle. Fixed (added the two missing ARG/ENV pairs).
+- **The bigger discovery underneath that**: even after fixing the Dockerfile, the client ID still
+  didn't show up in the live bundle - because **`arena.vikisol.in`'s DNS is a CNAME straight to
+  Vercel** (`c90d75ae3224d553.vercel-dns-017.com`, confirmed via `nslookup`), not Railway. A
+  separate, still-active Vercel project (`vikisol-technologies-projects/arena-web`) has been
+  auto-deploying this same GitHub repo in parallel with Railway all session, with its own
+  independent set of environment variables - every fix this session that didn't depend on a
+  `NEXT_PUBLIC_*` var (BuildStamp removal, the Hero live-clock, the Maps circle-leak fix) happened
+  to look "live-verified" because Vercel's auto-deploy kept pace with git pushes on its own, not
+  because Railway's copy mattered - Railway's `arena-web` was never actually reachable at the
+  public domain. Set `NEXT_PUBLIC_GOOGLE_CLIENT_ID` as a real Vercel env var instead, ran
+  `vercel --prod`, and **confirmed live via a real browser**: the button's iframe renders, every
+  request to `accounts.google.com/gsi/*` returns 200 with the correct client ID, zero console
+  errors.
+- **Cleanup, with Syam's explicit go-ahead**: deleted the redundant Railway `arena-web` service
+  entirely (`railway service delete`) - Railway now hosts only `arena-api` + Postgres + Redis;
+  Vercel is the one and only frontend host going forward, closing off this exact class of
+  "which platform actually has the latest env var" confusion for good. Re-verified landing page,
+  `/auth`, and the backend all healthy immediately after removal.
