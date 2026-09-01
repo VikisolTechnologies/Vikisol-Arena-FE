@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -16,6 +16,19 @@ export function Hero() {
   const scopeRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
 
+  // Was a hardcoded "02:41 AM" baked into the static prototype markup and never wired up - every
+  // visitor at every hour saw the same frozen instant, undermining the exact "your agent is awake
+  // right now" claim this badge makes. Client-only (starts null so SSR/first paint never has to
+  // guess the visitor's clock) and refreshed every 30s so it stays true for the whole time someone
+  // sits on the landing page.
+  const [time, setTime] = useState<string | null>(null);
+  useEffect(() => {
+    const update = () => setTime(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+    update();
+    const id = setInterval(update, 30_000);
+    return () => clearInterval(id);
+  }, []);
+
   const revealProps = (extra?: string) => ({
     "data-hero": reduced ? undefined : true,
     className: cn(!reduced && "reveal", extra),
@@ -30,7 +43,7 @@ export function Hero() {
       <div>
         <Badge variant="glass" {...revealProps()}>
           <span className="size-2 rounded-full bg-[#3ddc84]" />
-          Your agent is awake · 02:41 AM
+          Your agent is awake{time ? ` · ${time}` : ""}
         </Badge>
 
         <h1

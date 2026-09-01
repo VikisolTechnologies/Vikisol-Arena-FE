@@ -783,3 +783,70 @@ N+1 fixes, all built and live-verified:**
     post per feed page - two new IN-query projections grouped into per-post maps instead, right
     next to the comment/reaction-count batching that already existed there.
   - DB indexes were already confirmed solid in the original P3 pass - no changes needed there.
+
+**2026-09-01, later same day - full-app QA pass: forgot-password root cause, a real hardcoded-clock
+bug, a Maps memory leak, and a false-alarm chase through the E2E suite:**
+
+Syam's ask: test the whole app carefully, forgot-password still isn't visibly working, there's a
+"time and date" showing on every page, and animations feel off. Went through all four.
+
+- **Forgot-password root cause, confirmed**: the flow itself is not broken. Live-verified the full
+  round trip again end-to-end against `demo.talent@vikisol.dev` - triggered `/forgot-password`,
+  read the emitted token straight from Railway's logs (`NoopEmailProvider` logs the full body),
+  called `/reset-password` with it, confirmed the old password stopped working and the new one
+  (reset back to the original `Demo@12345` so the shared demo account wasn't left in a different
+  state) signed in cleanly. The reset link itself is now correct (last pass's `frontend-url` fix).
+  **The only reason no email lands in an inbox is that `RESEND_API_KEY` is still unset on Railway**
+  (confirmed via `railway variables`) - `NoopEmailProvider` only logs, it was never wired to a real
+  vendor. Same story for phone OTP, re-confirmed with a live throwaway signup (`+919876543210`,
+  cleaned up via `DELETE /profile/me` after) - correct WebOTP-formatted message, correct code,
+  correct account created, but nowhere to actually send it without an SMS vendor. Both are the
+  "SMS/Google credentials" gap already flagged above - genuinely needs Syam's action, not code.
+- **The "time and date on every page" bug, found and fixed**: `BuildStamp.tsx` - a permanent
+  build-commit + build-time stamp, mounted in the root layout, rendered bottom-right on literally
+  every route. Added in an earlier stabilization phase for a real reason (a phone-checkable "is
+  this actually the latest deploy" signal, paired with the still-useful `/version` API route this
+  pass left alone) but never meant to ship as permanent visual clutter for end users. Removed
+  `<BuildStamp />` from `layout.tsx` and deleted the now-dead component file.
+- **A second, separate "fake clock" bug, found while checking the first one**: the landing hero's
+  badge read "Your agent is awake · 02:41 AM" - a literal hardcoded string baked into
+  `Hero.tsx`, live-confirmed via `curl` against production (`arena.vikisol.in`) - every visitor at
+  every hour of every day saw the exact same frozen 2:41 AM, undermining the one thing that badge
+  is supposed to claim ("your agent is working *right now*"). Fixed to compute the visitor's actual
+  local time client-side (starts blank so SSR never has to guess, fills in on mount, refreshes
+  every 30s) - the same 24/7-agent framing, now actually true.
+- **A real bug in last pass's own Google Maps work**: `GoogleMapView`'s effect created a brand-new
+  `google.maps.Circle` overlay on every re-render (every filter/center/radius change) without ever
+  removing the previous one - overlapping circles would have silently piled up on the map for
+  anyone using it for a while. Fixed to track one `Circle` in a ref and update it in place, same
+  reuse pattern the marker loop right next to it already used. While in there: `selectedId` was
+  accepted as a prop but never actually changed a marker's appearance, so clicking a pin on the
+  real Google Map gave no visual confirmation of the selection (the sidebar list already highlights
+  it - the map itself didn't). Added a scale/color/z-index bump on the selected marker to match.
+  Both untestable live (no `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` provisioned yet), fixed by code
+  inspection and confirmed by `tsc --noEmit` passing clean.
+- **Full Playwright suite run against production** (`--workers=1`, all three projects): 172 passed,
+  70 failed. Chased the failures rather than reporting the raw count:
+  - Most were **already-known, not new** - the same accessibility violations and the same
+    intentionally-red Core Web Vitals performance test this suite's own `TESTING.md` already
+    documents as an open, previously-root-caused gap (landing-page JS floor, not something this
+    pass touched).
+  - The largest cluster by far (~44 tests) was every authenticated `mobile-webkit` route in the
+    smoke sweep failing on a `401` from `/auth/refresh`. Chased this instead of reporting it
+    blind: re-ran the same routes on `mobile-webkit` in isolation, right after a fresh login (so
+    the 15-minute access token was seconds old, not the ~20+ minutes it would have been by the time
+    this project's turn came up in a 24.7-minute single-worker run) - every previously-failing route
+    (`/home`, `/identity`, all the enterprise/admin pages) **passed clean**. That confirms the mass
+    failure was this long sequential run's session outliving its own access token, not a real
+    per-request defect - though it does leave a genuine, narrower open question (not confirmed
+    either way this pass) about whether the silent-refresh-via-cookie path is fully reliable in
+    WebKit specifically once a session actually runs past 15 minutes for real.
+  - Chasing it further backfired: a second isolated re-run hit a flat V8 out-of-memory crash under
+    4 parallel workers (this machine cannot sustain that, confirmed, not an app issue), and even a
+    `--workers=1` single-test re-run afterward saw login itself take 45s-2min instead of ~5s -
+    this machine was simply out of headroom from the back-to-back runs already executed this
+    session. Stopped there rather than let cumulative machine strain keep manufacturing
+    false signal.
+  - **Net finding**: no confirmed new regression from this pass's own changes (`layout.tsx`,
+    `Hero.tsx`, `GoogleMapView.tsx` all `tsc --noEmit` clean); the mass failure was real but was the
+    test run's own resource/timing envelope, not the product.

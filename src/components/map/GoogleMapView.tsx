@@ -33,6 +33,7 @@ export function GoogleMapView({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<Map<string, google.maps.marker.AdvancedMarkerElement | google.maps.Marker>>(new Map());
+  const circleRef = useRef<google.maps.Circle | null>(null);
 
   useEffect(() => {
     if (!API_KEY) return;
@@ -59,39 +60,43 @@ export function GoogleMapView({
         }
       });
 
-      new window.google.maps.Circle({
-        map,
-        center: { lat: centerLat, lng: centerLng },
-        radius: radiusKm * 1000,
-        strokeColor: "#FF6B35",
-        strokeOpacity: 0.25,
-        strokeWeight: 1,
-        fillColor: "#FF6B35",
-        fillOpacity: 0.04,
-      });
+      if (!circleRef.current) {
+        circleRef.current = new window.google.maps.Circle({
+          map,
+          center: { lat: centerLat, lng: centerLng },
+          radius: radiusKm * 1000,
+          strokeColor: "#FF6B35",
+          strokeOpacity: 0.25,
+          strokeWeight: 1,
+          fillColor: "#FF6B35",
+          fillOpacity: 0.04,
+        });
+      } else {
+        circleRef.current.setCenter({ lat: centerLat, lng: centerLng });
+        circleRef.current.setRadius(radiusKm * 1000);
+      }
 
       for (const post of posts) {
         if (post.approxLat == null || post.approxLng == null) continue;
+        const isSelected = post.id === selectedId;
         let marker = markersRef.current.get(post.id) as google.maps.Marker | undefined;
         const position = { lat: post.approxLat, lng: post.approxLng };
+        const icon = {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: isSelected ? 11 : 8,
+          fillColor: post.intentType === "activity" ? "#FF6B35" : "#7DD3FC",
+          fillOpacity: 1,
+          strokeColor: isSelected ? "#FFFFFF" : "#0b0b0d",
+          strokeWeight: isSelected ? 3 : 2,
+        };
         if (!marker) {
-          marker = new window.google.maps.Marker({
-            map,
-            position,
-            title: post.authorName,
-            icon: {
-              path: window.google.maps.SymbolPath.CIRCLE,
-              scale: 8,
-              fillColor: post.intentType === "activity" ? "#FF6B35" : "#7DD3FC",
-              fillOpacity: 1,
-              strokeColor: "#0b0b0d",
-              strokeWeight: 2,
-            },
-          });
+          marker = new window.google.maps.Marker({ map, position, title: post.authorName, icon, zIndex: isSelected ? 999 : undefined });
           marker.addListener("click", () => onSelect(post.id === selectedId ? null : post.id));
           markersRef.current.set(post.id, marker);
         } else {
           marker.setPosition(position);
+          marker.setIcon(icon);
+          marker.setZIndex(isSelected ? 999 : undefined);
         }
       }
     };
