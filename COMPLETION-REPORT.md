@@ -154,6 +154,14 @@ Railway keeps serving `arena.vikisol.in` unchanged until Syam makes this change.
 say so and I'll run the full suite against the real domain, then Step 5 (old-project retirement,
 also Syam-only) can happen for both the stale Vercel project and the Railway `arena-web` service.
 
+**Update 2026-09-01 — re-verified from a fresh laptop/session: DNS still NOT changed.** Authoritative
+nameserver query (`ns69.domaincontrol.com`) still returns `arena.vikisol.in → 55amzai3.up.railway.app`
+— Railway, not Vercel. Live site confirmed serving current code either way (`/version` returns
+`fb7f022`, matching `HEAD`), so the app itself is up and correct — this is purely the pending DNS
+cutover, not an outage. **The stale `vikisol-arena-fe` Vercel project was deleted this session**
+(explicit go-ahead given) — `vercel project ls` confirms it's gone; `arena-web` is the only Vercel
+project for this domain now, so the CNAME change above is the one remaining step.
+
 ### 0.1b — `arena-api`'s Railway region — investigated, not executed (Syam's call)
 
 Confirmed via `railway status` (switching linked service): `arena-web`, `arena-api`, and `Postgres`
