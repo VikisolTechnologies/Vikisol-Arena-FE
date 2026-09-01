@@ -937,3 +937,20 @@ significant infra discovery: `arena-web` was quietly deploying to two different 
 - **Live-verified with a real browser**, both paths: a genuinely nonexistent email/phone number
   hits the real backend, gets the real message, the button click genuinely switches the form to
   signup mode with the typed value intact.
+
+**Sentry (error tracking) activated - Syam's ask for "loggers, so we can fix everything at once."**
+
+- Both `arena-web` (`sentry-nextjs`, dormant unless `NEXT_PUBLIC_SENTRY_DSN`/`SENTRY_DSN` set) and
+  `arena-api` (`sentry-spring-boot-starter-jakarta`, dormant unless `SENTRY_DSN` set) already had
+  Sentry fully wired from an earlier pass - never activated, same "credential, not code" gap as
+  Resend/Google/Maps. Syam created two Sentry projects and provided both DSNs.
+- Set `SENTRY_DSN` on Railway (`arena-api`). Set `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN` (Next's
+  server-side instrumentation reads the plain, non-public name - different from the client one),
+  and both `NEXT_PUBLIC_SENTRY_ENVIRONMENT`/`SENTRY_ENVIRONMENT` (`staging`, matching arena-api's
+  existing label) on Vercel - not Railway, per the dual-deploy fix above.
+- **Live-verified for real**, not just "DSN is set": threw a genuine uncaught client-side error
+  against production and watched the network tab - a real `POST` to
+  `https://o4512013171949568.ingest.us.sentry.io/api/.../envelope/` fired with the correct project
+  ID and sentry key. Backend side uses the same official, widely-used Spring Boot starter against
+  a valid DSN - not independently forced-crash-tested against the live API to avoid triggering a
+  real error on production just to prove it, but the mechanism is identical and already standard.
