@@ -1,6 +1,6 @@
 import type { Role, Session } from "@/lib/types";
 import { CURRENT_CANDIDATE_ID, getCandidateById } from "@/lib/mock/candidates";
-import { setSession, clearSession, setOnboarded, setEnterpriseOnboarded } from "@/lib/session";
+import { getSession, setSession, clearSession, setOnboarded, setEnterpriseOnboarded } from "@/lib/session";
 import { delay } from "./shared";
 import { isRealMode } from "./mode";
 import { apiFetch, setToken, clearToken } from "./httpClient";
@@ -106,6 +106,101 @@ export async function signUp(name: string, email: string, password: string, role
   const session: Session = { role, name, email, candidateId: role === "talent" ? CURRENT_CANDIDATE_ID : undefined };
   setSession(session);
   return delay(session, 600);
+}
+
+// --- Phone number sign-in (existing, already-verified accounts) ---
+
+export async function requestPhoneSigninOtp(phoneNumber: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch<void>("/auth/phone/signin/request-otp", { method: "POST", auth: false, body: { phoneNumber } });
+    return;
+  }
+  await delay(undefined, 400);
+}
+
+export async function verifyPhoneSigninOtp(phoneNumber: string, code: string): Promise<SignInResult> {
+  if (isRealMode()) {
+    const res = await apiFetch<SessionResponse>("/auth/phone/signin/verify-otp", { method: "POST", auth: false, body: { phoneNumber, code } });
+    if (res.mfaRequired) {
+      return { status: "mfa_required", pendingToken: res.mfaPendingToken as string };
+    }
+    setToken(res.token as string);
+    const session = toSession(res);
+    setSession(session);
+    await syncOnboardedFromProfile(session.role);
+    return { status: "success", session };
+  }
+  const session: Session = { role: "talent", name: mockNameFor("talent"), email: "", candidateId: CURRENT_CANDIDATE_ID };
+  setSession(session);
+  return { status: "success", session: await delay(session, 400) };
+}
+
+// --- Phone number signup (brand-new TALENT account) ---
+
+export async function requestPhoneSignupOtp(phoneNumber: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch<void>("/auth/phone/signup/request-otp", { method: "POST", auth: false, body: { phoneNumber } });
+    return;
+  }
+  await delay(undefined, 400);
+}
+
+export async function verifyPhoneSignupOtp(phoneNumber: string, code: string, name: string): Promise<Session> {
+  if (isRealMode()) {
+    const res = await apiFetch<SessionResponse>("/auth/phone/signup/verify-otp", { method: "POST", auth: false, body: { phoneNumber, code, name } });
+    setToken(res.token as string);
+    const session = toSession(res);
+    setSession(session);
+    return session;
+  }
+  const session: Session = { role: "talent", name, email: "", candidateId: CURRENT_CANDIDATE_ID };
+  setSession(session);
+  return delay(session, 400);
+}
+
+// --- Google sign-in/signup (find-or-create) ---
+
+export async function signInWithGoogle(idToken: string): Promise<SignInResult> {
+  if (isRealMode()) {
+    const res = await apiFetch<SessionResponse>("/auth/google", { method: "POST", auth: false, body: { idToken } });
+    if (res.mfaRequired) {
+      return { status: "mfa_required", pendingToken: res.mfaPendingToken as string };
+    }
+    setToken(res.token as string);
+    const session = toSession(res);
+    setSession(session);
+    await syncOnboardedFromProfile(session.role);
+    return { status: "success", session };
+  }
+  const session: Session = { role: "talent", name: mockNameFor("talent"), email: "", candidateId: CURRENT_CANDIDATE_ID };
+  setSession(session);
+  return { status: "success", session: await delay(session, 400) };
+}
+
+// --- Account settings ---
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch<void>("/auth/change-password", { method: "POST", body: { currentPassword, newPassword } });
+    return;
+  }
+  await delay(undefined, 400);
+}
+
+export async function changeEmail(newEmail: string, currentPassword: string): Promise<Session> {
+  if (isRealMode()) {
+    const res = await apiFetch<SessionResponse>("/auth/change-email", { method: "POST", body: { newEmail, currentPassword } });
+    setToken(res.token as string);
+    const session = toSession(res);
+    setSession(session);
+    return session;
+  }
+  await delay(undefined, 400);
+  const session = getSession();
+  if (!session) throw new Error("Not signed in");
+  const updated = { ...session, email: newEmail };
+  setSession(updated);
+  return updated;
 }
 
 export async function signOut(): Promise<void> {

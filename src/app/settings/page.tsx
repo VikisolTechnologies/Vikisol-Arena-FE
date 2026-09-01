@@ -11,7 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getMyProfile, updateMyConsent, updateMyAutonomy, updateMyLocation, exportMyData, deleteMyAccount } from "@/lib/api/profile";
 import { getVerificationStatus, requestPhoneOtp, confirmPhoneOtp, setDateOfBirth } from "@/lib/api/verification";
-import { signOut } from "@/lib/api/auth";
+import { signOut, changePassword, changeEmail } from "@/lib/api/auth";
+import { getSession } from "@/lib/session";
+import { ApiError } from "@/lib/api/httpClient";
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from "@/lib/api/notifications";
 import { getManualReducedEffects, setManualReducedEffects } from "@/hooks/use-reduced-motion";
 import { requireOnboarded } from "@/lib/auth-guard";
@@ -62,6 +64,19 @@ export default function SettingsPage() {
   const [phoneBusy, setPhoneBusy] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
+  const [currentEmail, setCurrentEmail] = useState("");
+  const [newEmailInput, setNewEmailInput] = useState("");
+  const [emailPasswordInput, setEmailPasswordInput] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailSaved, setEmailSaved] = useState(false);
+
+  const [currentPasswordInput, setCurrentPasswordInput] = useState("");
+  const [newPasswordInput, setNewPasswordInput] = useState("");
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSaved, setPasswordSaved] = useState(false);
+
   useEffect(() => {
     if (!requireOnboarded(router)) return;
     getMyProfile().then((p) => {
@@ -73,7 +88,43 @@ export default function SettingsPage() {
       setVerification(v);
       setPhoneInput(v.phoneNumber ?? "");
     });
+    setCurrentEmail(getSession()?.email ?? "");
   }, [router]);
+
+  const handleChangeEmail = async () => {
+    setEmailError(null);
+    setEmailSaved(false);
+    if (!newEmailInput.trim()) { setEmailError("Enter a new email address."); return; }
+    setEmailBusy(true);
+    try {
+      const session = await changeEmail(newEmailInput.trim(), emailPasswordInput);
+      setCurrentEmail(session.email);
+      setNewEmailInput("");
+      setEmailPasswordInput("");
+      setEmailSaved(true);
+    } catch (err) {
+      setEmailError(err instanceof ApiError ? err.message : "Couldn't update your email — please try again.");
+    } finally {
+      setEmailBusy(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordError(null);
+    setPasswordSaved(false);
+    if (newPasswordInput.length < 6) { setPasswordError("New password must be at least 6 characters."); return; }
+    setPasswordBusy(true);
+    try {
+      await changePassword(currentPasswordInput, newPasswordInput);
+      setCurrentPasswordInput("");
+      setNewPasswordInput("");
+      setPasswordSaved(true);
+    } catch (err) {
+      setPasswordError(err instanceof ApiError ? err.message : "Couldn't update your password — please try again.");
+    } finally {
+      setPasswordBusy(false);
+    }
+  };
 
   if (!profile) {
     return (
@@ -360,6 +411,64 @@ export default function SettingsPage() {
                   </div>
                 )}
                 {phoneError && <p className="mt-2 text-xs text-red-400">{phoneError}</p>}
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <p className="mb-1 flex items-center gap-2 font-display text-sm font-bold"><Lock className="size-4 text-primary-soft" /> Account</p>
+            <p className="mb-4 text-xs text-muted-foreground">Change the email and password you sign in with.</p>
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-border bg-secondary px-4 py-3.5">
+                <p className="text-sm font-medium">Email</p>
+                <p className="mt-0.5 mb-2.5 text-xs text-muted-foreground">Currently {currentEmail || "—"}.</p>
+                <div className="space-y-2">
+                  <Input
+                    type="email"
+                    value={newEmailInput}
+                    onChange={(e) => { setNewEmailInput(e.target.value); setEmailSaved(false); }}
+                    placeholder="New email address"
+                    className="h-8 border-border bg-card text-xs"
+                  />
+                  <Input
+                    type="password"
+                    value={emailPasswordInput}
+                    onChange={(e) => { setEmailPasswordInput(e.target.value); setEmailSaved(false); }}
+                    placeholder="Current password"
+                    className="h-8 border-border bg-card text-xs"
+                  />
+                  <Button variant="outline" size="sm" disabled={!newEmailInput.trim() || emailBusy} onClick={handleChangeEmail}>
+                    {emailBusy ? "Saving…" : emailSaved ? "Saved ✓" : "Update email"}
+                  </Button>
+                </div>
+                {emailError && <p className="mt-2 text-xs text-red-400">{emailError}</p>}
+              </div>
+
+              <div className="rounded-2xl border border-border bg-secondary px-4 py-3.5">
+                <p className="text-sm font-medium">Password</p>
+                <p className="mt-0.5 mb-2.5 text-xs text-muted-foreground">
+                  Leave &quot;current password&quot; blank if you signed up with Google or a phone number and have never set one.
+                </p>
+                <div className="space-y-2">
+                  <Input
+                    type="password"
+                    value={currentPasswordInput}
+                    onChange={(e) => { setCurrentPasswordInput(e.target.value); setPasswordSaved(false); }}
+                    placeholder="Current password (if you have one)"
+                    className="h-8 border-border bg-card text-xs"
+                  />
+                  <Input
+                    type="password"
+                    value={newPasswordInput}
+                    onChange={(e) => { setNewPasswordInput(e.target.value); setPasswordSaved(false); }}
+                    placeholder="New password"
+                    className="h-8 border-border bg-card text-xs"
+                  />
+                  <Button variant="outline" size="sm" disabled={!newPasswordInput || passwordBusy} onClick={handleChangePassword}>
+                    {passwordBusy ? "Saving…" : passwordSaved ? "Saved ✓" : "Update password"}
+                  </Button>
+                </div>
+                {passwordError && <p className="mt-2 text-xs text-red-400">{passwordError}</p>}
               </div>
             </div>
           </Card>

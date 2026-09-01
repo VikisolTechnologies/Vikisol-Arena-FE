@@ -16,7 +16,11 @@ import { ApiError } from "@/lib/api/httpClient";
 import { isRealMode } from "@/lib/api/mode";
 import { isOnboarded } from "@/lib/session";
 import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
-import type { Role } from "@/lib/types";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { PhoneAuthForm } from "@/components/auth/PhoneAuthForm";
+import { signInWithGoogle } from "@/lib/api/auth";
+import type { Role, Session } from "@/lib/types";
+import type { SignInResult } from "@/lib/api/auth";
 
 // Public signup only ever creates "talent" or a brand-new tenant's "company_admin" (see
 // DECISIONS.md) - recruiter/hiring_manager accounts only ever come from accepting an invite.
@@ -36,6 +40,9 @@ export default function AuthPage() {
   // non-null value swaps the form below to the code-entry step instead of email/password.
   const [mfaPendingToken, setMfaPendingToken] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
+  // Phone/Google are talent-only entry points (see PhoneSignupVerifyRequest's comment) - "email"
+  // stays the only method for the enterprise/recruiter/hiring-manager/platform-admin tabs.
+  const [method, setMethod] = useState<"email" | "phone">("email");
   // Same fixed-bottom-banner-covers-a-real-control bug already fixed on every app shell's
   // sidebar (see use-cookie-consent-visible.ts) - CookieConsentBanner is a fixed, bottom-of-
   // viewport overlay (z-[900]) and this page's own submit button can land directly under it for
@@ -98,6 +105,35 @@ export default function AuthPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleGoogleCredential = async (idToken: string) => {
+    setError("");
+    setSubmitting(true);
+    try {
+      const result = await signInWithGoogle(idToken);
+      if (result.status === "mfa_required") {
+        setMfaPendingToken(result.pendingToken);
+        return;
+      }
+      redirectForRole(result.session.role);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Google sign-in didn't work — please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePhoneSignInResult = (result: SignInResult) => {
+    if (result.status === "mfa_required") {
+      setMfaPendingToken(result.pendingToken);
+      return;
+    }
+    redirectForRole(result.session.role);
+  };
+
+  const handlePhoneSignUpResult = (session: Session) => {
+    redirectForRole(session.role);
   };
 
   const handleVerifyMfa = async (e: React.FormEvent) => {
@@ -192,7 +228,7 @@ export default function AuthPage() {
                 <button
                   key={key}
                   type="button"
-                  onClick={() => setRole(key)}
+                  onClick={() => { setRole(key); setMethod("email"); }}
                   className={cn(
                     "flex flex-col items-center gap-1.5 rounded-2xl border px-3 py-3.5 text-center transition-colors",
                     role === key
@@ -217,7 +253,7 @@ export default function AuthPage() {
                   <button
                     key={key}
                     type="button"
-                    onClick={() => setRole(key)}
+                    onClick={() => { setRole(key); setMethod("email"); }}
                     className={cn(
                       "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                       role === key
@@ -231,6 +267,22 @@ export default function AuthPage() {
               </div>
             )}
 
+            {method === "phone" ? (
+              <>
+                <PhoneAuthForm
+                  mode={mode}
+                  onSignInResult={handlePhoneSignInResult}
+                  onSignUpResult={handlePhoneSignUpResult}
+                />
+                <button
+                  type="button"
+                  onClick={() => setMethod("email")}
+                  className="mt-4 w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Use email instead
+                </button>
+              </>
+            ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === "signup" && (
                 <div className="space-y-1.5">
@@ -275,7 +327,28 @@ export default function AuthPage() {
                   Any email and password works here — this is a design preview, no real account is created.
                 </p>
               )}
+
+              {/* Google/phone are talent-only entry points (see PhoneSignupVerifyRequest's
+                  comment) - enterprise/recruiter/hiring-manager/platform-admin stay email-only. */}
+              {role === "talent" && (
+                <div className="space-y-3 pt-1">
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-border" />
+                    <span className="text-[11px] uppercase tracking-wide text-muted-foreground">or</span>
+                    <div className="h-px flex-1 bg-border" />
+                  </div>
+                  <GoogleSignInButton onCredential={handleGoogleCredential} disabled={submitting} />
+                  <button
+                    type="button"
+                    onClick={() => setMethod("phone")}
+                    className="w-full rounded-full border border-border bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-white/20 hover:text-foreground"
+                  >
+                    Continue with phone number
+                  </button>
+                </div>
+              )}
             </form>
+            )}
               </>
             )}
           </div>
