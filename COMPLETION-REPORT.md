@@ -571,18 +571,103 @@ OAuth app (client ID/secret) for Gmail sign-in, and a choice of SMS/OTP vendor f
 WhatsApp scaffolding `PRODUCTION-CHECKLIST.md` already tracks). Explicitly sequenced **after P3**
 — Syam's call when asked directly, not assumed.
 
-## P3 & P5 — not started this pass, and why
+## P3 — backend audit (`arena-api`) — ✅ done, real findings, 2 fixed and live-verified, rest prioritized
 
-**P3** is a *backend* audit (`CandidateProfile.id`/`User.id` mismatch, API contract audit,
+Covered all six named areas: `CandidateProfile.id`/`User.id` mismatch, API contract audit,
 pagination/N+1 sweep, error-contract consistency, WebSocket reconnect behavior, media-pipeline
-durability) — it lives in a **separate repo** (`arena-api`) this session never opened, and per
-Syam's own sequencing it's next. **P5** (nav-completeness walk, end-to-end core-loop confirmation,
-company-side loop confirmation, seed-data refresh) depends on P2 to mean anything — P2 is fully
-done, so P5 is genuinely unblocked, just not started.
+durability. Traced every finding to file+line before acting on it — nothing below is guessed.
 
-Not because P3 is unimportant — arguably higher-stakes than anything in P0/P1/P2 — but because this
-session already covered a full GSAP architecture change, a production infra migration, two real
-live bugs found and fixed, a shell consolidation, a full theme migration, and P4's security
-re-verification, each shipped and live-verified rather than rushed. **Recommended next session's
-scope: P3's backend audit**, per Syam's own stated sequencing — real, scoped, ready to start cold
-from this document once arena-api's own repo is open.
+### Fixed and live-verified
+
+**`CandidateProfile.id`/`User.id` confusion — real, was silently breaking Follow/Block and
+self-profile redirects.** `CandidateProfileService.getPublicProfile` (line 219) put the
+*CandidateProfile PK* into the response's `id` field while the endpoint's own URL/comment say it's
+keyed by `User.id`; `AuthService.currentSession`/`issueSession` put the same CandidateProfile PK
+into `SessionResponse.candidateId`, despite every frontend call site (`people/[id]`, `feed/[id]`,
+`RoomsInbox`, `CommentThread`) reading it as `myUserId` and comparing it against genuinely
+`User.id`-keyed fields (post/comment/message authors). The two UUID spaces never matched:
+Follow/Block buttons on `/people/{userId}` silently 404'd (sent the wrong ID space to
+`userRepository.findById`), and a candidate visiting their own public profile was never redirected
+to `/identity` — they'd see themselves as if a stranger, Follow/Block buttons and all. Fixed both
+sides to consistently use `User.id` (`arena-api` commit `fb139e2`) — **verified live**: signed in
+as the demo talent account, confirmed the JWT's own `uid` claim, the session's `candidateId`, and
+`GET /profile/{id}`'s response `id` are now all the identical UUID (previously two different
+UUIDs). Enterprise-side candidate search/shortlist/unlock (`CandidateProfile.id`-keyed throughout)
+was checked and confirmed to already be internally consistent — this bug was specifically at the
+public-profile/session boundary, not there.
+
+**Error-contract leak on embedding failure — real, currently dormant (OpenAI isn't configured
+yet, so unreachable in production today, but wired correctly now for when it is).**
+`embeddingProvider.embed()` failures used to propagate straight into `PostService.create`/
+`createCompanyPost`, hitting `GlobalExceptionHandler`'s generic `RuntimeException` handler and
+returning OpenAI's raw upstream error text wrapped in a **400** — both the wrong status (a
+transient upstream 5xx should never read as a client error) and a message-leak, and inconsistent
+with every other external dependency in this codebase (email/Teams/WhatsApp are all best-effort,
+never block the primary operation). Fixed: embedding failures are now caught and logged, and the
+post just saves without one (falls out of similarity ranking until the next successful embed,
+rather than failing the whole request). Same commit (`fb139e2`). Compiles clean
+(`./mvnw compile`); **no automated test suite exists in `arena-api` to run** (`src/test/java` is an
+empty directory tree) — flagged as its own real gap below, not glossed over.
+
+### Real findings, prioritized, not fixed this pass (scope too large to rush safely)
+
+**N+1 / unbounded-list queries — highest priority, same anti-pattern already fixed once in this
+codebase (`CandidateProfileRepository.search()`'s batched IN-queries) but not applied everywhere:**
+1. `RoomService.getMyRooms`→`toResponse` (`rooms/service/RoomService.java:208-222`) loads a room's
+   **entire message history** per room just to read the last message + compute unread, plus a full
+   member-list query just for a count — both fire once per room in a user's room list.
+2. `RoomService.getMessages` (`rooms/service/RoomService.java:124-129,228-239`) has no
+   `Pageable`/limit at all, and does one extra `CandidateProfile` lookup per message instead of a
+   batched IN-query.
+3. `ConversationService.getMessages` (`messaging/service/ConversationService.java:46-52`) — same
+   unbounded-list gap (no N+1 here, just no limit).
+4. `PostCommentService.getComments` (`posts/service/PostCommentService.java:32-36,64-74`) — same
+   unbounded list **and** one `CandidateProfile` lookup per comment.
+5. `Post.tags`/`Post.mediaUrls` (`posts/entity/Post.java:110-120`, read in
+   `posts/service/PostMapper.java:135`) — every feed page (`getFeed`/`getScoredFeed`/`getTrending`/
+   `getMyPosts`/`getUserPosts`/`getNearby`) fires 2 extra lazy-load queries per post per page, right
+   next to the exact code (`PostService.toResponseList`) that already correctly batches comment
+   counts/reaction counts/author-join-counts — tags/media just never got the same treatment.
+
+Concrete risk: a user in 30 active rooms, or a viral post with thousands of comments, turns one
+page load into thousands of queries and an unbounded response payload. DB indexes themselves are
+solid — checked all 5 post-baseline Flyway migrations (`V3`–`V8`); `V3__performance_indexes.sql` is
+a deliberate, thorough retrofit and nothing hot looked unindexed.
+
+**Pagination shape inconsistency (medium):** `PostController`'s `getUserPosts`/`getMyPosts`/
+`getSaved` return `PagedResponse<T>` (content+page+size+total+last), but `getFeed`/`getTrending`/
+`getNearby` — same controller, same resource — take `page`/`size` params yet return a **bare
+`List<T>`** with the pagination metadata computed then discarded (`PostService.java:66,96,158`).
+The new v3 `FeedController.getFeed` reproduces the same gap rather than fixing it. Not a security
+issue, but a real frontend-parsing inconsistency (can't detect "last page" without an empty-array
+probe).
+
+**Two minor, low-severity media-pipeline gaps (new, not previously documented):** re-uploading a
+CV never deletes the old file from disk (`CandidateProfileService.uploadCv`, contrast with
+`deleteMyAccount` which correctly does call `delete()`); and a DB-save failure *after* a successful
+disk write leaves an orphaned file with no cleanup job. Disk-space leaks only, no security/data
+exposure — the ephemeral-Railway-disk gap itself was already known and tracked in `BLOCKED.md`,
+confirmed still accurate, not re-flagged as new.
+
+**No test suite exists in `arena-api`** (`src/test/java` is empty) — real gap against
+`PRODUCTION-CHECKLIST.md`'s own §6 launch-blocking item ("integration tests on auth, tenant
+isolation, consent/withdrawal flows"). Not attempted this pass (building a real suite from zero is
+its own scoped effort, not a same-pass addition on top of the fixes above).
+
+### Checked and confirmed clean (worth recording what was cleared, not just what's wrong)
+- Enterprise talent search/unlock/shortlist: consistently `CandidateProfile.id`-keyed end to end,
+  no swap risk with `User.id`.
+- Applications, messaging, follows/blocks (backend side): consistent ID usage throughout.
+- Global exception handling: one `@ControllerAdvice`, no controller has its own divergent
+  try/catch; validation errors are uniformly field-level; 401 vs 403 correctly split
+  (`JwtAuthenticationEntryPoint` vs `@PreAuthorize`/`AccessDeniedException`), no confusion found.
+- No WebSocket implementation exists at all (`rooms/service/RoomService.java`'s own comment
+  confirms it, verified independently via a dependency/grep sweep) — notifications are
+  authenticated REST polling, correctly scoped per-user (`NotificationController`), not a gap.
+- File upload: magic-byte validation (not just extension/MIME) already correctly implemented;
+  signed, time-limited, access-controlled file serving already correctly implemented.
+
+## P5 — not started this pass
+
+Nav-completeness walk, end-to-end core-loop confirmation, company-side loop confirmation, seed-data
+refresh — depends on P2 (done) to mean anything, genuinely unblocked, just not reached this pass.
