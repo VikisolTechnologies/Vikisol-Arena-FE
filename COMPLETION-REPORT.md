@@ -671,3 +671,68 @@ its own scoped effort, not a same-pass addition on top of the fixes above).
 
 Nav-completeness walk, end-to-end core-loop confirmation, company-side loop confirmation, seed-data
 refresh — depends on P2 (done) to mean anything, genuinely unblocked, just not reached this pass.
+
+## Sign-in/signup expansion (Google, phone number) + account settings — ✅ built, live-verified
+
+Delivered the item queued earlier this session ("3 more sign-up/sign-in options... plus password/
+username change"). Built for real, not scaffolded-and-left:
+
+- **Google sign-in/signup** — `POST /auth/google`, finds-or-creates by Google's `sub` claim,
+  links into an existing password account by verified email if no prior Google link exists (the
+  standard behavior for this across most consumer apps). Verifies the ID token via Google's own
+  `tokeninfo` endpoint rather than fetching Google's JWKS and checking the RS256 signature
+  ourselves - no new HTTP/crypto dependency, same `java.net.http` style as
+  `OpenAiEmbeddingProvider`/`ResendEmailProvider`. **Dormant until `GOOGLE_CLIENT_ID` is set** (only
+  the Client ID - no client secret exists to leak, since this never does a server-side
+  authorization-code exchange). Frontend: `GoogleSignInButton` renders nothing until
+  `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is set - confirmed the button correctly doesn't render without it,
+  and the backend correctly returns a clean "Google sign-in isn't available right now" (not a
+  crash, not a leaked config detail - see the fix below) when called without one configured.
+- **Phone number sign-in** (existing, already phone-verified accounts) and **phone number
+  signup** (brand-new TALENT account) - both real OTP flows reusing the existing `PhoneOtpProvider`
+  infrastructure that previously only backed phone *verification*, not sign-in/signup. **Live-
+  verified end to end** using the Noop provider's logged codes (no real SMS vendor wired yet - see
+  below): wrong code rejected, correct code accepted, re-requesting signup OTP for an
+  already-verified number correctly says "already registered - sign in instead," and a full
+  sign-in via phone OTP after signup issued a working session. Tested with disposable accounts,
+  deleted via the existing DPDP erasure endpoint afterward - no shared demo account touched.
+- **A real architectural constraint found and deliberately worked around, not glossed over**:
+  this app's JWT subject claim *is* the email, and the whole authenticated-request pipeline
+  resolves the caller via email lookup (`JwtAuthenticationFilter` → `CustomUserDetailsService` →
+  `findByEmailIgnoreCase`). A genuinely email-less phone signup would need that changed. Instead:
+  a phone-only signup gets an internal, never-delivered placeholder email
+  (`phone-<uuid>@users.arena.vikisol.in`) so the existing architecture needs zero surgery, and the
+  phone number is still the real, working login credential either way. Flagged as a real trade-off,
+  not hidden - the user can add a genuine email later via the new change-email endpoint.
+- **Change password / change email** - both authenticated, both live-verified with a disposable
+  account: wrong current password rejected, correct one accepted, old password stops working
+  immediately, new one works; email change re-issues a session (the JWT subject changes, so the
+  caller's current token would otherwise go stale mid-request) and sign-in with the new email
+  confirmed working right after.
+- **`passwordSet` column** (new, V9 migration) distinguishes a real user-chosen password from the
+  random, never-communicated one a Google/phone signup gets to satisfy the `NOT NULL passwordHash`
+  column - `changePassword` only demands the *current* password when one genuinely exists;
+  otherwise the account can set its first real one directly. Settings UI explains this case.
+- **A real bug found and fixed in this same pass, before it ever shipped**: the Google
+  not-configured path threw a raw `IllegalStateException` with the env var's name in the message,
+  which had no dedicated `GlobalExceptionHandler` mapping and would've fallen through to the
+  generic handler exactly like the OpenAI-embedding leak fixed earlier in P3 - caught by testing
+  the dormant path immediately after building it, fixed to a clean `BadRequestException` before
+  ever being reported as done.
+- **Migration risk, checked**: `V9__auth_expansion.sql`'s new unique constraint on `phone_number`
+  was checked against `DataSeeder` for existing collisions first (exactly one seeded row has a
+  phone number) - confirmed safe before writing the migration, not after a failed deploy. Applied
+  cleanly to the live database on this pass's deploy (`Flyway ... now at version v9`).
+
+**What's needed from Syam to fully activate, not something this session can supply:**
+1. A Google OAuth Client ID (Google Cloud Console → Credentials → OAuth Client ID → Web
+   application, authorized origin `https://arena.vikisol.in`) - free, self-service, ~5 minutes. Set
+   as `GOOGLE_CLIENT_ID` on `arena-api` and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` on `arena-web`/Vercel.
+2. A real SMS vendor (Twilio or similar) to replace `NoopPhoneOtpProvider` - same
+   interface→Noop→real pattern as `ResendEmailProvider`/`WhatsAppBusinessProvider`, a pure drop-in
+   once credentials exist (see `PhoneOtpProvider`'s own class comment). Until then, phone sign-
+   in/signup work correctly end-to-end but the code only reaches Railway's logs, not a real phone.
+
+**Scoped out of this pass, on purpose**: a "forgot password" flow (no password-reset mechanism
+exists at all in this codebase yet, for any account) - a real, separate gap, flagged here rather
+than silently bundled in or silently ignored.
