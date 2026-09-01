@@ -561,6 +561,16 @@ Railway's restore is dashboard-only with no CLI/API path, and this environment h
 `psql`/`pg_dump`, a non-running Docker daemon, and an inaccessible `winget`; exact 5-minute,
 low-risk dashboard procedure handed to Syam instead.
 
+## Queued — social/phone sign-in + account settings (after P3, per Syam's 2026-09-01 call)
+
+Syam asked for 3 more sign-in/sign-up options (mobile number, Gmail, and one more of Claude's
+choosing) plus password/username change, framed as part of prod-readiness. Scoped but not started:
+touches auth in both `arena-web` and `arena-api`, and needs from Syam before any code: a Google
+OAuth app (client ID/secret) for Gmail sign-in, and a choice of SMS/OTP vendor for phone sign-in
+(no such integration exists in either repo today — confirmed nothing dormant like the email/
+WhatsApp scaffolding `PRODUCTION-CHECKLIST.md` already tracks). Explicitly sequenced **after P3**
+— Syam's call when asked directly, not assumed.
+
 ## P3 & P5 — not started this pass, and why
 
 **P3** is a *backend* audit (`CandidateProfile.id`/`User.id` mismatch, API contract audit,
