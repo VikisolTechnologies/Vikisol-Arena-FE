@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Building2, User } from "lucide-react";
 import { AuraBackground } from "@/components/landing/AuraBackground";
@@ -29,9 +29,15 @@ const ROLES: { key: Role; label: string; desc: string; icon: typeof User }[] = [
   { key: "company_admin", label: "Enterprise", desc: "Find candidates", icon: Building2 },
 ];
 
-export default function AuthPage() {
+// Landing-page entry points (Hero's "Ask anything" input, OvernightReport's teaser links) send
+// visitors here as /auth?mode=signup - lands them straight on the signup tab instead of making
+// them click it themselves. useSearchParams() needs a Suspense boundary above it (see
+// reset-password/page.tsx for the same pattern) - the plain AuthPage() default export below
+// provides that.
+function AuthForm() {
   const router = useRouter();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const searchParams = useSearchParams();
+  const [mode, setMode] = useState<"signin" | "signup">(searchParams.get("mode") === "signup" ? "signup" : "signin");
   const [role, setRole] = useState<Role>("talent");
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
@@ -458,5 +464,13 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div className="min-h-svh w-full bg-background" />}>
+      <AuthForm />
+    </Suspense>
   );
 }

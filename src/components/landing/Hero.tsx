@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,8 @@ const Animator = dynamic(() => import("./HeroAnimator").then((m) => m.HeroAnimat
 export function Hero() {
   const scopeRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
+  const router = useRouter();
+  const [query, setQuery] = useState("");
 
   // Was a hardcoded "02:41 AM" baked into the static prototype markup and never wired up - every
   // visitor at every hour saw the same frozen instant, undermining the exact "your agent is awake
@@ -64,7 +67,14 @@ export function Hero() {
           <Button variant="primary-gradient" size="cta" render={<Link href="/auth" />} nativeButton={false}>
             Wake your agent
           </Button>
-          <Button variant="ghost-glass" size="cta">
+          {/* No demo video exists yet - was previously a dead button. Scrolls to the Overnight
+              Report section just below, which is the closest real thing to "watching it work"
+              (a concrete walkthrough of what the agent does), instead of doing nothing. */}
+          <Button
+            variant="ghost-glass"
+            size="cta"
+            onClick={() => document.getElementById("overnight")?.scrollIntoView({ behavior: reduced ? "auto" : "smooth" })}
+          >
             Watch it work ▷
           </Button>
         </div>
@@ -72,6 +82,15 @@ export function Hero() {
         <div {...revealProps("max-w-[520px]")}>
           <Input
             placeholder='Ask anything — "find me remote design contracts"'
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              // No unauthenticated agent-chat exists (that's a real, signed-in feature per
+              // CLAUDE.md's Phase 1) - was previously a decorative input that submitted nowhere.
+              // Enter now carries the visitor into signup so this becomes a real next step
+              // instead of silently doing nothing.
+              if (e.key === "Enter") router.push("/auth?mode=signup");
+            }}
             className="h-[60px] rounded-full border-border bg-white/[0.03] px-5.5 text-[15px] backdrop-blur-xl placeholder:text-[#8b8b93]"
           />
         </div>
