@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Send, Sparkles } from "lucide-react";
+import { RotateCw, Send, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { AgentOrbAvatar } from "@/components/agent/AgentOrbAvatar";
@@ -14,14 +14,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getMyProfile } from "@/lib/api/profile";
 import { getActivityFeed } from "@/lib/api/activity";
 import { applyToJob } from "@/lib/api/applications";
-import { getProjects, placeBid } from "@/lib/api/market";
+import { placeBid } from "@/lib/api/market";
 import { agentRealtime } from "@/lib/realtime";
+import { getOrCreateAgentConversation, getAgentMessages, sendAgentMessage, AGENT_UNAVAILABLE_MESSAGE } from "@/lib/api/agent";
 import { useAgentState, setAgentState } from "@/lib/agentState";
 import { requireOnboarded } from "@/lib/auth-guard";
-import { getJobs, getJob } from "@/lib/api/jobs";
+import { getJob } from "@/lib/api/jobs";
 import { useTypewriter } from "@/hooks/use-typewriter";
-import { formatINRRange } from "@/lib/format";
-import type { CandidateProfile, ChatMessage, AgentActivityEvent, IntentCard, Job, Project } from "@/lib/types";
+import type { CandidateProfile, ChatMessage, AgentActivityEvent, IntentCard } from "@/lib/types";
 
 const SUGGESTIONS = [
   "What's my best match right now?",
@@ -30,12 +30,14 @@ const SUGGESTIONS = [
   "What have you done overnight?",
 ];
 
-function AgentBubble({ message, onApprove, onReject }: {
+function AgentBubble({ message, onApprove, onReject, onRetry }: {
   message: ChatMessage;
   onApprove: (c: IntentCard) => void;
   onReject: (c: IntentCard) => void;
+  onRetry: () => void;
 }) {
   const { shown } = useTypewriter(message.content);
+  const unavailable = message.id.startsWith("unavailable-") || message.content === AGENT_UNAVAILABLE_MESSAGE;
   return (
     <div className="flex items-start gap-2.5">
       <AgentOrbAvatar state="idle" size="sm" />
@@ -43,6 +45,11 @@ function AgentBubble({ message, onApprove, onReject }: {
         <div className="max-w-md rounded-2xl rounded-tl-sm border border-border bg-secondary px-3.5 py-2.5 text-sm leading-relaxed">
           {shown}
         </div>
+        {unavailable && (
+          <Button variant="outline" size="sm" className="mt-2 gap-1.5" onClick={onRetry}>
+            <RotateCw className="size-3.5" /> Retry
+          </Button>
+        )}
         {message.intentCard && (
           <IntentCardView card={message.intentCard} onApprove={onApprove} onReject={onReject} />
         )}
@@ -51,108 +58,73 @@ function AgentBubble({ message, onApprove, onReject }: {
   );
 }
 
-function buildReply(
-  text: string,
-  profile: CandidateProfile,
-  jobs: Job[],
-  projects: Project[],
-): { content: string; intent?: Omit<IntentCard, "id" | "status"> } {
-  const t = text.toLowerCase();
-  const topJob = [...jobs].sort((a, b) => b.matchPercentage - a.matchPercentage)[0];
-  const topProject = projects[0];
-  if (!topJob) return { content: "I don't have any open roles loaded yet — check back in a moment." };
-
-  if (t.includes("apply") || t.includes("best match") || t.includes("top match")) {
-    return {
-      content: `Your strongest match right now is ${topJob.title} at ${topJob.company} — ${topJob.matchPercentage}% fit, ${topJob.location}. Want me to apply on your behalf?`,
-      intent: {
-        type: "apply",
-        summary: `Apply to ${topJob.title} at ${topJob.company}`,
-        payload: { jobId: topJob.id, title: topJob.title, company: topJob.company },
-      },
-    };
-  }
-  if ((t.includes("bid") || t.includes("project")) && topProject) {
-    return {
-      content: `"${topProject.title}" is open — ${formatINRRange(topProject.budgetMin, topProject.budgetMax)}, ${topProject.durationWeeks} weeks. Want me to place a competitive bid?`,
-      intent: {
-        type: "place_bid",
-        summary: `Place a bid on "${topProject.title}"`,
-        payload: { projectId: topProject.id, amount: topProject.budgetMin },
-      },
-    };
-  }
-  if (t.includes("resume")) {
-    return { content: "I tailor a fresh resume for every application, highlighting whichever of your skills actually match that role. If you turn off auto-apply in Settings, I'll show you each one before it goes out." };
-  }
-  if (t.includes("match") || t.includes("job") || t.includes("opportun")) {
-    const strong = jobs.filter((j) => j.matchPercentage >= 85).length;
-    return { content: `I'm tracking ${jobs.length} open roles right now, ${strong} of them above 85% match for you. Want me to open Discover, or should I just apply to the best one?` };
-  }
-  if (t.includes("journal") || t.includes("overnight") || t.includes("what have you done") || t.includes("slept")) {
-    return { content: "Check the Agent Journal tab above — everything I've done autonomously is logged there in order, nothing hidden or summarized away." };
-  }
-  return {
-    content: `Based on your profile — ${profile.title}, ${profile.skills.length} skills, ${profile.experienceYears} years — I'd focus on ${topJob.title} at ${topJob.company} next, it's your strongest fit at ${topJob.matchPercentage}%.`,
-  };
-}
-
 export default function AgentPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [activity, setActivity] = useState<AgentActivityEvent[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [input, setInput] = useState("");
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [lastFailedInput, setLastFailedInput] = useState<string | null>(null);
   const orbState = useAgentState();
   const scrollRef = useRef<HTMLDivElement>(null);
   const idCounter = useRef(0);
   const nextId = (prefix: string) => `${prefix}-${++idCounter.current}`;
 
+  const runSend = async (convId: string, text: string, isInitial = false) => {
+    const userMsg: ChatMessage = { id: nextId("u"), role: "user", content: text, timestamp: new Date().toISOString() };
+    setMessages((prev) => (isInitial ? [userMsg] : [...prev, userMsg]));
+    setAgentState("thinking");
+    setLastFailedInput(null);
+    try {
+      const reply = await sendAgentMessage(convId, text);
+      setMessages((prev) => [...prev, reply]);
+    } catch {
+      setLastFailedInput(text);
+      setMessages((prev) => [...prev, {
+        id: `unavailable-${nextId("x")}`,
+        role: "agent",
+        content: "Couldn't reach the agent — please try again.",
+        timestamp: new Date().toISOString(),
+      }]);
+    } finally {
+      setAgentState("idle");
+    }
+  };
+
+  // The old /agent page fabricated a whole opening exchange client-side via buildReply() - a
+  // keyword matcher, not a real AI (see ARENA-DOCUMENT-3 §3/§15: "must not become a keyword
+  // matcher"). It's been removed. Conversation history now lives server-side
+  // (com.vikisol.arena.agent), so this loads whatever the real conversation actually contains,
+  // and deep links (?about=/?ask=) send a real message through the same path a typed one would
+  // take instead of inventing a canned answer.
   useEffect(() => {
     if (!requireOnboarded(router)) return;
-    Promise.all([getMyProfile(), getJobs(), getProjects()]).then(async ([p, jobList, projectList]) => {
+    let cancelled = false;
+    (async () => {
+      const [p, conversation] = await Promise.all([getMyProfile(), getOrCreateAgentConversation()]);
+      if (cancelled) return;
       setProfile(p);
-      setJobs(jobList);
-      setProjects(projectList);
+      setConversationId(conversation.id);
+      const history = await getAgentMessages(conversation.id);
+      if (cancelled) return;
+
       const params = new URLSearchParams(window.location.search);
       const aboutJobId = params.get("about");
       const askQuery = params.get("ask");
-      const aboutJob = aboutJobId ? await getJob(aboutJobId) : undefined;
-      const welcome: ChatMessage = {
-        id: "welcome",
-        role: "agent",
-        content: `Hi ${p.name.split(" ")[0]} — I'm your agent. Ask me anything, or approve what I find and I'll take it from there.`,
-        timestamp: new Date().toISOString(),
-      };
-      if (aboutJob) {
-        setMessages([
-          welcome,
-          { id: "about-user", role: "user", content: `Tell me more about ${aboutJob.title} at ${aboutJob.company}`, timestamp: new Date().toISOString() },
-          {
-            id: "about-agent",
-            role: "agent",
-            content: `${aboutJob.title} at ${aboutJob.company} is a ${aboutJob.matchPercentage}% match — ${aboutJob.location}${aboutJob.remote ? " (remote)" : ""}, ₹${aboutJob.salaryMin}–${aboutJob.salaryMax} LPA. They're looking for ${aboutJob.skills.slice(0, 3).join(", ")}. Want me to apply?`,
-            timestamp: new Date().toISOString(),
-            intentCard: { id: "about-intent", type: "apply", status: "pending", summary: `Apply to ${aboutJob.title} at ${aboutJob.company}`, payload: { jobId: aboutJob.id, title: aboutJob.title, company: aboutJob.company } },
-          },
-        ]);
-      } else if (askQuery) {
-        // From the ⌘K command palette's "Ask agent: ..." action — build the reply against the
-        // freshly-loaded profile directly rather than reusing send(), which would read stale
-        // (still-null) profile state from this same render's closure.
-        const { content, intent } = buildReply(askQuery, p, jobList, projectList);
-        setMessages([
-          welcome,
-          { id: "ask-user", role: "user", content: askQuery, timestamp: new Date().toISOString() },
-          { id: "ask-agent", role: "agent", content, timestamp: new Date().toISOString(), intentCard: intent ? { ...intent, id: "ask-intent", status: "pending" } : undefined },
-        ]);
+
+      if (history.length === 0 && aboutJobId) {
+        const job = await getJob(aboutJobId);
+        if (!cancelled && job) await runSend(conversation.id, `Tell me more about ${job.title} at ${job.company}`, true);
+      } else if (history.length === 0 && askQuery) {
+        if (!cancelled) await runSend(conversation.id, askQuery, true);
       } else {
-        setMessages([welcome]);
+        setMessages(history);
       }
-    });
+    })();
     getActivityFeed().then(setActivity);
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   useEffect(() => {
@@ -160,31 +132,19 @@ export default function AgentPage() {
   }, [messages]);
 
   const send = (text: string) => {
-    if (!text.trim() || !profile) return;
-    const userMsg: ChatMessage = { id: nextId("u"), role: "user", content: text, timestamp: new Date().toISOString() };
-    setMessages((prev) => [...prev, userMsg]);
+    if (!text.trim() || !conversationId) return;
     setInput("");
-    setAgentState("thinking");
-
-    setTimeout(() => {
-      const { content, intent } = buildReply(text, profile, jobs, projects);
-      const agentMsg: ChatMessage = {
-        id: nextId("a"),
-        role: "agent",
-        content,
-        timestamp: new Date().toISOString(),
-        intentCard: intent ? { ...intent, id: nextId("intent"), status: "pending" } : undefined,
-      };
-      setMessages((prev) => [...prev, agentMsg]);
-      setAgentState(intent ? "needs-approval" : "idle");
-    }, 700);
+    void runSend(conversationId, text);
   };
 
-  const updateIntent = (messageId: string, card: IntentCard) => {
+  const retry = () => {
+    if (lastFailedInput && conversationId) void runSend(conversationId, lastFailedInput);
+  };
+
+  const updateIntent = (card: IntentCard) => {
     setMessages((prev) =>
       prev.map((m) => (m.intentCard?.id === card.id ? { ...m, intentCard: { ...card } } : m)),
     );
-    void messageId;
   };
 
   const handleApprove = async (card: IntentCard) => {
@@ -210,17 +170,19 @@ export default function AgentPage() {
         timestamp: new Date().toISOString(),
       });
     }
-    updateIntent(card.id, { ...card, status: "approved" });
+    updateIntent({ ...card, status: "approved" });
     setAgentState("idle");
   };
 
   const handleReject = (card: IntentCard) => {
-    updateIntent(card.id, { ...card, status: "rejected" });
+    updateIntent({ ...card, status: "rejected" });
     setAgentState("idle");
   };
 
   // Autonomy setting from /settings changes how approval cards behave: on autopilot, the
-  // agent approves its own pending intents instead of waiting on a tap.
+  // agent approves its own pending intents instead of waiting on a tap. Dormant today since no
+  // real agent backend proposes intents yet (Noop client just reports unavailable) - stays wired
+  // for when one does.
   useEffect(() => {
     if (profile?.autonomy !== "autopilot") return;
     const pending = messages.find((m) => m.intentCard?.status === "pending")?.intentCard;
@@ -259,18 +221,18 @@ export default function AgentPage() {
                 <p className="text-xs capitalize text-muted-foreground">{orbState.replace("-", " ")}</p>
               </div>
             </div>
-            {/* ARENA-SHIP-IT.md #3: AI-use disclosure where the agent acts. It only ever
-                rephrases facts already in your profile - never invents experience - and always
-                asks before applying or bidding on your behalf, unless you've turned on
-                Autopilot in Settings. */}
+            {/* Honest replacement for the old disclosure line, which described buildReply()'s fake
+                matching as if it were real. There is currently no live AI service behind this chat
+                (see AgentServiceClient) - every reply says so rather than pretending otherwise.
+                Nothing is ever applied/bid on your behalf without approval below, regardless. */}
             <p className="border-b border-border bg-secondary px-4 py-2 text-[11px] text-muted-foreground">
-              Matching and drafting here are algorithmic, not a live human — every application or bid still needs your approval below unless Autopilot is on.
+              This chat isn&apos;t connected to a live AI service yet — it will tell you honestly when it can&apos;t answer. Nothing is ever applied or bid on your behalf without your approval below.
             </p>
 
             <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
               {messages.map((m) =>
                 m.role === "agent" ? (
-                  <AgentBubble key={m.id} message={m} onApprove={handleApprove} onReject={handleReject} />
+                  <AgentBubble key={m.id} message={m} onApprove={handleApprove} onReject={handleReject} onRetry={retry} />
                 ) : (
                   <div key={m.id} className="flex justify-end">
                     <div className="max-w-md rounded-2xl rounded-tr-sm bg-primary/15 px-3.5 py-2.5 text-sm text-foreground">
