@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, Sparkles, Users, MapPin, Lock } from "lucide-react";
+import { Plus, Users, MapPin, Lock } from "lucide-react";
 import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
@@ -13,20 +13,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { getMyEnterpriseProfile, getMyPostings, createPosting, setPostingStatus, PostingLimitError } from "@/lib/api/enterprise";
 import { POSTING_LIMITS } from "@/lib/plan";
-import { SKILLS_BY_INDUSTRY } from "@/lib/mock/seed";
 import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
 import { cn } from "@/lib/utils";
-import { formatINRRange } from "@/lib/format";
-import type { EnterpriseProfile, JobPosting } from "@/lib/types";
+import type { EmploymentType, EnterpriseProfile, JobPosting } from "@/lib/types";
+
+const SELECT_CLASS = "mt-1.5 flex h-9 w-full rounded-md border border-border bg-secondary px-3 text-sm outline-none";
+const EMPLOYMENT_TYPES: EmploymentType[] = ["Full Time", "Contract", "Internship"];
+
+const EMPTY_DRAFT = {
+  title: "", description: "", location: "", remote: false,
+  employmentType: "Full Time" as EmploymentType, salaryMin: "", salaryMax: "", skills: "",
+};
 
 export default function PostingsPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<EnterpriseProfile | null>(null);
   const [postings, setPostings] = useState<JobPosting[]>([]);
   const [creating, setCreating] = useState(false);
-  const [oneLiner, setOneLiner] = useState("");
-  const [drafted, setDrafted] = useState<Omit<JobPosting, "id" | "status" | "createdAt"> | null>(null);
-  const [drafting, setDrafting] = useState(false);
+  const [draft, setDraft] = useState(EMPTY_DRAFT);
+  const [publishing, setPublishing] = useState(false);
   const [limitError, setLimitError] = useState<string | null>(null);
 
   const load = () => getMyPostings().then(setPostings);
@@ -37,39 +42,37 @@ export default function PostingsPage() {
     load();
   }, [router]);
 
-  const draftPosting = () => {
-    if (!oneLiner.trim() || !profile) return;
-    setDrafting(true);
-    setTimeout(() => {
-      const allSkills = Object.values(SKILLS_BY_INDUSTRY).flat();
-      const picked = allSkills.filter((s) => oneLiner.toLowerCase().includes(s.toLowerCase()));
-      setDrafted({
-        title: oneLiner.length > 60 ? oneLiner.slice(0, 57) + "…" : oneLiner,
-        industry: profile.industry,
-        location: "Bengaluru",
-        remote: true,
-        employmentType: "Full Time",
-        salaryMin: 12,
-        salaryMax: 24,
-        skills: picked.length ? picked : SKILLS_BY_INDUSTRY[profile.industry].slice(0, 3),
-        description: `${oneLiner}. Join ${profile.companyName} and work on real, shipped product.`,
-      });
-      setDrafting(false);
-    }, 900);
-  };
+  // Was "one line, an agent drafts the rest" — but every draft came back with the same
+  // Bengaluru/₹12-24L/Full Time/"join <company>" template regardless of what was typed, with
+  // only the skill chips varying by keyword match. No AI or backend call was involved. Until a
+  // real drafting assist exists, this is the honest version: fill in the real posting.
+  const canPublish = profile && draft.title.trim() && draft.description.trim() && draft.location.trim()
+    && Number(draft.salaryMin) > 0 && Number(draft.salaryMax) >= Number(draft.salaryMin);
 
   const publish = async () => {
-    if (!drafted) return;
+    if (!canPublish || !profile) return;
     setLimitError(null);
+    setPublishing(true);
     try {
-      await createPosting(drafted);
+      await createPosting({
+        title: draft.title.trim(),
+        description: draft.description.trim(),
+        industry: profile.industry,
+        location: draft.location.trim(),
+        remote: draft.remote,
+        employmentType: draft.employmentType,
+        salaryMin: Number(draft.salaryMin),
+        salaryMax: Number(draft.salaryMax),
+        skills: draft.skills.split(",").map((s) => s.trim()).filter(Boolean),
+      });
       setCreating(false);
-      setOneLiner("");
-      setDrafted(null);
+      setDraft(EMPTY_DRAFT);
       load();
     } catch (e) {
       if (e instanceof PostingLimitError) setLimitError(e.message);
       else throw e;
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -135,11 +138,11 @@ export default function PostingsPage() {
         )}
       </div>
 
-      <Dialog open={creating} onOpenChange={setCreating}>
+      <Dialog open={creating} onOpenChange={(open) => { setCreating(open); if (!open) setDraft(EMPTY_DRAFT); }}>
         <DialogContent className="border-border bg-popover sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>New posting</DialogTitle>
-            <DialogDescription>One line is enough — your agent drafts the rest.</DialogDescription>
+            <DialogDescription>Describe the role — candidates start applying once it&apos;s live.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             {atLimit ? (
@@ -153,26 +156,33 @@ export default function PostingsPage() {
               </div>
             ) : (
               <>
-            {limitError && (
-              <p className="rounded-lg border border-red-500/30 bg-red-500/[0.06] px-3 py-2 text-xs text-red-400">{limitError}</p>
-            )}
-            <div className="flex gap-2">
-              <Input value={oneLiner} onChange={(e) => setOneLiner(e.target.value)} placeholder="e.g. Senior backend engineer for our payments team" className="border-border bg-secondary" />
-              <Button variant="primary-gradient" size="sm" disabled={drafting} onClick={draftPosting} className="shrink-0 gap-1.5">
-                <Sparkles className="size-3.5" /> {drafting ? "Drafting…" : "Draft"}
-              </Button>
-            </div>
-            {drafted && (
-              <div className="space-y-3 rounded-2xl border border-border bg-secondary p-4">
-                <Input value={drafted.title} onChange={(e) => setDrafted({ ...drafted, title: e.target.value })} className="border-border bg-secondary" />
-                <Textarea value={drafted.description} onChange={(e) => setDrafted({ ...drafted, description: e.target.value })} rows={3} className="border-border bg-secondary" />
-                <div className="flex flex-wrap gap-1.5">
-                  {drafted.skills.map((s) => <Badge key={s} variant="secondary" className="bg-primary/10 text-primary-soft">{s}</Badge>)}
+                {limitError && (
+                  <p className="rounded-lg border border-red-500/30 bg-red-500/[0.06] px-3 py-2 text-xs text-red-400">{limitError}</p>
+                )}
+                <Input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="e.g. Senior backend engineer" className="border-border bg-secondary" />
+                <Textarea value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} placeholder="Role, responsibilities, what makes this team worth joining" rows={3} className="border-border bg-secondary" />
+                <Input value={draft.skills} onChange={(e) => setDraft({ ...draft, skills: e.target.value })} placeholder="Skills, comma-separated — e.g. Java, Spring Boot" className="border-border bg-secondary" />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input value={draft.location} onChange={(e) => setDraft({ ...draft, location: e.target.value })} placeholder="Location" className="border-border bg-secondary" />
+                  <select
+                    value={draft.employmentType}
+                    onChange={(e) => setDraft({ ...draft, employmentType: e.target.value as EmploymentType })}
+                    className={cn(SELECT_CLASS, "mt-0 bg-secondary")}
+                  >
+                    {EMPLOYMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
                 </div>
-                <p className="text-xs text-muted-foreground">{formatINRRange(drafted.salaryMin, drafted.salaryMax, "LPA")} · {drafted.location} · {drafted.employmentType}</p>
-                <Button variant="primary-gradient" size="sm" className="w-full" onClick={publish}>Publish posting</Button>
-              </div>
-            )}
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <input type="checkbox" checked={draft.remote} onChange={(e) => setDraft({ ...draft, remote: e.target.checked })} />
+                  Remote-friendly
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input type="number" min={0} value={draft.salaryMin} onChange={(e) => setDraft({ ...draft, salaryMin: e.target.value })} placeholder="Salary min (LPA)" className="border-border bg-secondary" />
+                  <Input type="number" min={0} value={draft.salaryMax} onChange={(e) => setDraft({ ...draft, salaryMax: e.target.value })} placeholder="Salary max (LPA)" className="border-border bg-secondary" />
+                </div>
+                <Button variant="primary-gradient" size="sm" className="w-full" disabled={!canPublish || publishing} onClick={publish}>
+                  {publishing ? "Publishing…" : "Publish posting"}
+                </Button>
               </>
             )}
           </div>

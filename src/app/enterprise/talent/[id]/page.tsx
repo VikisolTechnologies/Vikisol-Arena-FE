@@ -7,9 +7,10 @@ import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getMyEnterpriseProfile, getCandidateDetail, unlockCandidate, saveMyEnterpriseProfile, getUnlockedCandidateIds, hasDirectlyApplied } from "@/lib/api/enterprise";
+import { getMyEnterpriseProfile, getCandidateDetail, unlockCandidate, hasDirectlyApplied } from "@/lib/api/enterprise";
 import { getShortlistIds, toggleShortlist } from "@/lib/api/shortlist";
 import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
+import { ApiError } from "@/lib/api/httpClient";
 import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/format";
 import { Card } from "@/components/ui/card";
@@ -19,10 +20,10 @@ export default function CandidateDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [profile, setProfile] = useState<EnterpriseProfile | null>(null);
-  const [candidate, setCandidate] = useState<CandidateProfile | null | undefined>(undefined);
-  const [unlocked, setUnlocked] = useState(false);
+  const [candidate, setCandidate] = useState<(CandidateProfile & { fullAccess: boolean }) | null | undefined>(undefined);
   const [freeUnlock, setFreeUnlock] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
+  const [unlockError, setUnlockError] = useState("");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -30,9 +31,7 @@ export default function CandidateDetailPage() {
     getMyEnterpriseProfile().then(setProfile);
     getCandidateDetail(params.id).then(async (c) => {
       setCandidate(c ?? null);
-      const appliedDirectly = await hasDirectlyApplied(params.id);
-      setFreeUnlock(appliedDirectly);
-      setUnlocked(appliedDirectly || getUnlockedCandidateIds().includes(params.id));
+      setFreeUnlock(await hasDirectlyApplied(params.id));
       setSaved((await getShortlistIds()).includes(params.id));
     });
   }, [params.id, router]);
@@ -54,14 +53,29 @@ export default function CandidateDetailPage() {
 
   const canUnlock = profile.unlockCreditsUsed < profile.unlockCreditsTotal;
 
+  // Was fire-and-forget: marked the UI "unlocked" the instant the button was clicked,
+  // regardless of whether the server call actually succeeded, and computed the new credit
+  // balance client-side rather than trusting the server's own count. Now genuinely waits for
+  // the real unlock to succeed, re-fetches both the candidate (so cvUrl/fullAccess reflect
+  // what the server actually granted) and the enterprise profile (so the credit balance shown
+  // is the server's real count, not a guess) - and surfaces a real error, without touching any
+  // state, if the unlock fails (e.g. out of credits, a race with a teammate's own unlock).
   const handleUnlock = async () => {
     setUnlocking(true);
-    unlockCandidate(candidate.id);
-    const updated = { ...profile, unlockCreditsUsed: profile.unlockCreditsUsed + 1 };
-    await saveMyEnterpriseProfile(updated);
-    setProfile(updated);
-    setUnlocked(true);
-    setUnlocking(false);
+    setUnlockError("");
+    try {
+      await unlockCandidate(candidate.id);
+      const [freshCandidate, freshProfile] = await Promise.all([
+        getCandidateDetail(candidate.id),
+        getMyEnterpriseProfile(),
+      ]);
+      if (freshCandidate) setCandidate(freshCandidate);
+      if (freshProfile) setProfile(freshProfile);
+    } catch (err) {
+      setUnlockError(err instanceof ApiError ? err.message : "Couldn't unlock this candidate — please try again.");
+    } finally {
+      setUnlocking(false);
+    }
   };
 
   return (
@@ -75,7 +89,7 @@ export default function CandidateDetailPage() {
           <div className="flex items-start gap-4">
             <span className="text-4xl">{candidate.avatarEmoji}</span>
             <div className="min-w-0 flex-1">
-              <h1 className="font-display text-xl font-bold tracking-tight">{unlocked ? candidate.name : "Candidate profile"}</h1>
+              <h1 className="font-display text-xl font-bold tracking-tight">{candidate.fullAccess ? candidate.name : "Candidate profile"}</h1>
               <p className="text-sm text-muted-foreground">{candidate.title} · {candidate.location}</p>
             </div>
             <button type="button" onClick={() => toggleShortlist(candidate.id).then((ids) => setSaved(ids.includes(candidate.id)))} aria-label="Save">
@@ -110,7 +124,7 @@ export default function CandidateDetailPage() {
         </Card>
 
         <div className="rounded-[24px] border border-border bg-secondary p-5">
-          {unlocked ? (
+          {candidate.fullAccess ? (
             <>
               <p className="mb-3 flex items-center gap-1.5 font-display text-sm font-bold text-emerald-400">
                 <Unlock className="size-4" /> Contact unlocked
@@ -121,8 +135,14 @@ export default function CandidateDetailPage() {
                   for candidates you find via Talent Universe search.
                 </p>
               )}
-              <p className="mb-1 text-xs text-muted-foreground">Email</p>
-              <p className="mb-3 text-sm">{candidate.name.toLowerCase().replace(" ", ".")}@example.com</p>
+              {/* Arena doesn't collect a separate contact email/phone for candidates today - only
+                  the resume itself (cvUrl) is gated behind unlock, which the "Message" action
+                  below doesn't need. Was previously fabricating a name@example.com address here;
+                  showing an address Arena never asked the candidate for was never honest, so this
+                  routes to the real, working in-app messaging system instead. */}
+              <p className="mb-3 text-xs text-muted-foreground">
+                This candidate hasn&apos;t shared a direct contact email or phone through Arena — message them here instead.
+              </p>
               <Button variant="primary-gradient" size="sm" className="w-full gap-1.5" onClick={() => router.push(`/messages?with=${candidate.id}`)}>
                 <MessageCircle className="size-3.5" /> Message
               </Button>
@@ -133,9 +153,10 @@ export default function CandidateDetailPage() {
                 <Lock className="size-4 text-primary-soft" /> Contact locked
               </p>
               <p className="mb-4 text-xs text-muted-foreground">
-                {candidate.name} consented to be discoverable, but contact details stay private until you unlock — costs 1 credit.
+                {candidate.name} consented to be discoverable, but their resume stays private until you unlock — costs 1 credit.
                 {" "}{profile.unlockCreditsTotal - profile.unlockCreditsUsed} of {profile.unlockCreditsTotal} left.
               </p>
+              {unlockError && <p className="mb-3 text-xs text-red-400">{unlockError}</p>}
               <Button variant="primary-gradient" size="sm" className="w-full gap-1.5" disabled={!canUnlock || unlocking} onClick={handleUnlock}>
                 <Unlock className="size-3.5" /> {unlocking ? "Unlocking…" : canUnlock ? "Unlock contact" : "No credits left"}
               </Button>

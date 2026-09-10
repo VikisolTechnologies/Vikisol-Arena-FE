@@ -219,11 +219,21 @@ export async function searchTalent(query: {
   return delay(results.sort((a, b) => b.matchPercentage - a.matchPercentage), 350);
 }
 
-export async function getCandidateDetail(id: string): Promise<CandidateProfile | null> {
+/** `fullAccess` mirrors arena-api's `CandidateProfileResponse.fullAccess` (real mode) - whether
+ * *this* enterprise has already unlocked this candidate (or the candidate applied to one of
+ * their postings directly). Real mode reads this straight off the server response instead of
+ * inferring it from a nullable field or a client-side cache. Mock mode has no server-side unlock
+ * ledger, so it's synthesized here from the same localStorage-backed simulation the rest of
+ * mock mode already uses (see UNLOCKED_KEY below) - fine for a local-only demo, never the
+ * source of truth in real mode. */
+export async function getCandidateDetail(id: string): Promise<(CandidateProfile & { fullAccess: boolean }) | null> {
   if (isRealMode()) {
-    return apiFetch<CandidateProfile>(`/enterprise/talent/${id}`).catch(() => null);
+    return apiFetch<CandidateProfile & { fullAccess: boolean }>(`/enterprise/talent/${id}`).catch(() => null);
   }
-  return delay(getCandidateById(id) ?? null, 200);
+  const candidate = getCandidateById(id);
+  if (!candidate) return delay(null, 200);
+  const fullAccess = (await hasDirectlyApplied(id)) || getUnlockedCandidateIds().includes(id);
+  return delay({ ...candidate, fullAccess }, 200);
 }
 
 /** True when this candidate directly applied to one of *my* postings — direct applicants are
@@ -238,9 +248,8 @@ export async function hasDirectlyApplied(candidateId: string): Promise<boolean> 
   return delay(applied, 100);
 }
 
-// Which candidates *this browser* has already unlocked — a client-side convenience cache in
-// both modes. Real mode's actual credit spend is still enforced and recorded server-side by
-// the /unlock call below; this just avoids re-querying "am I unlocked with them" separately.
+// Mock-mode-only unlock ledger (no server-side ledger exists to ask in mock mode). Real mode
+// never reads this - see getCandidateDetail's `fullAccess`, sourced from the server response.
 const UNLOCKED_KEY = "arena_unlocked_candidates";
 export function getUnlockedCandidateIds(): string[] {
   if (typeof window === "undefined") return [];
@@ -250,8 +259,17 @@ export function getUnlockedCandidateIds(): string[] {
     return [];
   }
 }
-export function unlockCandidate(id: string) {
+
+/** Was fire-and-forget in real mode (`apiFetch(...).catch(() => {})`) - the caller had no way to
+ * know the unlock actually succeeded, so the UI marked a candidate "unlocked" even if the credit
+ * spend failed (out of credits, network error, etc.) or double-charged a credit on a double
+ * click. Now genuinely awaited and errors propagate to the caller, who must confirm success
+ * before updating any "unlocked" UI state. */
+export async function unlockCandidate(id: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch(`/enterprise/talent/${id}/unlock`, { method: "POST" });
+    return;
+  }
   const unlocked = getUnlockedCandidateIds();
   if (!unlocked.includes(id)) localStorage.setItem(UNLOCKED_KEY, JSON.stringify([...unlocked, id]));
-  if (isRealMode()) apiFetch(`/enterprise/talent/${id}/unlock`, { method: "POST" }).catch(() => {});
 }

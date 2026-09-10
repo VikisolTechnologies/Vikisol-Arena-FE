@@ -8,12 +8,11 @@ import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getMyEnterpriseProfile, getMyPostings, getAllApplicantCounts } from "@/lib/api/enterprise";
+import { getMyEnterpriseProfile, getMyPostings, getAllApplicantCounts, getCandidateDetail } from "@/lib/api/enterprise";
 import { getShortlistIds } from "@/lib/api/shortlist";
-import { getCandidateById } from "@/lib/mock/candidates";
 import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { EnterpriseProfile, JobPosting } from "@/lib/types";
+import type { CandidateProfile, EnterpriseProfile, JobPosting } from "@/lib/types";
 
 function StatCard({ icon: Icon, value, label }: { icon: typeof Briefcase; value: string | number; label: string }) {
   return (
@@ -31,13 +30,24 @@ export default function EnterpriseDashboardPage() {
   const [postings, setPostings] = useState<JobPosting[]>([]);
   const [applicantCount, setApplicantCount] = useState(0);
   const [shortlistIds, setShortlistIds] = useState<string[]>([]);
+  // Was resolved against mock-only MOCK_CANDIDATES (ids "cand-1".."cand-40") even in real
+  // mode, so every genuine backend shortlist UUID silently failed the lookup and this rail
+  // rendered as if nothing were ever saved - see COMPLETION-REPORT.md for the root cause.
+  // getCandidateDetail() is the same real-mode-aware call the talent detail page already
+  // uses, so a real shortlist now actually shows up here.
+  const [shortlistCandidates, setShortlistCandidates] = useState<(CandidateProfile & { fullAccess: boolean })[]>([]);
 
   useEffect(() => {
     if (!requireEnterpriseOnboarded(router)) return;
     getMyEnterpriseProfile().then((p) => {
       setProfile(p);
     });
-    getShortlistIds().then(setShortlistIds);
+    getShortlistIds().then((ids) => {
+      setShortlistIds(ids);
+      Promise.all(ids.slice(0, 4).map((id) => getCandidateDetail(id))).then((candidates) => {
+        setShortlistCandidates(candidates.filter((c): c is CandidateProfile & { fullAccess: boolean } => c !== null));
+      });
+    });
     Promise.all([getMyPostings(), getAllApplicantCounts()]).then(([p, count]) => {
       setPostings(p);
       setApplicantCount(count);
@@ -93,20 +103,16 @@ export default function EnterpriseDashboardPage() {
             </Link>
           </div>
           <div className="space-y-2.5">
-            {shortlistIds.slice(0, 4).map((id) => {
-              const c = getCandidateById(id);
-              if (!c) return null;
-              return (
-                <Link key={id} href={`/enterprise/talent/${id}`} className="flex items-center gap-3 rounded-xl border border-border bg-secondary px-3.5 py-2.5">
-                  <span className="text-lg">{c.avatarEmoji}</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{c.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{c.title}</p>
-                  </div>
-                  <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
-                </Link>
-              );
-            })}
+            {shortlistCandidates.map((c) => (
+              <Link key={c.id} href={`/enterprise/talent/${c.id}`} className="flex items-center gap-3 rounded-xl border border-border bg-secondary px-3.5 py-2.5">
+                <span className="text-lg">{c.avatarEmoji}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{c.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{c.title}</p>
+                </div>
+                <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
+              </Link>
+            ))}
             {shortlistIds.length === 0 && (
               <EmptyState title="Save candidates from Talent Universe to see them here." className="rounded-xl px-4 py-8 text-xs" />
             )}
