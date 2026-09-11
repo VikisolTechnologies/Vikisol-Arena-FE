@@ -1,7 +1,7 @@
 import { getCandidateById, MOCK_CANDIDATES } from "@/lib/mock/candidates";
 import type { EnterpriseProfile, Role } from "@/lib/types";
 import { delay } from "./shared";
-import { isRealMode } from "./mode";
+import { isRealMode, API_BASE_URL } from "./mode";
 import { apiFetch } from "./httpClient";
 import { getUnlockedCandidateIds } from "./enterprise";
 import type { PagedResponse } from "./paged";
@@ -266,7 +266,7 @@ export function auditExportUrl(): string {
   return `${apiBaseForExport()}/enterprise/admin/audit/export`;
 }
 function apiBaseForExport() {
-  return (typeof window !== "undefined" && isRealMode()) ? (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api/v1") : "";
+  return (typeof window !== "undefined" && isRealMode()) ? API_BASE_URL : "";
 }
 
 // ---- Billing (CA4) ----
