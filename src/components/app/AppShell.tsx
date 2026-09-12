@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -27,6 +27,7 @@ import type { CandidateProfile } from "@/lib/types";
 import { signOut } from "@/lib/api/auth";
 import { getUnreadCount } from "@/lib/api/notifications";
 import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
+import { useKeyboardInset, KEYBOARD_OPEN_THRESHOLD } from "@/hooks/use-keyboard-inset";
 import { getSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -106,6 +107,27 @@ export function AppShell({
   // Same cookie-banner-overlap fix CandidateAppShell already carries - see its own comment.
   const cookieBannerVisible = useCookieConsentVisible();
   const hasUnread = getUnreadCount() > 0;
+  const mobileNavRef = useRef<HTMLElement>(null);
+  // ARENA mobile-agent-ux pass - the on-screen keyboard covers the bottom of the viewport (see
+  // use-keyboard-inset's own comment for why this needs visualViewport, not dvh/svh) exactly
+  // where this bar lives. It only matters on /agent today (the one screen with a composer this
+  // low), so this stays scoped to that route rather than changing nav behavior anywhere else.
+  const keyboardInset = useKeyboardInset();
+  const hideNavForKeyboard = pathname === "/agent" && keyboardInset > KEYBOARD_OPEN_THRESHOLD;
+
+  // Mirrors CookieConsentBanner's own ResizeObserver -> CSS var technique (its comment explains
+  // why: a hardcoded guess at this bar's height previously undershot at real mobile widths).
+  // Publishing the real measured height lets /agent size its keyboard-safe chat panel against
+  // the bar's actual footprint instead of guessing a second constant.
+  useEffect(() => {
+    const el = mobileNavRef.current;
+    if (!el) return;
+    const publish = () => document.documentElement.style.setProperty("--bottom-nav-h", `${el.offsetHeight}px`);
+    const observer = new ResizeObserver(publish);
+    observer.observe(el);
+    publish();
+    return () => observer.disconnect();
+  }, []);
   // ARENA-INVENTORY-FIXES.md FIX 1 - /discover, /people/[id], /companies/[id] now render this
   // shell for logged-out visitors too, so "profile hasn't loaded yet" and "there's no session
   // at all" need to look different here instead of both showing "Loading…" forever. Starts
@@ -304,7 +326,14 @@ export function AppShell({
           on every migrated screen for any first-time mobile visitor until they dismissed the
           banner. Same measured-height fix as BottomTabBar. */}
       <nav
-        className="fixed inset-x-0 z-[890] flex items-stretch justify-around border-t border-border bg-background/95 backdrop-blur-xl lg:hidden"
+        ref={mobileNavRef}
+        // `inert` (not just aria-hidden) so a hidden tab bar can't still eat keyboard focus
+        // while it's translated off-screen underneath the open keyboard.
+        inert={hideNavForKeyboard}
+        className={cn(
+          "fixed inset-x-0 z-[890] flex items-stretch justify-around border-t border-border bg-background/95 backdrop-blur-xl transition-transform duration-200 ease-out lg:hidden",
+          hideNavForKeyboard && "translate-y-full motion-reduce:translate-y-0 motion-reduce:opacity-0",
+        )}
         style={{
           bottom: cookieBannerVisible ? "var(--cookie-banner-h, 88px)" : 0,
           paddingBottom: cookieBannerVisible ? 0 : "env(safe-area-inset-bottom)",

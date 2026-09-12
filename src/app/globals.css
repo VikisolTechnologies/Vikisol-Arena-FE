@@ -249,6 +249,18 @@ body {
   box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--champagne);
 }
 
+/* Referenced by command.tsx's command list and the /agent suggestion-chip row - a horizontally
+   scrollable row of chips/results with a visible scrollbar reads as a broken widget, not an
+   intentional swipe affordance. Content stays fully scrollable, only the browser's own
+   scrollbar chrome is hidden. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
