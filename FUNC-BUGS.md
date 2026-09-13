@@ -111,16 +111,30 @@ pre-existing and unrelated to anything touched this pass:
 Not fixed in this batch to keep it to one concern (the identity graph); real,
 cheap, low-risk fixes for the next batch.
 
-### F4 — Leftover test content in the demo talent account's feed (P2)
-**Role:** talent · **Route:** `/home`
+### F4 — The demo talent account's notification center is flooded with QA spam (P1, upgraded from P2)
+**Role:** talent · **Routes:** `/home`, `/notifications`
 
-The top post in `demo.talent@vikisol.dev`'s feed is titled "Golden path test
-activity 1786489017846" — clearly a QA artifact from a prior verification
-pass, not real seed content. Harmless functionally, but this is the account
-TEST-LOGINS.md describes as demo-ready ("Onboarded profile... resume already
-uploaded...") — worth deleting the post so a sales/demo walkthrough doesn't
-lead with a raw test string. Not fixed here (content cleanup, not code;
-flagging rather than deleting someone's data without confirmation).
+Not just one leftover post (as first found on `/home` — "Golden path test
+activity 1786489017846"): `/notifications` shows at least 7 unread "New join
+request" entries, all from a fabricated user called "Golden Path Test," all
+dated "32d ago," each referencing a different numbered "Golden path test
+activity" post. This is QA/verification-run output that never got cleaned up
+after whatever prior pass generated it — real notification-generation
+machinery working exactly as designed, fed fake input.
+
+This is the account TEST-LOGINS.md documents as the demo-ready one ("Onboarded
+profile... live application history... agent chat + activity journal") — right
+now, opening its notification bell in front of anyone is opening a wall of
+test spam, and its feed leads with the same. Directly the kind of thing the
+brief's "never fabricate network activity" rule (and the user's own explicit
+"don't fake Arena Pulse" instruction from the design-direction conversation)
+is meant to prevent — the fabrication isn't in the code path here, but in
+leftover data sitting where a real demo would see it.
+
+**Not fixed here** — this is a data cleanup (delete the "Golden Path Test"
+user's posts/join-requests and the resulting notifications), not a code
+change, and doing it against the shared demo tenant deserves a confirmation
+rather than being silently deleted mid-repair-pass.
 
 ---
 
