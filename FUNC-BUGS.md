@@ -131,31 +131,28 @@ brief's "never fabricate network activity" rule (and the user's own explicit
 is meant to prevent — the fabrication isn't in the code path here, but in
 leftover data sitting where a real demo would see it.
 
-**Status: partially cleaned up.** Added a real `DELETE /posts/{id}` to
-arena-api (author-only; refuses on a post whose room already has messages,
-pointing at the existing `cancel()` instead — see the commit for the full
-reasoning) and used it, live, on the 10 "Golden path test activity" posts:
-4 had no real room activity and were hard-deleted; the other 6 had actual
-chat history in their rooms (from the fake "Golden Path Test" user's
-join-and-chat flow) so the endpoint correctly refused and they were
-`cancel()`ed instead, exactly as designed.
+**Status: fully cleaned up, both rounds.** Added a real `DELETE /posts/{id}`
+to arena-api (author-only; refuses on a post whose room already has messages,
+pointing at the existing `cancel()` instead) and a matching
+`DELETE /notifications/{id}` (author-only hard delete — nothing like it
+existed either). Used both, live:
 
-**Still open, and expected to stay that way without further work:** the
-already-sent "New join request... Golden Path Test wants to join" 
-notifications on `/notifications` are untouched — `Notification` has no
-foreign key to the post it's about (just a `user`, freeform `title`/`body`
-text, and a `read` flag), so nothing about deleting or cancelling the post
-reaches those rows. There is also no delete-notification capability anywhere
-in the product to remove them directly. Confirmed live: `/home`'s feed no
-longer leads with a Golden Path Test post, but `/notifications` still shows
-the same flood.
+- All 10 "Golden path test activity" posts handled: 4 hard-deleted, 6 had
+  real chat history in their rooms so were `cancel()`ed instead.
+- The 7 *other* leftover test posts found while doing this (from apparently
+  unrelated earlier QA sessions — "QA test post for N+1 tag batching
+  verification," two "badminton test" posts, two "Safety-audit/safety-suite
+  live test" posts, a "Full flow test: coffee meetup" post, a "Nearby-search
+  test post") also handled: 3 hard-deleted, 4 were already cancelled from
+  whichever earlier session created them (no action needed).
+- 11 stale notifications deleted outright (the 8 Golden-Path-Test join
+  requests, plus 3 more from the other test posts' fake join requests).
 
-**Also found while doing this cleanup, not yet acted on:** the same account
-has at least 7 *more* leftover test posts from apparently unrelated prior QA
-passes ("QA test post for N+1 tag batching verification," two different
-"badminton test" posts, two "Safety-audit/safety-suite live test" posts, a
-"Full flow test: coffee meetup" post, a "Nearby-search test post"). Not
-deleted — outside what was actually approved for this batch.
+Verified live afterward: `/home` now leads with a real seeded job posting
+(Zoho — Business Development Manager), and `/notifications` shows only
+genuine entries (5 real "Application submitted," "Complete your profile,"
+the welcome notification). No test content left anywhere in either surface
+for this account.
 
 ---
 

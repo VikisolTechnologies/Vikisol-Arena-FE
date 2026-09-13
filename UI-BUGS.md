@@ -17,13 +17,10 @@ theme migration around it.
 
 ## Open
 
-### U2 — Leftover QA content leading the demo feed and flooding notifications
-Same finding as `FUNC-BUGS.md` F4, upgraded to P1 after checking
-`/notifications` too: not one stray post, but at least 7 fabricated "New join
-request" notifications from a "Golden Path Test" user. Filed in both files
-since it's simultaneously a content-hygiene issue and a first-impression one
-— the feed and the notification bell are the first two things a demo
-walkthrough opens.
+### U2 — Leftover QA content leading the demo feed and flooding notifications (fixed)
+Same finding as `FUNC-BUGS.md` F4. Fully cleaned up — see that entry for the
+full account. Verified live: `/home` and `/notifications` both show only
+genuine demo content now.
 
 ### U3 — `/identity` graph: peripheral nodes clip the card edge on mobile
 Follow-up from the U1/F1 fix, not a regression — the graph is now legible,
