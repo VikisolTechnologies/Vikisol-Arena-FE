@@ -12,9 +12,9 @@ route is wrong/broken but has a workaround · **P2** cosmetic/low-traffic.
 
 ---
 
-## OPEN, NEEDS A DECISION (not a code fix)
+## FIXED THIS PASS
 
-### F6 — 21% of the entire enterprise-visible talent pool is fake QA accounts (P0 for the recruiter-facing product, not a code bug)
+### F6 — 21% of the entire enterprise-visible talent pool was fake QA accounts
 **Role:** recruiter · **Route:** `/enterprise/talent` (Talent Universe)
 
 Queried the search API directly with no filter: **47 candidates total in the
@@ -33,31 +33,38 @@ notifications, already cleaned up) but a full order of magnitude bigger and a
 different kind of object entirely: **these are user accounts** (candidate
 profiles behind real auth records), not posts or notifications.
 
-**Why this isn't fixed already, unlike F4:** there is no way to remove a user
-account anywhere in this codebase (confirmed while building F4's fix — Arena
-has no delete-post or delete-notification either, until this session added
-them). Building real user deletion means correctly cascading across auth
-credentials, `CandidateProfile`, applications, posts, notifications, follows,
-room memberships, and moderation history — a meaningfully bigger, riskier
-change than the narrow author-scoped deletes this pass already shipped, and
-one with no clean undo. Not building it without explicit sign-off on the
-approach.
+**How this was resolved — deliberately NOT a fresh hard-delete.** Before
+building anything, mapped every entity referencing `User`/`CandidateProfile`/
+`EnterpriseProfile` across the whole codebase (30+ entities; several secondary
+roles — `ModerationItem.reporter`/`resolvedBy`, `Follow.followingUser`,
+`RoomMessage.sender`, etc. — have no repository support for a user-scoped
+delete or even a find at all). That research, and the risk it implied, turned
+out to already be independently reached by a prior pass: `User.deletedAt`
+already exists, wired through `CandidateProfileService.deleteMyAccount` (the
+DPDP right-to-erasure path behind `DELETE /profile/me`), with its own comment
+explaining it anonymizes + permanently disables login **rather than**
+hard-deleting, specifically because cascading a real delete through every FK
+reference safely was assessed as too large and risky.
 
-**Options, not yet chosen between:**
-1. **Deactivate/hide, don't delete** — add a flag (e.g. `visibleToEnterprises`
-   or reuse an existing "deactivated" concept if one exists) that the talent
-   search query excludes, and set it on these 10 accounts. Reversible, small
-   blast radius, doesn't touch auth/cascade at all.
-2. **Full account deletion** — the "actually gone" option, but real scope: a
-   proper cascading delete across every table with a user FK. Bigger, one-way.
-3. **Leave it, documented only** — no code change this pass.
+Reused that exact mechanism instead of duplicating it: added
+`DELETE /admin/users/{id}` (platform_admin only,
+`PlatformUserService.eraseAccount`) that calls the same
+`deleteMyAccount` logic against a target user chosen by an admin, audited
+separately (`AuditActions.ACCOUNT_ERASED_BY_ADMIN`, distinct from the
+self-service `ACCOUNT_DELETED`) so the trail shows who triggered it. Used it
+on all 10 accounts, live.
 
-Not acted on — logged here for a decision, the same way F4's actual deletion
-mechanism was decided before being built rather than assumed.
+**Also found and fixed as part of this: F7 — the search filter gap.**
+`CandidateProfileRepository.search()` never excluded an already-anonymized/
+erased account. Practical effect: the DPDP erasure flow didn't actually
+remove a candidate from enterprise search at all — just renamed them to
+"Deleted user" and left them fully visible and clickable, which defeats the
+point of a right-to-erasure feature. Added `c.user.deletedAt is null` to the
+query.
 
----
-
-## FIXED THIS PASS
+**Verified live:** talent pool went from 47 → 37 candidates; zero "Golden
+Path Test" results anywhere; searching "engineer" now returns only real
+seeded candidates.
 
 ### F1 — `/identity`'s skills graph was effectively invisible (P0)
 **Role:** talent · **Route:** `/identity` · **Device:** mobile + desktop (color bug, not a breakpoint bug)
@@ -86,25 +93,6 @@ against the canvas's own measured bounds in the spring simulation, or reduce
 batch to one concern.
 
 ---
-
-## OPEN
-
-### F3 — Sentry error reporting is being rejected in production (P1, quiet)
-**Roles:** all, including logged out · **Routes:** every route tested
-
-Every single page load in this census triggered a `403` from
-`https://sentry.io`'s ingest API for the configured DSN
-(`sentry_key=eb5c...`), on every role and every route, logged-out included.
-This isn't a user-facing bug — nothing in the product breaks — but it likely
-means **production JS errors are not reaching Sentry at all** right now,
-which quietly defeats exactly the kind of visibility this whole repair pass
-depends on going forward.
-
-**Not something I can fix from this repo**: a 403 from Sentry's own ingest
-endpoint means either the DSN/key was revoked, the project hit a quota, or
-the project's allowed-origins list doesn't include `arena.vikisol.in`. All
-three need Sentry dashboard access. **Logged in BLOCKERS.md (B2)** — needs
-Syam to check the Sentry project directly.
 
 ### F5 — Two pre-existing lint findings (fixed)
 
@@ -162,6 +150,27 @@ Verified live afterward: `/home` now leads with a real seeded job posting
 genuine entries (5 real "Application submitted," "Complete your profile,"
 the welcome notification). No test content left anywhere in either surface
 for this account.
+
+---
+
+## OPEN
+
+### F3 — Sentry error reporting is being rejected in production (P1, quiet)
+**Roles:** all, including logged out · **Routes:** every route tested
+
+Every single page load in this census triggered a `403` from
+`https://sentry.io`'s ingest API for the configured DSN
+(`sentry_key=eb5c...`), on every role and every route, logged-out included.
+This isn't a user-facing bug — nothing in the product breaks — but it likely
+means **production JS errors are not reaching Sentry at all** right now,
+which quietly defeats exactly the kind of visibility this whole repair pass
+depends on going forward.
+
+**Not something I can fix from this repo**: a 403 from Sentry's own ingest
+endpoint means either the DSN/key was revoked, the project hit a quota, or
+the project's allowed-origins list doesn't include `arena.vikisol.in`. All
+three need Sentry dashboard access. **Logged in BLOCKERS.md (B2)** — needs
+Syam to check the Sentry project directly.
 
 ---
 
