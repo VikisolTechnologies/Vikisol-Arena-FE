@@ -88,6 +88,9 @@ export default function SettingsPage() {
       setVerification(v);
       setPhoneInput(v.phoneNumber ?? "");
     });
+    // Client-only session read, same pattern as AppShell's own loggedIn state (SSR has no
+    // localStorage to read a session from).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentEmail(getSession()?.email ?? "");
   }, [router]);
 

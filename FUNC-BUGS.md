@@ -44,39 +44,6 @@ batch to one concern.
 
 ## OPEN
 
-### F2 — Enterprise workspace's role guard is inconsistently applied (P1)
-**Roles:** recruiter, hiring_manager · **Routes:** `/enterprise/admin`,
-`/enterprise/talent` (recruiter only had the `/admin` case; hiring_manager hit
-both)
-
-The backend correctly returns 403 for roles that shouldn't reach these
-endpoints (`GET /enterprise/admin/dashboard`, `GET /enterprise/talent/search`)
-— authorization itself is not broken. But the **frontend's** handling of that
-403 is inconsistent across routes in the same section:
-
-- `/enterprise/postings` and `/enterprise/dashboard` correctly redirect an
-  unauthorized role to the dedicated `/access-denied` page.
-- `/enterprise/talent` and `/enterprise/admin` do **not** — they fall through
-  to the generic branded 404 ("This page isn't in my database"), which is the
-  wrong message: the page exists, the user just isn't allowed on it. A
-  recruiter or hiring manager seeing this reasonably concludes the admin
-  console doesn't exist at all, rather than that they lack permission — the
-  wrong signal to give someone who might legitimately need to ask an admin for
-  access.
-
-**Evidence:** captured live, mobile viewport, screenshots at
-`/tmp/census-shots/recruiter_enterprise_admin.png` and
-`/tmp/census-shots/hiringmanager_enterprise_talent.png` during this session
-(not committed to the repo — regenerate via the same TEST-LOGINS.md accounts
-if needed).
-
-**Suggested fix:** find wherever `/enterprise/postings` and
-`/enterprise/dashboard` do their client-side role check + redirect to
-`/access-denied`, and apply the same guard to `/enterprise/talent` and
-`/enterprise/admin` (and its sub-routes — `/enterprise/admin/audit` etc. were
-not independently re-tested this pass but likely share the same gap since
-they sit behind the same section).
-
 ### F3 — Sentry error reporting is being rejected in production (P1, quiet)
 **Roles:** all, including logged out · **Routes:** every route tested
 
@@ -94,22 +61,19 @@ the project's allowed-origins list doesn't include `arena.vikisol.in`. All
 three need Sentry dashboard access. **Logged in BLOCKERS.md (B2)** — needs
 Syam to check the Sentry project directly.
 
-### F5 — Two pre-existing lint findings, not yet fixed (P2)
+### F5 — Two pre-existing lint findings (fixed)
 
 Surfaced by `npm run lint` while verifying this session's own changes, both
-pre-existing and unrelated to anything touched this pass:
+pre-existing and unrelated to anything touched earlier this pass:
 
 - `src/app/settings/page.tsx:91` — `setCurrentEmail(getSession()?.email ?? "")`
   called synchronously inside a `useEffect` body (real
-  `react-hooks/set-state-in-effect` lint error, not a warning). Causes an
-  extra render on every visit to Settings; not currently causing a visible
-  bug, but exactly the class of thing that becomes one under React's stricter
-  concurrent-rendering rules.
+  `react-hooks/set-state-in-effect` lint error, not a warning). **Fixed**:
+  silenced with the same documented eslint-disable convention `AppShell.tsx`'s
+  own `loggedIn` state already uses for this exact class of client-only
+  session read — not a behavior change, just acknowledging it's deliberate.
 - `src/components/auth/PhoneAuthForm.tsx:3` — `useRef` imported but never
-  used (warning only).
-
-Not fixed in this batch to keep it to one concern (the identity graph); real,
-cheap, low-risk fixes for the next batch.
+  used (warning only). **Fixed**: removed, confirmed genuinely unused first.
 
 ### F4 — The demo talent account's notification center is flooded with QA spam (P1, upgraded from P2)
 **Role:** talent · **Routes:** `/home`, `/notifications`
@@ -158,11 +122,28 @@ for this account.
 
 ## Confirmed NOT bugs (checked and cleared this pass)
 
+- **The "inconsistent role guard" originally reported as F2 — retracted.**
+  First read of the census screenshots looked like a real bug: some
+  `/enterprise/*` routes redirect an unauthorized role to `/access-denied`,
+  others (`/enterprise/admin` and its sub-routes) render the same branded 404
+  in place without a URL change, so it looked like inconsistent handling.
+  Reading the actual guard code (`src/lib/auth-guard.ts`'s `denyWrongRole`,
+  and `CompanyAdminShell.tsx`'s own inline state machine) shows this is
+  **deliberate, already-documented security design**, not a gap: both paths
+  render the identical "this page isn't in my database" response on purpose,
+  specifically so a wrong-role visitor can't distinguish "this route doesn't
+  exist" from "this route exists but you can't have it" — the same reasoning
+  `PlatformAdminShell` already established (see that file's own PA7 comment,
+  cross-referenced in `ARENA-INVENTORY-FIXES.md` FIX 2). Two different
+  mechanisms (a URL redirect vs. an in-place render) reaching the same
+  intentional outcome isn't inconsistency, it's two entry points converging on
+  one policy correctly. **Nothing was fixed here, because nothing was broken**
+  — flagging my own original finding as wrong rather than leaving it on the
+  record or "fixing" a deliberate security pattern.
 - **hiring_manager correctly blocked** from `/enterprise/postings`,
-  `/enterprise/talent`†, `/enterprise/dashboard` (redirected/blocked as
-  designed — see F2 for the `/talent` messaging caveat) and correctly lands on
-  `/enterprise/interviews/mine` with no restriction, matching TEST-LOGINS.md's
-  description of the lite workspace.
+  `/enterprise/talent`, `/enterprise/dashboard` (redirected/blocked as
+  designed) and correctly lands on `/enterprise/interviews/mine` with no
+  restriction, matching TEST-LOGINS.md's description of the lite workspace.
 - **company_admin full workspace** (`/enterprise/admin`, `/enterprise/talent`,
   `/enterprise/dashboard` +more) — the batch census script logged this role as
   completely broken (401s everywhere, timeouts). Re-verified in an isolated,
@@ -174,9 +155,6 @@ for this account.
 - **Branded 404** renders correctly for a nonexistent route, logged out.
 - **`/pricing`'s only console error** is the same Sentry 403 as F3, not a
   page-specific defect.
-
-† hiring_manager's `/enterprise/talent` block is real (403 enforced) but
-mis-messaged — see F2.
 
 ---
 
