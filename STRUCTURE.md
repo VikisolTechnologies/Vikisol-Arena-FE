@@ -54,6 +54,14 @@ the same live service as `api-arena.vikisol.in`, just addressed by its raw
 Railway domain instead of the custom one. Doc drift again, not a functional
 bug; worth a one-line fix to `TEST-LOGINS.md` removing the dead frontend URL.
 
+Same file, a second stale claim: it says `demo.hiringmanager@vikisol.dev`
+"has at least one interview assigned already." Checked directly against the
+live API (`GET /interviews/mine` as that account) — genuinely zero, not a
+display bug. `/enterprise/interviews/mine` correctly renders "No interviews
+assigned yet" for what the backend actually has. Whatever interview that demo
+account once had has since been reassigned/cancelled/cleaned up; the doc
+wasn't updated to match. Not fixed here (a one-line doc correction, not code).
+
 ## Retired Railway infrastructure still running
 
 Covered fully in `GROUND-TRUTH.md` (§0.1) and `BLOCKERS.md` (B1): a separate
