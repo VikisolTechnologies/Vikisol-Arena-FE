@@ -28,4 +28,29 @@ Not deleted, not stopped further, not modified — left exactly as found.
 
 ---
 
+---
+
+## B2 — Sentry is rejecting every event in production
+
+**Blocked:** Confirming whether production JS errors are actually reaching
+anyone.
+
+**Found:** Every single page load during the Phase 1 defect census (every
+role, every route, including logged out) triggered a `403` from Sentry's own
+ingest API for the configured DSN. Full detail in `FUNC-BUGS.md` (F3).
+
+**Ask for Syam:** Check the Sentry project directly (dashboard access only —
+not in this repo) for one of: a revoked/rotated DSN key that the deployed env
+var no longer matches, a quota/rate-limit block on the project, or an
+allowed-origins/allowed-domains restriction that doesn't include
+`arena.vikisol.in`. Whichever it is, until it's fixed, Sentry is not a
+reliable signal for anything in this repair pass — console-error evidence
+gathered directly (as in `FUNC-BUGS.md`) should be trusted over an absence of
+Sentry alerts.
+
+Not modified — `NEXT_PUBLIC_SENTRY_DSN` was only read via `vercel env ls`
+(names/existence, not values), never changed.
+
+---
+
 *(Further blockers get appended here as Phase 1/2 work surfaces them.)*
