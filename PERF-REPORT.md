@@ -273,3 +273,59 @@ the higher-severity, higher-confidence fixes and the right thing to prioritize f
 
 Both are logged here rather than silently dropped, per the standing charter's own rule about
 attributing gaps honestly instead of claiming done ahead of the real work.
+
+---
+
+## Pass 3 — `ARENA-FIX-EVERYTHING.md` Phase 4, measured 2026-09-13
+
+Picks up exactly where Pass 2 left off: its own closing assessment named the landing page's true
+cold load as "the one real standout" and its own recommended next step, not yet done, as
+"lazy-loading below-the-fold sections."
+
+### What changed
+
+Checked first, before writing anything: every individual animated piece (`Hero`, `OpenMarket`,
+`AuraBackground`, the shared `Reveal`/`CountUp`) already deferred its own GSAP-consuming
+`Animator` via `next/dynamic(..., { ssr: false })` — Pass 2's own fix, still correctly in place.
+What Pass 2 flagged but didn't yet act on was one level up: `src/app/page.tsx` still imported the
+below-the-fold section **components themselves** (`OvernightReport`, `TalentUniverse`,
+`OpenMarket`, `CtaFooter`) directly, so their base React tree and client-side data fetching
+(`getLandingStats`, `getFeaturedProject`) shipped in the same critical bundle as `Hero`, for
+content nobody sees without scrolling past it.
+
+Wrapped those four in `next/dynamic()` — deliberately **without** `ssr: false`, confirmed via a
+local production build that all three sections' real copy ("Stop searching for work," "Openings
+scanned," "Talent Universe") still appears in the server-rendered HTML. This only splits the
+client JS bundle; it doesn't touch what's server-rendered or SEO-visible.
+
+### Before → After (same methodology as Pass 2: Playwright + CDP, iPhone-width mobile profile,
+1.5Mbps/0.75Mbps/300ms RTT + 4× CPU throttle, longtask `PerformanceObserver` for TBT, `Network.loadingFinished`'s `encodedDataLength` for real wire bytes — not `Content-Length` headers, which undercount compressed responses)
+
+**Methodology note, stated plainly**: this is a comparison against Pass 2's documented baseline,
+not a controlled same-session A/B (the codebase has had other changes land between 2026-08-10 and
+now, including this pass's own earlier fixes). The margins below are large enough that they can't
+plausibly be explained by incidental drift, but flagging the comparison basis honestly rather than
+implying a perfectly isolated experiment.
+
+| Metric | Pass 2 baseline (2026-08-10) | Pass 3 (2026-09-13) | Change |
+|---|---|---|---|
+| TTFB | 452ms | 161ms | better, likely unrelated to this fix (server/cache state) |
+| FCP | 3984ms | 2564ms | **~36% faster** |
+| LCP | 5820ms | 3572ms | **~39% faster** |
+| TBT (approx, longtask-based) | 725ms | **99ms** | **~86% reduction** |
+| Long tasks | 9 | 2 | |
+| JS transferred (real wire bytes) | 294KB | 383KB | **+30%, an honest tradeoff** |
+| Total transferred | 459KB | 545KB | +19% |
+
+**The tradeoff, not hidden**: splitting into more, smaller chunks costs a bit of total bytes
+(per-chunk module-wrapper overhead, some duplicated small runtime bits) — both JS and total
+transfer went *up*, not down. That's expected and the right trade: the metric this fix actually
+targets is main-thread execution cost on a throttled CPU (TBT), not bytes over the wire, and TBT
+dropped by 86%. Byte count was never the bottleneck here — Pass 2's own baseline already said so
+("not bytes over the wire, execution cost once they arrive... under 4× CPU throttle").
+
+### Still open, unchanged from Pass 2
+
+Click-to-render on in-app navigation (2–2.6s, `PageTransitionAnimator`'s deliberate 500ms
+transition plus per-route data fetch under throttle) — not touched this pass, still a real,
+scoped follow-up.
