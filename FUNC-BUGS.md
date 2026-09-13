@@ -66,6 +66,22 @@ query.
 Path Test" results anywhere; searching "engineer" now returns only real
 seeded candidates.
 
+**F8 — two more gaps found immediately after, both fixed:** visually checking
+the platform_admin Users list (`/admin/users`) showed the 10 erased accounts
+still displayed as "Golden Path Test" — `deleteMyAccount` only anonymized
+`CandidateProfile.name`, never `User.name` (a separate field), and the admin
+list reads `User.name` directly. Fixed by anonymizing both. Separately, the
+audit trail's `account.deleted` entry always said "self-service erasure
+request" verbatim, including for these admin-triggered erasures - misleading
+for an accountability-sensitive log. Split the shared logic so
+admin-triggered erasure records its own accurate reason
+(`account.erased_by_admin`, distinct from the self-service action). Also made
+the admin endpoint idempotent (it only ever re-applies the same, already-safe
+anonymization) specifically so the `User.name` fix could be re-run against
+the 10 already-erased accounts instead of leaving them permanently stuck on
+their first pass. Verified live: `/admin/users` search for "Golden Path"
+now returns zero results too, not just enterprise talent search.
+
 ### F1 — `/identity`'s skills graph was effectively invisible (P0)
 **Role:** talent · **Route:** `/identity` · **Device:** mobile + desktop (color bug, not a breakpoint bug)
 
