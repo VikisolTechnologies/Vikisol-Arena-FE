@@ -34,16 +34,31 @@ clamp each node's distance from center against half the canvas's own measured
 width/height inside the spring simulation in `ForceGraph.tsx`, rather than
 using a fixed `restLen`/repel radius that assumes a wider (desktop) canvas.
 
+## Desktop pass (talent role) — clean
+
+Reviewed `/home`, `/identity`, `/discover`, `/map`, `/work`, `/notifications`,
+`/agent` at 1440×900 as `demo.talent@vikisol.dev`. No new defects — the
+ForceGraph fix (U1) holds on desktop too (Python/Node.js/Engineering/
+Kubernetes/AWS nodes all legible), `/map`'s empty state is honest
+("See what's nearby... turn on location") rather than fabricated activity,
+consistent with the brief's own rule, and `/work`'s hub card layout is clean.
+Zero network errors captured across this set.
+
+One very minor thing noticed, not filed as a defect: the agent chat history
+for this demo account contains what look like repeated/duplicate exchanges
+from earlier QA runs (same "Show me some jobs available on Arena" message
+appearing twice in view). Not a rendering bug — the chat is correctly
+displaying real message history, it's just noisier test history, same family
+as F4/U2 but far lower stakes since it's scrollback, not something a demo
+walkthrough leads with. Not touched.
+
 ## Not yet covered
 
-This pass reviewed a handful of representative screens (`/home`, `/identity`,
-`/discover`, plus the two mis-routed enterprise screens under F2) closely
-enough to call out real defects, out of the full 50-route × 5-role × 2-width
-matrix the brief asks for. Not yet individually reviewed for the specific
-things this file is supposed to track: consistent spacing/type scale/radii
-across every screen, missing avatars/media where the design system makes them
-mandatory, gold used as body text, two components doing the same job with
-different looks, and a proper WCAG AA contrast pass on `/home`, `/identity`
-(beyond the graph itself), and `/discover` specifically. That's the direct
-continuation of this phase, not abandoned — flagging honestly rather than
-padding this file with screens I didn't actually look at closely.
+Not yet individually reviewed: the enterprise-role screens on desktop, the
+rest of the route list beyond what's listed above, and the specific things
+this file is supposed to track in depth — consistent spacing/type scale/
+radii across every screen, missing avatars/media where the design system
+makes them mandatory, gold used as body text, two components doing the same
+job with different looks, and a proper WCAG AA contrast pass. That's the
+direct continuation of this phase, not abandoned — flagging honestly rather
+than padding this file with screens not actually looked at closely.
