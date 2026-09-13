@@ -12,6 +12,51 @@ route is wrong/broken but has a workaround · **P2** cosmetic/low-traffic.
 
 ---
 
+## OPEN, NEEDS A DECISION (not a code fix)
+
+### F6 — 21% of the entire enterprise-visible talent pool is fake QA accounts (P0 for the recruiter-facing product, not a code bug)
+**Role:** recruiter · **Route:** `/enterprise/talent` (Talent Universe)
+
+Queried the search API directly with no filter: **47 candidates total in the
+whole enterprise-visible pool, 10 of them named "Golden Path Test"** (one
+"Golden Path Test New Talent," nine "Golden Path Test QA Engineer," all in
+Bengaluru, all sharing the same two canned description strings verbatim —
+"Comes up frequently in searches like this one - high signal, low noise." /
+"Recently active, open to new roles, and priced within typical range."). A
+recruiter searching "engineer" got 8 of these in the first 17 results.
+
+This is TEST-LOGINS.md's own described "sales-pitch surface" (Talent Universe
+search, full recruiter workspace) — over a fifth of the searchable candidate
+database being obvious QA leftovers is a real problem for any demo or trial
+that touches this screen, in the same family as F4 (the QA-spam posts/
+notifications, already cleaned up) but a full order of magnitude bigger and a
+different kind of object entirely: **these are user accounts** (candidate
+profiles behind real auth records), not posts or notifications.
+
+**Why this isn't fixed already, unlike F4:** there is no way to remove a user
+account anywhere in this codebase (confirmed while building F4's fix — Arena
+has no delete-post or delete-notification either, until this session added
+them). Building real user deletion means correctly cascading across auth
+credentials, `CandidateProfile`, applications, posts, notifications, follows,
+room memberships, and moderation history — a meaningfully bigger, riskier
+change than the narrow author-scoped deletes this pass already shipped, and
+one with no clean undo. Not building it without explicit sign-off on the
+approach.
+
+**Options, not yet chosen between:**
+1. **Deactivate/hide, don't delete** — add a flag (e.g. `visibleToEnterprises`
+   or reuse an existing "deactivated" concept if one exists) that the talent
+   search query excludes, and set it on these 10 accounts. Reversible, small
+   blast radius, doesn't touch auth/cascade at all.
+2. **Full account deletion** — the "actually gone" option, but real scope: a
+   proper cascading delete across every table with a user FK. Bigger, one-way.
+3. **Leave it, documented only** — no code change this pass.
+
+Not acted on — logged here for a decision, the same way F4's actual deletion
+mechanism was decided before being built rather than assumed.
+
+---
+
 ## FIXED THIS PASS
 
 ### F1 — `/identity`'s skills graph was effectively invisible (P0)
@@ -122,6 +167,20 @@ for this account.
 
 ## Confirmed NOT bugs (checked and cleared this pass)
 
+- **Recruiter workflow, both false alarms caught before being reported.**
+  Testing the postings → applicants → talent search flow live as
+  `demo.recruiter@vikisol.dev` produced two things that looked broken on
+  first pass and weren't: (1) clicking "Applicants" on a posting card
+  appeared to do nothing — a `getByRole` click fired too early in one test
+  script run, before the page had fully settled; a slower, more careful retry
+  showed the existing `onClick={() => router.push(...)}` handler
+  (`src/app/enterprise/postings/page.tsx`) working exactly as written. (2) the
+  applicant pipeline page for a posting with zero applicants appeared stuck on
+  a loading spinner forever — a screenshot taken too early (before the API's
+  correctly-empty response had finished rendering) caught it mid-load; a
+  longer wait showed the real, working state: all five stage columns
+  correctly rendering "0 / Nothing here." Neither was a real defect, both were
+  this session's own test timing. Not fixed, because nothing needed fixing.
 - **The "inconsistent role guard" originally reported as F2 — retracted.**
   First read of the census screenshots looked like a real bug: some
   `/enterprise/*` routes redirect an unauthorized role to `/access-denied`,
