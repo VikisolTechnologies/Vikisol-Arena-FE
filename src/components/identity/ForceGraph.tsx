@@ -144,10 +144,13 @@ export function ForceGraph({
       ctx.scale(view.scale, view.scale);
       ctx.translate(-view.fx, -view.fy);
 
-      // Cluster glow — soft additive halos, brighter wherever nodes sit close together.
-      ctx.globalCompositeOperation = "lighter";
+      // Cluster glow - soft halos, brighter wherever nodes sit close together. Plain
+      // source-over alpha blending, not "lighter": additive blending was tuned for the old
+      // dark canvas (adding light onto near-black pixels) and washes out to near-nothing on
+      // the ivory card this now renders on (ARENA-FIX-EVERYTHING.md Phase 1 finding - the
+      // whole graph was effectively invisible after the product-theme migration).
       for (const n of nodes) {
-        const glowColor = n.type === "center" ? "255,107,53" : n.verified ? "52,211,153" : "255,138,91";
+        const glowColor = n.type === "center" ? "255,107,53" : n.verified ? "16,150,105" : "255,138,91";
         const glowR = n.type === "center" ? 60 : 42;
         const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, glowR);
         grad.addColorStop(0, `rgba(${glowColor},0.16)`);
@@ -157,7 +160,6 @@ export function ForceGraph({
         ctx.arc(n.x, n.y, glowR, 0, Math.PI * 2);
         ctx.fill();
       }
-      ctx.globalCompositeOperation = "source-over";
 
       const center = nodes.find((n) => n.type === "center");
       if (center) {
@@ -166,7 +168,7 @@ export function ForceGraph({
           ctx.beginPath();
           ctx.moveTo(center.x, center.y);
           ctx.lineTo(n.x, n.y);
-          ctx.strokeStyle = n.id === selectedId ? "rgba(255,138,91,0.5)" : "rgba(255,255,255,0.1)";
+          ctx.strokeStyle = n.id === selectedId ? "rgba(255,138,91,0.5)" : "rgba(0,0,0,0.1)";
           ctx.lineWidth = 1;
           ctx.stroke();
         }
@@ -182,14 +184,14 @@ export function ForceGraph({
             : n.id === selectedId
               ? "rgba(255,138,91,0.35)"
               : n.verified
-                ? "rgba(255,138,91,0.18)"
-                : "rgba(255,255,255,0.06)";
+                ? "rgba(255,138,91,0.22)"
+                : "rgba(0,0,0,0.05)";
         ctx.fill();
-        ctx.strokeStyle = n.id === selectedId ? "#FF8A5B" : "rgba(255,255,255,0.15)";
+        ctx.strokeStyle = n.id === selectedId ? "#FF8A5B" : "rgba(0,0,0,0.18)";
         ctx.lineWidth = n.id === selectedId ? 2 : 1;
         ctx.stroke();
 
-        ctx.fillStyle = n.type === "center" ? "#160a05" : "#F5F5F6";
+        ctx.fillStyle = n.type === "center" ? "#160a05" : "#111111";
         ctx.font = n.type === "center" ? "600 11px Inter, sans-serif" : "500 10px Inter, sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
