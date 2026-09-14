@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // ARENA-PHASE-1-BUILD.md §2 "Imagery" - real licensed Unsplash photography for the new v3
+  // screens (Home first), served via next/image. Unsplash's own CDN, not the deprecated
+  // source.unsplash.com hotlink API - stable, specific photo URLs recorded per-use at the
+  // call site (see HomeContent.tsx / ActivityCard usage) with photographer credit and license.
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
+  },
   // Standalone output for the Docker runtime image on Railway - bundles only the traced
   // production dependencies into .next/standalone instead of shipping the full node_modules
   // tree. Vercel's own build pipeline doesn't want this and sets process.env.VERCEL on every
