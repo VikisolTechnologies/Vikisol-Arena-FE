@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -95,17 +95,31 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
     }
   }
 
+  // ARENA-PHASE-1-BUILD.md §2 "Structure" - "Single column. 640px max on desktop, full-bleed
+  // on mobile." The hero IMAGE stays full-bleed at any width (that's correct per the mockup),
+  // but its text overlay, the card list, and the tab bar's icon row all need to sit inside a
+  // centered 640px measure on wide viewports - caught by actually looking at a 1440px
+  // screenshot before calling this checkpoint ready, where everything was still pinned to the
+  // left edge across the full viewport width. `left:50%; translateX(-50%)` centers an
+  // absolutely-positioned block without disturbing the full-bleed image behind it.
+  const centeredAbsolute: CSSProperties = {
+    position: "absolute",
+    left: "50%",
+    transform: "translateX(-50%)",
+    width: "min(640px, 100% - 40px)",
+  };
+
   return (
     <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
       <div style={{ position: "relative", height: 290, flexShrink: 0, overflow: "hidden", background: ARENA_V3.espresso }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 130, background: ARENA_V3.espressoLight }} />
         <Image src={HERO_IMAGE} alt="" fill priority sizes="600px" style={{ objectFit: "cover", opacity: 0.6 }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(34,28,23,0.15) 0%, rgba(34,28,23,0.75) 100%)" }} />
-        <div style={{ position: "absolute", top: 16, left: 20, right: 20, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ ...centeredAbsolute, top: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontSize: 11, color: "#C9BFB1", letterSpacing: 4 }}>ARENA</span>
           <Bell size={17} color="#E8DFD2" strokeWidth={1.75} />
         </div>
-        <div style={{ position: "absolute", bottom: 24, left: 20, right: 20 }}>
+        <div style={{ ...centeredAbsolute, bottom: 24 }}>
           {state === "loading" && (
             <>
               <div style={{ width: 150, height: 10, background: "rgba(247,241,234,0.22)", borderRadius: 4, marginBottom: 14 }} />
@@ -166,23 +180,25 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
           longer reserves its own space in flow; this bottom padding stands in for that,
           matching AppShell's own pb-24 reservation for its bottom tab bar. */}
       <div style={{ flex: 1, paddingTop: 14, paddingBottom: "calc(84px + env(safe-area-inset-bottom))" }}>
-        {state === "loading" &&
-          [0, 1].map((i) => (
-            <div key={i} style={{ background: ARENA_V3.white, margin: "0 12px 12px", borderRadius: 14, height: 112 + 78, opacity: 0.5 }} />
-          ))}
+        <div style={{ maxWidth: 640, margin: "0 auto" }}>
+          {state === "loading" &&
+            [0, 1].map((i) => (
+              <div key={i} style={{ background: ARENA_V3.white, margin: "0 12px 12px", borderRadius: 14, height: 112 + 78, opacity: 0.5 }} />
+            ))}
 
-        {state === "ready" &&
-          nearby.map((post) =>
-            post.intentType === "activity" ? (
-              <ActivityCard key={post.id} post={post} displayFont={displayFont} onJoin={handleJoin} joining={joiningId === post.id} />
-            ) : (
-              <NeedCard key={post.id} post={post} displayFont={displayFont} />
-            ),
+          {state === "ready" &&
+            nearby.map((post) =>
+              post.intentType === "activity" ? (
+                <ActivityCard key={post.id} post={post} displayFont={displayFont} onJoin={handleJoin} joining={joiningId === post.id} />
+              ) : (
+                <NeedCard key={post.id} post={post} displayFont={displayFont} />
+              ),
+            )}
+
+          {joinError && (
+            <p style={{ margin: "0 12px 12px", fontSize: 12, color: "#B23B3B" }}>{joinError}</p>
           )}
-
-        {joinError && (
-          <p style={{ margin: "0 12px 12px", fontSize: 12, color: "#B23B3B" }}>{joinError}</p>
-        )}
+        </div>
       </div>
 
       <HomeTabBar onCompose={() => setComposerOpen(true)} />

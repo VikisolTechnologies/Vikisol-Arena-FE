@@ -39,31 +39,34 @@ export function HomeTabBar({ onCompose }: { onCompose: () => void }) {
         left: 0,
         right: 0,
         bottom: cookieBannerVisible ? "var(--cookie-banner-h, 88px)" : 0,
-        display: "flex",
-        justifyContent: "space-around",
         padding: "14px 0 16px",
         paddingBottom: cookieBannerVisible ? 0 : "max(16px, env(safe-area-inset-bottom))",
         borderTop: `1px solid ${ARENA_V3.hairline}`,
         background: ARENA_V3.ivory,
       }}
     >
-      {items.map((item) => {
-        const Icon = item.icon;
-        const active = item.href != null && pathname === item.href;
-        const color = active ? ARENA_V3.ink : ARENA_V3.inactiveTab;
-        if (!item.href) {
+      {/* ARENA-PHASE-1-BUILD.md §2 "Structure" - same 640px-max centered measure as the hero
+          text and card list; without this the icons spread edge-to-edge across a wide desktop
+          viewport instead of sitting under the one content column. */}
+      <div style={{ display: "flex", justifyContent: "space-around", maxWidth: 640, margin: "0 auto" }}>
+        {items.map((item) => {
+          const Icon = item.icon;
+          const active = item.href != null && pathname === item.href;
+          const color = active ? ARENA_V3.ink : ARENA_V3.inactiveTab;
+          if (!item.href) {
+            return (
+              <button key={item.label} type="button" onClick={item.onClick} aria-label={item.label} style={{ background: "none", border: "none", padding: 0 }}>
+                <Icon size={20} color={color} strokeWidth={1.75} />
+              </button>
+            );
+          }
           return (
-            <button key={item.label} type="button" onClick={item.onClick} aria-label={item.label} style={{ background: "none", border: "none", padding: 0 }}>
+            <Link key={item.label} href={item.href} aria-label={item.label} style={{ display: "flex" }}>
               <Icon size={20} color={color} strokeWidth={1.75} />
-            </button>
+            </Link>
           );
-        }
-        return (
-          <Link key={item.label} href={item.href} aria-label={item.label} style={{ display: "flex" }}>
-            <Icon size={20} color={color} strokeWidth={1.75} />
-          </Link>
-        );
-      })}
+        })}
+      </div>
     </div>
   );
 }
