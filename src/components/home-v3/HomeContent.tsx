@@ -162,7 +162,10 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
         </div>
       </div>
 
-      <div style={{ flex: 1, paddingTop: 14, paddingBottom: 20 }}>
+      {/* HomeTabBar is position:fixed (not sticky - see its own comment on why), so it no
+          longer reserves its own space in flow; this bottom padding stands in for that,
+          matching AppShell's own pb-24 reservation for its bottom tab bar. */}
+      <div style={{ flex: 1, paddingTop: 14, paddingBottom: "calc(84px + env(safe-area-inset-bottom))" }}>
         {state === "loading" &&
           [0, 1].map((i) => (
             <div key={i} style={{ background: ARENA_V3.white, margin: "0 12px 12px", borderRadius: 14, height: 112 + 78, opacity: 0.5 }} />

@@ -3,6 +3,7 @@
 import { Home, MapPinned, Plus, Inbox, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
 import { ARENA_V3 } from "./tokens";
 
 // ARENA-PHASE-1-BUILD.md §2 "Structure" / §4 "Navigation" - the mockups' tab bar. Icons here
@@ -18,6 +19,12 @@ import { ARENA_V3 } from "./tokens";
 // buttons" rule is about function, not yet about visual consistency across screens.
 export function HomeTabBar({ onCompose }: { onCompose: () => void }) {
   const pathname = usePathname();
+  // ARENA-PERF-AND-MOBILE-FIX.md's own fix for AppShell's bottom nav, reapplied here - a fixed,
+  // full-width cookie banner at the bottom of the viewport otherwise sits directly on top of
+  // this bar, making Map/Create/Inbox/Profile all silently unreachable for any first-time
+  // visitor until they dismiss it. Found by actually looking at a screenshot before calling
+  // this checkpoint done, not assumed fixed because AppShell already solved it once elsewhere.
+  const cookieBannerVisible = useCookieConsentVisible();
   const items: { href: string | null; label: string; icon: typeof Home; onClick?: () => void }[] = [
     { href: "/home", label: "Home", icon: Home },
     { href: "/map", label: "Map", icon: MapPinned },
@@ -28,12 +35,14 @@ export function HomeTabBar({ onCompose }: { onCompose: () => void }) {
   return (
     <div
       style={{
-        position: "sticky",
-        bottom: 0,
+        position: "fixed",
+        left: 0,
+        right: 0,
+        bottom: cookieBannerVisible ? "var(--cookie-banner-h, 88px)" : 0,
         display: "flex",
         justifyContent: "space-around",
         padding: "14px 0 16px",
-        paddingBottom: "max(16px, env(safe-area-inset-bottom))",
+        paddingBottom: cookieBannerVisible ? 0 : "max(16px, env(safe-area-inset-bottom))",
         borderTop: `1px solid ${ARENA_V3.hairline}`,
         background: ARENA_V3.ivory,
       }}
