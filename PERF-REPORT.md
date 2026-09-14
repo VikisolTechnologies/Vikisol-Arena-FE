@@ -422,4 +422,44 @@ real per-route fetch cost every time.
   suggestion, still not attempted).
 - **Serving `arena-web` from a global edge** (`ARENA-FIX-EVERYTHING.md`'s own Phase 4 text,
   noting ~2.8s of cold-load cost was connection latency, not code) — not measured or attempted
-  this pass.
+  this pass. Written recommendation below instead of a fix, per standing instruction to park
+  this item without touching infra.
+
+### Recommendation: global edge for `arena-web` — not acted on, for Syam to decide
+
+**The ~2.8s figure was never independently verified this pass.** It comes from
+`ARENA-FIX-EVERYTHING.md`'s own text, not from a measurement taken during Phase 4. Every TTFB
+number actually measured in Passes 1–4 (all from this one machine, via Playwright/CDP) has been
+161–452ms — comfortably under the mission doc's own <600ms target, and nowhere near 2.8s. That
+doesn't mean the 2.8s claim is wrong; it means a from-one-location, simulated-throttle
+measurement is structurally the wrong tool to confirm or deny it; connection latency from a real
+distant user (say, someone outside India, or on a poor mobile network) doesn't show up in a test
+run from this laptop no matter how the network conditions are throttled — CDP throttling adds
+latency, it doesn't relocate the test.
+
+**What's actually in place today:** `vercel.json` sets no `regions` — Vercel's default handling
+of a mostly-`"use client"` Next.js app is to serve the static/prerendered routes (nearly the
+whole route manifest — `○ Static` on all eight screens' equivalents today, `home`, `discover`,
+`map`, etc.) from its global CDN automatically, no config needed. The handful of dynamic (`ƒ`)
+routes — `/version`, `/api/health`, `/api/vitals`, the `[id]` pages — run as serverless functions
+in a single region (whichever Vercel's project defaults to; not checked this pass). `arena-api`
+runs on Railway, which does not do automatic multi-region/edge distribution — it's one region,
+wherever that Railway project is provisioned.
+
+**The real candidate for a 2–3s number, if it's real:** not the frontend's static hosting (that's
+already edge-served) but the **combination of** (a) whichever single Railway region `arena-api`
+runs in, and (b) every authenticated page's client-side fetch to it after the static shell loads
+— for a user physically far from that region, each of those round trips pays real, uncompressible
+speed-of-light latency no CDN fixes, and there are several per navigation (see this pass's own
+findings on redundant profile fetches — now reduced, but the per-route data fetches to
+`arena-api` remain). Moving `arena-web`'s few dynamic functions to the edge would not touch this;
+the API's region is the thing that would need to move, or get a regional read-replica/CDN cache
+in front of it, which is a real infra decision with cost and complexity attached.
+
+**Recommendation, not a fix:** before spending effort relocating anything, get real geographic
+data rather than simulating it — either turn on Vercel Speed Insights/Analytics (real-user TTFB
+by region, not synthetic) for a couple of weeks, or run WebPageTest from 2–3 real distant
+locations against both `arena.vikisol.in` and `api-arena.vikisol.in` directly. If that confirms a
+real regional latency problem, the fix is choosing an `arena-api` region closer to where real
+users actually are (or fronting it with a CDN/cache layer), not a frontend-only edge migration —
+and that's an infra/cost decision for Syam, not something to act on unilaterally.
