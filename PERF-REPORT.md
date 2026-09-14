@@ -329,3 +329,97 @@ dropped by 86%. Byte count was never the bottleneck here — Pass 2's own baseli
 Click-to-render on in-app navigation (2–2.6s, `PageTransitionAnimator`'s deliberate 500ms
 transition plus per-route data fetch under throttle) — not touched this pass, still a real,
 scoped follow-up.
+
+---
+
+## Pass 4 — `ARENA-FIX-EVERYTHING.md` Phase 4, measured 2026-09-14
+
+Picks up Pass 2's still-open item directly: click-to-render on in-app navigation. Its own
+candidate fixes were "prefetching the target route's critical data" and "confirming the 500ms
+transition is the right trade-off." Neither of those turned out to be the real lever.
+
+### What changed
+
+Read `PageTransitionAnimator`/`PageTransition` first, expecting to find the 500ms entrance
+tween as a real contributor. It's already correctly code-split (`next/dynamic(..., {ssr:
+false})`, same pattern as every other GSAP animator in this codebase) and 500ms is a fixed,
+data-independent cost — not the thing worth chasing.
+
+The real finding was one layer down, in `getMyProfile()` (`src/lib/api/profile.ts`): zero
+caching, called fresh on every mount from **23 separate route components** via `AppShell`'s
+`profile` prop. Every single in-app navigation — Home → Discover → Map → Work → anywhere —
+re-fetched byte-identical profile data from the network, serially blocking that route's own
+loading gate before its own content could render. `getMyEnterpriseProfile()`
+(`src/lib/api/enterprise.ts`) had the identical gap across the 11 enterprise-shell routes.
+
+Added a 15s TTL in-memory cache to both (real mode only — mock mode's "fetch" is already a
+local read, not a network call). Mutation functions that already return the server's updated
+profile (`updateMyProfileDetails`, `updateMySkills`, `updateMyConsent`, `updateMyLocation`,
+`updateMyAutonomy`, `updateMyResume`, `saveMyEnterpriseProfile`) now write that response
+straight into the cache instead of waiting on the TTL, so a user's own edit is never stale on
+the very next read. `signOut()` clears both caches so a second account signing in on the same
+tab can never read a previous session's cached profile; `deleteMyAccount()` clears the
+candidate one on erasure.
+
+**Explicitly not attempted this pass**: caching each route's own primary data (`getJobs` on
+Discover, `getFeedItems` on Home, `getNearby` on Map) — that's a materially bigger change (each
+has real staleness/mutation-invalidation concerns this profile fetch doesn't, since profile
+changes rarely and only through this file's own setters, while jobs/feed/nearby-posts change
+from other users' actions too). Named as real follow-up scope below, not folded in here.
+
+### Methodology note: two measurement dead ends hit and ruled out
+
+Worth recording so a future pass doesn't repeat them. Three approaches were tried for "has the
+target route actually finished rendering" before landing on one that produces real numbers:
+
+1. `waitForSelector(".animate-pulse", {state: "hidden"})` alone — resolves instantly whenever
+   called while the *old* route's DOM (already loaded, no loader) is still on screen, which is
+   true at the moment right after the click fires. It never actually observes the new route's
+   loading cycle. Produced bogus ~50ms readings across every route, including ones known to
+   still be slow.
+2. `waitForURL(...)` + `waitForLoadState("networkidle")` — both resolved within ~70ms of the
+   click, confirmed via request/response logging to be *before* the route's own data fetch had
+   even started. Playwright's `networkidle` is scoped to page-navigation lifecycle events; it
+   doesn't re-arm for `fetch()` calls issued by a client-side SPA route transition, only by a
+   real page load.
+
+What actually works: wait for the URL to change first (a real cost — confirmed separately that
+under this throttle profile the click-to-route-swap alone can take over a second), then check
+the new route's DOM directly — if a loader happens to be visible, wait for it to clear; if not,
+the page already settled and the elapsed time so far is the real number.
+
+### Before → After (same throttle profile as Pass 2/3: 1.5Mbps/0.75Mbps/300ms RTT + 4× CPU,
+iPhone-width mobile viewport, real `Link` clicks against `demo.talent@vikisol.dev`)
+
+**Methodology note, stated plainly**: like Pass 3, this compares against Pass 2's documented
+baseline, not an isolated same-session A/B — other changes (including this codebase's own Pass
+3 landing-page fix) have landed between the two measurements. Run twice to check for stability;
+both runs agreed on order of magnitude.
+
+| Transition | Pass 2 baseline (2026-08-10) | Pass 4, first visit (2026-09-14) | Pass 4, repeat visit (cache warm) |
+|---|---|---|---|
+| Home → Discover | 2096ms | ~1339–1579ms | ~147–172ms |
+| Discover → Map | 2619ms | ~144–217ms | ~144–188ms |
+
+Discover → Map improved by more than Home → Discover because, for this account (location
+consent off), Map's content depends on *nothing but* the profile fetch — no further request
+fires once `center` stays unset — so removing the redundant profile re-fetch removes nearly the
+whole cost of that transition. Home → Discover still pays a real, uncached `getJobs()` call on
+first visit (matches the ~1160ms directly measured for that endpoint via request logging), which
+is exactly the "per-route data fetch" Pass 2 originally named and this pass didn't touch.
+
+Also measured, not in Pass 2's original table but worth recording since it shows the boundary of
+what this fix covers: **Map → Home** stayed slow both times (~955–1695ms) — Home's own
+`getFeedItems()` call isn't cached by this pass, so that transition still pays its full,
+real per-route fetch cost every time.
+
+### Still open
+
+- **Each route's own primary data fetch** (`getJobs`, `getFeedItems`, `getNearby`) — still
+  uncached, still a real per-navigation cost where it applies. Real candidates: a short TTL
+  cache matching this pass's pattern where staleness tolerance allows it, or prefetching on
+  link hover/viewport-entry alongside Next's own route-chunk prefetch (Pass 2's original
+  suggestion, still not attempted).
+- **Serving `arena-web` from a global edge** (`ARENA-FIX-EVERYTHING.md`'s own Phase 4 text,
+  noting ~2.8s of cold-load cost was connection latency, not code) — not measured or attempted
+  this pass.
