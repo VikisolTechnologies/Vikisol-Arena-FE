@@ -4,8 +4,8 @@ import { getSession, setSession, clearSession, setOnboarded, setEnterpriseOnboar
 import { delay } from "./shared";
 import { isRealMode } from "./mode";
 import { apiFetch, setToken, clearToken } from "./httpClient";
-import { getMyProfile } from "./profile";
-import { getMyEnterpriseProfile } from "./enterprise";
+import { getMyProfile, clearMyProfileCache } from "./profile";
+import { getMyEnterpriseProfile, clearMyEnterpriseProfileCache } from "./enterprise";
 
 interface SessionResponse {
   role: string | null;
@@ -222,6 +222,9 @@ export async function resetPassword(email: string, token: string, newPassword: s
 }
 
 export async function signOut(): Promise<void> {
+  // PERF-REPORT.md Pass 4 - getMyProfile() now caches in-memory across navigations (see
+  // profile.ts); must be cleared here so a second account signing in on the same tab can never
+  // read the previous account's cached profile.
   if (isRealMode()) {
     // Was client-discard-only - the access token stayed valid server-side until its natural
     // 15min expiry even after "signing out." POST /auth/signout denylists it immediately and
@@ -230,6 +233,8 @@ export async function signOut(): Promise<void> {
     await apiFetch<void>("/auth/signout", { method: "POST" }).catch(() => {});
     clearToken();
     clearSession();
+    clearMyProfileCache();
+    clearMyEnterpriseProfileCache();
     return;
   }
   clearSession();

@@ -11,13 +11,48 @@ import type { PagedResponse } from "./paged";
 
 // ---- Enterprise profile ----
 
+// PERF-REPORT.md Pass 4 - same fix, same reasoning as profile.ts's getMyProfile() cache: every
+// enterprise shell route (11 call sites) fetches this fresh on mount, re-requesting identical
+// data on each in-app navigation. Real mode only; mock mode's "fetch" is already a local read.
+const ENTERPRISE_PROFILE_CACHE_TTL_MS = 15_000;
+let cachedEnterpriseProfile: { value: EnterpriseProfile | null; expiresAt: number } | null = null;
+let enterpriseProfileRequest: Promise<EnterpriseProfile | null> | null = null;
+
+function setEnterpriseProfileCache(value: EnterpriseProfile | null) {
+  cachedEnterpriseProfile = { value, expiresAt: Date.now() + ENTERPRISE_PROFILE_CACHE_TTL_MS };
+}
+
+/** Sign-out needs this so the next session on the same tab never reads a stale, previous
+ * tenant's cached profile - same reasoning as profile.ts's clearMyProfileCache(). */
+export function clearMyEnterpriseProfileCache() {
+  cachedEnterpriseProfile = null;
+  enterpriseProfileRequest = null;
+}
+
 export async function getMyEnterpriseProfile(): Promise<EnterpriseProfile | null> {
-  if (isRealMode()) return apiFetch<EnterpriseProfile>("/enterprise/profile/me");
+  if (isRealMode()) {
+    if (cachedEnterpriseProfile && cachedEnterpriseProfile.expiresAt > Date.now()) return cachedEnterpriseProfile.value;
+    if (enterpriseProfileRequest) return enterpriseProfileRequest;
+    enterpriseProfileRequest = apiFetch<EnterpriseProfile>("/enterprise/profile/me")
+      .then((profile) => {
+        setEnterpriseProfileCache(profile);
+        return profile;
+      })
+      .finally(() => {
+        enterpriseProfileRequest = null;
+      });
+    return enterpriseProfileRequest;
+  }
   return delay(getEnterpriseProfile(), 200);
 }
 
 export async function saveMyEnterpriseProfile(profile: EnterpriseProfile): Promise<EnterpriseProfile> {
-  if (isRealMode()) return apiFetch<EnterpriseProfile>("/enterprise/profile/me", { method: "PUT", body: profile });
+  if (isRealMode()) {
+    return apiFetch<EnterpriseProfile>("/enterprise/profile/me", { method: "PUT", body: profile }).then((p) => {
+      setEnterpriseProfileCache(p);
+      return p;
+    });
+  }
   saveEnterpriseProfile(profile);
   return delay(profile, 300);
 }

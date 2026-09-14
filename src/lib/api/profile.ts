@@ -80,10 +80,45 @@ function writeMockLocation(state: MockLocationState) {
   localStorage.setItem(LOCATION_KEY, JSON.stringify(state));
 }
 
+// PERF-REPORT.md Pass 3's own follow-up: "per-route data fetch" was diagnosed as part of the
+// 2-2.6s click-to-render cost on in-app navigation, but the profile fetch specifically is worse
+// than a generic per-route fetch — AppShell's `profile` prop means every one of the 23 routes
+// that render it calls getMyProfile() fresh on mount, so navigating Home -> Discover -> Map
+// re-fetches the exact same, unchanged-in-that-session data three times under 300ms RTT
+// throttle. A short TTL cache (real mode only; mock mode's "fetch" is already a local read, not
+// a network call) collapses that to one real fetch per window, while self-healing within 15s if
+// some other flow ever mutates the profile without going through this file's own setters below
+// (which update the cache immediately, not waiting on the TTL).
+const PROFILE_CACHE_TTL_MS = 15_000;
+let cachedProfile: { value: CandidateProfile; expiresAt: number } | null = null;
+let profileRequest: Promise<CandidateProfile> | null = null;
+
+function setProfileCache(value: CandidateProfile) {
+  cachedProfile = { value, expiresAt: Date.now() + PROFILE_CACHE_TTL_MS };
+}
+
+/** Sign-out and account-erasure both need this so the next session (possibly a different
+ * account, same browser tab) never reads a stale, previous user's cached profile. */
+export function clearMyProfileCache() {
+  cachedProfile = null;
+  profileRequest = null;
+}
+
 /** Merges the static seed candidate with whatever the user entered during onboarding. */
 export async function getMyProfile(): Promise<CandidateProfile> {
   if (isRealMode()) {
-    return apiFetch<CandidateProfileResponse>("/profile/me").then(toCandidateProfile);
+    if (cachedProfile && cachedProfile.expiresAt > Date.now()) return cachedProfile.value;
+    if (profileRequest) return profileRequest;
+    profileRequest = apiFetch<CandidateProfileResponse>("/profile/me")
+      .then(toCandidateProfile)
+      .then((profile) => {
+        setProfileCache(profile);
+        return profile;
+      })
+      .finally(() => {
+        profileRequest = null;
+      });
+    return profileRequest;
   }
   const base = getCandidateById(CURRENT_CANDIDATE_ID)!;
   const onboarding = getOnboardingProfile();
@@ -151,21 +186,27 @@ export async function updateMyProfileDetails(details: {
   openTo: OpenTo[];
 }): Promise<CandidateProfile> {
   if (isRealMode()) {
-    return apiFetch<CandidateProfileResponse>("/profile/me/details", { method: "PUT", body: details }).then(toCandidateProfile);
+    return apiFetch<CandidateProfileResponse>("/profile/me/details", { method: "PUT", body: details })
+      .then(toCandidateProfile)
+      .then((p) => { setProfileCache(p); return p; });
   }
   return getMyProfile();
 }
 
 export async function updateMySkills(skills: string[]): Promise<CandidateProfile> {
   if (isRealMode()) {
-    return apiFetch<CandidateProfileResponse>("/profile/me/skills", { method: "PUT", body: { skills } }).then(toCandidateProfile);
+    return apiFetch<CandidateProfileResponse>("/profile/me/skills", { method: "PUT", body: { skills } })
+      .then(toCandidateProfile)
+      .then((p) => { setProfileCache(p); return p; });
   }
   return patchOnboardingProfile({ skills });
 }
 
 export async function updateMyConsent(consent: ConsentSettings): Promise<CandidateProfile> {
   if (isRealMode()) {
-    return apiFetch<CandidateProfileResponse>("/profile/me/consent", { method: "PUT", body: consent }).then(toCandidateProfile);
+    return apiFetch<CandidateProfileResponse>("/profile/me/consent", { method: "PUT", body: consent })
+      .then(toCandidateProfile)
+      .then((p) => { setProfileCache(p); return p; });
   }
   return patchOnboardingProfile({ consent });
 }
@@ -177,7 +218,9 @@ export async function updateMyConsent(consent: ConsentSettings): Promise<Candida
 // consent="precise".
 export async function updateMyLocation(input: { consent: LocationConsent; lat?: number; lng?: number; city?: string }): Promise<CandidateProfile> {
   if (isRealMode()) {
-    return apiFetch<CandidateProfileResponse>("/profile/me/location", { method: "PUT", body: input }).then(toCandidateProfile);
+    return apiFetch<CandidateProfileResponse>("/profile/me/location", { method: "PUT", body: input })
+      .then(toCandidateProfile)
+      .then((p) => { setProfileCache(p); return p; });
   }
   if (input.consent === "off") {
     writeMockLocation({ locationConsent: "off" });
@@ -192,7 +235,9 @@ export async function updateMyLocation(input: { consent: LocationConsent; lat?: 
 
 export async function updateMyAutonomy(autonomy: AutonomyLevel): Promise<CandidateProfile> {
   if (isRealMode()) {
-    return apiFetch<CandidateProfileResponse>("/profile/me/autonomy", { method: "PUT", body: { autonomy } }).then(toCandidateProfile);
+    return apiFetch<CandidateProfileResponse>("/profile/me/autonomy", { method: "PUT", body: { autonomy } })
+      .then(toCandidateProfile)
+      .then((p) => { setProfileCache(p); return p; });
   }
   return patchOnboardingProfile({ autonomy });
 }
@@ -203,7 +248,9 @@ export async function updateMyResume(input: { file: File; skills?: string[] }): 
   if (isRealMode()) {
     const formData = new FormData();
     formData.append("file", input.file);
-    return apiFetch<CandidateProfileResponse>("/profile/me/cv", { method: "POST", formData }).then(toCandidateProfile);
+    return apiFetch<CandidateProfileResponse>("/profile/me/cv", { method: "POST", formData })
+      .then(toCandidateProfile)
+      .then((p) => { setProfileCache(p); return p; });
   }
   return patchOnboardingProfile({
     resumeFileName: input.file.name,
@@ -266,6 +313,7 @@ export async function exportMyData(): Promise<DataExport> {
 export async function deleteMyAccount(): Promise<void> {
   if (isRealMode()) {
     await apiFetch<void>("/profile/me", { method: "DELETE" });
+    clearMyProfileCache();
     return;
   }
   return delay(undefined, 300);
