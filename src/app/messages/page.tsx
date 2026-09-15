@@ -1,36 +1,29 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { AppShell } from "@/components/app/AppShell";
+import { Suspense, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { OrbLoader } from "@/components/ui/orb-loader";
-import { MessagesInbox } from "@/components/messages/MessagesInbox";
-import { getMyProfile } from "@/lib/api/profile";
-import { requireOnboarded } from "@/lib/auth-guard";
-import type { CandidateProfile } from "@/lib/types";
 
-export default function MessagesPage() {
+// SCREEN 5 "INBOX" - "There is exactly one messaging surface in the app." The merged list now
+// lives at /rooms; this route stays only so the one external "message this person" link
+// (enterprise/talent/[id]) and any bookmarked /messages URL keep working, forwarding straight
+// into the real merged Inbox instead of the old, now-removed standalone Messages screen.
+function MessagesRedirect() {
   const router = useRouter();
-  const [profile, setProfile] = useState<CandidateProfile | null>(null);
+  const searchParams = useSearchParams();
+  const withParam = searchParams.get("with");
 
   useEffect(() => {
-    if (!requireOnboarded(router)) return;
-    getMyProfile().then(setProfile);
-  }, [router]);
+    router.replace(withParam ? `/rooms?with=${withParam}` : "/rooms");
+  }, [router, withParam]);
 
-  if (!profile) {
-    return (
-      <AppShell title="Messages">
-        <OrbLoader className="h-96" />
-      </AppShell>
-    );
-  }
+  return null;
+}
 
+export default function MessagesPage() {
   return (
-    <AppShell title="Messages" profile={profile}>
-      <Suspense fallback={<OrbLoader className="h-96" />}>
-        <MessagesInbox />
-      </Suspense>
-    </AppShell>
+    <Suspense fallback={<OrbLoader className="h-96" />}>
+      <MessagesRedirect />
+    </Suspense>
   );
 }

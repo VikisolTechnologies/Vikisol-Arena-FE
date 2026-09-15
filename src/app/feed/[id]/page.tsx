@@ -321,7 +321,7 @@ export default function PostDetailPage() {
                   <div style={{ display: "flex", gap: 10 }}>
                     <button
                       type="button"
-                      onClick={() => router.push(`/rooms?open=${post.roomId}`)}
+                      onClick={() => router.push(`/rooms/${post.roomId}`)}
                       style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: ARENA_V3.ink, color: ARENA_V3.ivory, fontSize: 14, padding: "14px 0", borderRadius: 26, border: "none", cursor: "pointer" }}
                     >
                       <MessageCircle size={16} /> Open room
