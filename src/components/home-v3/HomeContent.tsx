@@ -231,7 +231,10 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 130, background: ARENA_V3.espressoLight }} />
         <Image src={HERO_IMAGE} alt="" fill priority sizes="1200px" style={{ objectFit: "cover", opacity: 0.6 }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(34,28,23,0.15) 0%, rgba(34,28,23,0.75) 100%)" }} />
-        <div style={{ ...centeredAbsolute, top: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        {/* HomeHeader already carries the wordmark + notifications from md up - this hero-
+            internal row is mobile-only branding on the photo itself (the mockup's own masthead
+            treatment), not a second nav; showing both above 768px just duplicated it. */}
+        <div className="flex md:hidden" style={{ ...centeredAbsolute, top: 16, justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontSize: 11, color: "#C9BFB1", letterSpacing: 4 }}>ARENA</span>
           <Bell size={17} color="#E8DFD2" strokeWidth={1.75} />
         </div>
