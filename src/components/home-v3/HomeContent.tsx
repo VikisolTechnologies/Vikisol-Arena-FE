@@ -197,8 +197,8 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
       setFeedPosts((prev) =>
         prev.map((p) => (p.id === post.id ? { ...p, myJoinStatus: p.visibility === "public" ? "approved" : "pending" } : p)),
       );
-    } catch {
-      setJoinError("Couldn't send that request — try again.");
+    } catch (err) {
+      setJoinError(err instanceof Error ? err.message : "Couldn't send that request — try again.");
     } finally {
       setJoiningId(null);
     }
@@ -379,7 +379,24 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
             )}
 
           {joinError && (
-            <p style={{ margin: "0 12px 12px", fontSize: 12, color: "#B23B3B" }}>{joinError}</p>
+            <p style={{ margin: "0 12px 12px", fontSize: 12, color: "#B23B3B" }}>
+              {joinError}
+              {/* ARENA-STABILIZE.md Phase 2, G5's fix, same gap as Post Detail/CreateComposer had
+                  before their own fix - a fresh signup has no date of birth on file, so joining
+                  an Activity 400s with a message pointing at Settings; give a real way there. */}
+              {joinError.toLowerCase().includes("settings") && (
+                <>
+                  {" "}
+                  <button
+                    type="button"
+                    onClick={() => router.push("/settings")}
+                    style={{ background: "none", border: "none", padding: 0, color: ARENA_V3.ink, textDecoration: "underline", cursor: "pointer", fontSize: 12 }}
+                  >
+                    Go to Settings
+                  </button>
+                </>
+              )}
+            </p>
           )}
         </div>
       </div>
