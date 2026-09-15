@@ -90,9 +90,21 @@ function InboxContent() {
                 <p style={{ margin: "0 0 8px", fontSize: 15, color: ARENA_V3.ink }}>
                   {search.trim() ? "No conversations match that search" : "Nothing here yet"}
                 </p>
-                <p style={{ margin: 0, fontSize: 13, color: ARENA_V3.muted, lineHeight: 1.6 }}>
+                <p style={{ margin: search.trim() ? 0 : "0 0 18px", fontSize: 13, color: ARENA_V3.muted, lineHeight: 1.6 }}>
                   Join an activity or need to start a room, or message someone from their profile.
                 </p>
+                {/* ARENA-FINISH-IT.md §2 - "a real button." Not shown for the filtered-search-
+                    no-match case (there IS content, the search just didn't match it - clearing
+                    the search is the fix, not a fresh CTA). */}
+                {!search.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => router.push("/home")}
+                    style={{ fontSize: 13, background: ARENA_V3.ink, color: ARENA_V3.ivory, padding: "11px 26px", borderRadius: 24, border: "none", cursor: "pointer" }}
+                  >
+                    Go to Home
+                  </button>
+                )}
               </div>
             ) : (
               <div style={{ background: ARENA_V3.white, borderRadius: 14, overflow: "hidden" }}>
