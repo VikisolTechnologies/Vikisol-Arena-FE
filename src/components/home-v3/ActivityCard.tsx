@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ChampagneAvatar } from "./ChampagneAvatar";
+import { DemoContentBadge } from "./DemoContentBadge";
 import { ARENA_V3 } from "./tokens";
 import { formatEyebrowWhen } from "./format";
 import type { Post } from "@/lib/types";
@@ -47,9 +48,12 @@ export function ActivityCard({
           <Image src={imageUrl} alt="" fill sizes="400px" style={{ objectFit: "cover" }} />
         </div>
         <div style={{ padding: 14, paddingBottom: 0 }}>
-          <p style={{ margin: "0 0 9px", fontSize: 10, color: ARENA_V3.muted, letterSpacing: 3 }}>
-            ACTIVITY{post.startsAt ? ` · ${formatEyebrowWhen(post.startsAt)}` : ""}
-          </p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 9 }}>
+            <p style={{ margin: 0, fontSize: 10, color: ARENA_V3.muted, letterSpacing: 3 }}>
+              ACTIVITY{post.startsAt ? ` · ${formatEyebrowWhen(post.startsAt)}` : ""}
+            </p>
+            {post.demoContent && <DemoContentBadge />}
+          </div>
           <p
             style={{
               margin: "0 0 12px",

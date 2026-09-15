@@ -34,6 +34,9 @@ export function HomeTabBar({ onCompose }: { onCompose: () => void }) {
   ];
   return (
     <div
+      // ARENA-WEB-AND-SEED.md §2.2 - "the bottom tab bar is hidden entirely" from 768px up
+      // (Tailwind's `md`), replaced by HomeHeader's persistent top nav - see its own comment.
+      className="md:hidden"
       style={{
         position: "fixed",
         left: 0,

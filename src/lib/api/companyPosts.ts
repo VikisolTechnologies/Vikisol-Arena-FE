@@ -58,6 +58,7 @@ export async function createCompanyPost(input: CreateCompanyPostInput): Promise<
     myReacted: false,
     authorJoinCount: 0,
     authorAccountAgeDays: 400,
+    demoContent: false,
   };
   writePosts([post, ...readPosts()]);
   return delay(post, 300);

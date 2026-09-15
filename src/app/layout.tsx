@@ -44,9 +44,15 @@ export const metadata: Metadata = {
   // profile/company routes resolve to absolute https://arena.vikisol.in URLs instead of
   // silently falling back to Next's http://localhost:3000 default when shared links preview.
   metadataBase: new URL("https://arena.vikisol.in"),
-  title: "Arena — It works while you sleep",
+  // ARENA-WEB-AND-SEED.md Part 1.1 - "It works while you sleep" / the 24/7-autonomous-job-agent
+  // pitch is the retired product this rebuild replaces. This is the fallback every route without
+  // its own metadata export inherits (confirmed via grep: /home, /map, /work, /identity, /rooms
+  // and every other product screen have none of their own) - fixing it here is what actually
+  // reaches the browser tab on the screens the founder was looking at, not just the marketing
+  // root path itself.
+  title: "Arena — Real things happening near you",
   description:
-    "Arena is a Talent Operating System. A 24/7 AI agent hunts openings across every industry, applies with a tailored resume, and books your interviews — day and night.",
+    "Arena is where your city shows up: join activities, ask for help, find work, and build a real track record of following through.",
 };
 
 export default function RootLayout({

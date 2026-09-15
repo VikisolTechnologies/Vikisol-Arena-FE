@@ -211,6 +211,7 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
     myReacted: false,
     authorJoinCount: 0,
     authorAccountAgeDays: 30,
+    demoContent: false,
   };
   writePosts([post, ...readPosts()]);
   return delay(post, 300);

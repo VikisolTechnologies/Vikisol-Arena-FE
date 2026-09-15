@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DemoContentBadge } from "./DemoContentBadge";
 import { ARENA_V3 } from "./tokens";
 import type { Post } from "@/lib/types";
 
@@ -16,9 +17,12 @@ export function NeedCard({ post, displayFont }: { post: Post; displayFont: strin
         padding: 14,
       }}
     >
-      <p style={{ margin: "0 0 9px", fontSize: 10, color: ARENA_V3.muted, letterSpacing: 3 }}>
-        NEED{post.locationText ? ` · ${post.locationText}` : ""}
-      </p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 9 }}>
+        <p style={{ margin: 0, fontSize: 10, color: ARENA_V3.muted, letterSpacing: 3 }}>
+          NEED{post.locationText ? ` · ${post.locationText}` : ""}
+        </p>
+        {post.demoContent && <DemoContentBadge />}
+      </div>
       <p
         style={{
           margin: 0,
