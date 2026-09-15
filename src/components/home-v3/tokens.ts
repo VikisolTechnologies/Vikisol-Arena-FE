@@ -15,7 +15,12 @@ export const ARENA_V3 = {
   espressoLight: "#2B231C",
   mapDark: "#1B1713",
   body: "#6B655C",
-  muted: "#8A7F6E",
+  // ARENA-FINISH-IT.md §5 "axe-core accessibility clean, no AA contrast failures" - the
+  // mockups' own #8A7F6E only reaches ~3.5:1 on white/ivory (WCAG AA needs 4.5:1 for the small
+  // text this token is used for everywhere - eyebrows, timestamps, captions). Darkened to the
+  // nearest value that clears 4.5:1 on both surfaces with margin (~5:1), same warm grey-brown
+  // hue, not a different color.
+  muted: "#6E655A",
   hairline: "#DDD3C4",
   hairlineCard: "#F0EAE1",
   gold: "#D6A84F",

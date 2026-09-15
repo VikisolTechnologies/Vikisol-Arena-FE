@@ -202,7 +202,7 @@ export function CreateComposer({
                   <row.icon size={21} strokeWidth={1.5} color={ARENA_V3.ink} style={{ flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ margin: 0, fontSize: 15, color: ARENA_V3.ink }}>{row.label}</p>
-                    <p style={{ margin: "2px 0 0", fontSize: 12, color: "#8A7F6E" }}>{row.description}</p>
+                    <p style={{ margin: "2px 0 0", fontSize: 12, color: ARENA_V3.muted }}>{row.description}</p>
                   </div>
                   <ChevronRight size={16} color="#C9BFB1" style={{ flexShrink: 0 }} />
                 </button>
@@ -270,7 +270,7 @@ export function CreateComposer({
                   </div>
                   {locateError && <p style={{ margin: 0, fontSize: 11, color: "#B3432B" }}>{locateError}</p>}
                   {coords && (
-                    <p style={{ margin: 0, fontSize: 11, color: "#8A7F6E" }}>
+                    <p style={{ margin: 0, fontSize: 11, color: ARENA_V3.muted }}>
                       Only an approximate, jittered pin will ever be shown to others.
                     </p>
                   )}
@@ -282,7 +282,7 @@ export function CreateComposer({
                     style={fieldStyle}
                   />
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#8A7F6E" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: ARENA_V3.muted }}>
                       <ShieldCheck size={12} /> Who can join needs:
                     </span>
                     {(["basic", "phone"] as const).map((v) => (
@@ -296,7 +296,7 @@ export function CreateComposer({
 
               {joinable && (
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: 11, color: "#8A7F6E" }}>Who can join:</span>
+                  <span style={{ fontSize: 11, color: ARENA_V3.muted }}>Who can join:</span>
                   {(["public", "approval"] as const).map((v) => (
                     <Chip key={v} active={visibility === v} onClick={() => setVisibility(v)}>
                       {v === "public" ? "Anyone" : "I approve"}
@@ -316,7 +316,7 @@ export function CreateComposer({
               )}
 
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 11, color: "#8A7F6E" }}>Visible to:</span>
+                <span style={{ fontSize: 11, color: ARENA_V3.muted }}>Visible to:</span>
                 {(["global", "followers"] as const).map((a) => (
                   <Chip key={a} active={audience === a} onClick={() => setAudience(a)}>
                     {a === "global" ? "Everyone" : "Followers only"}
