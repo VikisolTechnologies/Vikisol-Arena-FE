@@ -2,18 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Compass, ClipboardList, Store, MessageSquare, Building2, MapPin, Sparkles, type LucideIcon } from "lucide-react";
-import { AppShell } from "@/components/app/AppShell";
+import { ChevronRight, Compass, ClipboardList, Store, MessageSquare, Building2, type LucideIcon } from "lucide-react";
 import { OrbLoader } from "@/components/ui/orb-loader";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { HomeHeader } from "@/components/home-v3/HomeHeader";
+import { HomeTabBar } from "@/components/home-v3/HomeTabBar";
+import { ARENA_V3 } from "@/components/home-v3/tokens";
+import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { getMyProfile } from "@/lib/api/profile";
-import { getJobs } from "@/lib/api/jobs";
+import { getMyBids } from "@/lib/api/myBids";
+import { getProject } from "@/lib/api/market";
+import { getMyApplications } from "@/lib/api/applications";
+import { getInterviewForApplication } from "@/lib/api/interviews";
+import { getJob } from "@/lib/api/jobs";
+import { getPosting } from "@/lib/api/enterprise";
+import { getMyRooms } from "@/lib/api/rooms";
 import { requireOnboarded } from "@/lib/auth-guard";
-import { formatINRRange } from "@/lib/format";
-import type { CandidateProfile, Job } from "@/lib/types";
+import { formatFriendlyDateTime } from "@/lib/format";
+import type { CandidateProfile } from "@/lib/types";
 
-const WORK_SURFACES: { href: string; label: string; description: string; icon: LucideIcon }[] = [
+const EXPLORE_SURFACES: { href: string; label: string; description: string; icon: LucideIcon }[] = [
   { href: "/discover", label: "Discover", description: "Swipe through jobs matched to your profile", icon: Compass },
   { href: "/applications", label: "Applications", description: "Track every application through the pipeline", icon: ClipboardList },
   { href: "/marketplace", label: "Marketplace", description: "Bid on projects, or post one of your own", icon: Store },
@@ -21,87 +28,166 @@ const WORK_SURFACES: { href: string; label: string; description: string; icon: L
   { href: "/agent", label: "Agent", description: "Chat with your agent, approve actions it drafts", icon: MessageSquare },
 ];
 
+interface ActiveItem {
+  id: string;
+  title: string;
+  state: string;
+  pillLabel?: string;
+  href: string;
+}
+
 export default function WorkHubPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
-  const [topMatch, setTopMatch] = useState<Job | null>(null);
+  const [bidItems, setBidItems] = useState<ActiveItem[] | null>(null);
+  const [interviewItems, setInterviewItems] = useState<ActiveItem[] | null>(null);
+  const [sessionItems, setSessionItems] = useState<ActiveItem[] | null>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
 
   useEffect(() => {
     if (!requireOnboarded(router)) return;
     getMyProfile().then(setProfile);
-    getJobs().then((jobs) => {
-      const best = [...jobs].sort((a, b) => b.matchPercentage - a.matchPercentage)[0];
-      setTopMatch(best ?? null);
+
+    // Live bids - status still pending/shortlisted; won/lost bids aren't something you're
+    // currently "in" any more, that's history (Marketplace > My bids covers it).
+    getMyBids().then(async (bids) => {
+      const live = bids.filter((b) => b.status === "pending" || b.status === "shortlisted");
+      const items = await Promise.all(
+        live.map(async (b): Promise<ActiveItem> => {
+          const project = await getProject(b.projectId);
+          return {
+            id: b.bidId,
+            title: project?.title ?? "Project",
+            state: `₹${b.amount.toLocaleString("en-IN")} bid`,
+            pillLabel: b.status.toUpperCase(),
+            href: `/marketplace/${b.projectId}`,
+          };
+        }),
+      );
+      setBidItems(items);
+    });
+
+    // Scheduled interviews - only applications actually at the interview stage, and only ones
+    // where a real Interview record exists with a proposed or confirmed slot (not every
+    // "interview"-stage application has one yet).
+    getMyApplications().then(async (apps) => {
+      const candidates = apps.filter((a) => a.stage === "interview").slice(0, 10);
+      const resolved = await Promise.all(
+        candidates.map(async (a): Promise<ActiveItem | null> => {
+          const interview = await getInterviewForApplication(a.id);
+          if (!interview || (interview.status !== "proposed" && interview.status !== "confirmed")) return null;
+          const posting = a.jobId ? await getJob(a.jobId) : a.postingId ? await getPosting(a.postingId) : undefined;
+          const confirmedSlot = interview.confirmedSlotId ? interview.proposedSlots.find((s) => s.id === interview.confirmedSlotId) : undefined;
+          return {
+            id: a.id,
+            title: posting?.title ?? "Interview",
+            state: confirmedSlot ? formatFriendlyDateTime(confirmedSlot.start) : "Awaiting your confirmation",
+            pillLabel: interview.status.toUpperCase(),
+            href: `/interviews/${a.id}`,
+          };
+        }),
+      );
+      setInterviewItems(resolved.filter((x): x is ActiveItem => x !== null));
+    });
+
+    // Joined sessions - real Rooms the viewer is currently in for a still-open activity/need.
+    getMyRooms().then((rooms) => {
+      const active = rooms.filter((r) => r.postStatus === "open" || r.postStatus === "full");
+      setSessionItems(
+        active.map((r) => ({
+          id: r.id,
+          title: r.postBody,
+          state: `${r.memberCount} in room`,
+          href: `/rooms/${r.id}`,
+        })),
+      );
     });
   }, [router]);
 
   if (!profile) {
     return (
-      <AppShell title="Work">
+      <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh" }}>
         <OrbLoader className="h-96" />
-      </AppShell>
+      </div>
     );
   }
 
+  const loading = bidItems === null || interviewItems === null || sessionItems === null;
+  const allItems = [...(bidItems ?? []), ...(interviewItems ?? []), ...(sessionItems ?? [])];
+
   return (
-    <AppShell title="Work" profile={profile}>
-      <p className="mb-4 text-sm text-muted-foreground">Everything job- and project-related, one tap from your Feed.</p>
+    <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
+      <HomeHeader profile={profile} onCompose={() => setComposerOpen(true)} />
 
-      {/* ARENA-VISUAL-RICHNESS.md R1/R4 - Work's named hero: one black "top match" opportunity
-          above the ivory hub cards, same fixed-dark-on-purpose treatment as SwipeCard/Home's
-          composer bar (see SwipeCard.tsx's comment for why this opts out of the semantic cascade). */}
-      {topMatch && (
-        <button
-          type="button"
-          onClick={() => router.push("/discover")}
-          className="group relative mb-5 block w-full overflow-hidden rounded-[24px] border border-white/10 bg-ink p-5 text-left text-white shadow-[0_20px_60px_rgba(0,0,0,0.5)] transition-transform hover:-translate-y-0.5"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element -- seeded placeholder, see PersonAvatar/SwipeCard */}
-          <img
-            src={`https://picsum.photos/seed/${encodeURIComponent(topMatch.id)}/900/280`}
-            alt=""
-            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30"
-            loading="lazy"
-          />
-          <div className="relative flex items-start justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-white/50">Your top match</p>
-              <h2 className="mt-1 font-display text-xl font-bold tracking-tight">{topMatch.title}</h2>
-              <p className="text-sm text-white/60">{topMatch.company}</p>
+      <div style={{ flex: 1, paddingBottom: "calc(84px + env(safe-area-inset-bottom))" }}>
+        <div style={{ maxWidth: 640, margin: "0 auto", padding: "18px 20px 0" }}>
+          <p style={{ margin: "0 0 14px", fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>WORK</p>
+          <p style={{ margin: 0, fontFamily: "var(--font-arena-fraunces)", fontSize: 28, color: ARENA_V3.ink }}>What you&apos;re in</p>
+          <div style={{ width: 40, height: 2, background: ARENA_V3.gold, margin: "14px 0 20px" }} />
+
+          {/* Active items - live bids, then scheduled interviews, then joined sessions, per
+              SCREEN 8's stated urgency order. No "Jenny noticed" agent card here: that requires
+              a real observation-generating backend that doesn't exist yet (ARENA-FINISH-IT §7
+              names the agent/JennySol explicitly out of scope for this pass) - showing one
+              anyway would mean fabricating what it "noticed," which this whole build has
+              deliberately avoided everywhere else. */}
+          {loading ? (
+            <OrbLoader className="h-40" />
+          ) : allItems.length === 0 ? (
+            <div style={{ background: ARENA_V3.white, borderRadius: 14, padding: "24px 20px", textAlign: "center", marginBottom: 24 }}>
+              <p style={{ margin: "0 0 8px", fontSize: 15, color: ARENA_V3.ink }}>Nothing active right now</p>
+              <p style={{ margin: 0, fontSize: 13, color: ARENA_V3.muted, lineHeight: 1.6 }}>
+                Bid on a project, apply to a role, or join an activity - it&apos;ll show up here.
+              </p>
             </div>
-            <Badge variant="secondary" className="gap-1 shrink-0 bg-champagne text-ink">
-              <Sparkles className="size-3" /> {topMatch.matchPercentage}% match
-            </Badge>
-          </div>
-          <div className="relative mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/60">
-            <span className="flex items-center gap-1">
-              <MapPin className="size-3" /> {topMatch.location}
-            </span>
-            <span>{formatINRRange(topMatch.salaryMin, topMatch.salaryMax, "LPA")}</span>
-          </div>
-        </button>
-      )}
+          ) : (
+            <div style={{ background: ARENA_V3.white, borderRadius: 14, overflow: "hidden", marginBottom: 24 }}>
+              {allItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => router.push(item.href)}
+                  style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", padding: 14, border: "none", background: "none", borderBottom: `1px solid ${ARENA_V3.hairlineCard}`, cursor: "pointer" }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 14, color: ARENA_V3.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.title}</p>
+                    <p style={{ margin: "3px 0 0", fontSize: 12, color: ARENA_V3.muted }}>{item.state}</p>
+                  </div>
+                  {item.pillLabel ? (
+                    <span style={{ flexShrink: 0, fontSize: 10, letterSpacing: 2, color: "#8A6A22", border: "1px solid #E0CDA1", borderRadius: 20, padding: "5px 10px" }}>
+                      {item.pillLabel}
+                    </span>
+                  ) : (
+                    <ChevronRight size={16} color="#C9BFB1" style={{ flexShrink: 0 }} />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        {WORK_SURFACES.map(({ href, label, description, icon: Icon }) => (
-          <button
-            key={href}
-            type="button"
-            onClick={() => router.push(href)}
-            className="text-left transition-transform hover:-translate-y-0.5"
-          >
-            <Card className="flex items-start gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary-soft">
-                <Icon className="size-5" />
-              </span>
-              <span>
-                <span className="block font-display text-sm font-bold">{label}</span>
-                <span className="block text-xs text-muted-foreground">{description}</span>
-              </span>
-            </Card>
-          </button>
-        ))}
+          <p style={{ margin: "0 0 10px", fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>EXPLORE</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 24 }}>
+            {EXPLORE_SURFACES.map(({ href, label, description, icon: Icon }) => (
+              <button
+                key={href}
+                type="button"
+                onClick={() => router.push(href)}
+                style={{ display: "flex", alignItems: "center", gap: 13, width: "100%", textAlign: "left", background: ARENA_V3.white, border: "none", borderRadius: 14, padding: 15, cursor: "pointer" }}
+              >
+                <Icon size={21} strokeWidth={1.5} color={ARENA_V3.ink} style={{ flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 15, color: ARENA_V3.ink }}>{label}</p>
+                  <p style={{ margin: "2px 0 0", fontSize: 12, color: ARENA_V3.muted }}>{description}</p>
+                </div>
+                <ChevronRight size={16} color="#C9BFB1" style={{ flexShrink: 0 }} />
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
-    </AppShell>
+
+      <HomeTabBar onCompose={() => setComposerOpen(true)} />
+      <CreateComposer open={composerOpen} onOpenChange={setComposerOpen} onPublished={() => {}} />
+    </div>
   );
 }
