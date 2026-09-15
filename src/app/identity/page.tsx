@@ -90,14 +90,16 @@ export default function ProfilePage() {
             >
               <Settings size={20} strokeWidth={1.75} />
             </button>
+            {/* Anchored to the cover, not a negative margin on the content below - a negative
+                top margin there collapses through its padding-less parent and drags the whole
+                block (name, stats, everything) up under the cover instead of just the avatar. */}
+            <div style={{ position: "absolute", left: 20, bottom: -34, width: 72, height: 72, borderRadius: "50%", border: `3px solid ${ARENA_V3.ivory}`, overflow: "hidden" }}>
+              <ChampagneAvatar name={profile.name} sizePx={66} />
+            </div>
           </div>
 
           <div style={{ padding: "0 20px" }}>
-            <div style={{ marginTop: -34, marginBottom: 14 }}>
-              <div style={{ width: 72, height: 72, borderRadius: "50%", border: `3px solid ${ARENA_V3.ivory}`, overflow: "hidden" }}>
-                <ChampagneAvatar name={profile.name} sizePx={66} />
-              </div>
-            </div>
+            <div style={{ height: 34 + 14 }} />
             <p style={{ margin: 0, fontFamily: "var(--font-arena-fraunces)", fontSize: 26, color: ARENA_V3.ink }}>{profile.name}</p>
             <p style={{ margin: "4px 0 0", fontSize: 13, color: ARENA_V3.muted }}>
               {profile.title} · {profile.homeCity ?? profile.location}
