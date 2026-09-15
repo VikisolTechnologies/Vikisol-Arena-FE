@@ -12,6 +12,7 @@ import { PostComposer } from "@/components/feed/PostComposer";
 import { ARENA_V3 } from "./tokens";
 import { ActivityCard } from "./ActivityCard";
 import { NeedCard } from "./NeedCard";
+import { HomeEmptyState } from "./HomeEmptyState";
 import { HomeTabBar } from "./HomeTabBar";
 import { HomeHeader } from "./HomeHeader";
 import type { CandidateProfile, FeedItem, Post } from "@/lib/types";
@@ -86,6 +87,7 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
   const [joiningId, setJoiningId] = useState<string | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [composerIntent, setComposerIntent] = useState<Post["intentType"]>("activity");
   const [locating, setLocating] = useState(false);
   const [locationBlocked, setLocationBlocked] = useState(false);
   const [locationAskDismissed, setLocationAskDismissed] = useState(false);
@@ -199,6 +201,11 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
     }
   }
 
+  function openComposer(intent: Post["intentType"]) {
+    setComposerIntent(intent);
+    setComposerOpen(true);
+  }
+
   function refreshAfterPost() {
     if (profile?.approxLat != null && profile?.approxLng != null) {
       getNearby({ lat: profile.approxLat, lng: profile.approxLng, radiusKm: 10, withinHours: 24 })
@@ -221,7 +228,7 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
 
   return (
     <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
-      <HomeHeader profile={profile} onCompose={() => setComposerOpen(true)} />
+      <HomeHeader profile={profile} onCompose={() => openComposer("activity")} />
 
       {/* ARENA-WEB-AND-SEED.md §2.4 "The hero on desktop. Minimum height 420px... Headline
           scales to 44px on desktop." Only height/font-size are breakpoint-dependent, so only
@@ -322,15 +329,6 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
               </button>
             </div>
           )}
-          {state === "ready" && hasLocation && nearbyCount === 0 && (
-            <button
-              type="button"
-              onClick={() => setComposerOpen(true)}
-              style={{ display: "inline-block", marginTop: 12, fontSize: 12, color: "#E8DFD2", textDecoration: "underline", background: "none", border: "none", padding: 0, cursor: "pointer" }}
-            >
-              Start something for today
-            </button>
-          )}
         </div>
       </div>
 
@@ -346,11 +344,17 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
             ))}
 
           {state === "ready" && feedPosts.length === 0 && (
-            <div style={{ margin: "0 12px 12px", padding: 20, textAlign: "center" }}>
-              <p style={{ margin: 0, fontSize: 13, color: ARENA_V3.muted }}>
-                Nothing to show right now. Be the first to start something.
-              </p>
-            </div>
+            <HomeEmptyState
+              headline={hasLocation ? "Nothing nearby right now" : "It's quiet right now"}
+              description={
+                hasLocation
+                  ? "No activities or needs posted near you in the last day. Check the map for a wider radius, or be the first to start something."
+                  : "Nothing posted recently. Be the first to start something today."
+              }
+              primaryActionLabel="Start something"
+              onPrimaryAction={() => openComposer("activity")}
+              onStartIntent={openComposer}
+            />
           )}
 
           {state === "ready" &&
@@ -368,14 +372,14 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
         </div>
       </div>
 
-      <HomeTabBar onCompose={() => setComposerOpen(true)} />
+      <HomeTabBar onCompose={() => openComposer("activity")} />
 
       <PostComposer
-        key={composerOpen ? "open" : "closed"}
+        key={composerIntent}
         open={composerOpen}
         onOpenChange={setComposerOpen}
         onPublished={refreshAfterPost}
-        defaultIntent="activity"
+        defaultIntent={composerIntent}
       />
     </div>
   );
