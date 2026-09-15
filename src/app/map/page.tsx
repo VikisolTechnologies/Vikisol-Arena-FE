@@ -1,58 +1,50 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LocateFixed, MapPin, Sparkles, Users } from "lucide-react";
-import { AppShell } from "@/components/app/AppShell";
-import { OrbLoader } from "@/components/ui/orb-loader";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { PersonAvatar } from "@/components/ui/person-avatar";
-import { getMyProfile } from "@/lib/api/profile";
+import { LocateFixed } from "lucide-react";
+import { getMyProfile, updateMyLocation } from "@/lib/api/profile";
 import { getNearby, requestJoin } from "@/lib/api/posts";
 import { requireOnboarded } from "@/lib/auth-guard";
 import { GoogleMapView, googleMapsConfigured } from "@/components/map/GoogleMapView";
+import { OrbLoader } from "@/components/ui/orb-loader";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
-import { formatFriendlyDateTime } from "@/lib/format";
-import { cn } from "@/lib/utils";
-import type { CandidateProfile, Post, PostIntentType } from "@/lib/types";
+import { HomeHeader } from "@/components/home-v3/HomeHeader";
+import { HomeTabBar } from "@/components/home-v3/HomeTabBar";
+import { ARENA_V3 } from "@/components/home-v3/tokens";
+import { MapFilterChips, type MapTypeFilter } from "@/components/map-v3/MapFilterChips";
+import { MapListRow } from "@/components/map-v3/MapListRow";
+import { MapDetailSheet } from "@/components/map-v3/MapDetailSheet";
+import { PostComposer } from "@/components/feed/PostComposer";
+import type { CandidateProfile, Post } from "@/lib/types";
 
-// ssr:false - WebGL has no server-side equivalent, same next/dynamic pattern as every other R3F
-// scene in this codebase (OrbScene, HealthOrbScene).
 const MapRadarScene = dynamic(() => import("@/components/map/MapRadarScene").then((m) => m.MapRadarScene), {
   ssr: false,
   loading: () => <OrbLoader className="h-full" />,
 });
 
-const RADIUS_OPTIONS = [2, 5, 10, 25];
-const TIME_OPTIONS: { key: string; label: string; hours?: number }[] = [
-  { key: "any", label: "Any time" },
-  { key: "3h", label: "Next 3h", hours: 3 },
-  { key: "today", label: "Today", hours: 24 },
-  { key: "week", label: "This week", hours: 168 },
-];
-const TYPE_OPTIONS: { key: string; label: string; type?: PostIntentType }[] = [
-  { key: "all", label: "All" },
-  { key: "activity", label: "Activities", type: "activity" },
-  { key: "ask", label: "Asks", type: "ask" },
-];
+// ARENA-WEB-AND-SEED.md §3.5 - "The Map centres on the city with a clear 'showing all of
+// Hyderabad' state... It does not show an empty ring and a dot." Real Hyderabad city center
+// (same coordinates DataSeeder/DemoContentService already use for Gachibowli-area jittering),
+// used the moment the map needs SOME center and the viewer hasn't granted precise location yet -
+// the map always renders real content at this radius, never blocks on location first.
+const HYDERABAD_CENTER = { lat: 17.385, lng: 78.4867 };
 
 export default function MapPage() {
   const router = useRouter();
   const reducedMotion = useReducedMotion();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
-  const [center, setCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const [center, setCenter] = useState(HYDERABAD_CENTER);
+  const [hasPreciseLocation, setHasPreciseLocation] = useState(false);
   const [locating, setLocating] = useState(false);
-  const [locateError, setLocateError] = useState<string | null>(null);
-  const [radiusKm, setRadiusKm] = useState(5);
-  const [timeKey, setTimeKey] = useState("any");
-  const [typeKey, setTypeKey] = useState("all");
+  const [locationBlocked, setLocationBlocked] = useState(false);
+  const [radiusKm, setRadiusKm] = useState(10);
+  const [typeKey, setTypeKey] = useState<MapTypeFilter>("all");
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
 
   useEffect(() => {
     if (!requireOnboarded(router)) return;
@@ -60,217 +52,155 @@ export default function MapPage() {
       setProfile(p);
       if (p.locationConsent && p.locationConsent !== "off" && p.approxLat != null && p.approxLng != null) {
         setCenter({ lat: p.approxLat, lng: p.approxLng });
+        setHasPreciseLocation(true);
       }
     });
   }, [router]);
 
   useEffect(() => {
-    if (!center) return;
-    const timeOpt = TIME_OPTIONS.find((t) => t.key === timeKey);
-    const typeOpt = TYPE_OPTIONS.find((t) => t.key === typeKey);
-    getNearby({ lat: center.lat, lng: center.lng, radiusKm, withinHours: timeOpt?.hours, intentType: typeOpt?.type }).then(setPosts);
-  }, [center, radiusKm, timeKey, typeKey]);
+    const type = typeKey === "all" ? undefined : typeKey;
+    getNearby({ lat: center.lat, lng: center.lng, radiusKm, withinHours: 168, intentType: type }).then(setPosts);
+  }, [center, radiusKm, typeKey]);
 
-  const selected = useMemo(() => posts?.find((p) => p.id === selectedId) ?? null, [posts, selectedId]);
+  const selected = posts?.find((p) => p.id === selectedId) ?? null;
 
-  // Ad hoc, session-only - never persisted to the profile (that's Settings' job). Satisfies §5's
-  // "the app must remain usable at 'off'": a candidate with location off can still use Map for
-  // this one visit without changing their standing consent.
-  const useMyLocationOnce = () => {
-    if (!navigator.geolocation) { setLocateError("Location isn't available in this browser."); return; }
-    setLocating(true);
-    setLocateError(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLocating(false); },
-      () => { setLocateError("Couldn't get your location - check permissions and try again."); setLocating(false); },
-      { enableHighAccuracy: false, timeout: 8000 },
-    );
-  };
-
-  const join = async (post: Post) => {
-    setJoining(true);
-    try {
-      await requestJoin(post.id);
-      if (center) getNearby({ lat: center.lat, lng: center.lng, radiusKm, withinHours: TIME_OPTIONS.find((t) => t.key === timeKey)?.hours, intentType: TYPE_OPTIONS.find((t) => t.key === typeKey)?.type }).then(setPosts);
-    } finally {
-      setJoining(false);
+  // ARENA-WEB-AND-SEED.md §1.3/§3.3 - a real button calling the browser's own geolocation API
+  // directly, not a text link elsewhere. Updates the standing profile (same call Settings'
+  // "Precise" option makes) and re-centers in place - no navigation, no reload.
+  function enableLocation() {
+    if (!navigator.geolocation) {
+      setLocationBlocked(true);
+      return;
     }
-  };
-
-  if (!profile) {
-    return (
-      <AppShell title="Map">
-        <OrbLoader className="h-96" />
-      </AppShell>
+    setLocating(true);
+    setLocationBlocked(false);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const updated = await updateMyLocation({ consent: "precise", lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setProfile(updated);
+          setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setHasPreciseLocation(true);
+        } finally {
+          setLocating(false);
+        }
+      },
+      (err) => {
+        setLocating(false);
+        if (err.code === 1) setLocationBlocked(true);
+      },
+      { enableHighAccuracy: false, timeout: 8000 },
     );
   }
 
+  async function join(post: Post) {
+    setJoining(true);
+    try {
+      await requestJoin(post.id);
+      const type = typeKey === "all" ? undefined : typeKey;
+      const fresh = await getNearby({ lat: center.lat, lng: center.lng, radiusKm, withinHours: 168, intentType: type });
+      setPosts(fresh);
+    } finally {
+      setJoining(false);
+    }
+  }
+
   return (
-    <AppShell title="Map" profile={profile}>
-      {!center && (
-        <>
-          <EmptyState
-            title="See what's nearby"
-            description="Turn on location in Settings to browse activities on the map every time, or use it just for this visit below."
-            className="py-16"
+    <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
+      <HomeHeader profile={profile} onCompose={() => setComposerOpen(true)} />
+
+      <div className="h-[300px] md:h-[380px]" style={{ position: "relative", flexShrink: 0, background: ARENA_V3.mapDark }}>
+        {posts === null ? (
+          <OrbLoader className="h-full" />
+        ) : googleMapsConfigured() ? (
+          <GoogleMapView posts={posts} centerLat={center.lat} centerLng={center.lng} radiusKm={radiusKm} selectedId={selectedId} onSelect={(id) => setSelectedId(id || null)} />
+        ) : (
+          <MapRadarScene
+            posts={posts}
+            centerLat={center.lat}
+            centerLng={center.lng}
+            radiusKm={radiusKm}
+            selectedId={selectedId}
+            onSelect={(id) => setSelectedId(id || null)}
+            reducedMotion={reducedMotion}
           />
-          <div className="mx-auto mt-4 flex max-w-sm flex-col items-center gap-2.5">
-            <Button variant="default" size="sm" className="gap-1.5" disabled={locating} onClick={useMyLocationOnce}>
-              <LocateFixed className="size-3.5" /> {locating ? "Locating…" : "Use my location for this visit"}
-            </Button>
-            <Link href="/settings" className="text-xs text-muted-foreground hover:text-foreground hover:underline">
-              Or turn on location permanently in Settings
-            </Link>
-            {locateError && <p className="text-xs text-red-400">{locateError}</p>}
+        )}
+        <MapFilterChips typeKey={typeKey} onTypeChange={setTypeKey} radiusKm={radiusKm} onRadiusChange={setRadiusKm} />
+        {!hasPreciseLocation && (
+          <div style={{ position: "absolute", bottom: 14, left: 14, right: 14, display: "flex", justifyContent: "center", zIndex: 5 }}>
+            <button
+              type="button"
+              onClick={enableLocation}
+              disabled={locating}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 12,
+                background: ARENA_V3.ivory,
+                color: ARENA_V3.ink,
+                border: "none",
+                borderRadius: 20,
+                padding: "9px 16px",
+                cursor: locating ? "default" : "pointer",
+                opacity: locating ? 0.7 : 1,
+              }}
+            >
+              <LocateFixed size={13} strokeWidth={1.75} />
+              {locating ? "Locating…" : "Showing Hyderabad · use my location"}
+            </button>
           </div>
-        </>
-      )}
+        )}
+        {locationBlocked && (
+          <p style={{ position: "absolute", bottom: -22, left: 14, right: 14, margin: 0, fontSize: 11, color: ARENA_V3.muted }}>
+            Location is blocked for this site - check your browser&apos;s site settings to turn it back on.
+          </p>
+        )}
+      </div>
 
-      {center && (
-        <>
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-muted-foreground">Within:</span>
-              {RADIUS_OPTIONS.map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setRadiusKm(r)}
-                  className={cn(
-                    "rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
-                    radiusKm === r ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground",
-                  )}
-                >
-                  {r}km
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-1.5">
-              {TIME_OPTIONS.map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => setTimeKey(t.key)}
-                  className={cn(
-                    "rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
-                    timeKey === t.key ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground",
-                  )}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-1.5">
-              {TYPE_OPTIONS.map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => setTypeKey(t.key)}
-                  className={cn(
-                    "rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
-                    typeKey === t.key ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground",
-                  )}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-            <div className="glass-panel overflow-hidden rounded-[24px] border border-border bg-secondary" style={{ height: "min(480px, 60vh)" }}>
-              {posts === null ? (
-                <OrbLoader className="h-full" />
-              ) : googleMapsConfigured() ? (
-                // Real Google Maps tiles, plotting the exact same already-jittered
-                // approxLat/approxLng the radar view uses below - not a precision regression,
-                // just a different renderer for identically privacy-safe data (see
-                // GoogleMapView's own comment).
-                <GoogleMapView
-                  posts={posts}
-                  centerLat={center.lat}
-                  centerLng={center.lng}
-                  radiusKm={radiusKm}
-                  selectedId={selectedId}
-                  onSelect={(id) => setSelectedId(id || null)}
-                />
-              ) : (
-                <MapRadarScene
-                  posts={posts}
-                  centerLat={center.lat}
-                  centerLng={center.lng}
-                  radiusKm={radiusKm}
-                  selectedId={selectedId}
-                  onSelect={(id) => setSelectedId(id || null)}
-                  reducedMotion={reducedMotion}
-                />
-              )}
-            </div>
-
-            <div className="flex flex-col gap-3">
-              {selected && (
-                <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4">
-                  <div className="flex items-start gap-2.5">
-                    <PersonAvatar seed={selected.authorUserId} name={selected.authorName} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold">{selected.authorName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {selected.distanceKm != null && `${selected.distanceKm.toFixed(1)} km away`}
-                        {selected.startsAt && ` · ${formatFriendlyDateTime(selected.startsAt)}`}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="mt-2.5 line-clamp-2 text-xs text-foreground/90">{selected.body}</p>
-                  <div className="mt-3 flex gap-2">
-                    {selected.myJoinStatus ? (
-                      <p className="text-xs text-muted-foreground">
-                        {selected.myJoinStatus === "approved" ? "You're in" : selected.myJoinStatus === "pending" ? "Request pending" : "Request declined"}
-                      </p>
-                    ) : (
-                      <Button variant="default" size="sm" className="gap-1.5" disabled={joining} onClick={() => join(selected)}>
-                        <Sparkles className="size-3.5" /> {joining ? "Requesting…" : selected.visibility === "public" ? "Join" : "Request to join"}
-                      </Button>
-                    )}
-                    <Button variant="outline" size="sm" onClick={() => router.push(`/feed/${selected.id}`)}>View post</Button>
-                  </div>
+      {/* ARENA-MOCKUP-REFERENCE.md SCREEN 2 - "Bottom sheet... pulled up 20px over the map." A
+          negative margin over a rounded-top panel, not a floating/draggable overlay - matches
+          the mockup's own literal markup, not an invented gesture interaction. */}
+      <div className="md:pb-6" style={{ flex: 1, background: ARENA_V3.ivory, borderRadius: "20px 20px 0 0", marginTop: -20, position: "relative", paddingTop: 16, paddingBottom: "calc(84px + env(safe-area-inset-bottom))" }}>
+        <div style={{ width: 32, height: 3, background: ARENA_V3.hairline, borderRadius: 3, margin: "0 auto 16px" }} />
+        <div style={{ maxWidth: 640, margin: "0 auto", padding: "0 14px" }}>
+          {selected ? (
+            <MapDetailSheet
+              post={selected}
+              joining={joining}
+              onJoin={() => join(selected)}
+              onViewPost={() => router.push(`/feed/${selected.id}`)}
+            />
+          ) : (
+            <>
+              <p style={{ margin: "0 0 12px", fontSize: 10, color: ARENA_V3.muted, letterSpacing: 3 }}>
+                {posts === null ? "LOADING" : `${posts.length} NEARBY`}
+              </p>
+              {posts !== null && posts.length === 0 && (
+                <div style={{ textAlign: "center", padding: "20px 0" }}>
+                  <p style={{ margin: "0 0 14px", fontSize: 13, color: ARENA_V3.muted }}>
+                    Nothing nearby right now. Widen your radius, or be the first to start something.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setComposerOpen(true)}
+                    style={{ fontSize: 13, background: ARENA_V3.ink, color: ARENA_V3.ivory, padding: "10px 22px", borderRadius: 20, border: "none", cursor: "pointer" }}
+                  >
+                    Start something
+                  </button>
                 </div>
               )}
+              {posts?.map((p) => (
+                <MapListRow key={p.id} post={p} active={p.id === selectedId} onSelect={() => setSelectedId(p.id)} />
+              ))}
+            </>
+          )}
+        </div>
+      </div>
 
-              <div className="flex-1 space-y-2 overflow-y-auto" style={{ maxHeight: selected ? "min(340px, 40vh)" : "min(480px, 60vh)" }}>
-                {posts === null ? null : posts.length === 0 ? (
-                  <EmptyState title="Nothing nearby right now" description="Try a wider radius or a different time window." className="py-10" />
-                ) : (
-                  posts.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setSelectedId(p.id)}
-                      className={cn(
-                        "flex w-full items-start gap-2.5 rounded-xl border px-3.5 py-3 text-left transition-colors",
-                        p.id === selectedId ? "border-primary/50 bg-primary/[0.06]" : "border-border bg-secondary hover:border-white/20",
-                      )}
-                    >
-                      <PersonAvatar seed={p.authorUserId} name={p.authorName} size="sm" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-medium">{p.authorName}</p>
-                        <p className="line-clamp-1 text-xs text-muted-foreground">{p.body}</p>
-                      </div>
-                      <div className="flex shrink-0 flex-col items-end gap-1">
-                        <Badge variant="secondary" className="gap-1 bg-secondary text-[10px] text-muted-foreground">
-                          <MapPin className="size-2.5" /> {p.distanceKm != null ? `${p.distanceKm.toFixed(1)}km` : ""}
-                        </Badge>
-                        {p.capacity && (
-                          <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground"><Users className="size-2.5" /> {p.spotsFilled}/{p.capacity}</span>
-                        )}
-                      </div>
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-    </AppShell>
+      <HomeTabBar onCompose={() => setComposerOpen(true)} />
+
+      <PostComposer open={composerOpen} onOpenChange={setComposerOpen} onPublished={() => {}} defaultIntent="activity" />
+    </div>
   );
 }
