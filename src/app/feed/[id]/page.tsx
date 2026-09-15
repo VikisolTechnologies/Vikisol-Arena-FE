@@ -187,7 +187,7 @@ export default function PostDetailPage() {
 
           <div style={{ padding: "20px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
-              <p style={{ margin: 0, fontSize: 10, letterSpacing: 3, color: ARENA_V3.gold }}>
+              <p style={{ margin: 0, fontSize: 10, letterSpacing: 3, color: ARENA_V3.goldText }}>
                 {post.intentType.toUpperCase()}{post.startsAt ? ` · ${formatEyebrowWhen(post.startsAt)}` : ""}
               </p>
               {post.demoContent && <DemoContentBadge />}
@@ -259,7 +259,7 @@ export default function PostDetailPage() {
                 {post.locationText && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><MapPin size={12} /> {post.locationText}</span>}
                 {distanceKm != null && <span>about {distanceKm.toFixed(1)} km away</span>}
                 {post.requiredVerificationLevel && post.requiredVerificationLevel !== "basic" && (
-                  <span style={{ color: ARENA_V3.gold }}>{VERIFICATION_LABEL[post.requiredVerificationLevel]} required to join</span>
+                  <span style={{ color: ARENA_V3.goldText }}>{VERIFICATION_LABEL[post.requiredVerificationLevel]} required to join</span>
                 )}
               </div>
             )}

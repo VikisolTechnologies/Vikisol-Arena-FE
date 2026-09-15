@@ -273,7 +273,7 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
           )}
           {state === "ready" && (
             <>
-              <p style={{ margin: "0 0 12px", fontSize: 10, color: ARENA_V3.gold, letterSpacing: 3.5 }}>
+              <p style={{ margin: "0 0 12px", fontSize: 10, color: ARENA_V3.goldText, letterSpacing: 3.5 }}>
                 {hasLocation ? `${cityLabel} · TODAY` : "HYDERABAD · TODAY"}
               </p>
               <p className="text-[32px] md:text-[44px]" style={{ margin: 0, fontFamily: displayFont, fontWeight: 400, lineHeight: 1.1, color: ARENA_V3.ivory }}>

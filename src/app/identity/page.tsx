@@ -104,7 +104,7 @@ export default function ProfilePage() {
             <p style={{ margin: "4px 0 0", fontSize: 13, color: ARENA_V3.muted }}>
               {profile.title} · {profile.homeCity ?? profile.location}
             </p>
-            {isVerified && <p style={{ margin: "8px 0 0", fontSize: 11, letterSpacing: 2, color: ARENA_V3.gold }}>VERIFIED</p>}
+            {isVerified && <p style={{ margin: "8px 0 0", fontSize: 11, letterSpacing: 2, color: ARENA_V3.goldText }}>VERIFIED</p>}
             <div style={{ width: 40, height: 2, background: ARENA_V3.gold, margin: "14px 0 20px" }} />
 
             {/* Stats - Outcomes first, deliberately: "identity in Arena is what you have done,

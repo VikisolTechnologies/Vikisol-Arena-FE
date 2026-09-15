@@ -25,7 +25,7 @@ export function MapDetailSheet({
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
-        <p style={{ margin: 0, fontSize: 10, color: ARENA_V3.gold, letterSpacing: 3 }}>
+        <p style={{ margin: 0, fontSize: 10, color: ARENA_V3.goldText, letterSpacing: 3 }}>
           {post.intentType.toUpperCase()} · {post.visibility === "approval" ? "APPROVAL REQUIRED" : "OPEN"}
         </p>
         {post.demoContent && <DemoContentBadge />}

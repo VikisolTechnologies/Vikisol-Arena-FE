@@ -24,6 +24,12 @@ export const ARENA_V3 = {
   hairline: "#DDD3C4",
   hairlineCard: "#F0EAE1",
   gold: "#D6A84F",
+  // ARENA-FINISH-IT.md §5 - axe-verified: raw `gold` only reaches ~1.95:1 on ivory/white, far
+  // short of AA's 4.5:1, at the small sizes (10-11px) every eyebrow/status-text use of it is
+  // set in. This is the same darker gold the mockups themselves already specify for exactly
+  // that case (status pill text, the pinned-context strip) - never used for the 2px rule or
+  // other genuinely decorative (non-text) marks, which keep the lighter `gold`.
+  goldText: "#8A6A22",
   champagne: "#F3D79B",
   champagneText: "#412402",
   inactiveTab: "#B0A696",
