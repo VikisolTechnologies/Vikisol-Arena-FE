@@ -17,6 +17,7 @@ import { MapFilterChips, type MapTypeFilter } from "@/components/map-v3/MapFilte
 import { MapListRow } from "@/components/map-v3/MapListRow";
 import { MapDetailSheet } from "@/components/map-v3/MapDetailSheet";
 import { CreateComposer } from "@/components/create-v3/CreateComposer";
+import { HomeEmptyState } from "@/components/home-v3/HomeEmptyState";
 import type { CandidateProfile, Post } from "@/lib/types";
 
 const MapRadarScene = dynamic(() => import("@/components/map/MapRadarScene").then((m) => m.MapRadarScene), {
@@ -46,8 +47,16 @@ export default function MapPage() {
   const [joining, setJoining] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerSession, setComposerSession] = useState(0);
+  const [composerIntent, setComposerIntent] = useState<Exclude<Post["intentType"], "company"> | null>(null);
 
   function openComposer() {
+    setComposerIntent(null);
+    setComposerSession((n) => n + 1);
+    setComposerOpen(true);
+  }
+
+  function openComposerWithIntent(intent: Exclude<Post["intentType"], "company">) {
+    setComposerIntent(intent);
     setComposerSession((n) => n + 1);
     setComposerOpen(true);
   }
@@ -183,18 +192,13 @@ export default function MapPage() {
                 {posts === null ? "LOADING" : `${posts.length} NEARBY`}
               </p>
               {posts !== null && posts.length === 0 && (
-                <div style={{ textAlign: "center", padding: "20px 0" }}>
-                  <p style={{ margin: "0 0 14px", fontSize: 13, color: ARENA_V3.muted }}>
-                    Nothing nearby right now. Widen your radius, or be the first to start something.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={openComposer}
-                    style={{ fontSize: 13, background: ARENA_V3.ink, color: ARENA_V3.ivory, padding: "10px 22px", borderRadius: 20, border: "none", cursor: "pointer" }}
-                  >
-                    Start something
-                  </button>
-                </div>
+                <HomeEmptyState
+                  headline="Nothing nearby right now"
+                  description="Widen your radius, or be the first to start something at this distance."
+                  primaryActionLabel="Start something"
+                  onPrimaryAction={openComposer}
+                  onStartIntent={openComposerWithIntent}
+                />
               )}
               {posts?.map((p) => (
                 <MapListRow key={p.id} post={p} active={p.id === selectedId} onSelect={() => setSelectedId(p.id)} />
@@ -206,7 +210,7 @@ export default function MapPage() {
 
       <HomeTabBar onCompose={openComposer} />
 
-      <CreateComposer key={composerSession} open={composerOpen} onOpenChange={setComposerOpen} onPublished={() => {}} />
+      <CreateComposer key={composerSession} open={composerOpen} onOpenChange={setComposerOpen} onPublished={() => {}} initialIntent={composerIntent} />
     </div>
   );
 }
