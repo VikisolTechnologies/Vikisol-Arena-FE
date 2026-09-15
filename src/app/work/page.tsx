@@ -136,9 +136,19 @@ export default function WorkHubPage() {
           ) : allItems.length === 0 ? (
             <div style={{ background: ARENA_V3.white, borderRadius: 14, padding: "24px 20px", textAlign: "center", marginBottom: 24 }}>
               <p style={{ margin: "0 0 8px", fontSize: 15, color: ARENA_V3.ink }}>Nothing active right now</p>
-              <p style={{ margin: 0, fontSize: 13, color: ARENA_V3.muted, lineHeight: 1.6 }}>
+              <p style={{ margin: "0 0 18px", fontSize: 13, color: ARENA_V3.muted, lineHeight: 1.6 }}>
                 Bid on a project, apply to a role, or join an activity - it&apos;ll show up here.
               </p>
+              {/* ARENA-FINISH-IT.md §2 - "a real button," not just text. No single action fits
+                  (an active item here can start three different real ways), so this scrolls to
+                  the real Explore list right below rather than picking one arbitrarily. */}
+              <button
+                type="button"
+                onClick={() => document.getElementById("explore")?.scrollIntoView({ behavior: "smooth" })}
+                style={{ fontSize: 13, background: ARENA_V3.ink, color: ARENA_V3.ivory, padding: "11px 26px", borderRadius: 24, border: "none", cursor: "pointer" }}
+              >
+                Explore
+              </button>
             </div>
           ) : (
             <div style={{ background: ARENA_V3.white, borderRadius: 14, overflow: "hidden", marginBottom: 24 }}>
@@ -165,7 +175,7 @@ export default function WorkHubPage() {
             </div>
           )}
 
-          <p style={{ margin: "0 0 10px", fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>EXPLORE</p>
+          <p id="explore" style={{ margin: "0 0 10px", fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>EXPLORE</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 24 }}>
             {EXPLORE_SURFACES.map(({ href, label, description, icon: Icon }) => (
               <button
