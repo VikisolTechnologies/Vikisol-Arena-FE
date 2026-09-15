@@ -234,7 +234,7 @@ export default function PostDetailPage() {
               </div>
               {!post.mine && <ChevronRight size={16} color="#C9BFB1" style={{ flexShrink: 0 }} />}
               {!post.mine && myUserId !== post.authorUserId && !post.authorCompanyId && (
-                <div data-theme="product" style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                <div data-theme="product" className="text-foreground" style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                   <FollowButton userId={post.authorUserId} />
                   <BlockButton userId={post.authorUserId} />
                   <button type="button" disabled={reported} onClick={report} aria-label="Report this post" title={reported ? "Reported" : "Report"} style={{ background: "none", border: "none", cursor: reported ? "default" : "pointer", color: reported ? "#B3432B" : ARENA_V3.muted, padding: 4 }}>
@@ -299,13 +299,13 @@ export default function PostDetailPage() {
               </button>
             )}
 
-            <div data-theme="product" style={{ marginBottom: post.mine || !post.joinable ? 0 : 16 }}>
+            <div data-theme="product" className="text-foreground" style={{ marginBottom: post.mine || !post.joinable ? 0 : 16 }}>
               <ReactionButton postId={post.id} reacted={!!post.myReacted} count={post.reactionCount} className="text-sm" />
             </div>
 
             {/* Mine: join-requests panel to approve/decline. Not mine + joinable: the real CTA. */}
             {post.joinable && !inactive && post.mine && (
-              <div data-theme="product" style={{ marginTop: 16 }}>
+              <div data-theme="product" className="text-foreground" style={{ marginTop: 16 }}>
                 <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 600, color: ARENA_V3.ink }}>Join requests</p>
                 <JoinRequestsPanel postId={post.id} onDecided={load} />
               </div>
@@ -369,7 +369,7 @@ export default function PostDetailPage() {
 
           <div style={{ padding: "0 20px 20px" }}>
             <p style={{ margin: "0 0 10px", fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>COMMENTS</p>
-            <div data-theme="product" style={{ background: ARENA_V3.white, borderRadius: 14, padding: 14 }}>
+            <div data-theme="product" className="text-foreground" style={{ background: ARENA_V3.white, borderRadius: 14, padding: 14 }}>
               <CommentThread postId={post.id} postAuthorUserId={post.authorUserId} />
             </div>
           </div>
@@ -378,7 +378,7 @@ export default function PostDetailPage() {
 
       <HomeTabBar onCompose={() => setComposerOpen(true)} />
       <CreateComposer open={composerOpen} onOpenChange={setComposerOpen} onPublished={load} />
-      <div data-theme="product">
+      <div data-theme="product" className="text-foreground">
         <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action={signInAction} />
       </div>
     </div>
