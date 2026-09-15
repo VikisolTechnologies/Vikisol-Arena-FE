@@ -1,27 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { AlertTriangle, ArrowLeft, Flag, MapPin, MessageCircle, Share2, ShieldCheck, Users, XCircle } from "lucide-react";
-import { AppShell } from "@/components/app/AppShell";
+import { ArrowLeft, Bookmark, ChevronRight, Flag, MapPin, MessageCircle, MoreHorizontal, Share2, XCircle } from "lucide-react";
 import { OrbLoader } from "@/components/ui/orb-loader";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { FollowButton } from "@/components/feed/FollowButton";
 import { BlockButton } from "@/components/feed/BlockButton";
 import { ReactionButton } from "@/components/feed/ReactionButton";
 import { CommentThread } from "@/components/feed/CommentThread";
 import { JoinRequestsPanel } from "@/components/feed/JoinRequestsPanel";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
+import { HomeHeader } from "@/components/home-v3/HomeHeader";
+import { HomeTabBar } from "@/components/home-v3/HomeTabBar";
+import { ChampagneAvatar } from "@/components/home-v3/ChampagneAvatar";
+import { DemoContentBadge } from "@/components/home-v3/DemoContentBadge";
+import { ARENA_V3 } from "@/components/home-v3/tokens";
+import { formatEyebrowWhen } from "@/components/home-v3/format";
+import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { getMyProfile } from "@/lib/api/profile";
-import { getPost, requestJoin, cancelPost, reportPost } from "@/lib/api/posts";
+import { getPost, requestJoin, cancelPost, reportPost, savePost, unsavePost } from "@/lib/api/posts";
 import { formatFriendlyDateTime } from "@/lib/format";
+import { haversineKm } from "@/lib/geo";
 import { getSession } from "@/lib/session";
 import type { CandidateProfile, Post } from "@/lib/types";
 
 const VERIFICATION_LABEL: Record<string, string> = { basic: "Basic", phone: "Phone-verified", id: "ID-verified" };
 const NEW_ACCOUNT_THRESHOLD_DAYS = 14;
+// Same fallback used by ActivityCard for posts without their own photo - credited there.
+const ACTIVITY_FALLBACK_IMAGE = "https://images.unsplash.com/photo-1743601587751-01dc32b707d2";
 
 export default function PostDetailPage() {
   const params = useParams<{ id: string }>();
@@ -33,15 +41,14 @@ export default function PostDetailPage() {
   const [joinError, setJoinError] = useState<string | null>(null);
   const [reported, setReported] = useState(false);
   const [shared, setShared] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [signInPromptOpen, setSignInPromptOpen] = useState(false);
   const [signInAction, setSignInAction] = useState("do that");
+  const [composerOpen, setComposerOpen] = useState(false);
 
   const load = () => { getPost(params.id).then((p) => setPost(p ?? null)); };
 
-  // ARENA-STABILIZE.md Phase 2, G9 - shared post links are the growth loop; a logged-out
-  // visitor must see the real post, not bounce to onboarding. getMyProfile() (AppShell's
-  // sidebar account block) only fires when a session exists - GET /posts/{id} itself is now
-  // permitAll'd and null-viewer-tolerant end to end (see PostController/PostMapper).
   useEffect(() => {
     if (getSession()) getMyProfile().then(setProfile);
     load();
@@ -55,16 +62,22 @@ export default function PostDetailPage() {
 
   if (post === undefined) {
     return (
-      <AppShell title="Post">
+      <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh" }}>
+        <HomeHeader profile={profile} onCompose={() => setComposerOpen(true)} />
         <OrbLoader className="h-96" />
-      </AppShell>
+        <HomeTabBar onCompose={() => setComposerOpen(true)} />
+      </div>
     );
   }
   if (post === null) {
     return (
-      <AppShell title="Post">
-        <p className="text-sm text-muted-foreground">This post isn&apos;t available anymore.</p>
-      </AppShell>
+      <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh" }}>
+        <HomeHeader profile={profile} onCompose={() => setComposerOpen(true)} />
+        <p style={{ margin: "40px 20px", fontSize: 13, color: ARENA_V3.muted, textAlign: "center" }}>
+          This post isn&apos;t available anymore.
+        </p>
+        <HomeTabBar onCompose={() => setComposerOpen(true)} />
+      </div>
     );
   }
 
@@ -92,18 +105,26 @@ export default function PostDetailPage() {
     }
   };
 
-  // §4 safety-audit fix: "report ... everywhere" - posts are directly reportable now, not just
-  // via a Room (which UPDATE posts and not-yet-joined ACTIVITY/ASK posts never had at all).
   const report = async () => {
     if (!getSession()) { requireSignIn("report a post"); return; }
     await reportPost(post.id, "Reported from the post");
     setReported(true);
   };
 
-  // §4's "share-my-plan (send room details to a trusted contact)" - no backend/contacts system
-  // needed: assembles the same info already on this page into shareable text and hands it to
-  // the OS share sheet (falls back to clipboard), so the user can send it to whoever they want
-  // via WhatsApp/SMS/anything themselves.
+  const toggleSave = async () => {
+    if (!getSession()) { requireSignIn("save this"); return; }
+    setSaving(true);
+    const next = !saved;
+    setSaved(next);
+    try {
+      await (next ? savePost(post.id) : unsavePost(post.id));
+    } catch {
+      setSaved(!next);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const sharePlan = async () => {
     const when = post.startsAt ? formatFriendlyDateTime(post.startsAt) : "time not set";
     const where = post.exactMeetingPoint || post.locationText || "location not set";
@@ -124,184 +145,268 @@ export default function PostDetailPage() {
   const myUserId = getSession()?.candidateId;
   const inactive = post.status === "cancelled" || post.status === "expired";
   const spotsLeft = post.capacity ? Math.max(0, post.capacity - post.spotsFilled) : undefined;
+  const heroImage = post.mediaUrls[0] || (post.intentType === "activity" ? ACTIVITY_FALLBACK_IMAGE : null);
+  const distanceKm =
+    profile?.approxLat != null && profile?.approxLng != null && post.approxLat != null && post.approxLng != null
+      ? haversineKm(profile.approxLat, profile.approxLng, post.approxLat, post.approxLng)
+      : undefined;
 
   return (
-    <AppShell title="Post" profile={profile}>
-      {/* ARENA-STABILIZE.md Phase 3 - this page moved onto AppShell (Home/Discover/Map/Work/
-          Inbox nav) in Phase 2's public-post-detail fix, but "back" still pointed at /feed - the
-          older, now-orphaned CandidateAppShell-based list page, a jarring shell switch mid-flow.
-          /home is this page's actual parent surface now (that's where every post link on the
-          Golden Path originates from). */}
-      <button
-        type="button"
-        onClick={() => router.push("/home")}
-        className="mb-4 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" /> Back to Home
-      </button>
+    <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
+      <HomeHeader profile={profile} onCompose={() => setComposerOpen(true)} />
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        <Card>
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">{post.authorEmoji}</span>
-            <div className="min-w-0 flex-1">
-              {post.mine ? (
-                <p className="text-sm font-semibold">{post.authorName}</p>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => router.push(post.authorCompanyId ? `/companies/${post.authorCompanyId}` : `/people/${post.authorUserId}`)}
-                  className="text-sm font-semibold hover:underline"
-                >
-                  {post.authorName}
-                </button>
-              )}
-              <p className="text-xs text-muted-foreground">{formatFriendlyDateTime(post.createdAt)}</p>
-            </div>
-            {(post.status === "cancelled" || post.status === "expired" || post.status === "full") && (
-              <Badge variant="secondary" className={post.status === "full" ? "bg-white/5 text-[11px] text-muted-foreground" : "gap-1 bg-red-500/10 text-[11px] text-red-400"}>
-                {post.status === "cancelled" && <XCircle className="size-3" />}
-                {post.status === "cancelled" ? "Cancelled" : post.status === "expired" ? "Expired" : "Full"}
-              </Badge>
-            )}
-            {!post.mine && myUserId !== post.authorUserId && !post.authorCompanyId && (
-              <div className="flex items-center gap-1.5">
-                <FollowButton userId={post.authorUserId} />
-                <BlockButton userId={post.authorUserId} />
-                <Button variant="ghost-glass" size="icon-sm" disabled={reported} onClick={report} aria-label="Report this post" title={reported ? "Reported" : "Report"}>
-                  <Flag className={reported ? "size-3.5 text-red-400" : "size-3.5"} />
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {post.joinable && !post.mine && (
-            <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
-              {post.authorAccountAgeDays < NEW_ACCOUNT_THRESHOLD_DAYS ? (
-                <span className="text-amber-400">New account (joined {post.authorAccountAgeDays}d ago)</span>
-              ) : (
-                <span>On Arena {post.authorAccountAgeDays}d</span>
-              )}
-              {post.authorJoinCount > 0 && (
-                <span className="flex items-center gap-1"><ShieldCheck className="size-3" /> {post.authorJoinCount} activities joined</span>
-              )}
-            </div>
-          )}
-
-          <p className="mt-5 whitespace-pre-wrap text-sm leading-relaxed">{post.body}</p>
-
-          {post.tags.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-1.5">
-              {post.tags.map((t) => (
-                <Badge key={t} variant="secondary" className="bg-white/5 text-muted-foreground">#{t}</Badge>
-              ))}
-            </div>
-          )}
-
-          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            {post.locationText && <span className="flex items-center gap-1"><MapPin className="size-3" /> {post.locationText}</span>}
-            {post.startsAt && <span className="flex items-center gap-1">Starts {formatFriendlyDateTime(post.startsAt)}</span>}
-            {post.joinable && (
-              <span className="flex items-center gap-1">
-                <Users className="size-3" /> {post.spotsFilled}{post.capacity ? `/${post.capacity}` : ""} joined
-                {spotsLeft !== undefined && post.status === "open" && ` · ${spotsLeft} spot${spotsLeft === 1 ? "" : "s"} left`}
-              </span>
-            )}
-            {post.requiredVerificationLevel && post.requiredVerificationLevel !== "basic" && (
-              <span className="flex items-center gap-1 text-primary-soft">
-                <ShieldCheck className="size-3" /> {VERIFICATION_LABEL[post.requiredVerificationLevel]} required
-              </span>
-            )}
-          </div>
-
-          {post.exactMeetingPoint && (
-            <div className="mt-4 rounded-xl border border-primary/20 bg-primary/[0.04] px-3.5 py-3">
-              <div className="flex items-start gap-2">
-                <MapPin className="mt-0.5 size-3.5 shrink-0 text-primary-soft" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-primary-soft">Meeting point</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{post.exactMeetingPoint}</p>
-                </div>
-              </div>
-              {/* §4 "in-room safety UX: public-place suggestions, share-my-plan" */}
-              <p className="mt-2.5 text-[11px] text-muted-foreground">
-                For a first meetup, prefer a public place and daylight hours where possible.
-              </p>
+      <div style={{ flex: 1, paddingBottom: "calc(84px + env(safe-area-inset-bottom))" }}>
+        <div style={{ maxWidth: 640, margin: "0 auto" }}>
+          {/* SCREEN 4 "Image header" - 200px full-bleed; skipped (not faked) for posts with no
+              media and no activity-style fallback, e.g. a plain Update - same "no image,
+              deliberately" call NeedCard already makes for its card. */}
+          {heroImage ? (
+            <div style={{ position: "relative", height: 200, width: "100%", background: ARENA_V3.espressoLight }}>
+              <Image src={heroImage} alt="" fill sizes="640px" style={{ objectFit: "cover" }} priority />
               <button
                 type="button"
-                onClick={sharePlan}
-                className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-primary-soft hover:underline"
+                onClick={() => router.push("/home")}
+                style={{ position: "absolute", top: 16, left: 16, background: "none", border: "none", cursor: "pointer", color: ARENA_V3.ivory }}
+                aria-label="Back"
               >
-                <Share2 className="size-3" /> {shared ? "Copied to clipboard" : "Share this plan with someone"}
+                <ArrowLeft size={20} strokeWidth={1.75} />
+              </button>
+              <MoreHorizontal size={20} strokeWidth={1.75} color={ARENA_V3.ivory} style={{ position: "absolute", top: 16, right: 16 }} />
+            </div>
+          ) : (
+            <div style={{ padding: "16px 20px 0" }}>
+              <button
+                type="button"
+                onClick={() => router.push("/home")}
+                style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: ARENA_V3.body, fontSize: 13, padding: 0 }}
+              >
+                <ArrowLeft size={16} strokeWidth={1.75} /> Back
               </button>
             </div>
           )}
 
-          {post.mine && !inactive && (post.status === "open" || post.status === "full") && (
-            <Button variant="ghost-glass" size="sm" className="mt-4 gap-1.5 text-red-400" disabled={cancelling} onClick={cancel}>
-              <XCircle className="size-3.5" /> {cancelling ? "Cancelling…" : "Cancel this post"}
-            </Button>
-          )}
+          <div style={{ padding: "20px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+              <p style={{ margin: 0, fontSize: 10, letterSpacing: 3, color: ARENA_V3.gold }}>
+                {post.intentType.toUpperCase()}{post.startsAt ? ` · ${formatEyebrowWhen(post.startsAt)}` : ""}
+              </p>
+              {post.demoContent && <DemoContentBadge />}
+              {(post.status === "cancelled" || post.status === "expired" || post.status === "full") && (
+                <span style={{ marginLeft: "auto", fontSize: 10, letterSpacing: 2, color: post.status === "full" ? ARENA_V3.muted : "#B3432B" }}>
+                  {post.status === "cancelled" ? "CANCELLED" : post.status === "expired" ? "EXPIRED" : "FULL"}
+                </span>
+              )}
+            </div>
 
-          <div className="mt-4 flex items-center gap-4 border-t border-border pt-4">
-            <ReactionButton postId={post.id} reacted={!!post.myReacted} count={post.reactionCount} className="text-sm" />
-          </div>
-        </Card>
-
-        {post.joinable && (
-          <Card>
-            {inactive ? (
-              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-                <span>{post.status === "cancelled" ? "This was cancelled by the author." : "This activity has ended and is no longer joinable."}</span>
-              </div>
-            ) : post.mine ? (
-              <>
-                <p className="mb-3 font-display text-sm font-bold">Join requests</p>
-                <JoinRequestsPanel postId={post.id} onDecided={load} />
-              </>
-            ) : post.myJoinStatus === "approved" && post.roomId ? (
-              <>
-                <p className="mb-2 font-display text-sm font-bold">You&apos;re in</p>
-                <p className="mb-4 text-xs text-muted-foreground">Head to the room to coordinate.</p>
-                <Button variant="primary-gradient" size="sm" className="w-full gap-1.5" onClick={() => router.push(`/rooms?open=${post.roomId}`)}>
-                  <MessageCircle className="size-3.5" /> Open room
-                </Button>
-              </>
-            ) : post.myJoinStatus === "pending" ? (
-              <p className="text-sm text-muted-foreground">Your request to join is waiting on approval.</p>
-            ) : post.myJoinStatus === "declined" ? (
-              <p className="text-sm text-muted-foreground">Your request to join wasn&apos;t accepted this time.</p>
-            ) : post.status === "full" ? (
-              <p className="text-sm text-muted-foreground">This one&apos;s full - check back if a spot opens up.</p>
-            ) : (
-              <>
-                <Button variant="primary-gradient" size="cta" className="w-full" disabled={joining} onClick={join}>
-                  {joining ? "Requesting…" : post.visibility === "public" ? "Join" : "Request to join"}
-                </Button>
-                {joinError && (
-                  <p className="mt-2 text-xs text-red-400">
-                    {joinError}
-                    {/* ARENA-STABILIZE.md Phase 2, G5 - found live: a fresh signup has no date
-                        of birth on file (onboarding never asks), so joining/creating an
-                        Activity 400s with a message pointing at Settings - but nothing actually
-                        got them there. Same treatment as PostComposer's identical error. */}
-                    {joinError.toLowerCase().includes("settings") && (
-                      <> <button type="button" onClick={() => router.push("/settings")} className="font-medium text-primary-soft hover:underline">Go to Settings</button></>
-                    )}
-                  </p>
-                )}
-              </>
+            <p style={{ margin: "0 0 12px", fontFamily: "var(--font-arena-fraunces)", fontSize: 25, lineHeight: 1.2, color: ARENA_V3.ink }}>
+              {post.title || post.body}
+            </p>
+            {post.title && (
+              <p style={{ margin: "0 0 16px", fontSize: 14, lineHeight: 1.8, color: ARENA_V3.body, whiteSpace: "pre-wrap" }}>{post.body}</p>
             )}
-          </Card>
-        )}
+
+            {post.tags.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+                {post.tags.map((t) => (
+                  <span key={t} style={{ fontSize: 11, color: ARENA_V3.body, border: `1px solid ${ARENA_V3.hairline}`, borderRadius: 20, padding: "4px 10px" }}>#{t}</span>
+                ))}
+              </div>
+            )}
+
+            {/* Host row */}
+            <div style={{ display: "flex", alignItems: "center", gap: 11, paddingBottom: 16, marginBottom: 16, borderBottom: `1px solid ${ARENA_V3.hairline}` }}>
+              <ChampagneAvatar name={post.authorName} sizePx={40} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {post.mine ? (
+                  <p style={{ margin: 0, fontSize: 15, color: ARENA_V3.ink }}>{post.authorName}</p>
+                ) : (
+                  <Link
+                    href={post.authorCompanyId ? `/companies/${post.authorCompanyId}` : `/people/${post.authorUserId}`}
+                    style={{ fontSize: 15, color: ARENA_V3.ink, textDecoration: "none" }}
+                  >
+                    {post.authorName}
+                  </Link>
+                )}
+                <p style={{ margin: "2px 0 0", fontSize: 12, color: ARENA_V3.muted }}>
+                  {post.authorAccountAgeDays < NEW_ACCOUNT_THRESHOLD_DAYS ? `New here · joined ${post.authorAccountAgeDays}d ago` : `On Arena ${post.authorAccountAgeDays}d`}
+                  {post.authorJoinCount > 0 && ` · ${post.authorJoinCount} sessions`}
+                </p>
+              </div>
+              {!post.mine && <ChevronRight size={16} color="#C9BFB1" style={{ flexShrink: 0 }} />}
+              {!post.mine && myUserId !== post.authorUserId && !post.authorCompanyId && (
+                <div data-theme="product" style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                  <FollowButton userId={post.authorUserId} />
+                  <BlockButton userId={post.authorUserId} />
+                  <button type="button" disabled={reported} onClick={report} aria-label="Report this post" title={reported ? "Reported" : "Report"} style={{ background: "none", border: "none", cursor: reported ? "default" : "pointer", color: reported ? "#B3432B" : ARENA_V3.muted, padding: 4 }}>
+                    <Flag size={14} strokeWidth={1.75} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Participants - real counts only; no fabricated avatar stack (no participant-list
+                endpoint backs one - same "don't invent what isn't there" call as Map's dropped
+                "People" filter). */}
+            {post.joinable && (
+              <p style={{ margin: "0 0 14px", fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>
+                {post.spotsFilled > 0 ? `${post.spotsFilled} GOING` : "BE THE FIRST"}
+                {spotsLeft !== undefined && post.status === "open" ? ` · ${spotsLeft} SPOT${spotsLeft === 1 ? "" : "S"} LEFT` : ""}
+              </p>
+            )}
+
+            {(post.locationText || distanceKm != null || post.requiredVerificationLevel) && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px", marginBottom: 14, fontSize: 12, color: ARENA_V3.body }}>
+                {post.locationText && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><MapPin size={12} /> {post.locationText}</span>}
+                {distanceKm != null && <span>about {distanceKm.toFixed(1)} km away</span>}
+                {post.requiredVerificationLevel && post.requiredVerificationLevel !== "basic" && (
+                  <span style={{ color: ARENA_V3.gold }}>{VERIFICATION_LABEL[post.requiredVerificationLevel]} required to join</span>
+                )}
+              </div>
+            )}
+
+            {/* Safety card */}
+            {(post.exactMeetingPoint || post.joinable) && (
+              <div style={{ background: ARENA_V3.white, borderRadius: 12, padding: 13, marginBottom: 16 }}>
+                {distanceKm != null && <p style={{ margin: "0 0 4px", fontSize: 12, color: ARENA_V3.ink }}>about {distanceKm.toFixed(1)} km away</p>}
+                <p style={{ margin: 0, fontSize: 12, lineHeight: 1.7, color: ARENA_V3.muted }}>
+                  {post.exactMeetingPoint ? post.exactMeetingPoint : "Exact meeting point is shared once you're approved."}
+                </p>
+                {post.exactMeetingPoint && (
+                  <>
+                    <p style={{ margin: "8px 0 0", fontSize: 11, color: ARENA_V3.muted }}>
+                      For a first meetup, prefer a public place and daylight hours where possible.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={sharePlan}
+                      style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, background: "none", border: "none", cursor: "pointer", color: ARENA_V3.ink, fontSize: 11, fontWeight: 500, padding: 0 }}
+                    >
+                      <Share2 size={12} /> {shared ? "Copied to clipboard" : "Share this plan with someone"}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
+            {post.mine && !inactive && (post.status === "open" || post.status === "full") && (
+              <button
+                type="button"
+                disabled={cancelling}
+                onClick={cancel}
+                style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: "#B3432B", fontSize: 12, padding: "0 0 16px" }}
+              >
+                <XCircle size={14} /> {cancelling ? "Cancelling…" : "Cancel this post"}
+              </button>
+            )}
+
+            <div data-theme="product" style={{ marginBottom: post.mine || !post.joinable ? 0 : 16 }}>
+              <ReactionButton postId={post.id} reacted={!!post.myReacted} count={post.reactionCount} className="text-sm" />
+            </div>
+
+            {/* Mine: join-requests panel to approve/decline. Not mine + joinable: the real CTA. */}
+            {post.joinable && !inactive && post.mine && (
+              <div data-theme="product" style={{ marginTop: 16 }}>
+                <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 600, color: ARENA_V3.ink }}>Join requests</p>
+                <JoinRequestsPanel postId={post.id} onDecided={load} />
+              </div>
+            )}
+
+            {post.joinable && !post.mine && (
+              <div style={{ marginTop: 16 }}>
+                {inactive ? (
+                  <p style={{ fontSize: 13, color: ARENA_V3.muted }}>
+                    {post.status === "cancelled" ? "This was cancelled by the author." : "This activity has ended and is no longer joinable."}
+                  </p>
+                ) : post.myJoinStatus === "approved" && post.roomId ? (
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/rooms?open=${post.roomId}`)}
+                      style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: ARENA_V3.ink, color: ARENA_V3.ivory, fontSize: 14, padding: "14px 0", borderRadius: 26, border: "none", cursor: "pointer" }}
+                    >
+                      <MessageCircle size={16} /> Open room
+                    </button>
+                    <BookmarkButton saved={saved} saving={saving} onClick={toggleSave} />
+                  </div>
+                ) : post.myJoinStatus === "pending" ? (
+                  <p style={{ fontSize: 13, color: ARENA_V3.muted }}>Your request to join is waiting on approval.</p>
+                ) : post.myJoinStatus === "declined" ? (
+                  <p style={{ fontSize: 13, color: ARENA_V3.muted }}>Your request to join wasn&apos;t accepted this time.</p>
+                ) : post.status === "full" ? (
+                  <p style={{ fontSize: 13, color: ARENA_V3.muted }}>This one&apos;s full - check back if a spot opens up.</p>
+                ) : (
+                  <>
+                    <div style={{ display: "flex", gap: 10 }}>
+                      <button
+                        type="button"
+                        disabled={joining}
+                        onClick={join}
+                        style={{ flex: 1, fontSize: 14, fontWeight: 500, padding: "14px 0", borderRadius: 26, border: "none", background: ARENA_V3.ink, color: ARENA_V3.ivory, opacity: joining ? 0.6 : 1, cursor: joining ? "default" : "pointer" }}
+                      >
+                        {joining ? "Requesting…" : post.visibility === "public" ? "Join" : "Request to join"}
+                      </button>
+                      <BookmarkButton saved={saved} saving={saving} onClick={toggleSave} />
+                    </div>
+                    {joinError && (
+                      <p style={{ margin: "8px 0 0", fontSize: 12, color: "#B3432B" }}>
+                        {joinError}
+                        {joinError.toLowerCase().includes("settings") && (
+                          <> <button type="button" onClick={() => router.push("/settings")} style={{ background: "none", border: "none", padding: 0, color: ARENA_V3.ink, textDecoration: "underline", cursor: "pointer", fontSize: 12 }}>Go to Settings</button></>
+                        )}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {!post.joinable && (
+              <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                <BookmarkButton saved={saved} saving={saving} onClick={toggleSave} />
+              </div>
+            )}
+          </div>
+
+          <div style={{ padding: "0 20px 20px" }}>
+            <p style={{ margin: "0 0 10px", fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>COMMENTS</p>
+            <div data-theme="product" style={{ background: ARENA_V3.white, borderRadius: 14, padding: 14 }}>
+              <CommentThread postId={post.id} postAuthorUserId={post.authorUserId} />
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Card className="mt-4">
-        <p className="mb-3 font-display text-sm font-bold">Comments</p>
-        <CommentThread postId={post.id} postAuthorUserId={post.authorUserId} />
-      </Card>
-      <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action={signInAction} />
-    </AppShell>
+      <HomeTabBar onCompose={() => setComposerOpen(true)} />
+      <CreateComposer open={composerOpen} onOpenChange={setComposerOpen} onPublished={load} />
+      <div data-theme="product">
+        <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action={signInAction} />
+      </div>
+    </div>
+  );
+}
+
+function BookmarkButton({ saved, saving, onClick }: { saved: boolean; saving: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      disabled={saving}
+      onClick={onClick}
+      aria-label={saved ? "Remove from saved" : "Save this post"}
+      style={{
+        width: 46,
+        height: 46,
+        flexShrink: 0,
+        borderRadius: "50%",
+        border: `1px solid ${ARENA_V3.hairline}`,
+        background: saved ? ARENA_V3.ink : "none",
+        color: saved ? ARENA_V3.ivory : ARENA_V3.ink,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: saving ? "default" : "pointer",
+      }}
+    >
+      <Bookmark size={18} strokeWidth={1.75} fill={saved ? "currentColor" : "none"} />
+    </button>
   );
 }
