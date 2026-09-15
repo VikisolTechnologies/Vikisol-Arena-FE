@@ -143,7 +143,15 @@ export default function ProfilePage() {
                 <OrbLoader className="h-32" />
               ) : recent.length === 0 ? (
                 <div style={{ background: ARENA_V3.white, borderRadius: 14, padding: "20px 15px", textAlign: "center" }}>
-                  <p style={{ margin: 0, fontSize: 13, color: ARENA_V3.muted }}>Nothing posted yet.</p>
+                  <p style={{ margin: "0 0 14px", fontSize: 13, color: ARENA_V3.muted }}>Nothing posted yet.</p>
+                  {/* ARENA-FINISH-IT.md §2 - "a real button," not a single line of text. */}
+                  <button
+                    type="button"
+                    onClick={() => setComposerOpen(true)}
+                    style={{ fontSize: 13, background: ARENA_V3.ink, color: ARENA_V3.ivory, padding: "10px 22px", borderRadius: 20, border: "none", cursor: "pointer" }}
+                  >
+                    Start something
+                  </button>
                 </div>
               ) : (
                 <div style={{ background: ARENA_V3.white, borderRadius: 14, overflow: "hidden" }}>
