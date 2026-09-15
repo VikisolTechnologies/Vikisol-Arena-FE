@@ -8,7 +8,7 @@ import { getMyProfile, updateMyLocation } from "@/lib/api/profile";
 import { getNearby, requestJoin } from "@/lib/api/posts";
 import { getFeedItems } from "@/lib/api/feed";
 import { requireOnboarded } from "@/lib/auth-guard";
-import { PostComposer } from "@/components/feed/PostComposer";
+import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { ARENA_V3 } from "./tokens";
 import { ActivityCard } from "./ActivityCard";
 import { NeedCard } from "./NeedCard";
@@ -87,7 +87,10 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
   const [joiningId, setJoiningId] = useState<string | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
-  const [composerIntent, setComposerIntent] = useState<Post["intentType"]>("activity");
+  const [composerIntent, setComposerIntent] = useState<Exclude<Post["intentType"], "company"> | null>(null);
+  // CreateComposer resets its internal draft by remounting (initial-state-only, no reset effect)
+  // - bumped on every open so re-opening after a cancel never resurfaces a stale draft.
+  const [composerSession, setComposerSession] = useState(0);
   const [locating, setLocating] = useState(false);
   const [locationBlocked, setLocationBlocked] = useState(false);
   const [locationAskDismissed, setLocationAskDismissed] = useState(false);
@@ -201,8 +204,17 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
     }
   }
 
-  function openComposer(intent: Post["intentType"]) {
+  function openComposer(intent: Exclude<Post["intentType"], "company">) {
     setComposerIntent(intent);
+    setComposerSession((n) => n + 1);
+    setComposerOpen(true);
+  }
+
+  // Generic "+" entry points (header, tab bar) show SCREEN 3's intent picker first, rather than
+  // assuming Activity - a suggestion card that already names its intent skips straight there.
+  function openComposerPicker() {
+    setComposerIntent(null);
+    setComposerSession((n) => n + 1);
     setComposerOpen(true);
   }
 
@@ -228,7 +240,7 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
 
   return (
     <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
-      <HomeHeader profile={profile} onCompose={() => openComposer("activity")} />
+      <HomeHeader profile={profile} onCompose={openComposerPicker} />
 
       {/* ARENA-WEB-AND-SEED.md §2.4 "The hero on desktop. Minimum height 420px... Headline
           scales to 44px on desktop." Only height/font-size are breakpoint-dependent, so only
@@ -352,7 +364,7 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
                   : "Nothing posted recently. Be the first to start something today."
               }
               primaryActionLabel="Start something"
-              onPrimaryAction={() => openComposer("activity")}
+              onPrimaryAction={openComposerPicker}
               onStartIntent={openComposer}
             />
           )}
@@ -372,14 +384,14 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
         </div>
       </div>
 
-      <HomeTabBar onCompose={() => openComposer("activity")} />
+      <HomeTabBar onCompose={openComposerPicker} />
 
-      <PostComposer
-        key={composerIntent}
+      <CreateComposer
+        key={composerSession}
         open={composerOpen}
         onOpenChange={setComposerOpen}
         onPublished={refreshAfterPost}
-        defaultIntent={composerIntent}
+        initialIntent={composerIntent}
       />
     </div>
   );

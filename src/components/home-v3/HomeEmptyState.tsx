@@ -15,7 +15,7 @@ import type { Post } from "@/lib/types";
 // four intents, same order, as the Create screen spec (ARENA-MOCKUP-REFERENCE.md SCREEN 3) -
 // this is the canonical "here's what you can start" list in this product, not a Home-specific
 // invention.
-const SUGGESTIONS: { icon: LucideIcon; label: string; description: string; intent?: Post["intentType"]; href?: string }[] = [
+const SUGGESTIONS: { icon: LucideIcon; label: string; description: string; intent?: Exclude<Post["intentType"], "company">; href?: string }[] = [
   { icon: Users, label: "An activity", description: "Something happening at a time and place", intent: "activity" },
   { icon: HelpCircle, label: "A need", description: "Ask for help, skills or people", intent: "ask" },
   { icon: Briefcase, label: "A project or job", description: "Paid work others can bid on", href: "/marketplace" },
@@ -33,7 +33,7 @@ export function HomeEmptyState({
   description: string;
   primaryActionLabel: string;
   onPrimaryAction: () => void;
-  onStartIntent: (intent: Post["intentType"]) => void;
+  onStartIntent: (intent: Exclude<Post["intentType"], "company">) => void;
 }) {
   return (
     <div style={{ margin: "0 12px 12px" }}>

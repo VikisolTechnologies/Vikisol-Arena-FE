@@ -16,7 +16,7 @@ import { ARENA_V3 } from "@/components/home-v3/tokens";
 import { MapFilterChips, type MapTypeFilter } from "@/components/map-v3/MapFilterChips";
 import { MapListRow } from "@/components/map-v3/MapListRow";
 import { MapDetailSheet } from "@/components/map-v3/MapDetailSheet";
-import { PostComposer } from "@/components/feed/PostComposer";
+import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import type { CandidateProfile, Post } from "@/lib/types";
 
 const MapRadarScene = dynamic(() => import("@/components/map/MapRadarScene").then((m) => m.MapRadarScene), {
@@ -45,6 +45,12 @@ export default function MapPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [composerSession, setComposerSession] = useState(0);
+
+  function openComposer() {
+    setComposerSession((n) => n + 1);
+    setComposerOpen(true);
+  }
 
   useEffect(() => {
     if (!requireOnboarded(router)) return;
@@ -107,7 +113,7 @@ export default function MapPage() {
 
   return (
     <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
-      <HomeHeader profile={profile} onCompose={() => setComposerOpen(true)} />
+      <HomeHeader profile={profile} onCompose={openComposer} />
 
       <div className="h-[300px] md:h-[380px]" style={{ position: "relative", flexShrink: 0, background: ARENA_V3.mapDark }}>
         {posts === null ? (
@@ -183,7 +189,7 @@ export default function MapPage() {
                   </p>
                   <button
                     type="button"
-                    onClick={() => setComposerOpen(true)}
+                    onClick={openComposer}
                     style={{ fontSize: 13, background: ARENA_V3.ink, color: ARENA_V3.ivory, padding: "10px 22px", borderRadius: 20, border: "none", cursor: "pointer" }}
                   >
                     Start something
@@ -198,9 +204,9 @@ export default function MapPage() {
         </div>
       </div>
 
-      <HomeTabBar onCompose={() => setComposerOpen(true)} />
+      <HomeTabBar onCompose={openComposer} />
 
-      <PostComposer open={composerOpen} onOpenChange={setComposerOpen} onPublished={() => {}} defaultIntent="activity" />
+      <CreateComposer key={composerSession} open={composerOpen} onOpenChange={setComposerOpen} onPublished={() => {}} />
     </div>
   );
 }
