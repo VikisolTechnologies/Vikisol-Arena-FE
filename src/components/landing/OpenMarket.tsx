@@ -59,7 +59,7 @@ export function OpenMarket() {
           </Reveal>
           <Reveal as="p" delay={0.05} className="my-4.5 max-w-[440px] text-[16.5px] leading-relaxed text-muted-foreground">
             Post a project and take bids in the open. Hire on proof, not resumes — from developers
-            to designers to doctors. Your agent shortlists the bids worth your time.
+            to designers to doctors. Every bid shows a real match percentage against your brief.
           </Reveal>
           <Reveal delay={0.1} className="flex flex-wrap gap-3.5">
             <Button variant="primary-gradient" size="cta" render={<Link href="/auth" />} nativeButton={false}>
@@ -101,7 +101,11 @@ export function OpenMarket() {
                         {bid.bidderName} · {bid.matchPercentage}% match
                       </div>
                     </div>
-                    {bid.agentPick && <span className="text-[12.5px] font-semibold text-primary-soft">agent pick ★</span>}
+                    {/* ARENA-FINISH-IT.md §4 - bid.agentPick is never actually set true on the
+                        real bid-creation path (ProjectService always writes false); the "agent
+                        pick ★" badge this used to show never fires on live data and implied a
+                        selection feature that isn't built. The highlighted top row (highest
+                        amount, styled above) already carries the visual emphasis on its own. */}
                   </div>
                 ))}
                 {topBids.length === 0 && (

@@ -6,13 +6,18 @@ import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 const Animator = dynamic(() => import("./AgentOrbAnimator").then((m) => m.AgentOrbAnimator), { ssr: false });
 
+// ARENA-FINISH-IT.md §4 - was "Applied · 3 jobs tonight" / "Found · 12 new matches" /
+// "Interview · Tue 3:00 PM" - fabricated proof of an autonomous agent working unattended, next
+// to the hero's own false claim. Reframed around the same three real intents shown just below
+// (SEE_LANDING_REFERENCE SCREEN 3) - things a real person actually did on Arena, not what an
+// agent supposedly did for them.
 const CHIPS = [
-  { className: "left-[-4%] top-[6%] rotate-[-5deg]", icon: "✓", label: "Applied", value: "3 jobs tonight" },
-  { className: "right-[-6%] top-[26%] rotate-[5deg]", icon: "🔍", label: "Found", value: "12 new matches" },
-  { className: "bottom-[8%] left-[12%] rotate-[3deg]", icon: "📅", label: "Interview", value: "Tue 3:00 PM" },
+  { className: "left-[-4%] top-[6%] rotate-[-5deg]", icon: "✓", label: "Joined", value: "Badminton tonight" },
+  { className: "right-[-6%] top-[26%] rotate-[5deg]", icon: "🤝", label: "Asked", value: "Help moving Sat" },
+  { className: "bottom-[8%] left-[12%] rotate-[3deg]", icon: "💼", label: "Bid", value: "₹62,000 sent" },
 ];
 
-/** The living agent orb — eyes, orbit rings, floating activity chips. Matches arena-prototype.html's #orb exactly. */
+/** The orb — eyes, orbit rings, floating activity chips. Matches arena-prototype.html's #orb exactly. */
 export function AgentOrb() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();

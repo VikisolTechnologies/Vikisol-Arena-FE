@@ -1,36 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { AgentOrb } from "./AgentOrb";
 import { cn } from "@/lib/utils";
 
 const Animator = dynamic(() => import("./HeroAnimator").then((m) => m.HeroAnimator), { ssr: false });
 
+// ARENA-FINISH-IT.md §4 - was "It works while you sleep" / "Wake your agent" / an "Ask
+// anything" box that routed to signup no matter what you typed: describing a fully autonomous
+// job-hunting agent (scans openings, applies with a tailored resume, books interviews) that
+// isn't built - the closest real thing is a chat surface behind a real login, not an
+// unauthenticated one that pretends to act on what you type. Rewritten around what Arena
+// actually does today: real activities, needs, and work, with real people nearby, not a job
+// board. Draft only - flagged for the founder to correct the wording, per §4's own instruction.
 export function Hero() {
   const scopeRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
-  const router = useRouter();
-  const [query, setQuery] = useState("");
-
-  // Was a hardcoded "02:41 AM" baked into the static prototype markup and never wired up - every
-  // visitor at every hour saw the same frozen instant, undermining the exact "your agent is awake
-  // right now" claim this badge makes. Client-only (starts null so SSR/first paint never has to
-  // guess the visitor's clock) and refreshed every 30s so it stays true for the whole time someone
-  // sits on the landing page.
-  const [time, setTime] = useState<string | null>(null);
-  useEffect(() => {
-    const update = () => setTime(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
-    update();
-    const id = setInterval(update, 30_000);
-    return () => clearInterval(id);
-  }, []);
 
   const revealProps = (extra?: string) => ({
     "data-hero": reduced ? undefined : true,
@@ -40,59 +30,42 @@ export function Hero() {
   return (
     <section
       ref={scopeRef}
-      id="agent"
+      id="hero"
       className="relative z-10 mx-auto grid min-h-svh w-full max-w-[1240px] items-center gap-6 px-5 pt-[110px] sm:px-6 lg:grid-cols-[1.05fr_0.95fr]"
     >
       <div>
         <Badge variant="glass" {...revealProps()}>
           <span className="size-2 rounded-full bg-[#3ddc84]" />
-          Your agent is awake{time ? ` · ${time}` : ""}
+          Not a job board
         </Badge>
 
         <h1
           {...revealProps("mt-5 font-display text-[clamp(44px,6.4vw,88px)] font-bold leading-[1.02] tracking-tight")}
         >
-          It works while{" "}
+          Real things,{" "}
           <span className="bg-linear-to-r from-primary-soft to-primary bg-clip-text text-transparent">
-            you sleep.
+            happening near you.
           </span>
         </h1>
 
         <p {...revealProps("mt-5.5 max-w-[480px] text-[17px] leading-relaxed text-muted-foreground")}>
-          Arena&apos;s agent hunts openings across every industry, applies with a tailored resume, and
-          books your interviews — day and night.
+          Join a pickup game, ask your neighborhood for a hand, bid on a freelance project, or apply
+          to a real role — all in one place, all real people nearby.
         </p>
 
         <div {...revealProps("mt-6.5 mb-6.5 flex flex-wrap gap-3.5")}>
           <Button variant="primary-gradient" size="cta" render={<Link href="/auth" />} nativeButton={false}>
-            Wake your agent
+            Get started
           </Button>
-          {/* No demo video exists yet - was previously a dead button. Scrolls to the Overnight
-              Report section just below, which is the closest real thing to "watching it work"
-              (a concrete walkthrough of what the agent does), instead of doing nothing. */}
+          {/* Scrolls to the section just below, a concrete look at the four real ways to start
+              something on Arena - no demo video exists yet. */}
           <Button
             variant="ghost-glass"
             size="cta"
             onClick={() => document.getElementById("overnight")?.scrollIntoView({ behavior: reduced ? "auto" : "smooth" })}
           >
-            Watch it work ▷
+            See how it works ▷
           </Button>
-        </div>
-
-        <div {...revealProps("max-w-[520px]")}>
-          <Input
-            placeholder='Ask anything — "find me remote design contracts"'
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              // No unauthenticated agent-chat exists (that's a real, signed-in feature per
-              // CLAUDE.md's Phase 1) - was previously a decorative input that submitted nowhere.
-              // Enter now carries the visitor into signup so this becomes a real next step
-              // instead of silently doing nothing.
-              if (e.key === "Enter") router.push("/auth?mode=signup");
-            }}
-            className="h-[60px] rounded-full border-border bg-white/[0.03] px-5.5 text-[15px] backdrop-blur-xl placeholder:text-[#8b8b93]"
-          />
         </div>
       </div>
 

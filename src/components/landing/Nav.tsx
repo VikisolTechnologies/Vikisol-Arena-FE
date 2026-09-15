@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
-  { href: "#agent", label: "Agent" },
+  { href: "#overnight", label: "How it works" },
   { href: "#universe", label: "Talent Universe" },
   { href: "#market", label: "Projects" },
   { href: "#cta", label: "Enterprise" },

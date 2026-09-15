@@ -10,10 +10,10 @@ export function CtaFooter() {
           as="h2"
           className="max-w-[820px] font-display text-[clamp(36px,6vw,72px)] font-bold leading-[1.05] tracking-tight"
         >
-          Stop searching for work.
+          Stop scrolling listings.
           <br />
           <span className="bg-linear-to-r from-primary-soft to-primary bg-clip-text text-transparent">
-            Let work find you.
+            Start something real.
           </span>
         </Reveal>
         <Reveal as="p" delay={0.05} className="my-5 text-[17px] text-muted-foreground">
@@ -30,7 +30,7 @@ export function CtaFooter() {
         <span>
           ARENA<span className="text-primary">.</span> — a Vikisol Technologies product
         </span>
-        <span>Identity · Agent · Marketplace · Enterprise</span>
+        <span>Identity · Map · Marketplace · Enterprise</span>
       </footer>
     </>
   );

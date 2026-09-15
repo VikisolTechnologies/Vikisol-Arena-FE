@@ -1,26 +1,36 @@
 import Link from "next/link";
-import { CountUp } from "./CountUp";
+import { Users, HelpCircle, Briefcase, MessageCircle, type LucideIcon } from "lucide-react";
 import { Reveal } from "./Reveal";
 
-const CARDS = [
+// ARENA-FINISH-IT.md §4 - replaces the old "Overnight Report" (47 openings scanned, 3
+// applications sent, 1 interview booked - an autonomous job-hunting agent that isn't built).
+// Same four intents, same order, as the real Create screen (ARENA-MOCKUP-REFERENCE.md SCREEN 3)
+// - this is the honest version of "watch it work": what a visitor can actually go do, not a
+// fabricated log of what an agent supposedly did overnight.
+const CARDS: { icon: LucideIcon; title: string; body: string; tagline: string }[] = [
   {
-    count: 47,
-    title: "Openings scanned",
-    body: "Matched against your identity graph — skills, proof of work, salary floor and the roles you swiped away.",
-    tagline: "QUALITY-GATED ›",
+    icon: Users,
+    title: "An activity",
+    body: "A pickup game, a trek, a coding jam — post it or find one, and show up in real life.",
+    tagline: "SEE WHAT'S ON ›",
   },
   {
-    count: 3,
-    title: "Applications sent",
-    body: "Only above a 90% match. Each one carries a resume tailored to that exact role, ready for your review.",
-    tagline: "SEE WHAT IT WROTE ›",
-    accent: true,
+    icon: HelpCircle,
+    title: "A need",
+    body: "Ask your neighborhood for a hand, a skill, a favor — not a forum post that goes nowhere.",
+    tagline: "ASK SOMETHING ›",
   },
   {
-    count: 1,
-    title: "Interview booked",
-    body: "It read both calendars, proposed slots, and locked Tuesday 3:00 PM. You just have to show up.",
-    tagline: "ADD TO CALENDAR ›",
+    icon: Briefcase,
+    title: "A project or job",
+    body: "Bid on freelance work in the open, or apply to a real role. Hire on proof, not just a resume.",
+    tagline: "BROWSE WORK ›",
+  },
+  {
+    icon: MessageCircle,
+    title: "An update",
+    body: "Share something with the people who already follow you — no algorithm deciding who sees it.",
+    tagline: "SAY SOMETHING ›",
   },
 ];
 
@@ -32,42 +42,38 @@ export function OvernightReport() {
           as="div"
           className="mb-4 font-display text-xs font-bold tracking-[5px] text-primary-soft"
         >
-          OVERNIGHT REPORT
+          FOUR WAYS IN
         </Reveal>
         <Reveal as="h2" delay={0.05} className="font-display text-[clamp(32px,4.6vw,56px)] font-bold leading-[1.08] tracking-tight">
-          While you slept, it didn&apos;t.
+          Not one box to fit into.
         </Reveal>
         <Reveal as="p" delay={0.1} className="mt-4 text-[16.5px] leading-relaxed text-muted-foreground">
-          Every morning opens with a report of what your agent already finished — not a to-do list
-          of what you should start.
+          Arena isn&apos;t a job board. These are the same four ways real people already use it —
+          the project or job sits third, deliberately.
         </Reveal>
       </div>
 
-      <div className="grid gap-4.5 pb-10 sm:grid-cols-3">
-        {CARDS.map((card, i) => (
-          <Reveal
-            key={card.title}
-            delay={i * 0.08}
-            className="rounded-[24px] border border-border bg-white/5 p-6.5 backdrop-blur-[18px]"
-          >
-            <CountUp
-              end={card.count}
-              className={`font-display text-[clamp(34px,3.6vw,46px)] font-bold ${card.accent ? "text-primary-soft" : "text-foreground"}`}
-            />
-            <h3 className="mt-1.5 font-display text-[17px] font-bold">{card.title}</h3>
-            <p className="mt-2 text-[14.5px] leading-relaxed text-muted-foreground">{card.body}</p>
-            {/* These teaser numbers describe what your agent does once you're signed up (not a
-                claim about the visitor's own history yet) - was a plain <span> styled to look
-                like a link but going nowhere. Points at /auth so "SEE WHAT IT WROTE ›" etc. are
-                real next steps instead of dead text. */}
-            <Link
-              href="/auth?mode=signup"
-              className="mt-3.5 inline-block text-xs font-semibold tracking-wide text-primary-soft hover:underline"
+      <div className="grid gap-4.5 pb-10 sm:grid-cols-2 lg:grid-cols-4">
+        {CARDS.map((card, i) => {
+          const Icon = card.icon;
+          return (
+            <Reveal
+              key={card.title}
+              delay={i * 0.08}
+              className="rounded-[24px] border border-border bg-white/5 p-6.5 backdrop-blur-[18px]"
             >
-              {card.tagline}
-            </Link>
-          </Reveal>
-        ))}
+              <Icon className="size-7 text-primary-soft" strokeWidth={1.5} />
+              <h3 className="mt-3.5 font-display text-[17px] font-bold">{card.title}</h3>
+              <p className="mt-2 text-[14.5px] leading-relaxed text-muted-foreground">{card.body}</p>
+              <Link
+                href="/auth?mode=signup"
+                className="mt-3.5 inline-block text-xs font-semibold tracking-wide text-primary-soft hover:underline"
+              >
+                {card.tagline}
+              </Link>
+            </Reveal>
+          );
+        })}
       </div>
     </section>
   );
