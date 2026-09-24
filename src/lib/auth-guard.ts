@@ -44,6 +44,21 @@ export function requireOnboarded(router: Router): boolean {
   return true;
 }
 
+// "Enter as guest" (founder's call) - Home/Map/Marketplace/Companies/Discover render fully for a
+// signed-out visitor; only the actual write (post, join, apply, bid, follow, message) needs an
+// account, gated right at that action via <SignInPrompt> instead of at page load. A session that
+// DOES exist but is the wrong role still gets bounced exactly like requireOnboarded - a recruiter
+// landing on the candidate feed is a real routing bug, not a valid guest view.
+export function allowGuestBrowsing(router: Router): boolean {
+  const session = getSession();
+  if (!session) return true;
+  if (session.role !== "talent") {
+    denyWrongRole(router);
+    return false;
+  }
+  return true;
+}
+
 export function requireEnterpriseOnboarded(router: Router): boolean {
   if (!requireSession(router)) return false;
   const session = getSession();

@@ -17,7 +17,9 @@ import { getMyProfile } from "@/lib/api/profile";
 import { getProject, placeBid, submitMyDeliverable } from "@/lib/api/market";
 import { getMyProject, addBidToMyProject } from "@/lib/api/myProjects";
 import { recordMyBid, getMyBids } from "@/lib/api/myBids";
-import { requireOnboarded } from "@/lib/auth-guard";
+import { allowGuestBrowsing } from "@/lib/auth-guard";
+import { getSession } from "@/lib/session";
+import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import { formatINR, formatINRRange } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CandidateProfile, Project, Bid } from "@/lib/types";
@@ -44,9 +46,21 @@ export default function ProjectDetailPage() {
   const [now, setNow] = useState<number | null>(null);
   const [bidding, setBidding] = useState(false);
   const [amount, setAmount] = useState("");
+  const [signInPromptOpen, setSignInPromptOpen] = useState(false);
   const bidsListRef = useRef<HTMLDivElement>(null);
 
+  // "Enter as guest" - a shared/browsed project link must render read-only without a session;
+  // getMyProject/getMyBids are both "my stuff" calls that 401 without one, so they're skipped
+  // entirely for a guest rather than treated as load failures. getProject (the public path)
+  // already returns the same shape either way.
   const load = () => {
+    if (!getSession()) {
+      getProject(params.id).then((p) => {
+        setProject(p ?? null);
+        setIsMine(false);
+      });
+      return;
+    }
     getMyProject(params.id).then((mine) => {
       if (mine) { setProject(mine); setIsMine(true); return; }
       getProject(params.id).then((p) => {
@@ -62,8 +76,8 @@ export default function ProjectDetailPage() {
   };
 
   useEffect(() => {
-    if (!requireOnboarded(router)) return;
-    getMyProfile().then(setProfile);
+    if (!allowGuestBrowsing(router)) return;
+    if (getSession()) getMyProfile().then(setProfile);
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id, router]);
@@ -74,7 +88,7 @@ export default function ProjectDetailPage() {
   }, []);
 
 
-  if (project === undefined || !profile) {
+  if (project === undefined) {
     return (
       <AppShell title="Project">
         <OrbLoader className="h-96" />
@@ -91,7 +105,16 @@ export default function ProjectDetailPage() {
 
   const msLeft = now === null ? null : new Date(project.endsAt).getTime() - now;
 
+  function openBidDialog() {
+    if (!getSession()) {
+      setSignInPromptOpen(true);
+      return;
+    }
+    setBidding(true);
+  }
+
   const submitBid = async () => {
+    if (!profile) return;
     const num = Number(amount);
     if (!num) return;
     if (isMine) return; // owners don't bid on their own project
@@ -149,7 +172,7 @@ export default function ProjectDetailPage() {
           </div>
 
           {!isMine && (
-            <Button variant="default" size="cta" className="mt-5 w-full" onClick={() => setBidding(true)} disabled={msLeft === null || msLeft <= 0}>
+            <Button variant="default" size="cta" className="mt-5 w-full" onClick={openBidDialog} disabled={msLeft === null || msLeft <= 0}>
               Place a bid
             </Button>
           )}
@@ -251,6 +274,7 @@ export default function ProjectDetailPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action="place a bid" />
     </AppShell>
   );
 }

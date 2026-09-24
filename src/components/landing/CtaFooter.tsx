@@ -20,7 +20,9 @@ export function CtaFooter() {
           Free for talent. Enterprise plans for teams that hire.
         </Reveal>
         <Reveal delay={0.1}>
-          <Button variant="primary-gradient" size="cta-lg" render={<Link href="/auth" />} nativeButton={false}>
+          {/* "Enter as guest" - "Enter Arena" now means exactly that: straight into the real
+              feed, no signup wall first. */}
+          <Button variant="primary-gradient" size="cta-lg" render={<Link href="/home" />} nativeButton={false}>
             Enter Arena
           </Button>
         </Reveal>

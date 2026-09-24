@@ -63,10 +63,12 @@ export function OpenMarket() {
             to designers to doctors. Every bid shows a real match percentage against your brief.
           </Reveal>
           <Reveal delay={0.1} className="flex flex-wrap gap-3.5">
-            <Button variant="primary-gradient" size="cta" render={<Link href="/auth" />} nativeButton={false}>
+            {/* "Enter as guest" - Marketplace itself renders fully logged-out now; posting a
+                project is gated right there (SignInPrompt), not at this link. */}
+            <Button variant="primary-gradient" size="cta" render={<Link href="/marketplace" />} nativeButton={false}>
               Post a project
             </Button>
-            <Button variant="ghost-glass" size="cta" render={<Link href="/auth" />} nativeButton={false}>
+            <Button variant="ghost-glass" size="cta" render={<Link href="/marketplace" />} nativeButton={false}>
               Browse open bids →
             </Button>
           </Reveal>
@@ -120,7 +122,7 @@ export function OpenMarket() {
                 variant="primary-gradient"
                 size="cta"
                 className="mt-2.5 w-full"
-                render={<Link href="/auth" />}
+                render={<Link href={`/marketplace/${project.id}`} />}
                 nativeButton={false}
               >
                 Place a bid
@@ -136,7 +138,7 @@ export function OpenMarket() {
                 variant="primary-gradient"
                 size="cta"
                 className="mt-4.5 w-full"
-                render={<Link href="/auth" />}
+                render={<Link href="/marketplace" />}
                 nativeButton={false}
               >
                 Post a project

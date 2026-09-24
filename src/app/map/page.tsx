@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { LocateFixed } from "lucide-react";
 import { getMyProfile, updateMyLocation } from "@/lib/api/profile";
 import { getNearby, requestJoin } from "@/lib/api/posts";
-import { requireOnboarded } from "@/lib/auth-guard";
+import { allowGuestBrowsing } from "@/lib/auth-guard";
+import { getSession } from "@/lib/session";
 import { GoogleMapView, googleMapsConfigured } from "@/components/map/GoogleMapView";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -18,6 +19,7 @@ import { MapListRow } from "@/components/map-v3/MapListRow";
 import { MapDetailSheet } from "@/components/map-v3/MapDetailSheet";
 import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { HomeEmptyState } from "@/components/home-v3/HomeEmptyState";
+import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import type { CandidateProfile, Post } from "@/lib/types";
 
 const MapRadarScene = dynamic(() => import("@/components/map/MapRadarScene").then((m) => m.MapRadarScene), {
@@ -48,21 +50,36 @@ export default function MapPage() {
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerSession, setComposerSession] = useState(0);
   const [composerIntent, setComposerIntent] = useState<Exclude<Post["intentType"], "company"> | null>(null);
+  const [signInPromptOpen, setSignInPromptOpen] = useState(false);
+  const [signInAction, setSignInAction] = useState("do that");
 
   function openComposer() {
+    if (!getSession()) {
+      setSignInAction("post");
+      setSignInPromptOpen(true);
+      return;
+    }
     setComposerIntent(null);
     setComposerSession((n) => n + 1);
     setComposerOpen(true);
   }
 
   function openComposerWithIntent(intent: Exclude<Post["intentType"], "company">) {
+    if (!getSession()) {
+      setSignInAction("post");
+      setSignInPromptOpen(true);
+      return;
+    }
     setComposerIntent(intent);
     setComposerSession((n) => n + 1);
     setComposerOpen(true);
   }
 
+  // "Enter as guest" - the map itself (getNearby, below) needs no session; only fetch/apply a
+  // saved profile location when one actually exists to fetch.
   useEffect(() => {
-    if (!requireOnboarded(router)) return;
+    if (!allowGuestBrowsing(router)) return;
+    if (!getSession()) return;
     getMyProfile().then((p) => {
       setProfile(p);
       if (p.locationConsent && p.locationConsent !== "off" && p.approxLat != null && p.approxLng != null) {
@@ -83,6 +100,11 @@ export default function MapPage() {
   // directly, not a text link elsewhere. Updates the standing profile (same call Settings'
   // "Precise" option makes) and re-centers in place - no navigation, no reload.
   function enableLocation() {
+    if (!getSession()) {
+      setSignInAction("save your location");
+      setSignInPromptOpen(true);
+      return;
+    }
     if (!navigator.geolocation) {
       setLocationBlocked(true);
       return;
@@ -109,6 +131,11 @@ export default function MapPage() {
   }
 
   async function join(post: Post) {
+    if (!getSession()) {
+      setSignInAction("join this");
+      setSignInPromptOpen(true);
+      return;
+    }
     setJoining(true);
     try {
       await requestJoin(post.id);
@@ -211,6 +238,7 @@ export default function MapPage() {
       <HomeTabBar onCompose={openComposer} />
 
       <CreateComposer key={composerSession} open={composerOpen} onOpenChange={setComposerOpen} onPublished={() => {}} initialIntent={composerIntent} />
+      <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action={signInAction} />
     </div>
   );
 }

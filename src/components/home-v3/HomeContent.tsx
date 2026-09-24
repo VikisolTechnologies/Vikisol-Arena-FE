@@ -8,8 +8,10 @@ import { getMyProfile, updateMyLocation } from "@/lib/api/profile";
 import { getNearby, requestJoin } from "@/lib/api/posts";
 import { getFeedItems } from "@/lib/api/feed";
 import { getJobs } from "@/lib/api/jobs";
-import { requireOnboarded } from "@/lib/auth-guard";
+import { allowGuestBrowsing } from "@/lib/auth-guard";
+import { getSession } from "@/lib/session";
 import { CreateComposer } from "@/components/create-v3/CreateComposer";
+import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import { ARENA_V3 } from "./tokens";
 import { ActivityCard } from "./ActivityCard";
 import { NeedCard } from "./NeedCard";
@@ -94,6 +96,10 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
   // matching postings (Job.matchPercentage is already computed server-side, see ScoringService)
   // up top; "just exploring" users see the feed exactly as before, untouched.
   const [matchingJobs, setMatchingJobs] = useState<Job[] | null>(null);
+  // "Enter as guest" - Home renders fully signed-out; this is the one gate every mutating
+  // action (join, post, turn on location) funnels through instead of a page-load redirect.
+  const [signInPromptOpen, setSignInPromptOpen] = useState(false);
+  const [signInAction, setSignInAction] = useState("do that");
 
   useEffect(() => {
     // Client-only read (SSR has no sessionStorage) flipping post-hydration state, same pattern
@@ -113,25 +119,31 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
   }
 
   useEffect(() => {
-    if (!requireOnboarded(router)) return;
+    if (!allowGuestBrowsing(router)) return;
     let cancelled = false;
     (async () => {
       try {
-        const p = await getMyProfile();
-        if (cancelled) return;
-        setProfile(p);
-        if (p.cameForJob === true) {
-          getJobs()
-            .then((jobs) => {
-              if (cancelled) return;
-              setMatchingJobs(jobs.slice().sort((a, b) => b.matchPercentage - a.matchPercentage).slice(0, 3));
-            })
-            .catch(() => {
-              // Best-effort - the jobs section just doesn't render if this fails, same as any
-              // other optional feed enrichment; never blocks the rest of the page loading.
-            });
+        // A guest has no CandidateProfile to fetch, no matching-jobs enrichment, and no saved
+        // location - loadGlobalFeed() below is the same honest fallback a signed-in user with
+        // location off already sees, not a degraded/placeholder guest view.
+        let p: CandidateProfile | null = null;
+        if (getSession()) {
+          p = await getMyProfile();
+          if (cancelled) return;
+          setProfile(p);
+          if (p.cameForJob === true) {
+            getJobs()
+              .then((jobs) => {
+                if (cancelled) return;
+                setMatchingJobs(jobs.slice().sort((a, b) => b.matchPercentage - a.matchPercentage).slice(0, 3));
+              })
+              .catch(() => {
+                // Best-effort - the jobs section just doesn't render if this fails, same as any
+                // other optional feed enrichment; never blocks the rest of the page loading.
+              });
+          }
         }
-        if (p.approxLat != null && p.approxLng != null) {
+        if (p?.approxLat != null && p?.approxLng != null) {
           const posts = await getNearby({ lat: p.approxLat, lng: p.approxLng, radiusKm: 10, withinHours: 24 });
           if (cancelled) return;
           setFeedPosts(posts.filter((post) => post.intentType === "activity" || post.intentType === "ask"));
@@ -161,6 +173,11 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
   // feed" - nearby results are merged ahead of whatever the global fallback already showed,
   // deduped by id, rather than replacing it outright.
   function enableLocation() {
+    if (!getSession()) {
+      setSignInAction("save your location");
+      setSignInPromptOpen(true);
+      return;
+    }
     if (!navigator.geolocation) {
       setLocationBlocked(true);
       return;
@@ -201,6 +218,11 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
   }
 
   async function handleJoin(post: Post) {
+    if (!getSession()) {
+      setSignInAction("join this");
+      setSignInPromptOpen(true);
+      return;
+    }
     setJoiningId(post.id);
     setJoinError(null);
     try {
@@ -216,6 +238,11 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
   }
 
   function openComposer(intent: Exclude<Post["intentType"], "company">) {
+    if (!getSession()) {
+      setSignInAction("post");
+      setSignInPromptOpen(true);
+      return;
+    }
     setComposerIntent(intent);
     setComposerSession((n) => n + 1);
     setComposerOpen(true);
@@ -224,6 +251,11 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
   // Generic "+" entry points (header, tab bar) show SCREEN 3's intent picker first, rather than
   // assuming Activity - a suggestion card that already names its intent skips straight there.
   function openComposerPicker() {
+    if (!getSession()) {
+      setSignInAction("post");
+      setSignInPromptOpen(true);
+      return;
+    }
     setComposerIntent(null);
     setComposerSession((n) => n + 1);
     setComposerOpen(true);
@@ -430,6 +462,7 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
         onPublished={refreshAfterPost}
         initialIntent={composerIntent}
       />
+      <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action={signInAction} />
     </div>
   );
 }

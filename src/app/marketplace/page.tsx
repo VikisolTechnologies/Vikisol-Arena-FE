@@ -13,7 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { getMyProfile } from "@/lib/api/profile";
 import { getProjects } from "@/lib/api/market";
 import { getMyProjects, createMyProject } from "@/lib/api/myProjects";
-import { requireOnboarded } from "@/lib/auth-guard";
+import { allowGuestBrowsing } from "@/lib/auth-guard";
+import { getSession } from "@/lib/session";
+import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import { formatINRRange } from "@/lib/format";
 import type { CandidateProfile, Project } from "@/lib/types";
 
@@ -27,25 +29,46 @@ export default function MarketplacePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [posting, setPosting] = useState(false);
   const [draft, setDraft] = useState(EMPTY_DRAFT);
   const [publishing, setPublishing] = useState(false);
+  const [signInPromptOpen, setSignInPromptOpen] = useState(false);
 
+  // "Enter as guest" - a signed-out visitor sees every open project, just none of their own
+  // postings (there aren't any) layered on top; getMyProjects() is a "my stuff" call that would
+  // 401 without a session, so it's skipped entirely rather than treated as a load failure.
   const load = () => {
-    Promise.all([getProjects(), getMyProjects()]).then(([all, mine]) => {
-      // Real mode's /marketplace/projects already includes the caller's own postings, so `all`
-      // and `mine` overlap there (mock mode's MOCK_PROJECTS never does) - dedupe by id, keeping
-      // the "mine" copy since it carries the flag the "Mine" badge renders off of.
-      const mineIds = new Set(mine.map((p) => p.id));
-      setProjects([...mine, ...all.filter((p) => !mineIds.has(p.id))]);
-    });
+    if (getSession()) {
+      Promise.all([getProjects(), getMyProjects()]).then(([all, mine]) => {
+        // Real mode's /marketplace/projects already includes the caller's own postings, so `all`
+        // and `mine` overlap there (mock mode's MOCK_PROJECTS never does) - dedupe by id, keeping
+        // the "mine" copy since it carries the flag the "Mine" badge renders off of.
+        const mineIds = new Set(mine.map((p) => p.id));
+        setProjects([...mine, ...all.filter((p) => !mineIds.has(p.id))]);
+        setLoaded(true);
+      });
+    } else {
+      getProjects().then((all) => {
+        setProjects(all);
+        setLoaded(true);
+      });
+    }
   };
 
   useEffect(() => {
-    if (!requireOnboarded(router)) return;
-    getMyProfile().then(setProfile);
+    if (!allowGuestBrowsing(router)) return;
+    if (getSession()) getMyProfile().then(setProfile);
     load();
   }, [router]);
+
+  function startPosting() {
+    if (!getSession()) {
+      setSignInPromptOpen(true);
+      return;
+    }
+    setPosting(true);
+  }
 
   // Was "type one line, an agent drafts the full brief" — but nothing drafted it: a fixed
   // ₹1.5–4L/6-week budget got returned for every input, with only the skill chips varying by
@@ -75,7 +98,7 @@ export default function MarketplacePage() {
     }
   };
 
-  if (!profile) {
+  if (!loaded) {
     return (
       <AppShell title="Marketplace">
         <OrbLoader className="h-96" />
@@ -92,7 +115,7 @@ export default function MarketplacePage() {
           <Button variant="outline" size="sm" onClick={() => router.push("/marketplace/bids")}>
             My bids
           </Button>
-          <Button variant="default" size="sm" className="gap-1.5" onClick={() => setPosting(true)}>
+          <Button variant="default" size="sm" className="gap-1.5" onClick={startPosting}>
             <Plus className="size-3.5" /> Post a project
           </Button>
         </div>
@@ -191,6 +214,7 @@ export default function MarketplacePage() {
           </div>
         </DialogContent>
       </Dialog>
+      <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action="post a project" />
     </AppShell>
   );
 }

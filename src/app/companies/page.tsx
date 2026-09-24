@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { CompanyFollowButton } from "@/components/companies/CompanyFollowButton";
 import { getMyProfile } from "@/lib/api/profile";
 import { listCompanies } from "@/lib/api/companies";
-import { requireOnboarded } from "@/lib/auth-guard";
+import { allowGuestBrowsing } from "@/lib/auth-guard";
+import { getSession } from "@/lib/session";
 import type { CandidateProfile, Company } from "@/lib/types";
 
 export default function CompaniesPage() {
@@ -23,13 +24,13 @@ export default function CompaniesPage() {
   const load = () => { listCompanies(query).then((p) => setCompanies(p.content)); };
 
   useEffect(() => {
-    if (!requireOnboarded(router)) return;
-    getMyProfile().then(setProfile);
+    if (!allowGuestBrowsing(router)) return;
+    if (getSession()) getMyProfile().then(setProfile);
   }, [router]);
 
   useEffect(load, [query]);
 
-  if (!profile) {
+  if (!companies) {
     return (
       <AppShell title="Companies">
         <OrbLoader className="h-96" />

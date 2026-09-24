@@ -104,7 +104,11 @@ export function Nav() {
         <Button variant="ghost-glass" size="cta-sm" render={<Link href="/auth" />} nativeButton={false}>
           Sign in
         </Button>
-        <Button variant="primary-gradient" size="cta-sm" render={<Link href="/auth" />} nativeButton={false}>
+        {/* "Enter as guest" - Home, Map, Marketplace and Companies all render fully signed-out
+            now; "Get started" drops a visitor straight into the real feed instead of forcing
+            signup first. Only the actual write (post, join, apply, bid) still asks for an
+            account, at that specific moment, via SignInPrompt. */}
+        <Button variant="primary-gradient" size="cta-sm" render={<Link href="/home" />} nativeButton={false}>
           Get started
         </Button>
       </div>

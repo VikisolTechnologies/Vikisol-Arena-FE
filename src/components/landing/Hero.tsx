@@ -54,7 +54,10 @@ export function Hero() {
         </p>
 
         <div {...revealProps("mt-6.5 mb-6.5 flex flex-wrap gap-3.5")}>
-          <Button variant="primary-gradient" size="cta" render={<Link href="/auth" />} nativeButton={false}>
+          {/* "Enter as guest" - same as Nav's own "Get started": drops a visitor straight into
+              the real, browsable feed. An account is only asked for at the moment they actually
+              try to post/join/apply/bid, not before. */}
+          <Button variant="primary-gradient" size="cta" render={<Link href="/home" />} nativeButton={false}>
             Get started
           </Button>
           {/* Scrolls to the section just below, a concrete look at the four real ways to start
