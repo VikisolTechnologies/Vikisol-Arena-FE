@@ -3,9 +3,11 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
+import Link from "next/link";
 import { getMyProfile, updateMyLocation } from "@/lib/api/profile";
 import { getNearby, requestJoin } from "@/lib/api/posts";
 import { getFeedItems } from "@/lib/api/feed";
+import { getJobs } from "@/lib/api/jobs";
 import { requireOnboarded } from "@/lib/auth-guard";
 import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { ARENA_V3 } from "./tokens";
@@ -14,7 +16,7 @@ import { NeedCard } from "./NeedCard";
 import { HomeEmptyState } from "./HomeEmptyState";
 import { HomeTabBar } from "./HomeTabBar";
 import { HomeHeader } from "./HomeHeader";
-import type { CandidateProfile, FeedItem, Post } from "@/lib/types";
+import type { CandidateProfile, FeedItem, Job, Post } from "@/lib/types";
 
 const LOCATION_ASK_DISMISSED_KEY = "arena_home_location_ask_dismissed";
 
@@ -86,6 +88,12 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
   const [locating, setLocating] = useState(false);
   const [locationBlocked, setLocationBlocked] = useState(false);
   const [locationAskDismissed, setLocationAskDismissed] = useState(false);
+  // Onboarding's job-intent question ("here for a job" vs "just exploring") previously had no
+  // effect on what the feed actually showed - same undifferentiated activity/ask list either
+  // way. This is what makes it actually change the feed: job-seekers additionally see real
+  // matching postings (Job.matchPercentage is already computed server-side, see ScoringService)
+  // up top; "just exploring" users see the feed exactly as before, untouched.
+  const [matchingJobs, setMatchingJobs] = useState<Job[] | null>(null);
 
   useEffect(() => {
     // Client-only read (SSR has no sessionStorage) flipping post-hydration state, same pattern
@@ -112,6 +120,17 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
         const p = await getMyProfile();
         if (cancelled) return;
         setProfile(p);
+        if (p.cameForJob === true) {
+          getJobs()
+            .then((jobs) => {
+              if (cancelled) return;
+              setMatchingJobs(jobs.slice().sort((a, b) => b.matchPercentage - a.matchPercentage).slice(0, 3));
+            })
+            .catch(() => {
+              // Best-effort - the jobs section just doesn't render if this fails, same as any
+              // other optional feed enrichment; never blocks the rest of the page loading.
+            });
+        }
         if (p.approxLat != null && p.approxLng != null) {
           const posts = await getNearby({ lat: p.approxLat, lng: p.approxLng, radiusKm: 10, withinHours: 24 });
           if (cancelled) return;
@@ -314,6 +333,37 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
           extra padding is harmless on desktop since nothing sits directly below the fold there. */}
       <div className="md:pb-6" style={{ flex: 1, paddingTop: 14, paddingBottom: "calc(84px + env(safe-area-inset-bottom))" }}>
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
+          {matchingJobs != null && matchingJobs.length > 0 && (
+            <div style={{ margin: "0 12px 18px" }}>
+              <p style={{ margin: "0 0 10px", fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>
+                JOBS MATCHING YOU
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {matchingJobs.map((job) => (
+                  <Link
+                    key={job.id}
+                    href={`/jobs/${job.id}`}
+                    style={{ display: "block", background: ARENA_V3.white, borderRadius: 14, padding: 14, textDecoration: "none" }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: ARENA_V3.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {job.title}
+                        </p>
+                        <p style={{ margin: "2px 0 0", fontSize: 12, color: ARENA_V3.muted }}>
+                          {job.company} · {job.remote ? "Remote" : job.location}
+                        </p>
+                      </div>
+                      <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 600, color: ARENA_V3.goldText }}>
+                        {job.matchPercentage}% match
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {state === "loading" &&
             [0, 1].map((i) => (
               <div key={i} style={{ background: ARENA_V3.white, margin: "0 12px 12px", borderRadius: 14, height: 112 + 78, opacity: 0.5 }} />
