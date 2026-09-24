@@ -48,7 +48,8 @@ export function OpenMarket() {
 
   return (
     <section id="market" className="relative z-10 mx-auto w-full max-w-[1240px] px-5 sm:px-6">
-      <Reveal as="div" className="pb-0 pt-[110px] font-display text-xs font-bold tracking-[5px] text-primary-soft">
+      <Reveal as="div" className="flex items-center gap-2.5 pb-0 pt-[110px] font-display text-xs font-bold tracking-[5px] text-primary-soft">
+        <span className="text-[#5a5a63]">03</span>
         OPEN MARKET
       </Reveal>
 

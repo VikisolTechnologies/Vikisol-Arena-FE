@@ -39,7 +39,8 @@ export function TalentUniverse() {
       >
         <Starfield />
         <div className="relative z-[2] w-full px-5 py-[70px] sm:px-6">
-          <Reveal as="div" className="mb-4 font-display text-xs font-bold tracking-[5px] text-primary-soft">
+          <Reveal as="div" className="mb-4 flex items-center justify-center gap-2.5 font-display text-xs font-bold tracking-[5px] text-primary-soft">
+            <span className="text-[#5a5a63]">02</span>
             FOR ENTERPRISES
           </Reveal>
           <Reveal as="h2" delay={0.05} className="font-display text-[clamp(30px,4.4vw,52px)] font-bold">
