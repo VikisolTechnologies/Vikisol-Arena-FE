@@ -18,6 +18,7 @@ import { isOnboarded } from "@/lib/session";
 import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { PhoneAuthForm } from "@/components/auth/PhoneAuthForm";
+import { EmailOtpAuthForm } from "@/components/auth/EmailOtpAuthForm";
 import { signInWithGoogle } from "@/lib/api/auth";
 import type { Role, Session } from "@/lib/types";
 import type { SignInResult } from "@/lib/api/auth";
@@ -48,7 +49,10 @@ function AuthForm() {
   const [mfaCode, setMfaCode] = useState("");
   // Phone/Google are talent-only entry points (see PhoneSignupVerifyRequest's comment) - "email"
   // stays the only method for the enterprise/recruiter/hiring-manager/platform-admin tabs.
-  const [method, setMethod] = useState<"email" | "phone">("email");
+  // "email-otp" (unlike phone/google) applies to every role, same as password - it's just an
+  // alternate credential for an account that already has one, and it's signin-only (see
+  // AuthService.requestEmailSigninOtp's own comment on why there's no signup counterpart).
+  const [method, setMethod] = useState<"email" | "phone" | "email-otp">("email");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   // Syam's explicit call (2026-09-02): sign-in against an unknown email used to just show the
   // same generic "Invalid email or password" as a wrong password - a dead end for someone who
@@ -285,7 +289,17 @@ function AuthForm() {
               </form>
             ) : (
               <>
-            <Tabs value={mode} onValueChange={(v) => { setMode(v as "signin" | "signup"); setAccountNotFound(false); setError(""); }}>
+            <Tabs value={mode} onValueChange={(v) => {
+              const nextMode = v as "signin" | "signup";
+              setMode(nextMode);
+              // email-otp has no signup counterpart (see AuthService.requestEmailSigninOtp's
+              // comment) - switching to the Signup tab directly (not via onSwitchToSignup) must
+              // still fall back to the password form rather than leaving a signup-mode
+              // EmailOtpAuthForm rendered.
+              if (nextMode === "signup" && method === "email-otp") setMethod("email");
+              setAccountNotFound(false);
+              setError("");
+            }}>
               <TabsList className="mb-6 grid w-full grid-cols-2 rounded-full bg-white/5 p-1">
                 <TabsTrigger value="signin" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   Sign in
@@ -356,6 +370,21 @@ function AuthForm() {
                   Use email instead
                 </button>
               </>
+            ) : method === "email-otp" ? (
+              <>
+                <EmailOtpAuthForm
+                  initialEmail={form.email}
+                  onSignInResult={handlePhoneSignInResult}
+                  onSwitchToSignup={() => { setMode("signup"); setMethod("email"); }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setMethod("email")}
+                  className="mt-4 w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Use password instead
+                </button>
+              </>
             ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === "signup" && (
@@ -400,6 +429,16 @@ function AuthForm() {
                   className="h-11 rounded-xl border-border bg-white/[0.03]"
                 />
               </div>
+
+              {mode === "signin" && (
+                <button
+                  type="button"
+                  onClick={() => { setMethod("email-otp"); setError(""); setAccountNotFound(false); }}
+                  className="-mt-2 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Sign in with a one-time code instead
+                </button>
+              )}
 
               {accountNotFound ? (
                 <div className="rounded-xl border border-border bg-white/[0.03] p-4">

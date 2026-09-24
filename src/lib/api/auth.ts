@@ -158,6 +158,33 @@ export async function verifyPhoneSignupOtp(phoneNumber: string, code: string, na
   return delay(session, 400);
 }
 
+// --- Email OTP sign-in (existing accounts, any role) ---
+
+export async function requestEmailSigninOtp(email: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch<void>("/auth/email/signin/request-otp", { method: "POST", auth: false, body: { email } });
+    return;
+  }
+  await delay(undefined, 400);
+}
+
+export async function verifyEmailSigninOtp(email: string, code: string): Promise<SignInResult> {
+  if (isRealMode()) {
+    const res = await apiFetch<SessionResponse>("/auth/email/signin/verify-otp", { method: "POST", auth: false, body: { email, code } });
+    if (res.mfaRequired) {
+      return { status: "mfa_required", pendingToken: res.mfaPendingToken as string };
+    }
+    setToken(res.token as string);
+    const session = toSession(res);
+    setSession(session);
+    await syncOnboardedFromProfile(session.role);
+    return { status: "success", session };
+  }
+  const session: Session = { role: "talent", name: mockNameFor("talent"), email, candidateId: CURRENT_CANDIDATE_ID };
+  setSession(session);
+  return { status: "success", session: await delay(session, 400) };
+}
+
 // --- Google sign-in/signup (find-or-create) ---
 
 export async function signInWithGoogle(idToken: string): Promise<SignInResult> {
