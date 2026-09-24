@@ -51,6 +51,13 @@ export interface CandidateProfile {
   homeCity?: string;
   approxLat?: number;
   approxLng?: number;
+  // Onboarding's job-intent branch (see backend CandidateProfile entity comment) - all optional/
+  // skippable. cameForJob undefined = never asked (older accounts) or skipped.
+  cameForJob?: boolean;
+  organization?: string;
+  currentCtc?: number;
+  expectedCtc?: number;
+  preferredLocation?: string;
 }
 
 export interface Job {

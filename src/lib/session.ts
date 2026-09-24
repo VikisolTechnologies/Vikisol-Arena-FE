@@ -44,6 +44,11 @@ export interface OnboardingProfile {
   resumeFileName?: string;
   resumeUploadedAt?: string;
   careerHealth?: number;
+  cameForJob?: boolean;
+  organization?: string;
+  currentCtc?: number;
+  expectedCtc?: number;
+  preferredLocation?: string;
 }
 
 const PROFILE_KEY = "arena_onboarding_profile";

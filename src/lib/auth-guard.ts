@@ -1,5 +1,5 @@
 import type { useRouter } from "next/navigation";
-import { getSession, isOnboarded, isEnterpriseOnboarded } from "@/lib/session";
+import { getSession, isEnterpriseOnboarded } from "@/lib/session";
 
 type Router = ReturnType<typeof useRouter>;
 
@@ -27,15 +27,18 @@ function denyWrongRole(router: Router): void {
   router.replace("/access-denied");
 }
 
+// Onboarding is no longer a hard gate (founder's call) - a brand-new signup already gets a
+// real, valid default CandidateProfile server-side (AuthService.signUp ->
+// seedDataFactory.blankCandidateProfile), so nothing downstream actually depends on the wizard
+// having run first. /onboarding is still a real, reachable page (linked from a "complete your
+// profile" prompt), just no longer mandatory before using the rest of the app. isOnboarded()
+// itself is kept (still set at signup/sign-in - see redirectForRole) purely as a UI hint for
+// that prompt, not as an access check.
 export function requireOnboarded(router: Router): boolean {
   if (!requireSession(router)) return false;
   const session = getSession();
   if (session && session.role !== "talent") {
     denyWrongRole(router);
-    return false;
-  }
-  if (!isOnboarded()) {
-    router.replace("/onboarding");
     return false;
   }
   return true;

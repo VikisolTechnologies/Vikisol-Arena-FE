@@ -29,6 +29,11 @@ interface CandidateProfileResponse {
   homeCity?: string;
   approxLat?: number;
   approxLng?: number;
+  cameForJob?: boolean;
+  organization?: string;
+  currentCtc?: number;
+  expectedCtc?: number;
+  preferredLocation?: string;
 }
 
 function toCandidateProfile(res: CandidateProfileResponse): CandidateProfile {
@@ -54,6 +59,11 @@ function toCandidateProfile(res: CandidateProfileResponse): CandidateProfile {
     homeCity: res.homeCity,
     approxLat: res.approxLat,
     approxLng: res.approxLng,
+    cameForJob: res.cameForJob,
+    organization: res.organization,
+    currentCtc: res.currentCtc,
+    expectedCtc: res.expectedCtc,
+    preferredLocation: res.preferredLocation,
   };
 }
 
@@ -184,6 +194,11 @@ export async function updateMyProfileDetails(details: {
   experienceYears: number;
   rateFloor: number;
   openTo: OpenTo[];
+  cameForJob?: boolean;
+  organization?: string;
+  currentCtc?: number;
+  expectedCtc?: number;
+  preferredLocation?: string;
 }): Promise<CandidateProfile> {
   if (isRealMode()) {
     return apiFetch<CandidateProfileResponse>("/profile/me/details", { method: "PUT", body: details })

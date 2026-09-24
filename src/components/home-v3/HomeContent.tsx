@@ -2,7 +2,6 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { Bell } from "lucide-react";
 import { getMyProfile, updateMyLocation } from "@/lib/api/profile";
 import { getNearby, requestJoin } from "@/lib/api/posts";
@@ -17,13 +16,6 @@ import { HomeTabBar } from "./HomeTabBar";
 import { HomeHeader } from "./HomeHeader";
 import type { CandidateProfile, FeedItem, Post } from "@/lib/types";
 
-// Hero image credit: "People play cricket on a street in India" by Zoshua Colah on Unsplash,
-// https://unsplash.com/photos/klW2RayHc0s, Unsplash License (free to use). Real photography,
-// recorded per ARENA-PHASE-1-BUILD.md §2's "record source and licence for everything that
-// ships." Replaces an earlier choice (a Hong Kong harbour photo) that ARENA-WEB-AND-SEED.md
-// §1.6 correctly flagged: "Arena is hyperlocal to Hyderabad. Imagery must plausibly be
-// somewhere the user could be."
-const HERO_IMAGE = "https://images.unsplash.com/photo-1753443279716-b2aaadb7e08f";
 const LOCATION_ASK_DISMISSED_KEY = "arena_home_location_ask_dismissed";
 
 type LoadState = "loading" | "ready" | "error";
@@ -242,72 +234,44 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
     <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
       <HomeHeader profile={profile} onCompose={openComposerPicker} />
 
-      {/* ARENA-WEB-AND-SEED.md §2.4 "The hero on desktop. Minimum height 420px... Headline
-          scales to 44px on desktop." Only height/font-size are breakpoint-dependent, so only
-          those move to a className - everything else (color, weight, positioning) stays inline
-          with the rest of this screen's tokens. */}
-      <div className="h-[290px] md:h-[420px]" style={{ position: "relative", flexShrink: 0, overflow: "hidden", background: ARENA_V3.espresso }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 130, background: ARENA_V3.espressoLight }} />
-        <Image src={HERO_IMAGE} alt="" fill priority sizes="1200px" style={{ objectFit: "cover", opacity: 0.6 }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(34,28,23,0.15) 0%, rgba(34,28,23,0.75) 100%)" }} />
-        {/* HomeHeader already carries the wordmark + notifications from md up - this hero-
-            internal row is mobile-only branding on the photo itself (the mockup's own masthead
-            treatment), not a second nav; showing both above 768px just duplicated it. */}
+      {/* Redesigned feed header - previously a full-bleed generic stock photo band (290-420px
+          tall); replaced with a compact, text-led espresso panel (~120-150px) that leads with
+          the real headline/count instead of decorative imagery with no connection to the actual
+          content below it. Mobile-only branding row kept (HomeHeader only shows md+). */}
+      <div style={{ position: "relative", flexShrink: 0, background: ARENA_V3.espresso, padding: "18px 0 26px" }}>
         <div className="flex md:hidden" style={{ ...centeredAbsolute, top: 16, justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontSize: 11, color: "#C9BFB1", letterSpacing: 4 }}>ARENA</span>
           <Bell size={17} color="#E8DFD2" strokeWidth={1.75} />
         </div>
-        {/* §2.4 "48px of breathing room beneath" the text block. */}
-        <div style={{ ...centeredAbsolute, bottom: 48 }}>
+        <div style={{ ...centeredAbsolute, position: "static", margin: "0 auto", paddingTop: 40 }} className="md:pt-0">
           {state === "loading" && (
             <>
               <div style={{ width: 150, height: 10, background: "rgba(247,241,234,0.22)", borderRadius: 4, marginBottom: 14 }} />
-              <div style={{ width: 210, height: 30, background: "rgba(247,241,234,0.16)", borderRadius: 6, marginBottom: 6 }} />
-              <div style={{ width: 130, height: 30, background: "rgba(247,241,234,0.16)", borderRadius: 6 }} />
+              <div style={{ width: 210, height: 26, background: "rgba(247,241,234,0.16)", borderRadius: 6 }} />
             </>
           )}
           {state === "error" && (
-            <p className="text-[26px] md:text-[36px]" style={{ margin: 0, fontFamily: displayFont, lineHeight: 1.2, color: ARENA_V3.ivory }}>
+            <p className="text-[22px] md:text-[28px]" style={{ margin: 0, fontFamily: displayFont, lineHeight: 1.2, color: ARENA_V3.ivory }}>
               Couldn&apos;t load what&apos;s nearby
             </p>
           )}
           {state === "ready" && (
             <>
-              <p style={{ margin: "0 0 12px", fontSize: 10, color: ARENA_V3.goldText, letterSpacing: 3.5 }}>
+              <p style={{ margin: "0 0 8px", fontSize: 10, color: ARENA_V3.goldText, letterSpacing: 3.5 }}>
                 {hasLocation ? `${cityLabel} · TODAY` : "HYDERABAD · TODAY"}
               </p>
-              <p className="text-[32px] md:text-[44px]" style={{ margin: 0, fontFamily: displayFont, fontWeight: 400, lineHeight: 1.1, color: ARENA_V3.ivory }}>
+              <p className="text-[24px] md:text-[28px]" style={{ margin: 0, fontFamily: displayFont, fontWeight: 400, lineHeight: 1.25, color: ARENA_V3.ivory }}>
                 {hasLocation ? (
-                  nearbyCount === 0 ? (
-                    <>
-                      Nothing nearby
-                      <br />
-                      yet today
-                    </>
-                  ) : (
-                    <>
-                      {nearbyCount} thing{nearbyCount === 1 ? "" : "s"}
-                      <br />
-                      near you
-                    </>
-                  )
+                  nearbyCount === 0 ? "Nothing nearby yet today" : `${nearbyCount} thing${nearbyCount === 1 ? "" : "s"} near you`
                 ) : locationAskDismissed ? (
-                  <>
-                    What&apos;s happening
-                    <br />
-                    in Hyderabad
-                  </>
+                  "What's happening in Hyderabad"
                 ) : (
-                  <>
-                    Turn on location
-                    <br />
-                    to see what&apos;s near
-                  </>
+                  "Turn on location to see what's near"
                 )}
               </p>
             </>
           )}
-          <div style={{ width: 36, height: 1, background: ARENA_V3.gold, marginTop: 16 }} />
+          <div style={{ width: 32, height: 1, background: ARENA_V3.gold, marginTop: 14 }} />
           {state === "ready" && !hasLocation && !locationAskDismissed && (
             <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
               <button
@@ -367,6 +331,12 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
               onPrimaryAction={openComposerPicker}
               onStartIntent={openComposer}
             />
+          )}
+
+          {state === "ready" && feedPosts.length > 0 && (
+            <p style={{ margin: "0 12px 10px", fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>
+              HAPPENING NOW
+            </p>
           )}
 
           {state === "ready" &&

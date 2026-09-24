@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Settings } from "lucide-react";
+import { Settings, LogOut } from "lucide-react";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { HomeHeader } from "@/components/home-v3/HomeHeader";
 import { HomeTabBar } from "@/components/home-v3/HomeTabBar";
@@ -10,6 +10,7 @@ import { ChampagneAvatar } from "@/components/home-v3/ChampagneAvatar";
 import { ARENA_V3 } from "@/components/home-v3/tokens";
 import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { getMyProfile } from "@/lib/api/profile";
+import { signOut } from "@/lib/api/auth";
 import { getMyFollowers } from "@/lib/api/follows";
 import { getMyPosts } from "@/lib/api/posts";
 import { getMyRooms } from "@/lib/api/rooms";
@@ -46,6 +47,13 @@ export default function ProfilePage() {
   const [sessionCount, setSessionCount] = useState<number | null>(null);
   const [outcomeCount, setOutcomeCount] = useState<number | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleLogout = async () => {
+    setSigningOut(true);
+    await signOut();
+    router.push("/auth");
+  };
 
   useEffect(() => {
     if (!requireOnboarded(router)) return;
@@ -124,6 +132,33 @@ export default function ProfilePage() {
               ))}
             </div>
 
+            {/* Onboarding is no longer mandatory (see auth-guard.ts) - this is the "fill later"
+                path back to it, shown only while the job-intent questions genuinely haven't
+                been answered yet (not just "answered false/skipped", which are real states, not
+                an unfinished one). */}
+            {profile.cameForJob == null && !profile.organization && profile.currentCtc == null && (
+              <button
+                type="button"
+                onClick={() => router.push("/onboarding")}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  textAlign: "left",
+                  marginBottom: 24,
+                  padding: "14px 16px",
+                  borderRadius: 14,
+                  border: `1px solid ${ARENA_V3.gold}`,
+                  background: ARENA_V3.white,
+                  cursor: "pointer",
+                }}
+              >
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: ARENA_V3.ink }}>Complete your profile</p>
+                <p style={{ margin: "3px 0 0", fontSize: 12, color: ARENA_V3.muted }}>
+                  Add your experience and preferences so we can match you to real opportunities.
+                </p>
+              </button>
+            )}
+
             {profile.skills.length > 0 && (
               <div style={{ marginBottom: 24 }}>
                 <p style={{ margin: "0 0 10px", fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>SKILLS</p>
@@ -173,6 +208,38 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
+
+            {/* The v3 shell (HomeHeader/HomeTabBar) has no sign-out affordance anywhere - the
+                avatar/Profile tab both route here, and the "gear" icon on the cover above goes
+                to /identity/edit (edit profile), not /settings, where signOut() actually lived.
+                A logged-in user had no reachable way to log out short of manually typing
+                /settings or clearing cookies. This page is what every nav path reaches, so this
+                is the one real place to put it. */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={signingOut}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                width: "100%",
+                marginTop: 28,
+                marginBottom: 8,
+                padding: "13px 0",
+                fontSize: 13,
+                color: ARENA_V3.muted,
+                background: "none",
+                border: `1px solid ${ARENA_V3.hairlineCard}`,
+                borderRadius: 12,
+                cursor: signingOut ? "default" : "pointer",
+                opacity: signingOut ? 0.6 : 1,
+              }}
+            >
+              <LogOut size={15} strokeWidth={1.75} />
+              {signingOut ? "Signing out…" : "Log out"}
+            </button>
           </div>
         </div>
       </div>

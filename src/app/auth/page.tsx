@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { signIn, signUp, verifyMfa, forgotPassword } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/httpClient";
 import { isRealMode } from "@/lib/api/mode";
-import { isOnboarded } from "@/lib/session";
+import { setOnboarded } from "@/lib/session";
 import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { PhoneAuthForm } from "@/components/auth/PhoneAuthForm";
@@ -52,7 +52,12 @@ function AuthForm() {
   // "email-otp" (unlike phone/google) applies to every role, same as password - it's just an
   // alternate credential for an account that already has one, and it's signin-only (see
   // AuthService.requestEmailSigninOtp's own comment on why there's no signup counterpart).
-  const [method, setMethod] = useState<"email" | "phone" | "email-otp">("email");
+  // Defaults to email-otp for sign-in (founder's call: code-first is easier than remembering a
+  // password) but never for signup (?mode=signup deep links, e.g. from the landing page) -
+  // email-otp has no signup counterpart, so defaulting to it there would render a broken step.
+  const [method, setMethod] = useState<"email" | "phone" | "email-otp">(
+    searchParams.get("mode") === "signup" ? "email" : "email-otp",
+  );
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   // Syam's explicit call (2026-09-02): sign-in against an unknown email used to just show the
   // same generic "Invalid email or password" as a wrong password - a dead end for someone who
@@ -91,7 +96,12 @@ function AuthForm() {
         router.push("/admin");
         break;
       default:
-        router.push(isOnboarded() ? "/home" : "/onboarding");
+        // Onboarding is no longer a mandatory gate (see auth-guard.ts's requireOnboarded) -
+        // every talent sign-in/signup lands straight in the app, /home's real feed by default.
+        // Still calling setOnboarded() here keeps the flag meaningful as a UI hint (e.g. a
+        // "complete your profile" prompt), just not as an access check anymore.
+        setOnboarded();
+        router.push("/home");
     }
   };
 
@@ -198,8 +208,10 @@ function AuthForm() {
         className="relative z-10 mx-auto grid min-h-svh w-full max-w-[1240px] items-center gap-8 px-5 py-16 sm:px-6 lg:grid-cols-2"
         style={cookieBannerVisible ? { paddingBottom: "var(--cookie-banner-h, 88px)" } : undefined}
       >
-        {/* Branding panel */}
-        <div className="order-2 hidden flex-col items-center text-center lg:order-1 lg:flex">
+        {/* Branding panel - entrance animation via tw-animate-css (already used site-wide for
+            Base UI's data-open/data-closed transitions, e.g. dialog.tsx) rather than a new
+            animation dependency; unconditional animate-in classes just run once on first paint. */}
+        <div className="order-2 hidden flex-col items-center text-center lg:order-1 lg:flex animate-in fade-in-0 slide-in-from-left-4 duration-700">
           <AgentOrb />
           <p className="mt-4 max-w-sm font-display text-2xl font-bold tracking-tight">
             Your agent is ready to work.
@@ -210,14 +222,21 @@ function AuthForm() {
         </div>
 
         {/* Form panel */}
-        <div className="order-1 mx-auto w-full max-w-md lg:order-2">
+        <div className="order-1 mx-auto w-full max-w-md lg:order-2 animate-in fade-in-0 slide-in-from-bottom-4 duration-700">
           <Link href="/" className="mb-8 flex items-center gap-2.5">
             <span className="font-display text-lg font-bold tracking-wide">
               ARENA<span className="text-primary">.</span>
             </span>
           </Link>
 
-          <div className="rounded-[24px] border border-border bg-white/5 p-7 backdrop-blur-[18px]">
+          <div className="rounded-[24px] border border-border bg-white/5 p-7 backdrop-blur-[18px] overflow-hidden">
+            {/* Cross-fade between forgot-password / 2FA / tabs+method views - a fresh `key` forces
+                React to remount this subtree, which re-triggers the animate-in classes exactly
+                like a route change would, instead of the content just jump-cutting in place. */}
+            <div
+              key={showForgotPassword ? "forgot" : mfaPendingToken ? "mfa" : `${mode}-${method}`}
+              className="animate-in fade-in-0 slide-in-from-right-2 duration-300"
+            >
             {showForgotPassword ? (
               <div className="space-y-4">
                 <div>
@@ -315,7 +334,7 @@ function AuthForm() {
                 <button
                   key={key}
                   type="button"
-                  onClick={() => { setRole(key); setMethod("email"); setAccountNotFound(false); }}
+                  onClick={() => { setRole(key); setMethod(mode === "signup" ? "email" : "email-otp"); setAccountNotFound(false); }}
                   className={cn(
                     "flex flex-col items-center gap-1.5 rounded-2xl border px-3 py-3.5 text-center transition-colors",
                     role === key
@@ -340,7 +359,7 @@ function AuthForm() {
                   <button
                     key={key}
                     type="button"
-                    onClick={() => { setRole(key); setMethod("email"); setAccountNotFound(false); }}
+                    onClick={() => { setRole(key); setMethod("email-otp"); setAccountNotFound(false); }}
                     className={cn(
                       "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                       role === key
@@ -364,7 +383,7 @@ function AuthForm() {
                 />
                 <button
                   type="button"
-                  onClick={() => setMethod("email")}
+                  onClick={() => setMethod(mode === "signup" ? "email" : "email-otp")}
                   className="mt-4 w-full text-center text-xs text-muted-foreground hover:text-foreground"
                 >
                   Use email instead
@@ -499,6 +518,7 @@ function AuthForm() {
             )}
               </>
             )}
+            </div>
           </div>
         </div>
       </div>
