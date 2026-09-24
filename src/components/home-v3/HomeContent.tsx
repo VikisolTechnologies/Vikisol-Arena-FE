@@ -93,6 +93,10 @@ export function HomeContent() {
   // matching postings (Job.matchPercentage is already computed server-side, see ScoringService)
   // up top; "just exploring" users see the feed exactly as before, untouched.
   const [matchingJobs, setMatchingJobs] = useState<Job[] | null>(null);
+  // Shown only when matchingJobs isn't (guest, or a profile that isn't flagged as job-seeking) -
+  // a handful of real open roles/projects pulled from the same general feed fetch below, so
+  // "browse Arena" always includes a taste of the job/bidding side, not just activities.
+  const [feedJobItems, setFeedJobItems] = useState<FeedItem[]>([]);
   // "Enter as guest" - Home renders fully signed-out; this is the one gate every mutating
   // action (join, post, turn on location) funnels through instead of a page-load redirect.
   const [signInPromptOpen, setSignInPromptOpen] = useState(false);
@@ -111,10 +115,15 @@ export function HomeContent() {
   // Never blank." §1.2 named this as "the single worst thing" in the previous build - an empty
   // viewport below the hero whenever location was off. getFeedItems() (the same general,
   // recency-ranked feed Home's own pre-rebuild version used) is the real, honest fallback content
-  // source; getNearby() (a real geo+time query) is used instead once location is actually granted.
-  async function loadGlobalFeed() {
+  // source. Extended here to also cover the has-location-but-nearby-is-sparse case (a narrow
+  // 10km/24h geo+time query can legitimately come back empty even when there's plenty of real
+  // content elsewhere) - "never blank" only actually holds if the fallback applies whenever
+  // there's little to show, not only when location is off outright.
+  async function loadGeneralFeed() {
     const items = await getFeedItems("for-you", 0, 30);
-    return items.filter((i) => i.itemType === "activity" || i.itemType === "ask").map(feedItemToPost);
+    const posts = items.filter((i) => i.itemType === "activity" || i.itemType === "ask").map(feedItemToPost);
+    const jobItems = items.filter((i) => i.itemType === "job" || i.itemType === "project").slice(0, 3);
+    return { posts, jobItems };
   }
 
   useEffect(() => {
@@ -123,14 +132,16 @@ export function HomeContent() {
     (async () => {
       try {
         // A guest has no CandidateProfile to fetch, no matching-jobs enrichment, and no saved
-        // location - loadGlobalFeed() below is the same honest fallback a signed-in user with
-        // location off already sees, not a degraded/placeholder guest view.
+        // location - the general-feed fallback below is the same honest content a signed-in
+        // user with location off already sees, not a degraded/placeholder guest view.
         let p: CandidateProfile | null = null;
+        let sawJobSeeker = false;
         if (getSession()) {
           p = await getMyProfile();
           if (cancelled) return;
           setProfile(p);
           if (p.cameForJob === true) {
+            sawJobSeeker = true;
             getJobs()
               .then((jobs) => {
                 if (cancelled) return;
@@ -142,14 +153,23 @@ export function HomeContent() {
               });
           }
         }
+
+        let nearbyPosts: Post[] = [];
         if (p?.approxLat != null && p?.approxLng != null) {
           const posts = await getNearby({ lat: p.approxLat, lng: p.approxLng, radiusKm: 10, withinHours: 24 });
           if (cancelled) return;
-          setFeedPosts(posts.filter((post) => post.intentType === "activity" || post.intentType === "ask"));
+          nearbyPosts = posts.filter((post) => post.intentType === "activity" || post.intentType === "ask");
+        }
+
+        if (nearbyPosts.length > 0) {
+          setFeedPosts(nearbyPosts);
         } else {
-          const global = await loadGlobalFeed();
+          const general = await loadGeneralFeed();
           if (cancelled) return;
-          setFeedPosts(global);
+          setFeedPosts(general.posts);
+          // Only a teaser when there's no already-personalized "matching jobs" row for this
+          // profile - avoids showing the same kind of content twice on one page.
+          if (!sawJobSeeker) setFeedJobItems(general.jobItems);
         }
         if (!cancelled) setState("ready");
       } catch {
@@ -207,8 +227,8 @@ export function HomeContent() {
   }
 
   // §3.1 "a secondary text action: 'Show me what's happening everywhere' - dismisses the
-  // location ask for the session." The feed is already showing global content by default
-  // whenever location is off (see loadGlobalFeed above) - this only softens the hero's own
+  // location ask for the session." The feed is already showing general content by default
+  // whenever location is off (see loadGeneralFeed above) - this only softens the hero's own
   // copy so it stops asking, for the rest of this browser session.
   function dismissLocationAsk() {
     sessionStorage.setItem(LOCATION_ASK_DISMISSED_KEY, "1");
@@ -235,17 +255,6 @@ export function HomeContent() {
     }
   }
 
-  function openComposer(intent: Exclude<Post["intentType"], "company">) {
-    if (!getSession()) {
-      setSignInAction("post");
-      setSignInPromptOpen(true);
-      return;
-    }
-    setComposerIntent(intent);
-    setComposerSession((n) => n + 1);
-    setComposerOpen(true);
-  }
-
   // Generic "+" entry points (header, tab bar) show SCREEN 3's intent picker first, rather than
   // assuming Activity - a suggestion card that already names its intent skips straight there.
   function openComposerPicker() {
@@ -262,10 +271,14 @@ export function HomeContent() {
   function refreshAfterPost() {
     if (profile?.approxLat != null && profile?.approxLng != null) {
       getNearby({ lat: profile.approxLat, lng: profile.approxLng, radiusKm: 10, withinHours: 24 })
-        .then((posts) => setFeedPosts(posts.filter((post) => post.intentType === "activity" || post.intentType === "ask")))
+        .then((posts) => {
+          const nearby = posts.filter((post) => post.intentType === "activity" || post.intentType === "ask");
+          if (nearby.length > 0) setFeedPosts(nearby);
+          else loadGeneralFeed().then((g) => setFeedPosts(g.posts)).catch(() => {});
+        })
         .catch(() => {});
     } else {
-      loadGlobalFeed().then(setFeedPosts).catch(() => {});
+      loadGeneralFeed().then((g) => setFeedPosts(g.posts)).catch(() => {});
     }
   }
 
@@ -408,6 +421,38 @@ export function HomeContent() {
               </div>
             )}
 
+            {feedJobItems.length > 0 && (
+              <div className="mb-5">
+                <p className="mb-2.5 text-[10px] tracking-[3px]" style={{ color: "var(--muted-foreground)" }}>
+                  ON ARENA RIGHT NOW
+                </p>
+                <div className="flex flex-col gap-2">
+                  {feedJobItems.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={item.itemType === "job" ? `/jobs/${item.id}` : `/marketplace/${item.id}`}
+                      className="flex items-center justify-between gap-3 rounded-xl px-4 py-3.5"
+                      style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-[13.5px] font-semibold" style={{ color: "var(--foreground)" }}>
+                          {item.title}
+                        </p>
+                        <p className="mt-0.5 text-[11.5px]" style={{ color: "var(--muted-foreground)" }}>
+                          {item.itemType === "job"
+                            ? `${item.authorCompanyName ?? "A company"} · ${item.remote ? "Remote" : (item.locationText ?? "Hyderabad")}`
+                            : `₹${item.budgetMin?.toLocaleString("en-IN")}–₹${item.budgetMax?.toLocaleString("en-IN")} · ${item.bidCount ?? 0} bids`}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-[10px] font-bold tracking-wide" style={{ color: "var(--muted-foreground)" }}>
+                        {item.itemType === "job" ? "JOB" : "BIDDING"}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {state === "loading" &&
               [0, 1].map((i) => (
                 <div key={i} className="mb-3 rounded-2xl" style={{ background: "var(--card)", height: 112 + 78, opacity: 0.5 }} />
@@ -423,7 +468,6 @@ export function HomeContent() {
                 }
                 primaryActionLabel="Start something"
                 onPrimaryAction={openComposerPicker}
-                onStartIntent={openComposer}
               />
             )}
 
