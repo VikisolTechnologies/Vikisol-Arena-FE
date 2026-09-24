@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
 import Link from "next/link";
@@ -12,12 +12,11 @@ import { allowGuestBrowsing } from "@/lib/auth-guard";
 import { getSession } from "@/lib/session";
 import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
-import { ARENA_V3 } from "./tokens";
 import { ActivityCard } from "./ActivityCard";
 import { NeedCard } from "./NeedCard";
 import { HomeEmptyState } from "./HomeEmptyState";
-import { HomeTabBar } from "./HomeTabBar";
-import { HomeHeader } from "./HomeHeader";
+import { HomeMobileTabBar } from "./HomeMobileTabBar";
+import { HomeSidebar } from "./HomeSidebar";
 import type { CandidateProfile, FeedItem, Job, Post } from "@/lib/types";
 
 const LOCATION_ASK_DISMISSED_KEY = "arena_home_location_ask_dismissed";
@@ -64,21 +63,19 @@ function feedItemToPost(item: FeedItem): Post {
 }
 
 /**
- * ARENA-PHASE-1-BUILD.md §3.1 Home + ARENA-WEB-AND-SEED.md Parts 2/3. The static hero frame
- * (image, overlay, wordmark, bell, gold rule) is what a server component would render
- * motionlessly - this whole screen is one "use client" tree instead, because Next still
- * server-renders a client component's first pass to real HTML, so the hero's actual pixels are
- * still present in the initial response with zero JS required to see them. What genuinely can't
- * be server-rendered under this app's current JWT-in-localStorage session model (no
- * server-readable auth) is the PERSONALIZED text inside it - the real nearby-today count and the
- * join feed both need this user's own token. That's an honest, incremental compromise given a
- * documented pre-existing architecture constraint: the hero's frame never waits on it, only the
- * numbers inside it do, and they show a skeleton (never a fake number) until they resolve.
+ * Home, on Arena's real ecosystem brand (dark background, orange accent, Space Grotesk +
+ * Inter - verified against globals.css :root and Vikisol Technologies' own site) instead of
+ * the ivory/gold "product theme" this screen used before, which the codebase itself scopes to
+ * an unfinished, not-yet-app-wide experiment. Desktop gets a persistent left shell
+ * (HomeSidebar) in place of a top nav bar; mobile keeps a top bar + bottom tab bar, both
+ * re-themed. All the real behavior below (location, join, composer, guest browsing) is
+ * unchanged from before - only the shell and colors around it moved.
  */
-export function HomeContent({ displayFont }: { displayFont: string }) {
+export function HomeContent() {
   const router = useRouter();
   const [state, setState] = useState<LoadState>("loading");
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
   const [feedPosts, setFeedPosts] = useState<Post[]>([]);
   const [joiningId, setJoiningId] = useState<string | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
@@ -102,10 +99,12 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
   const [signInAction, setSignInAction] = useState("do that");
 
   useEffect(() => {
-    // Client-only read (SSR has no sessionStorage) flipping post-hydration state, same pattern
-    // AppShell's own loggedIn flag already uses for the identical class of problem.
+    // Client-only reads (SSR has neither sessionStorage nor a real answer for getSession())
+    // flipping post-hydration state - same pattern AppShell's own loggedIn flag already uses
+    // for the identical class of problem.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocationAskDismissed(sessionStorage.getItem(LOCATION_ASK_DISMISSED_KEY) === "1");
+    setSignedIn(!!getSession());
   }, []);
 
   // ARENA-WEB-AND-SEED.md §3.2 "The feed with location off shows... global and city-wide posts...
@@ -164,7 +163,6 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
 
   const hasLocation = profile?.approxLat != null && profile?.approxLng != null;
   const nearbyCount = hasLocation ? feedPosts.length : 0;
-  const cityLabel = profile?.homeCity ? profile.homeCity.toUpperCase() : "YOUR AREA";
 
   // ARENA-WEB-AND-SEED.md §1.3/§3.3 - a real button that calls the browser's own geolocation
   // API directly (the exact same call Settings' "Precise" option makes - see updateMyLocation),
@@ -271,189 +269,205 @@ export function HomeContent({ displayFont }: { displayFont: string }) {
     }
   }
 
-  // ARENA-PHASE-1-BUILD.md §2 "Structure" - "Single column. 640px max on desktop, full-bleed on
-  // mobile." The hero IMAGE stays full-bleed at any width; its text overlay, the card list, and
-  // the nav's centered content all sit inside a centered 640px measure on wide viewports.
-  const centeredAbsolute: CSSProperties = {
-    position: "absolute",
-    left: "50%",
-    transform: "translateX(-50%)",
-    width: "min(640px, 100% - 40px)",
-  };
+  const headline =
+    state === "ready"
+      ? hasLocation
+        ? nearbyCount === 0
+          ? "Nothing nearby yet today"
+          : `${nearbyCount} thing${nearbyCount === 1 ? "" : "s"} near you`
+        : locationAskDismissed
+          ? "What's happening in Hyderabad"
+          : "Turn on location to see what's near"
+      : null;
+
+  // Jenny is UI-only in this pass (no AI backend wired up yet) - this line only ever states
+  // numbers already fetched for real above; it never invents activity that isn't there.
+  const jennyNote =
+    matchingJobs != null && matchingJobs.length > 0
+      ? `${nearbyCount > 0 ? `${nearbyCount} things nearby, and ` : ""}${matchingJobs.length} job${matchingJobs.length === 1 ? "" : "s"} matching you.`
+      : nearbyCount > 0
+        ? `${nearbyCount} thing${nearbyCount === 1 ? "" : "s"} nearby right now.`
+        : null;
 
   return (
-    <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
-      <HomeHeader profile={profile} onCompose={openComposerPicker} />
+    <div className="flex min-h-dvh bg-background">
+      <HomeSidebar profile={profile} signedIn={signedIn} />
 
-      {/* Redesigned feed header - previously a full-bleed generic stock photo band (290-420px
-          tall); replaced with a compact, text-led espresso panel (~120-150px) that leads with
-          the real headline/count instead of decorative imagery with no connection to the actual
-          content below it. Mobile-only branding row kept (HomeHeader only shows md+). */}
-      <div style={{ position: "relative", flexShrink: 0, background: ARENA_V3.espresso, padding: "18px 0 26px" }}>
-        <div className="flex md:hidden" style={{ ...centeredAbsolute, top: 16, justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 11, color: "#C9BFB1", letterSpacing: 4 }}>ARENA</span>
-          <Bell size={17} color="#E8DFD2" strokeWidth={1.75} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Mobile-only top bar - the sidebar covers this on desktop */}
+        <div className="flex items-center justify-between px-4 py-3 md:hidden" style={{ borderBottom: "1px solid var(--border)" }}>
+          <span className="font-display" style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>
+            Arena<span style={{ color: "var(--primary)" }}>.</span>
+          </span>
+          <Bell size={18} strokeWidth={1.75} color="var(--muted-foreground)" />
         </div>
-        <div style={{ ...centeredAbsolute, position: "static", margin: "0 auto", paddingTop: 40 }} className="md:pt-0">
-          {state === "loading" && (
-            <>
-              <div style={{ width: 150, height: 10, background: "rgba(247,241,234,0.22)", borderRadius: 4, marginBottom: 14 }} />
-              <div style={{ width: 210, height: 26, background: "rgba(247,241,234,0.16)", borderRadius: 6 }} />
-            </>
-          )}
-          {state === "error" && (
-            <p className="text-[22px] md:text-[28px]" style={{ margin: 0, fontFamily: displayFont, lineHeight: 1.2, color: ARENA_V3.ivory }}>
-              Couldn&apos;t load what&apos;s nearby
-            </p>
-          )}
-          {state === "ready" && (
-            <>
-              <p style={{ margin: "0 0 8px", fontSize: 10, color: ARENA_V3.goldText, letterSpacing: 3.5 }}>
-                {hasLocation ? `${cityLabel} · TODAY` : "HYDERABAD · TODAY"}
-              </p>
-              <p className="text-[24px] md:text-[28px]" style={{ margin: 0, fontFamily: displayFont, fontWeight: 400, lineHeight: 1.25, color: ARENA_V3.ivory }}>
-                {hasLocation ? (
-                  nearbyCount === 0 ? "Nothing nearby yet today" : `${nearbyCount} thing${nearbyCount === 1 ? "" : "s"} near you`
-                ) : locationAskDismissed ? (
-                  "What's happening in Hyderabad"
-                ) : (
-                  "Turn on location to see what's near"
-                )}
-              </p>
-            </>
-          )}
-          <div style={{ width: 32, height: 1, background: ARENA_V3.gold, marginTop: 14 }} />
-          {state === "ready" && !hasLocation && !locationAskDismissed && (
-            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
-              <button
-                type="button"
-                onClick={enableLocation}
-                disabled={locating}
-                style={{
-                  fontSize: 12,
-                  color: ARENA_V3.ink,
-                  background: ARENA_V3.ivory,
-                  border: "none",
-                  borderRadius: 20,
-                  padding: "8px 16px",
-                  cursor: locating ? "default" : "pointer",
-                  opacity: locating ? 0.7 : 1,
-                }}
-              >
-                {locating ? "Locating…" : "Turn on location"}
-              </button>
-              {locationBlocked && (
-                <p style={{ margin: 0, fontSize: 11, color: "#E8DFD2", maxWidth: 260, lineHeight: 1.5 }}>
-                  Location is blocked for this site. Look for the site-info icon in your browser&apos;s address bar → Site settings → Location, to turn it back on.
-                </p>
+
+        {/* Jenny, mobile - pinned under the top bar rather than a banner that scrolls away.
+            Same "UI only, honestly disabled" treatment as the sidebar's box. */}
+        <div className="px-4 py-2.5 md:hidden" style={{ background: "var(--popover)", borderBottom: "1px solid var(--border)" }}>
+          <div className="flex items-center gap-2 rounded-full pl-3 pr-1.5 py-1.5" style={{ background: "rgba(0,0,0,0.3)" }}>
+            <div style={{ width: 22, height: 22, borderRadius: 999, flexShrink: 0, background: "radial-gradient(circle at 32% 30%, var(--primary-soft), var(--primary) 70%)" }} />
+            <input
+              type="text"
+              disabled
+              placeholder="Ask Jenny anything…"
+              aria-label="Ask Jenny (coming soon)"
+              className="flex-1 bg-transparent text-[12px]"
+              style={{ color: "var(--faint)", border: "none", cursor: "not-allowed" }}
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 pb-[calc(84px+env(safe-area-inset-bottom))] md:pb-10">
+          <div className="mx-auto w-full max-w-[780px] px-4 pt-5 md:px-9 md:pt-7">
+            <div className="mb-4 flex items-baseline justify-between">
+              {state === "loading" && <div className="h-6 w-48 animate-pulse rounded" style={{ background: "var(--muted)" }} />}
+              {state === "error" && (
+                <h1 className="font-display text-[22px] font-semibold" style={{ color: "var(--foreground)" }}>
+                  Couldn&apos;t load what&apos;s nearby
+                </h1>
               )}
-              <button
-                type="button"
-                onClick={dismissLocationAsk}
-                style={{ fontSize: 12, color: "#E8DFD2", textDecoration: "underline", background: "none", border: "none", padding: 0, cursor: "pointer" }}
-              >
-                Show me what&apos;s happening everywhere
-              </button>
+              {state === "ready" && (
+                <h1 className="font-display text-[22px] font-semibold md:text-[24px]" style={{ color: "var(--foreground)" }}>
+                  {headline}
+                </h1>
+              )}
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* HomeTabBar is position:fixed (not sticky), so it no longer reserves its own space in
-          flow on mobile; this bottom padding stands in for that, matching AppShell's own pb-24
-          reservation. Desktop uses HomeHeader instead (no bottom padding needed there), but the
-          extra padding is harmless on desktop since nothing sits directly below the fold there. */}
-      <div className="md:pb-6" style={{ flex: 1, paddingTop: 14, paddingBottom: "calc(84px + env(safe-area-inset-bottom))" }}>
-        <div style={{ maxWidth: 640, margin: "0 auto" }}>
-          {matchingJobs != null && matchingJobs.length > 0 && (
-            <div style={{ margin: "0 12px 18px" }}>
-              <p style={{ margin: "0 0 10px", fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>
-                JOBS MATCHING YOU
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {matchingJobs.map((job) => (
-                  <Link
-                    key={job.id}
-                    href={`/jobs/${job.id}`}
-                    style={{ display: "block", background: ARENA_V3.white, borderRadius: 14, padding: 14, textDecoration: "none" }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                      <div style={{ minWidth: 0 }}>
-                        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: ARENA_V3.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {state === "ready" && !hasLocation && !locationAskDismissed && (
+              <div
+                className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3"
+                style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+              >
+                <button
+                  type="button"
+                  onClick={enableLocation}
+                  disabled={locating}
+                  className="rounded-full px-4 py-2 text-[12.5px] font-semibold"
+                  style={{ background: "var(--primary)", color: "var(--primary-foreground)", opacity: locating ? 0.7 : 1 }}
+                >
+                  {locating ? "Locating…" : "Turn on location"}
+                </button>
+                <button
+                  type="button"
+                  onClick={dismissLocationAsk}
+                  className="text-[12px] underline"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
+                  Show me what&apos;s happening everywhere
+                </button>
+                {locationBlocked && (
+                  <p className="w-full text-[11px] leading-relaxed" style={{ color: "var(--faint)" }}>
+                    Location is blocked for this site. Look for the site-info icon in your browser&apos;s address bar → Site settings → Location, to turn it back on.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {state === "ready" && jennyNote && (
+              <div
+                className="mb-5 flex items-center gap-3 rounded-2xl px-4 py-3.5"
+                style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="var(--primary)" stroke="none" className="shrink-0">
+                  <path d="M12 2 14 9l7 2-7 2-2 7-2-7-7-2 7-2Z" />
+                </svg>
+                <p className="text-[13px]" style={{ color: "var(--foreground)" }}>
+                  <span className="font-semibold">Jenny noticed:</span> {jennyNote}
+                </p>
+              </div>
+            )}
+
+            {matchingJobs != null && matchingJobs.length > 0 && (
+              <div className="mb-5">
+                <p className="mb-2.5 text-[10px] tracking-[3px]" style={{ color: "var(--muted-foreground)" }}>
+                  JOBS MATCHING YOU
+                </p>
+                <div className="flex flex-col gap-2">
+                  {matchingJobs.map((job) => (
+                    <Link
+                      key={job.id}
+                      href={`/jobs/${job.id}`}
+                      className="flex items-center justify-between gap-3 rounded-xl px-4 py-3.5"
+                      style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-[13.5px] font-semibold" style={{ color: "var(--foreground)" }}>
                           {job.title}
                         </p>
-                        <p style={{ margin: "2px 0 0", fontSize: 12, color: ARENA_V3.muted }}>
+                        <p className="mt-0.5 text-[11.5px]" style={{ color: "var(--muted-foreground)" }}>
                           {job.company} · {job.remote ? "Remote" : job.location}
                         </p>
                       </div>
-                      <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 600, color: ARENA_V3.goldText }}>
+                      <span className="shrink-0 text-[11px] font-bold" style={{ color: "var(--foreground)" }}>
                         {job.matchPercentage}% match
                       </span>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-
-          {state === "loading" &&
-            [0, 1].map((i) => (
-              <div key={i} style={{ background: ARENA_V3.white, margin: "0 12px 12px", borderRadius: 14, height: 112 + 78, opacity: 0.5 }} />
-            ))}
-
-          {state === "ready" && feedPosts.length === 0 && (
-            <HomeEmptyState
-              headline={hasLocation ? "Nothing nearby right now" : "It's quiet right now"}
-              description={
-                hasLocation
-                  ? "No activities or needs posted near you in the last day. Check the map for a wider radius, or be the first to start something."
-                  : "Nothing posted recently. Be the first to start something today."
-              }
-              primaryActionLabel="Start something"
-              onPrimaryAction={openComposerPicker}
-              onStartIntent={openComposer}
-            />
-          )}
-
-          {state === "ready" && feedPosts.length > 0 && (
-            <p style={{ margin: "0 12px 10px", fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>
-              HAPPENING NOW
-            </p>
-          )}
-
-          {state === "ready" &&
-            feedPosts.map((post) =>
-              post.intentType === "activity" ? (
-                <ActivityCard key={post.id} post={post} displayFont={displayFont} onJoin={handleJoin} joining={joiningId === post.id} />
-              ) : (
-                <NeedCard key={post.id} post={post} displayFont={displayFont} />
-              ),
             )}
 
-          {joinError && (
-            <p style={{ margin: "0 12px 12px", fontSize: 12, color: "#B23B3B" }}>
-              {joinError}
-              {/* ARENA-STABILIZE.md Phase 2, G5's fix, same gap as Post Detail/CreateComposer had
-                  before their own fix - a fresh signup has no date of birth on file, so joining
-                  an Activity 400s with a message pointing at Settings; give a real way there. */}
-              {joinError.toLowerCase().includes("settings") && (
-                <>
-                  {" "}
-                  <button
-                    type="button"
-                    onClick={() => router.push("/settings")}
-                    style={{ background: "none", border: "none", padding: 0, color: ARENA_V3.ink, textDecoration: "underline", cursor: "pointer", fontSize: 12 }}
-                  >
-                    Go to Settings
-                  </button>
-                </>
-              )}
-            </p>
-          )}
-        </div>
-      </div>
+            {state === "loading" &&
+              [0, 1].map((i) => (
+                <div key={i} className="mb-3 rounded-2xl" style={{ background: "var(--card)", height: 112 + 78, opacity: 0.5 }} />
+              ))}
 
-      <HomeTabBar onCompose={openComposerPicker} />
+            {state === "ready" && feedPosts.length === 0 && (
+              <HomeEmptyState
+                headline={hasLocation ? "Nothing nearby right now" : "It's quiet right now"}
+                description={
+                  hasLocation
+                    ? "No activities or needs posted near you in the last day. Check the map for a wider radius, or be the first to start something."
+                    : "Nothing posted recently. Be the first to start something today."
+                }
+                primaryActionLabel="Start something"
+                onPrimaryAction={openComposerPicker}
+                onStartIntent={openComposer}
+              />
+            )}
+
+            {state === "ready" && feedPosts.length > 0 && (
+              <p className="mb-2.5 text-[10px] tracking-[3px]" style={{ color: "var(--muted-foreground)" }}>
+                HAPPENING NOW
+              </p>
+            )}
+
+            {state === "ready" &&
+              feedPosts.map((post) =>
+                post.intentType === "activity" ? (
+                  <ActivityCard key={post.id} post={post} onJoin={handleJoin} joining={joiningId === post.id} />
+                ) : (
+                  <NeedCard key={post.id} post={post} />
+                ),
+              )}
+
+            {joinError && (
+              <p className="px-3 pb-3 text-[12px]" style={{ color: "#f87171" }}>
+                {joinError}
+                {/* ARENA-STABILIZE.md Phase 2, G5's fix, same gap as Post Detail/CreateComposer had
+                    before their own fix - a fresh signup has no date of birth on file, so joining
+                    an Activity 400s with a message pointing at Settings; give a real way there. */}
+                {joinError.toLowerCase().includes("settings") && (
+                  <>
+                    {" "}
+                    <button
+                      type="button"
+                      onClick={() => router.push("/settings")}
+                      className="underline"
+                      style={{ background: "none", border: "none", padding: 0, color: "var(--foreground)", cursor: "pointer", fontSize: 12 }}
+                    >
+                      Go to Settings
+                    </button>
+                  </>
+                )}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <HomeMobileTabBar onCompose={openComposerPicker} />
+      </div>
 
       <CreateComposer
         key={composerSession}

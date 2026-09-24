@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChampagneAvatar } from "./ChampagneAvatar";
 import { DemoContentBadge } from "./DemoContentBadge";
-import { ARENA_V3 } from "./tokens";
 import { formatEyebrowWhen } from "./format";
 import type { Post } from "@/lib/types";
 
@@ -19,12 +18,10 @@ const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1743601587751-01dc32b7
 
 export function ActivityCard({
   post,
-  displayFont,
   onJoin,
   joining,
 }: {
   post: Post;
-  displayFont: string;
   onJoin: (post: Post) => void;
   joining: boolean;
 }) {
@@ -37,31 +34,33 @@ export function ActivityCard({
   return (
     <div
       style={{
-        background: ARENA_V3.white,
+        background: "var(--card)",
+        border: "1px solid var(--border)",
         margin: "0 12px 12px",
-        borderRadius: 14,
+        borderRadius: 16,
         overflow: "hidden",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
       }}
     >
       <Link href={`/feed/${post.id}`} style={{ display: "block" }}>
-        <div style={{ position: "relative", height: 112, width: "100%", background: "#2F2F2F" }}>
+        <div style={{ position: "relative", height: 180, width: "100%", background: "#2F2F2F" }}>
           <Image src={imageUrl} alt="" fill sizes="400px" style={{ objectFit: "cover" }} />
         </div>
         <div style={{ padding: 14, paddingBottom: 0 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 9 }}>
-            <p style={{ margin: 0, fontSize: 10, color: ARENA_V3.muted, letterSpacing: 3 }}>
+            <p style={{ margin: 0, fontSize: 10, color: "var(--muted-foreground)", letterSpacing: 3 }}>
               ACTIVITY{post.startsAt ? ` · ${formatEyebrowWhen(post.startsAt)}` : ""}
             </p>
             {post.demoContent && <DemoContentBadge />}
           </div>
           <p
+            className="font-display"
             style={{
               margin: "0 0 12px",
-              fontFamily: displayFont,
-              fontWeight: 400,
-              fontSize: 20,
-              lineHeight: 1.3,
-              color: ARENA_V3.ink,
+              fontWeight: 500,
+              fontSize: 19,
+              lineHeight: 1.4,
+              color: "var(--foreground)",
             }}
           >
             {post.title || post.body}
@@ -71,7 +70,7 @@ export function ActivityCard({
       <div style={{ padding: "0 14px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 9 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
           <ChampagneAvatar name={post.authorName} sizePx={26} />
-          <span style={{ fontSize: 12, color: ARENA_V3.body, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <span style={{ fontSize: 12, color: "var(--muted-foreground)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {post.authorName}
             {spotsLeft != null && ` · ${spotsLeft} spot${spotsLeft === 1 ? "" : "s"} left`}
           </span>
@@ -87,10 +86,11 @@ export function ActivityCard({
           style={{
             flexShrink: 0,
             fontSize: 13,
-            background: ARENA_V3.ink,
-            color: ARENA_V3.ivory,
+            fontWeight: 600,
+            background: "var(--primary)",
+            color: "var(--primary-foreground)",
             padding: "10px 22px",
-            borderRadius: 24,
+            borderRadius: 999,
             border: "none",
             opacity: pillDisabled ? 0.55 : 1,
             cursor: pillDisabled ? "default" : "pointer",
