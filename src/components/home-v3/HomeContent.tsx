@@ -14,7 +14,7 @@ import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import { ActivityCard } from "./ActivityCard";
 import { NeedCard } from "./NeedCard";
-import { HomeEmptyState } from "./HomeEmptyState";
+import { HomeEmptyStateDark } from "./HomeEmptyStateDark";
 import { HomeMobileTabBar } from "./HomeMobileTabBar";
 import { HomeSidebar } from "./HomeSidebar";
 import type { CandidateProfile, FeedItem, Job, Post } from "@/lib/types";
@@ -414,7 +414,7 @@ export function HomeContent() {
               ))}
 
             {state === "ready" && feedPosts.length === 0 && (
-              <HomeEmptyState
+              <HomeEmptyStateDark
                 headline={hasLocation ? "Nothing nearby right now" : "It's quiet right now"}
                 description={
                   hasLocation
