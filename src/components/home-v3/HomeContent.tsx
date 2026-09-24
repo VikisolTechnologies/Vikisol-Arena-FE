@@ -8,8 +8,10 @@ import { getMyProfile, updateMyLocation } from "@/lib/api/profile";
 import { getNearby, requestJoin } from "@/lib/api/posts";
 import { getFeedItems } from "@/lib/api/feed";
 import { getJobs } from "@/lib/api/jobs";
+import { getProjects } from "@/lib/api/market";
 import { allowGuestBrowsing } from "@/lib/auth-guard";
 import { getSession } from "@/lib/session";
+import { formatINRRange } from "@/lib/format";
 import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import { ActivityCard } from "./ActivityCard";
@@ -17,7 +19,7 @@ import { NeedCard } from "./NeedCard";
 import { HomeEmptyStateDark } from "./HomeEmptyStateDark";
 import { HomeMobileTabBar } from "./HomeMobileTabBar";
 import { HomeSidebar } from "./HomeSidebar";
-import type { CandidateProfile, FeedItem, Job, Post } from "@/lib/types";
+import type { CandidateProfile, FeedItem, Job, Post, Project } from "@/lib/types";
 
 const LOCATION_ASK_DISMISSED_KEY = "arena_home_location_ask_dismissed";
 
@@ -87,16 +89,22 @@ export function HomeContent() {
   const [locating, setLocating] = useState(false);
   const [locationBlocked, setLocationBlocked] = useState(false);
   const [locationAskDismissed, setLocationAskDismissed] = useState(false);
-  // Onboarding's job-intent question ("here for a job" vs "just exploring") previously had no
-  // effect on what the feed actually showed - same undifferentiated activity/ask list either
-  // way. This is what makes it actually change the feed: job-seekers additionally see real
-  // matching postings (Job.matchPercentage is already computed server-side, see ScoringService)
-  // up top; "just exploring" users see the feed exactly as before, untouched.
-  const [matchingJobs, setMatchingJobs] = useState<Job[] | null>(null);
-  // Shown only when matchingJobs isn't (guest, or a profile that isn't flagged as job-seeking) -
-  // a handful of real open roles/projects pulled from the same general feed fetch below, so
-  // "browse Arena" always includes a taste of the job/bidding side, not just activities.
-  const [feedJobItems, setFeedJobItems] = useState<FeedItem[]>([]);
+  // Jobs and bidding are fetched for every visitor now, not just profiles onboarding flagged as
+  // job-seeking - the filter row below is a direct, explicit "show me jobs/bidding too" control,
+  // which is a stronger signal than an inferred onboarding answer. null = not loaded yet, [] =
+  // loaded and genuinely empty; that distinction is what keeps the empty-state honest.
+  const [jobsList, setJobsList] = useState<Job[] | null>(null);
+  const [biddingList, setBiddingList] = useState<Project[] | null>(null);
+  // Whether this profile said "here for a job" during onboarding - only changes the section's
+  // label ("matching you" vs "on Arena"), not whether it's shown; showing it at all is now the
+  // filter row's job, not this flag's.
+  const [isJobSeeker, setIsJobSeeker] = useState(false);
+  // "Let me choose what I see" - independent toggles, all on by default so a first-time visitor
+  // sees everything with no setup required; turning one off narrows the page, same idea as the
+  // three checkboxes rather than a single confusing "mode" picker.
+  const [showPosts, setShowPosts] = useState(true);
+  const [showJobs, setShowJobs] = useState(true);
+  const [showBidding, setShowBidding] = useState(true);
   // "Enter as guest" - Home renders fully signed-out; this is the one gate every mutating
   // action (join, post, turn on location) funnels through instead of a page-load redirect.
   const [signInPromptOpen, setSignInPromptOpen] = useState(false);
@@ -121,37 +129,44 @@ export function HomeContent() {
   // there's little to show, not only when location is off outright.
   async function loadGeneralFeed() {
     const items = await getFeedItems("for-you", 0, 30);
-    const posts = items.filter((i) => i.itemType === "activity" || i.itemType === "ask").map(feedItemToPost);
-    const jobItems = items.filter((i) => i.itemType === "job" || i.itemType === "project").slice(0, 3);
-    return { posts, jobItems };
+    return items.filter((i) => i.itemType === "activity" || i.itemType === "ask").map(feedItemToPost);
   }
 
   useEffect(() => {
     if (!allowGuestBrowsing(router)) return;
     let cancelled = false;
+
+    // Jobs and bidding no longer depend on the profile fetch below - every visitor (guest
+    // included) gets them, since GET /jobs and /marketplace/projects are both already
+    // guest-accessible. Best-effort each: a failure here never blocks the rest of the page.
+    getJobs()
+      .then((jobs) => {
+        if (cancelled) return;
+        setJobsList(jobs.slice().sort((a, b) => b.matchPercentage - a.matchPercentage).slice(0, 8));
+      })
+      .catch(() => {
+        if (!cancelled) setJobsList([]);
+      });
+    getProjects()
+      .then((projects) => {
+        if (cancelled) return;
+        setBiddingList(projects.filter((p) => p.status === "open").slice(0, 8));
+      })
+      .catch(() => {
+        if (!cancelled) setBiddingList([]);
+      });
+
     (async () => {
       try {
-        // A guest has no CandidateProfile to fetch, no matching-jobs enrichment, and no saved
-        // location - the general-feed fallback below is the same honest content a signed-in
-        // user with location off already sees, not a degraded/placeholder guest view.
+        // A guest has no CandidateProfile to fetch and no saved location - the general-feed
+        // fallback below is the same honest content a signed-in user with location off already
+        // sees, not a degraded/placeholder guest view.
         let p: CandidateProfile | null = null;
-        let sawJobSeeker = false;
         if (getSession()) {
           p = await getMyProfile();
           if (cancelled) return;
           setProfile(p);
-          if (p.cameForJob === true) {
-            sawJobSeeker = true;
-            getJobs()
-              .then((jobs) => {
-                if (cancelled) return;
-                setMatchingJobs(jobs.slice().sort((a, b) => b.matchPercentage - a.matchPercentage).slice(0, 3));
-              })
-              .catch(() => {
-                // Best-effort - the jobs section just doesn't render if this fails, same as any
-                // other optional feed enrichment; never blocks the rest of the page loading.
-              });
-          }
+          setIsJobSeeker(p.cameForJob === true);
         }
 
         let nearbyPosts: Post[] = [];
@@ -166,10 +181,7 @@ export function HomeContent() {
         } else {
           const general = await loadGeneralFeed();
           if (cancelled) return;
-          setFeedPosts(general.posts);
-          // Only a teaser when there's no already-personalized "matching jobs" row for this
-          // profile - avoids showing the same kind of content twice on one page.
-          if (!sawJobSeeker) setFeedJobItems(general.jobItems);
+          setFeedPosts(general);
         }
         if (!cancelled) setState("ready");
       } catch {
@@ -274,11 +286,11 @@ export function HomeContent() {
         .then((posts) => {
           const nearby = posts.filter((post) => post.intentType === "activity" || post.intentType === "ask");
           if (nearby.length > 0) setFeedPosts(nearby);
-          else loadGeneralFeed().then((g) => setFeedPosts(g.posts)).catch(() => {});
+          else loadGeneralFeed().then(setFeedPosts).catch(() => {});
         })
         .catch(() => {});
     } else {
-      loadGeneralFeed().then((g) => setFeedPosts(g.posts)).catch(() => {});
+      loadGeneralFeed().then(setFeedPosts).catch(() => {});
     }
   }
 
@@ -296,11 +308,18 @@ export function HomeContent() {
   // Jenny is UI-only in this pass (no AI backend wired up yet) - this line only ever states
   // numbers already fetched for real above; it never invents activity that isn't there.
   const jennyNote =
-    matchingJobs != null && matchingJobs.length > 0
-      ? `${nearbyCount > 0 ? `${nearbyCount} things nearby, and ` : ""}${matchingJobs.length} job${matchingJobs.length === 1 ? "" : "s"} matching you.`
+    jobsList != null && jobsList.length > 0
+      ? `${nearbyCount > 0 ? `${nearbyCount} things nearby, and ` : ""}${jobsList.length} job${jobsList.length === 1 ? "" : "s"} on Arena.`
       : nearbyCount > 0
         ? `${nearbyCount} thing${nearbyCount === 1 ? "" : "s"} nearby right now.`
         : null;
+
+  const visiblePostsCount = showPosts ? feedPosts.length : 0;
+  const visibleJobsCount = showJobs ? jobsList?.length ?? 0 : 0;
+  const visibleBiddingCount = showBidding ? biddingList?.length ?? 0 : 0;
+  const stillLoadingExtras = jobsList === null || biddingList === null;
+  const nothingToShow =
+    state === "ready" && !stillLoadingExtras && visiblePostsCount === 0 && visibleJobsCount === 0 && visibleBiddingCount === 0;
 
   return (
     <div className="flex min-h-dvh bg-background">
@@ -391,13 +410,54 @@ export function HomeContent() {
               </div>
             )}
 
-            {matchingJobs != null && matchingJobs.length > 0 && (
+            {/* "Let me choose what I see" - independent toggles, all on by default. Turning one
+                off just hides that section below; nothing here changes what gets fetched. */}
+            <div className="mb-5 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setShowPosts((v) => !v)}
+                className="rounded-full px-3.5 py-1.5 text-[12px] font-semibold"
+                style={
+                  showPosts
+                    ? { background: "var(--foreground)", color: "var(--background)" }
+                    : { background: "var(--card)", color: "var(--muted-foreground)", border: "1px solid var(--border)" }
+                }
+              >
+                Posts
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowJobs((v) => !v)}
+                className="rounded-full px-3.5 py-1.5 text-[12px] font-semibold"
+                style={
+                  showJobs
+                    ? { background: "var(--foreground)", color: "var(--background)" }
+                    : { background: "var(--card)", color: "var(--muted-foreground)", border: "1px solid var(--border)" }
+                }
+              >
+                Jobs
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowBidding((v) => !v)}
+                className="rounded-full px-3.5 py-1.5 text-[12px] font-semibold"
+                style={
+                  showBidding
+                    ? { background: "var(--foreground)", color: "var(--background)" }
+                    : { background: "var(--card)", color: "var(--muted-foreground)", border: "1px solid var(--border)" }
+                }
+              >
+                Bidding
+              </button>
+            </div>
+
+            {showJobs && jobsList != null && jobsList.length > 0 && (
               <div className="mb-5">
                 <p className="mb-2.5 text-[10px] tracking-[3px]" style={{ color: "var(--muted-foreground)" }}>
-                  JOBS MATCHING YOU
+                  {isJobSeeker ? "JOBS MATCHING YOU" : "JOBS ON ARENA"}
                 </p>
                 <div className="flex flex-col gap-2">
-                  {matchingJobs.map((job) => (
+                  {jobsList.map((job) => (
                     <Link
                       key={job.id}
                       href={`/jobs/${job.id}`}
@@ -412,40 +472,40 @@ export function HomeContent() {
                           {job.company} · {job.remote ? "Remote" : job.location}
                         </p>
                       </div>
-                      <span className="shrink-0 text-[11px] font-bold" style={{ color: "var(--foreground)" }}>
-                        {job.matchPercentage}% match
-                      </span>
+                      {job.matchPercentage > 0 && (
+                        <span className="shrink-0 text-[11px] font-bold" style={{ color: "var(--foreground)" }}>
+                          {job.matchPercentage}% match
+                        </span>
+                      )}
                     </Link>
                   ))}
                 </div>
               </div>
             )}
 
-            {feedJobItems.length > 0 && (
+            {showBidding && biddingList != null && biddingList.length > 0 && (
               <div className="mb-5">
                 <p className="mb-2.5 text-[10px] tracking-[3px]" style={{ color: "var(--muted-foreground)" }}>
-                  ON ARENA RIGHT NOW
+                  OPEN BIDDING
                 </p>
                 <div className="flex flex-col gap-2">
-                  {feedJobItems.map((item) => (
+                  {biddingList.map((project) => (
                     <Link
-                      key={item.id}
-                      href={item.itemType === "job" ? `/jobs/${item.id}` : `/marketplace/${item.id}`}
+                      key={project.id}
+                      href={`/marketplace/${project.id}`}
                       className="flex items-center justify-between gap-3 rounded-xl px-4 py-3.5"
                       style={{ background: "var(--card)", border: "1px solid var(--border)" }}
                     >
                       <div className="min-w-0">
                         <p className="truncate text-[13.5px] font-semibold" style={{ color: "var(--foreground)" }}>
-                          {item.title}
+                          {project.title}
                         </p>
                         <p className="mt-0.5 text-[11.5px]" style={{ color: "var(--muted-foreground)" }}>
-                          {item.itemType === "job"
-                            ? `${item.authorCompanyName ?? "A company"} · ${item.remote ? "Remote" : (item.locationText ?? "Hyderabad")}`
-                            : `₹${item.budgetMin?.toLocaleString("en-IN")}–₹${item.budgetMax?.toLocaleString("en-IN")} · ${item.bidCount ?? 0} bids`}
+                          {formatINRRange(project.budgetMin, project.budgetMax)} · {project.durationWeeks}w
                         </p>
                       </div>
-                      <span className="shrink-0 text-[10px] font-bold tracking-wide" style={{ color: "var(--muted-foreground)" }}>
-                        {item.itemType === "job" ? "JOB" : "BIDDING"}
+                      <span className="shrink-0 text-[11px] font-bold" style={{ color: "var(--foreground)" }}>
+                        {project.bids.length} bid{project.bids.length === 1 ? "" : "s"}
                       </span>
                     </Link>
                   ))}
@@ -458,26 +518,35 @@ export function HomeContent() {
                 <div key={i} className="mb-3 rounded-2xl" style={{ background: "var(--card)", height: 112 + 78, opacity: 0.5 }} />
               ))}
 
-            {state === "ready" && feedPosts.length === 0 && (
+            {nothingToShow && (
               <HomeEmptyStateDark
-                headline={hasLocation ? "Nothing nearby right now" : "It's quiet right now"}
+                headline={
+                  !showPosts && !showJobs && !showBidding
+                    ? "Nothing to show with every filter off"
+                    : hasLocation
+                      ? "Nothing nearby right now"
+                      : "It's quiet right now"
+                }
                 description={
-                  hasLocation
-                    ? "No activities or needs posted near you in the last day. Check the map for a wider radius, or be the first to start something."
-                    : "Nothing posted recently. Be the first to start something today."
+                  !showPosts && !showJobs && !showBidding
+                    ? "Turn at least one of Posts, Jobs or Bidding back on above."
+                    : hasLocation
+                      ? "No activities or needs posted near you in the last day. Check the map for a wider radius, or be the first to start something."
+                      : "Nothing posted recently. Be the first to start something today."
                 }
                 primaryActionLabel="Start something"
                 onPrimaryAction={openComposerPicker}
               />
             )}
 
-            {state === "ready" && feedPosts.length > 0 && (
+            {showPosts && state === "ready" && feedPosts.length > 0 && (
               <p className="mb-2.5 text-[10px] tracking-[3px]" style={{ color: "var(--muted-foreground)" }}>
                 HAPPENING NOW
               </p>
             )}
 
-            {state === "ready" &&
+            {showPosts &&
+              state === "ready" &&
               feedPosts.map((post) =>
                 post.intentType === "activity" ? (
                   <ActivityCard key={post.id} post={post} onJoin={handleJoin} joining={joiningId === post.id} />
