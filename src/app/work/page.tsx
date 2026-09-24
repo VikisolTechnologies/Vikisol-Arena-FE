@@ -1,203 +1,284 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Compass, ClipboardList, Store, MessageSquare, Building2, type LucideIcon } from "lucide-react";
+import { ChevronRight, Compass, Building2, Plus } from "lucide-react";
+import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
-import { HomeHeader } from "@/components/home-v3/HomeHeader";
-import { HomeTabBar } from "@/components/home-v3/HomeTabBar";
-import { ARENA_V3 } from "@/components/home-v3/tokens";
-import { CreateComposer } from "@/components/create-v3/CreateComposer";
-import { getMyProfile } from "@/lib/api/profile";
+import { Button } from "@/components/ui/button";
+import { SignInPrompt } from "@/components/auth/SignInPrompt";
+import { getJobs, getJob } from "@/lib/api/jobs";
+import { getProjects, getProject } from "@/lib/api/market";
 import { getMyBids } from "@/lib/api/myBids";
-import { getProject } from "@/lib/api/market";
 import { getMyApplications } from "@/lib/api/applications";
 import { getInterviewForApplication } from "@/lib/api/interviews";
-import { getJob } from "@/lib/api/jobs";
 import { getPosting } from "@/lib/api/enterprise";
-import { getMyRooms } from "@/lib/api/rooms";
-import { requireOnboarded } from "@/lib/auth-guard";
-import { formatFriendlyDateTime } from "@/lib/format";
-import type { CandidateProfile } from "@/lib/types";
+import { allowGuestBrowsing } from "@/lib/auth-guard";
+import { getSession } from "@/lib/session";
+import { formatFriendlyDateTime, formatINRRange } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import type { Job, Project } from "@/lib/types";
 
-const EXPLORE_SURFACES: { href: string; label: string; description: string; icon: LucideIcon }[] = [
-  { href: "/discover", label: "Discover", description: "Swipe through jobs matched to your profile", icon: Compass },
-  { href: "/applications", label: "Applications", description: "Track every application through the pipeline", icon: ClipboardList },
-  { href: "/marketplace", label: "Marketplace", description: "Bid on projects, or post one of your own", icon: Store },
-  { href: "/companies", label: "Companies", description: "Browse companies, see open roles, follow the ones you like", icon: Building2 },
-  { href: "/agent", label: "Agent", description: "Chat with your agent, approve actions it drafts", icon: MessageSquare },
+// Work: the one home for jobs and bidding (Arena restructure, Phase 1). Replaces the old
+// "What you're in" page + list of links out to Discover/Marketplace/Companies - those are still
+// real pages, reachable from here, but a visitor no longer has to know which of four places
+// holds the thing they want.
+type Tab = "jobs" | "bidding" | "mine";
+const TABS: { key: Tab; label: string }[] = [
+  { key: "jobs", label: "Jobs" },
+  { key: "bidding", label: "Bidding" },
+  { key: "mine", label: "Mine" },
 ];
 
 interface ActiveItem {
   id: string;
   title: string;
   state: string;
-  pillLabel?: string;
+  pill?: string;
   href: string;
 }
 
-export default function WorkHubPage() {
+function hoursLeft(endsAt: string) {
+  return Math.max(0, Math.round((new Date(endsAt).getTime() - Date.now()) / 3_600_000));
+}
+
+function Row({ href, title, sub, trailing }: { href: string; title: string; sub: string; trailing?: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3.5 transition-colors hover:bg-secondary"
+    >
+      <div className="min-w-0">
+        <p className="truncate text-[14px] font-semibold text-foreground">{title}</p>
+        <p className="mt-0.5 truncate text-[12px] text-muted-foreground">{sub}</p>
+      </div>
+      {trailing}
+    </Link>
+  );
+}
+
+export default function WorkPage() {
   const router = useRouter();
-  const [profile, setProfile] = useState<CandidateProfile | null>(null);
-  const [bidItems, setBidItems] = useState<ActiveItem[] | null>(null);
-  const [interviewItems, setInterviewItems] = useState<ActiveItem[] | null>(null);
-  const [sessionItems, setSessionItems] = useState<ActiveItem[] | null>(null);
-  const [composerOpen, setComposerOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>("jobs");
+  const [signedIn, setSignedIn] = useState(false);
+  const [jobs, setJobs] = useState<Job[] | null>(null);
+  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [mine, setMine] = useState<ActiveItem[] | null>(null);
+  const [signInPromptOpen, setSignInPromptOpen] = useState(false);
 
   useEffect(() => {
-    if (!requireOnboarded(router)) return;
-    getMyProfile().then(setProfile);
+    // ?tab=bidding / ?tab=mine deep links (read once, client-only).
+    const requested = new URLSearchParams(window.location.search).get("tab");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only URL read
+    if (requested === "bidding" || requested === "mine") setTab(requested);
+    setSignedIn(!!getSession());
+  }, []);
 
-    // Live bids - status still pending/shortlisted; won/lost bids aren't something you're
-    // currently "in" any more, that's history (Marketplace > My bids covers it).
-    getMyBids().then(async (bids) => {
-      const live = bids.filter((b) => b.status === "pending" || b.status === "shortlisted");
-      const items = await Promise.all(
-        live.map(async (b): Promise<ActiveItem> => {
-          const project = await getProject(b.projectId);
-          return {
-            id: b.bidId,
-            title: project?.title ?? "Project",
-            state: `₹${b.amount.toLocaleString("en-IN")} bid`,
-            pillLabel: b.status.toUpperCase(),
-            href: `/marketplace/${b.projectId}`,
-          };
-        }),
-      );
-      setBidItems(items);
-    });
-
-    // Scheduled interviews - only applications actually at the interview stage, and only ones
-    // where a real Interview record exists with a proposed or confirmed slot (not every
-    // "interview"-stage application has one yet).
-    getMyApplications().then(async (apps) => {
-      const candidates = apps.filter((a) => a.stage === "interview").slice(0, 10);
-      const resolved = await Promise.all(
-        candidates.map(async (a): Promise<ActiveItem | null> => {
-          const interview = await getInterviewForApplication(a.id);
-          if (!interview || (interview.status !== "proposed" && interview.status !== "confirmed")) return null;
-          const posting = a.jobId ? await getJob(a.jobId) : a.postingId ? await getPosting(a.postingId) : undefined;
-          const confirmedSlot = interview.confirmedSlotId ? interview.proposedSlots.find((s) => s.id === interview.confirmedSlotId) : undefined;
-          return {
-            id: a.id,
-            title: posting?.title ?? "Interview",
-            state: confirmedSlot ? formatFriendlyDateTime(confirmedSlot.start) : "Awaiting your confirmation",
-            pillLabel: interview.status.toUpperCase(),
-            href: `/interviews/${a.id}`,
-          };
-        }),
-      );
-      setInterviewItems(resolved.filter((x): x is ActiveItem => x !== null));
-    });
-
-    // Joined sessions - real Rooms the viewer is currently in for a still-open activity/need.
-    getMyRooms().then((rooms) => {
-      const active = rooms.filter((r) => r.postStatus === "open" || r.postStatus === "full");
-      setSessionItems(
-        active.map((r) => ({
-          id: r.id,
-          title: r.postBody,
-          state: `${r.memberCount} in room`,
-          href: `/rooms/${r.id}`,
-        })),
-      );
-    });
+  useEffect(() => {
+    if (!allowGuestBrowsing(router)) return;
+    getJobs()
+      .then((j) => setJobs(j.slice().sort((a, b) => b.matchPercentage - a.matchPercentage || a.postedDaysAgo - b.postedDaysAgo)))
+      .catch(() => setJobs([]));
+    getProjects()
+      .then((p) => setProjects(p.filter((x) => x.status === "open")))
+      .catch(() => setProjects([]));
   }, [router]);
 
-  if (!profile) {
-    return (
-      <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh" }}>
-        <OrbLoader className="h-96" />
-      </div>
-    );
+  // "Mine" = things you're actively in: live bids and interviews with a real slot. Joined
+  // activity rooms live in Inbox now, so they're not repeated here.
+  useEffect(() => {
+    if (tab !== "mine" || mine !== null || !getSession()) return;
+    (async () => {
+      const [bids, apps] = await Promise.all([getMyBids().catch(() => []), getMyApplications().catch(() => [])]);
+      const bidItems = await Promise.all(
+        bids
+          .filter((b) => b.status === "pending" || b.status === "shortlisted")
+          .map(async (b): Promise<ActiveItem> => {
+            const project = await getProject(b.projectId);
+            return {
+              id: `bid-${b.bidId}`,
+              title: project?.title ?? "Project",
+              state: `Your bid: ₹${b.amount.toLocaleString("en-IN")}`,
+              pill: b.status === "shortlisted" ? "Shortlisted" : "Pending",
+              href: `/marketplace/${b.projectId}`,
+            };
+          }),
+      );
+      const interviewItems = (
+        await Promise.all(
+          apps
+            .filter((a) => a.stage === "interview")
+            .slice(0, 10)
+            .map(async (a): Promise<ActiveItem | null> => {
+              const interview = await getInterviewForApplication(a.id);
+              if (!interview || (interview.status !== "proposed" && interview.status !== "confirmed")) return null;
+              const posting = a.jobId ? await getJob(a.jobId) : a.postingId ? await getPosting(a.postingId) : undefined;
+              const slot = interview.confirmedSlotId ? interview.proposedSlots.find((s) => s.id === interview.confirmedSlotId) : undefined;
+              return {
+                id: `int-${a.id}`,
+                title: posting?.title ?? "Interview",
+                state: slot ? formatFriendlyDateTime(slot.start) : "Pick a time",
+                pill: interview.status === "confirmed" ? "Interview" : "Choose slot",
+                href: `/interviews/${a.id}`,
+              };
+            }),
+        )
+      ).filter((x): x is ActiveItem => x !== null);
+      setMine([...interviewItems, ...bidItems]);
+    })();
+  }, [tab, mine]);
+
+  function postProject() {
+    if (!signedIn) {
+      setSignInPromptOpen(true);
+      return;
+    }
+    router.push("/marketplace?post=1");
   }
 
-  const loading = bidItems === null || interviewItems === null || sessionItems === null;
-  const allItems = [...(bidItems ?? []), ...(interviewItems ?? []), ...(sessionItems ?? [])];
-
   return (
-    <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
-      <HomeHeader profile={profile} onCompose={() => setComposerOpen(true)} />
-
-      <div style={{ flex: 1, paddingBottom: "calc(84px + env(safe-area-inset-bottom))" }}>
-        <div style={{ maxWidth: 640, margin: "0 auto", padding: "18px 20px 0" }}>
-          <p style={{ margin: "0 0 14px", fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>WORK</p>
-          <p style={{ margin: 0, fontFamily: "var(--font-arena-fraunces)", fontSize: 28, color: ARENA_V3.ink }}>What you&apos;re in</p>
-          <div style={{ width: 40, height: 2, background: ARENA_V3.gold, margin: "14px 0 20px" }} />
-
-          {/* Active items - live bids, then scheduled interviews, then joined sessions, per
-              SCREEN 8's stated urgency order. No "Jenny noticed" agent card here: that requires
-              a real observation-generating backend that doesn't exist yet (ARENA-FINISH-IT §7
-              names the agent/JennySol explicitly out of scope for this pass) - showing one
-              anyway would mean fabricating what it "noticed," which this whole build has
-              deliberately avoided everywhere else. */}
-          {loading ? (
-            <OrbLoader className="h-40" />
-          ) : allItems.length === 0 ? (
-            <div style={{ background: ARENA_V3.white, borderRadius: 14, padding: "24px 20px", textAlign: "center", marginBottom: 24 }}>
-              <p style={{ margin: "0 0 8px", fontSize: 15, color: ARENA_V3.ink }}>Nothing active right now</p>
-              <p style={{ margin: "0 0 18px", fontSize: 13, color: ARENA_V3.muted, lineHeight: 1.6 }}>
-                Bid on a project, apply to a role, or join an activity - it&apos;ll show up here.
-              </p>
-              {/* ARENA-FINISH-IT.md §2 - "a real button," not just text. No single action fits
-                  (an active item here can start three different real ways), so this scrolls to
-                  the real Explore list right below rather than picking one arbitrarily. */}
-              <button
-                type="button"
-                onClick={() => document.getElementById("explore")?.scrollIntoView({ behavior: "smooth" })}
-                style={{ fontSize: 13, background: ARENA_V3.ink, color: ARENA_V3.ivory, padding: "11px 26px", borderRadius: 24, border: "none", cursor: "pointer" }}
-              >
-                Explore
-              </button>
-            </div>
-          ) : (
-            <div style={{ background: ARENA_V3.white, borderRadius: 14, overflow: "hidden", marginBottom: 24 }}>
-              {allItems.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => router.push(item.href)}
-                  style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", padding: 14, border: "none", background: "none", borderBottom: `1px solid ${ARENA_V3.hairlineCard}`, cursor: "pointer" }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 14, color: ARENA_V3.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.title}</p>
-                    <p style={{ margin: "3px 0 0", fontSize: 12, color: ARENA_V3.muted }}>{item.state}</p>
-                  </div>
-                  {item.pillLabel ? (
-                    <span style={{ flexShrink: 0, fontSize: 10, letterSpacing: 2, color: "#8A6A22", border: "1px solid #E0CDA1", borderRadius: 20, padding: "5px 10px" }}>
-                      {item.pillLabel}
-                    </span>
-                  ) : (
-                    <ChevronRight size={16} color="#C9BFB1" style={{ flexShrink: 0 }} />
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <p id="explore" style={{ margin: "0 0 10px", fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>EXPLORE</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 24 }}>
-            {EXPLORE_SURFACES.map(({ href, label, description, icon: Icon }) => (
-              <button
-                key={href}
-                type="button"
-                onClick={() => router.push(href)}
-                style={{ display: "flex", alignItems: "center", gap: 13, width: "100%", textAlign: "left", background: ARENA_V3.white, border: "none", borderRadius: 14, padding: 15, cursor: "pointer" }}
-              >
-                <Icon size={21} strokeWidth={1.5} color={ARENA_V3.ink} style={{ flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 15, color: ARENA_V3.ink }}>{label}</p>
-                  <p style={{ margin: "2px 0 0", fontSize: 12, color: ARENA_V3.muted }}>{description}</p>
-                </div>
-                <ChevronRight size={16} color="#C9BFB1" style={{ flexShrink: 0 }} />
-              </button>
-            ))}
-          </div>
+    <AppShell title="Work">
+      <div className="mx-auto w-full max-w-[780px]">
+        <div role="tablist" aria-label="Work" className="mb-5 flex gap-1 rounded-full border border-border bg-card p-1">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              role="tab"
+              aria-selected={tab === t.key}
+              onClick={() => setTab(t.key)}
+              className={cn(
+                "flex-1 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors",
+                tab === t.key ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
-      </div>
 
-      <HomeTabBar onCompose={() => setComposerOpen(true)} />
-      <CreateComposer open={composerOpen} onOpenChange={setComposerOpen} onPublished={() => {}} />
-    </div>
+        {tab === "jobs" && (
+          <section aria-label="Jobs">
+            <div className="mb-4 flex flex-wrap gap-2">
+              <Link href="/discover" className="inline-flex items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground">
+                <Compass className="size-3.5" /> Swipe through matches
+              </Link>
+              <Link href="/companies" className="inline-flex items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground">
+                <Building2 className="size-3.5" /> Companies
+              </Link>
+            </div>
+            {jobs === null ? (
+              <OrbLoader className="h-48" />
+            ) : jobs.length === 0 ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">No open roles right now.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{jobs.length} open roles</p>
+                {jobs.map((job) => (
+                  <Row
+                    key={job.id}
+                    href={`/jobs/${job.id}`}
+                    title={job.title}
+                    sub={`${job.company} · ${job.remote ? "Remote" : job.location} · ₹${job.salaryMin}–${job.salaryMax}L`}
+                    trailing={
+                      job.matchPercentage > 0 ? (
+                        <span className="shrink-0 text-[12px] font-bold text-foreground">{job.matchPercentage}% match</span>
+                      ) : (
+                        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                      )
+                    }
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {tab === "bidding" && (
+          <section aria-label="Bidding">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <p className="text-[13px] text-muted-foreground">Freelance projects open for bids.</p>
+              <Button size="sm" className="gap-1.5" onClick={postProject}>
+                <Plus className="size-3.5" /> Post a project
+              </Button>
+            </div>
+            {projects === null ? (
+              <OrbLoader className="h-48" />
+            ) : projects.length === 0 ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">No projects open for bids right now.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {projects.map((p) => (
+                  <Row
+                    key={p.id}
+                    href={`/marketplace/${p.id}`}
+                    title={p.title}
+                    sub={`${formatINRRange(p.budgetMin, p.budgetMax)} · ${p.durationWeeks} weeks · ${hoursLeft(p.endsAt)}h left`}
+                    trailing={
+                      <span className="shrink-0 text-[12px] font-bold text-foreground">
+                        {p.bids.length} bid{p.bids.length === 1 ? "" : "s"}
+                      </span>
+                    }
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {tab === "mine" && (
+          <section aria-label="Mine">
+            {!signedIn ? (
+              <div className="rounded-2xl border border-border bg-card px-5 py-8 text-center">
+                <p className="mb-2 text-[15px] font-medium">Your applications and bids live here</p>
+                <p className="mb-5 text-[13px] text-muted-foreground">Sign in to track interviews, bids and everything you&apos;ve applied to.</p>
+                <Button size="sm" render={<Link href="/auth" />} nativeButton={false}>
+                  Sign in
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4 flex flex-wrap gap-2">
+                  <Link href="/applications" className="rounded-full border border-border px-3.5 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground">
+                    All applications
+                  </Link>
+                  <Link href="/marketplace/bids" className="rounded-full border border-border px-3.5 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground">
+                    All my bids
+                  </Link>
+                </div>
+                {mine === null ? (
+                  <OrbLoader className="h-48" />
+                ) : mine.length === 0 ? (
+                  <div className="rounded-2xl border border-border bg-card px-5 py-8 text-center">
+                    <p className="mb-2 text-[15px] font-medium">Nothing in progress</p>
+                    <p className="text-[13px] text-muted-foreground">Apply to a role or bid on a project and it&apos;ll show up here.</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {mine.map((item) => (
+                      <Row
+                        key={item.id}
+                        href={item.href}
+                        title={item.title}
+                        sub={item.state}
+                        trailing={
+                          item.pill && (
+                            <span className="shrink-0 rounded-full border border-border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-foreground">
+                              {item.pill}
+                            </span>
+                          )
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+        )}
+      </div>
+      <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action="post a project" />
+    </AppShell>
   );
 }

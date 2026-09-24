@@ -11,14 +11,13 @@ import { getSession } from "@/lib/session";
 import { GoogleMapView, googleMapsConfigured } from "@/components/map/GoogleMapView";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
-import { HomeHeader } from "@/components/home-v3/HomeHeader";
-import { HomeTabBar } from "@/components/home-v3/HomeTabBar";
+import { AppShell } from "@/components/app/AppShell";
 import { ARENA_V3 } from "@/components/home-v3/tokens";
-import { MapFilterChips, type MapTypeFilter } from "@/components/map-v3/MapFilterChips";
+import { MapFilterChips } from "@/components/map-v3/MapFilterChips";
 import { MapListRow } from "@/components/map-v3/MapListRow";
 import { MapDetailSheet } from "@/components/map-v3/MapDetailSheet";
 import { CreateComposer } from "@/components/create-v3/CreateComposer";
-import { HomeEmptyState } from "@/components/home-v3/HomeEmptyState";
+import { HomeEmptyStateDark } from "@/components/home-v3/HomeEmptyStateDark";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import type { CandidateProfile, Post } from "@/lib/types";
 
@@ -43,36 +42,29 @@ export default function MapPage() {
   const [locating, setLocating] = useState(false);
   const [locationBlocked, setLocationBlocked] = useState(false);
   const [radiusKm, setRadiusKm] = useState(10);
-  const [typeKey, setTypeKey] = useState<MapTypeFilter>("all");
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerSession, setComposerSession] = useState(0);
-  const [composerIntent, setComposerIntent] = useState<Exclude<Post["intentType"], "company"> | null>(null);
   const [signInPromptOpen, setSignInPromptOpen] = useState(false);
   const [signInAction, setSignInAction] = useState("do that");
 
-  function openComposer() {
+  // Nearby's own "start one" action goes straight to an activity - the shell's Create button
+  // covers every other kind of post.
+  function startActivity() {
     if (!getSession()) {
-      setSignInAction("post");
+      setSignInAction("start an activity");
       setSignInPromptOpen(true);
       return;
     }
-    setComposerIntent(null);
     setComposerSession((n) => n + 1);
     setComposerOpen(true);
   }
 
-  function openComposerWithIntent(intent: Exclude<Post["intentType"], "company">) {
-    if (!getSession()) {
-      setSignInAction("post");
-      setSignInPromptOpen(true);
-      return;
-    }
-    setComposerIntent(intent);
-    setComposerSession((n) => n + 1);
-    setComposerOpen(true);
+  // Nearby is activities only - needs and questions live in Discuss.
+  function loadActivities() {
+    return getNearby({ lat: center.lat, lng: center.lng, radiusKm, withinHours: 168, intentType: "activity" });
   }
 
   // "Enter as guest" - the map itself (getNearby, below) needs no session; only fetch/apply a
@@ -90,9 +82,8 @@ export default function MapPage() {
   }, [router]);
 
   useEffect(() => {
-    const type = typeKey === "all" ? undefined : typeKey;
-    getNearby({ lat: center.lat, lng: center.lng, radiusKm, withinHours: 168, intentType: type }).then(setPosts);
-  }, [center, radiusKm, typeKey]);
+    getNearby({ lat: center.lat, lng: center.lng, radiusKm, withinHours: 168, intentType: "activity" }).then(setPosts);
+  }, [center, radiusKm]);
 
   const selected = posts?.find((p) => p.id === selectedId) ?? null;
 
@@ -139,18 +130,14 @@ export default function MapPage() {
     setJoining(true);
     try {
       await requestJoin(post.id);
-      const type = typeKey === "all" ? undefined : typeKey;
-      const fresh = await getNearby({ lat: center.lat, lng: center.lng, radiusKm, withinHours: 168, intentType: type });
-      setPosts(fresh);
+      setPosts(await loadActivities());
     } finally {
       setJoining(false);
     }
   }
 
   return (
-    <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
-      <HomeHeader profile={profile} onCompose={openComposer} />
-
+    <AppShell bleed profile={profile}>
       <div className="h-[300px] md:h-[380px]" style={{ position: "relative", flexShrink: 0, background: ARENA_V3.mapDark }}>
         {posts === null ? (
           <OrbLoader className="h-full" />
@@ -167,7 +154,7 @@ export default function MapPage() {
             reducedMotion={reducedMotion}
           />
         )}
-        <MapFilterChips typeKey={typeKey} onTypeChange={setTypeKey} radiusKm={radiusKm} onRadiusChange={setRadiusKm} />
+        <MapFilterChips radiusKm={radiusKm} onRadiusChange={setRadiusKm} />
         {!hasPreciseLocation && (
           <div style={{ position: "absolute", bottom: 14, left: 14, right: 14, display: "flex", justifyContent: "center", zIndex: 5 }}>
             <button
@@ -179,8 +166,8 @@ export default function MapPage() {
                 alignItems: "center",
                 gap: 6,
                 fontSize: 12,
-                background: ARENA_V3.ivory,
-                color: ARENA_V3.ink,
+                background: ARENA_V3.ink,
+                color: ARENA_V3.ivory,
                 border: "none",
                 borderRadius: 20,
                 padding: "9px 16px",
@@ -203,7 +190,7 @@ export default function MapPage() {
       {/* ARENA-MOCKUP-REFERENCE.md SCREEN 2 - "Bottom sheet... pulled up 20px over the map." A
           negative margin over a rounded-top panel, not a floating/draggable overlay - matches
           the mockup's own literal markup, not an invented gesture interaction. */}
-      <div className="md:pb-6" style={{ flex: 1, background: ARENA_V3.ivory, borderRadius: "20px 20px 0 0", marginTop: -20, position: "relative", paddingTop: 16, paddingBottom: "calc(84px + env(safe-area-inset-bottom))" }}>
+      <div style={{ flex: 1, background: ARENA_V3.ivory, borderRadius: "20px 20px 0 0", marginTop: -20, position: "relative", paddingTop: 16, paddingBottom: 24 }}>
         <div style={{ width: 32, height: 3, background: ARENA_V3.hairline, borderRadius: 3, margin: "0 auto 16px" }} />
         <div style={{ maxWidth: 640, margin: "0 auto", padding: "0 14px" }}>
           {selected ? (
@@ -216,15 +203,14 @@ export default function MapPage() {
           ) : (
             <>
               <p style={{ margin: "0 0 12px", fontSize: 10, color: ARENA_V3.muted, letterSpacing: 3 }}>
-                {posts === null ? "LOADING" : `${posts.length} NEARBY`}
+                {posts === null ? "LOADING" : `${posts.length} ACTIVIT${posts.length === 1 ? "Y" : "IES"} NEARBY`}
               </p>
               {posts !== null && posts.length === 0 && (
-                <HomeEmptyState
-                  headline="Nothing nearby right now"
-                  description="Widen your radius, or be the first to start something at this distance."
-                  primaryActionLabel="Start something"
-                  onPrimaryAction={openComposer}
-                  onStartIntent={openComposerWithIntent}
+                <HomeEmptyStateDark
+                  headline="No activities nearby yet"
+                  description="Widen the radius above, or start one - people close by can join and you'll get a room to plan it."
+                  primaryActionLabel="Start an activity"
+                  onPrimaryAction={startActivity}
                 />
               )}
               {posts?.map((p) => (
@@ -235,10 +221,14 @@ export default function MapPage() {
         </div>
       </div>
 
-      <HomeTabBar onCompose={openComposer} />
-
-      <CreateComposer key={composerSession} open={composerOpen} onOpenChange={setComposerOpen} onPublished={() => {}} initialIntent={composerIntent} />
+      <CreateComposer
+        key={composerSession}
+        open={composerOpen}
+        onOpenChange={setComposerOpen}
+        onPublished={() => loadActivities().then(setPosts).catch(() => {})}
+        initialIntent="activity"
+      />
       <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action={signInAction} />
-    </div>
+    </AppShell>
   );
 }

@@ -17,7 +17,7 @@ export function MapListRow({ post, active, onSelect }: { post: Post; active: boo
         padding: "12px 14px",
         borderRadius: 12,
         border: active ? `1px solid ${ARENA_V3.gold}` : "1px solid transparent",
-        background: active ? "rgba(214,168,79,0.08)" : ARENA_V3.white,
+        background: active ? "rgba(255,107,53,0.08)" : ARENA_V3.white,
         marginBottom: 8,
         cursor: "pointer",
       }}

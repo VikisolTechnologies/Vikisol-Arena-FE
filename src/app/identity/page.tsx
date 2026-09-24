@@ -4,11 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Settings, LogOut } from "lucide-react";
 import { OrbLoader } from "@/components/ui/orb-loader";
-import { HomeHeader } from "@/components/home-v3/HomeHeader";
-import { HomeTabBar } from "@/components/home-v3/HomeTabBar";
+import { AppShell } from "@/components/app/AppShell";
 import { ChampagneAvatar } from "@/components/home-v3/ChampagneAvatar";
 import { ARENA_V3 } from "@/components/home-v3/tokens";
-import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { getMyProfile } from "@/lib/api/profile";
 import { signOut } from "@/lib/api/auth";
 import { getMyFollowers } from "@/lib/api/follows";
@@ -46,7 +44,6 @@ export default function ProfilePage() {
   const [myPosts, setMyPosts] = useState<Post[] | null>(null);
   const [sessionCount, setSessionCount] = useState<number | null>(null);
   const [outcomeCount, setOutcomeCount] = useState<number | null>(null);
-  const [composerOpen, setComposerOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
   const handleLogout = async () => {
@@ -71,9 +68,9 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh" }}>
+      <AppShell bleed profile={null}>
         <OrbLoader className="h-96" />
-      </div>
+      </AppShell>
     );
   }
 
@@ -81,10 +78,8 @@ export default function ProfilePage() {
   const recent = (myPosts ?? []).slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 6);
 
   return (
-    <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
-      <HomeHeader profile={profile} onCompose={() => setComposerOpen(true)} />
-
-      <div style={{ flex: 1, paddingBottom: "calc(84px + env(safe-area-inset-bottom))" }}>
+    <AppShell bleed profile={profile}>
+      <div style={{ flex: 1, paddingBottom: 24 }}>
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
           {/* Cover - a flat espresso band, not a fabricated stock photo (no real cover-photo
               upload pipeline exists yet - honest placeholder, same call PersonAvatar's own
@@ -94,7 +89,7 @@ export default function ProfilePage() {
               type="button"
               onClick={() => router.push("/identity/edit")}
               aria-label="Edit profile"
-              style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", color: ARENA_V3.ivory }}
+              style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", color: "#ffffff" }}
             >
               <Settings size={20} strokeWidth={1.75} />
             </button>
@@ -182,7 +177,7 @@ export default function ProfilePage() {
                   {/* ARENA-FINISH-IT.md §2 - "a real button," not a single line of text. */}
                   <button
                     type="button"
-                    onClick={() => setComposerOpen(true)}
+                    onClick={() => router.push("/home")}
                     style={{ fontSize: 13, background: ARENA_V3.ink, color: ARENA_V3.ivory, padding: "10px 22px", borderRadius: 20, border: "none", cursor: "pointer" }}
                   >
                     Start something
@@ -209,12 +204,8 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* The v3 shell (HomeHeader/HomeTabBar) has no sign-out affordance anywhere - the
-                avatar/Profile tab both route here, and the "gear" icon on the cover above goes
-                to /identity/edit (edit profile), not /settings, where signOut() actually lived.
-                A logged-in user had no reachable way to log out short of manually typing
-                /settings or clearing cookies. This page is what every nav path reaches, so this
-                is the one real place to put it. */}
+            {/* Profile is where people look for "log out" - kept here as well as in the shell's
+                account menu. */}
             <button
               type="button"
               onClick={handleLogout}
@@ -244,8 +235,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <HomeTabBar onCompose={() => setComposerOpen(true)} />
-      <CreateComposer open={composerOpen} onOpenChange={setComposerOpen} onPublished={() => {}} />
-    </div>
+    </AppShell>
   );
 }

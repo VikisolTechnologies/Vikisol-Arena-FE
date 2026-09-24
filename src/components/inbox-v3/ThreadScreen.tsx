@@ -85,9 +85,9 @@ export function ThreadScreen({
 
       {/* Pinned context strip - keeps the post a Room belongs to permanently visible. */}
       {pinnedContext && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 16px", background: "#F1E8DA" }}>
-          <MapPin size={15} strokeWidth={1.75} color="#8A6A22" style={{ flexShrink: 0 }} />
-          <p style={{ margin: 0, fontSize: 12, color: "#5C4A1C" }}>{pinnedContext}</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 16px", background: "rgba(255,107,53,0.1)" }}>
+          <MapPin size={15} strokeWidth={1.75} color="#ff8a5b" style={{ flexShrink: 0 }} />
+          <p style={{ margin: 0, fontSize: 12, color: "#ffb38a" }}>{pinnedContext}</p>
         </div>
       )}
 

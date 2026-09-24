@@ -72,7 +72,7 @@ export default function RoomDetailPage() {
       backHref="/rooms"
       thumbnail={
         <div style={{ width: 34, height: 34, borderRadius: 11, background: ARENA_V3.mapDark, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <Users size={15} strokeWidth={1.75} color={ARENA_V3.ivory} />
+          <Users size={15} strokeWidth={1.75} color={ARENA_V3.ink} />
         </div>
       }
       title={room.postBody}
@@ -85,7 +85,7 @@ export default function RoomDetailPage() {
           <button type="button" onClick={toggleMute} aria-label={room.muted ? "Unmute" : "Mute"} style={{ background: "none", border: "none", cursor: "pointer", color: ARENA_V3.muted, padding: 4 }}>
             {room.muted ? <BellOff size={16} strokeWidth={1.75} /> : <Bell size={16} strokeWidth={1.75} />}
           </button>
-          <button type="button" onClick={report} disabled={reported} aria-label={reported ? "Reported" : "Report"} style={{ background: "none", border: "none", cursor: reported ? "default" : "pointer", color: reported ? "#B3432B" : ARENA_V3.muted, padding: 4 }}>
+          <button type="button" onClick={report} disabled={reported} aria-label={reported ? "Reported" : "Report"} style={{ background: "none", border: "none", cursor: reported ? "default" : "pointer", color: reported ? "#f87171" : ARENA_V3.muted, padding: 4 }}>
             <Flag size={16} strokeWidth={1.75} />
           </button>
         </div>

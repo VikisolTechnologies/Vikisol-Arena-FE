@@ -4,11 +4,9 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { OrbLoader } from "@/components/ui/orb-loader";
-import { HomeHeader } from "@/components/home-v3/HomeHeader";
-import { HomeTabBar } from "@/components/home-v3/HomeTabBar";
+import { AppShell } from "@/components/app/AppShell";
 import { ARENA_V3 } from "@/components/home-v3/tokens";
 import { InboxRow } from "@/components/inbox-v3/InboxRow";
-import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { getMyProfile } from "@/lib/api/profile";
 import { getMyRooms } from "@/lib/api/rooms";
 import { getConversations, getOrCreateConversation } from "@/lib/api/messages";
@@ -28,7 +26,6 @@ function InboxContent() {
   const [rooms, setRooms] = useState<Room[] | null>(null);
   const [conversations, setConversations] = useState<Conversation[] | null>(null);
   const [search, setSearch] = useState("");
-  const [composerOpen, setComposerOpen] = useState(false);
 
   useEffect(() => {
     if (!requireOnboarded(router)) return;
@@ -61,10 +58,8 @@ function InboxContent() {
   const loading = rooms === null || conversations === null;
 
   return (
-    <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
-      <HomeHeader profile={profile} onCompose={() => setComposerOpen(true)} />
-
-      <div style={{ flex: 1, paddingBottom: "calc(84px + env(safe-area-inset-bottom))" }}>
+    <AppShell bleed profile={profile}>
+      <div style={{ flex: 1, paddingBottom: 24 }}>
         <div style={{ maxWidth: 640, margin: "0 auto", padding: "18px 0 0" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", marginBottom: 20 }}>
             <p style={{ margin: 0, fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>INBOX</p>
@@ -139,9 +134,7 @@ function InboxContent() {
         </div>
       </div>
 
-      <HomeTabBar onCompose={() => setComposerOpen(true)} />
-      <CreateComposer open={composerOpen} onOpenChange={setComposerOpen} onPublished={() => {}} />
-    </div>
+    </AppShell>
   );
 }
 

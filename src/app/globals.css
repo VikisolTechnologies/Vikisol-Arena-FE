@@ -64,56 +64,66 @@
  * component work) are defined here, side by side, pointing at the same values.
  */
 [data-theme="product"] {
-  --canvas: #f7f1ea;
-  --canvas-alt: #fbf7f2;
-  --surface: #ffffff;
-  --surface-sunk: #f2ece4;
+  /* Founder decision (2026-09-25): the product runs on Arena's real ecosystem brand - dark
+     ground, orange accent, same as the marketing site and Vikisol Technologies' own site - not
+     the ivory/gold palette this block originally carried. Redefining the tokens here (instead
+     of stripping data-theme="product" from every shell) switches every shell that opts in at
+     once. Token NAMES keep their original roles: `ink` is still the "dark surface / dark text
+     on a light chip" color (bg-ink text-white stat cards, text-ink on champagne chips), so it
+     stays dark; `foreground` is decoupled from it and set to light text directly. The
+     champagne/gold family now carries the orange accent. */
+  color-scheme: dark;
 
-  --ink: #000000;
-  --ink-800: #111111;
-  --ink-600: #2f2f2f;
-  --ink-400: #6b6b6b;
-  --ink-300: #9a9a9a;
+  --canvas: #09090b;
+  --canvas-alt: #0d0d10;
+  --surface: #141417;
+  --surface-sunk: #1b1b1f;
 
-  --line: rgba(0, 0, 0, 0.08);
-  --line-strong: rgba(0, 0, 0, 0.14);
+  --ink: #1c1c20;
+  --ink-800: #26262b;
+  --ink-600: #3a3a40;
+  --ink-400: #a1a1aa;
+  --ink-300: #5c5c64;
 
-  --champagne: #ffe6bc;
-  --gold-soft: #f3d79b;
-  --gold: #d6a84f;
-  --gold-deep: #a87c2c;
+  --line: rgba(255, 255, 255, 0.12);
+  --line-strong: rgba(255, 255, 255, 0.2);
 
-  --success: #2e7d5b;
-  --warning: #b8791f;
-  --danger: #c0392b;
-  --info: #2f5d8c;
+  --champagne: #ff8a5b;
+  --gold-soft: #ffb38a;
+  --gold: #ff6b35;
+  --gold-deep: #ff8a5b;
+
+  --success: #4cc38a;
+  --warning: #e0a84a;
+  --danger: #ef4444;
+  --info: #60a5fa;
 
   /* remapped existing semantic names - this is what makes shared primitives (Button, Card,
      Avatar, Badge, Input, Sheet, Toast, Skeleton, EmptyState, ...) reskin automatically */
   --background: var(--canvas);
-  --foreground: var(--ink);
+  --foreground: #f5f5f6;
   --faint: var(--ink-300);
 
-  --primary: var(--ink);
-  --primary-soft: var(--ink-600);
-  --primary-foreground: #ffffff;
+  --primary: #ff6b35;
+  --primary-soft: #ff8a5b;
+  --primary-foreground: #160a05;
 
   --card: var(--surface);
-  --card-foreground: var(--ink);
-  --popover: var(--surface);
-  --popover-foreground: var(--ink);
+  --card-foreground: #f5f5f6;
+  --popover: var(--canvas-alt);
+  --popover-foreground: #f5f5f6;
 
   --secondary: var(--surface-sunk);
-  --secondary-foreground: var(--ink);
+  --secondary-foreground: #f5f5f6;
   --muted: var(--surface-sunk);
   --muted-foreground: var(--ink-400);
-  --accent: var(--champagne);
-  --accent-foreground: var(--gold-deep);
+  --accent: rgba(255, 138, 91, 0.14);
+  --accent-foreground: var(--primary-soft);
   --destructive: var(--danger);
 
   --border: var(--line);
   --input: var(--line);
-  --ring: var(--gold);
+  --ring: var(--primary-soft);
 
   /* §4 "Radii" / "Shadows (soft and expensive, never heavy)" - card is the only primitive
      given a real geometry change here (20px vs the dark theme's 24px); Button/Input/Sheet/
@@ -125,8 +135,8 @@
      is also used in plenty of non-interactive/static contexts.
    */
   --radius-card: 20px;
-  --shadow-card-rest: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.06);
+  --shadow-card-rest: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 @theme inline {
@@ -270,11 +280,6 @@ body {
   }
   html {
     @apply font-sans;
-  }
-  /* ARENA-DESIGN-SYSTEM.md §3 - Poppins throughout the product theme; marketing keeps the
-     existing Inter/Space Grotesk pairing (this rule only fires inside the scoped override). */
-  [data-theme="product"] {
-    font-family: var(--font-poppins), var(--font-sans);
   }
 }
 

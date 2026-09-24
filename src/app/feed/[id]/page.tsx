@@ -12,13 +12,11 @@ import { ReactionButton } from "@/components/feed/ReactionButton";
 import { CommentThread } from "@/components/feed/CommentThread";
 import { JoinRequestsPanel } from "@/components/feed/JoinRequestsPanel";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
-import { HomeHeader } from "@/components/home-v3/HomeHeader";
-import { HomeTabBar } from "@/components/home-v3/HomeTabBar";
+import { AppShell } from "@/components/app/AppShell";
 import { ChampagneAvatar } from "@/components/home-v3/ChampagneAvatar";
 import { DemoContentBadge } from "@/components/home-v3/DemoContentBadge";
 import { ARENA_V3 } from "@/components/home-v3/tokens";
 import { formatEyebrowWhen } from "@/components/home-v3/format";
-import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { getMyProfile } from "@/lib/api/profile";
 import { getPost, requestJoin, cancelPost, reportPost, savePost, unsavePost } from "@/lib/api/posts";
 import { formatFriendlyDateTime } from "@/lib/format";
@@ -45,7 +43,6 @@ export default function PostDetailPage() {
   const [saving, setSaving] = useState(false);
   const [signInPromptOpen, setSignInPromptOpen] = useState(false);
   const [signInAction, setSignInAction] = useState("do that");
-  const [composerOpen, setComposerOpen] = useState(false);
 
   const load = () => { getPost(params.id).then((p) => setPost(p ?? null)); };
 
@@ -62,22 +59,18 @@ export default function PostDetailPage() {
 
   if (post === undefined) {
     return (
-      <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh" }}>
-        <HomeHeader profile={profile} onCompose={() => setComposerOpen(true)} />
+      <AppShell bleed profile={profile}>
         <OrbLoader className="h-96" />
-        <HomeTabBar onCompose={() => setComposerOpen(true)} />
-      </div>
+      </AppShell>
     );
   }
   if (post === null) {
     return (
-      <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh" }}>
-        <HomeHeader profile={profile} onCompose={() => setComposerOpen(true)} />
+      <AppShell bleed profile={profile}>
         <p style={{ margin: "40px 20px", fontSize: 13, color: ARENA_V3.muted, textAlign: "center" }}>
           This post isn&apos;t available anymore.
         </p>
-        <HomeTabBar onCompose={() => setComposerOpen(true)} />
-      </div>
+      </AppShell>
     );
   }
 
@@ -152,10 +145,8 @@ export default function PostDetailPage() {
       : undefined;
 
   return (
-    <div style={{ background: ARENA_V3.ivory, minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
-      <HomeHeader profile={profile} onCompose={() => setComposerOpen(true)} />
-
-      <div style={{ flex: 1, paddingBottom: "calc(84px + env(safe-area-inset-bottom))" }}>
+    <AppShell bleed profile={profile}>
+      <div style={{ flex: 1, paddingBottom: 24 }}>
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
           {/* SCREEN 4 "Image header" - 200px full-bleed; skipped (not faked) for posts with no
               media and no activity-style fallback, e.g. a plain Update - same "no image,
@@ -165,19 +156,19 @@ export default function PostDetailPage() {
               <Image src={heroImage} alt="" fill sizes="640px" style={{ objectFit: "cover" }} priority />
               <button
                 type="button"
-                onClick={() => router.push("/home")}
-                style={{ position: "absolute", top: 16, left: 16, background: "none", border: "none", cursor: "pointer", color: ARENA_V3.ivory }}
+                onClick={() => router.push(post.intentType === "activity" ? "/map" : "/discuss")}
+                style={{ position: "absolute", top: 16, left: 16, background: "none", border: "none", cursor: "pointer", color: "#ffffff" }}
                 aria-label="Back"
               >
                 <ArrowLeft size={20} strokeWidth={1.75} />
               </button>
-              <MoreHorizontal size={20} strokeWidth={1.75} color={ARENA_V3.ivory} style={{ position: "absolute", top: 16, right: 16 }} />
+              <MoreHorizontal size={20} strokeWidth={1.75} color="#ffffff" style={{ position: "absolute", top: 16, right: 16 }} />
             </div>
           ) : (
             <div style={{ padding: "16px 20px 0" }}>
               <button
                 type="button"
-                onClick={() => router.push("/home")}
+                onClick={() => router.push(post.intentType === "activity" ? "/map" : "/discuss")}
                 style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: ARENA_V3.body, fontSize: 13, padding: 0 }}
               >
                 <ArrowLeft size={16} strokeWidth={1.75} /> Back
@@ -192,7 +183,7 @@ export default function PostDetailPage() {
               </p>
               {post.demoContent && <DemoContentBadge />}
               {(post.status === "cancelled" || post.status === "expired" || post.status === "full") && (
-                <span style={{ marginLeft: "auto", fontSize: 10, letterSpacing: 2, color: post.status === "full" ? ARENA_V3.muted : "#B3432B" }}>
+                <span style={{ marginLeft: "auto", fontSize: 10, letterSpacing: 2, color: post.status === "full" ? ARENA_V3.muted : "#f87171" }}>
                   {post.status === "cancelled" ? "CANCELLED" : post.status === "expired" ? "EXPIRED" : "FULL"}
                 </span>
               )}
@@ -232,12 +223,12 @@ export default function PostDetailPage() {
                   {post.authorJoinCount > 0 && ` · ${post.authorJoinCount} sessions`}
                 </p>
               </div>
-              {!post.mine && <ChevronRight size={16} color="#C9BFB1" style={{ flexShrink: 0 }} />}
+              {!post.mine && <ChevronRight size={16} color="#5c5c64" style={{ flexShrink: 0 }} />}
               {!post.mine && myUserId !== post.authorUserId && !post.authorCompanyId && (
                 <div data-theme="product" className="text-foreground" style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                   <FollowButton userId={post.authorUserId} />
                   <BlockButton userId={post.authorUserId} />
-                  <button type="button" disabled={reported} onClick={report} aria-label="Report this post" title={reported ? "Reported" : "Report"} style={{ background: "none", border: "none", cursor: reported ? "default" : "pointer", color: reported ? "#B3432B" : ARENA_V3.muted, padding: 4 }}>
+                  <button type="button" disabled={reported} onClick={report} aria-label="Report this post" title={reported ? "Reported" : "Report"} style={{ background: "none", border: "none", cursor: reported ? "default" : "pointer", color: reported ? "#f87171" : ARENA_V3.muted, padding: 4 }}>
                     <Flag size={14} strokeWidth={1.75} />
                   </button>
                 </div>
@@ -293,7 +284,7 @@ export default function PostDetailPage() {
                 type="button"
                 disabled={cancelling}
                 onClick={cancel}
-                style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: "#B3432B", fontSize: 12, padding: "0 0 16px" }}
+                style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: "#f87171", fontSize: 12, padding: "0 0 16px" }}
               >
                 <XCircle size={14} /> {cancelling ? "Cancelling…" : "Cancel this post"}
               </button>
@@ -348,7 +339,7 @@ export default function PostDetailPage() {
                       <BookmarkButton saved={saved} saving={saving} onClick={toggleSave} />
                     </div>
                     {joinError && (
-                      <p style={{ margin: "8px 0 0", fontSize: 12, color: "#B3432B" }}>
+                      <p style={{ margin: "8px 0 0", fontSize: 12, color: "#f87171" }}>
                         {joinError}
                         {joinError.toLowerCase().includes("settings") && (
                           <> <button type="button" onClick={() => router.push("/settings")} style={{ background: "none", border: "none", padding: 0, color: ARENA_V3.ink, textDecoration: "underline", cursor: "pointer", fontSize: 12 }}>Go to Settings</button></>
@@ -376,12 +367,10 @@ export default function PostDetailPage() {
         </div>
       </div>
 
-      <HomeTabBar onCompose={() => setComposerOpen(true)} />
-      <CreateComposer open={composerOpen} onOpenChange={setComposerOpen} onPublished={load} />
       <div data-theme="product" className="text-foreground">
         <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action={signInAction} />
       </div>
-    </div>
+    </AppShell>
   );
 }
 

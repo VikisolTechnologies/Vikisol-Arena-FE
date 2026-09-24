@@ -60,6 +60,9 @@ export default function MarketplacePage() {
     if (!allowGuestBrowsing(router)) return;
     if (getSession()) getMyProfile().then(setProfile);
     load();
+    // Work > Bidding > "Post a project" lands here with ?post=1 - open the form directly.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only URL read
+    if (getSession() && new URLSearchParams(window.location.search).get("post") === "1") setPosting(true);
   }, [router]);
 
   function startPosting() {

@@ -4,27 +4,28 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Home,
-  Compass,
+  Sparkles,
   MapPinned,
+  MessagesSquare,
   Briefcase,
   Inbox as InboxIcon,
   Bookmark,
   Bell,
-  Search,
   Plus,
   LogOut,
   Menu,
   X,
+  UserRound,
+  type LucideIcon,
 } from "lucide-react";
 import { PersistentOrb } from "@/components/orb/PersistentOrb";
-import { CommandDialog, CommandInput, CommandList, CommandEmpty } from "@/components/ui/command";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { PostComposer } from "@/components/feed/PostComposer";
+import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import type { CandidateProfile } from "@/lib/types";
 import { signOut } from "@/lib/api/auth";
+import { getMyProfile } from "@/lib/api/profile";
 import { getUnreadCount } from "@/lib/api/notifications";
 import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
 import { useKeyboardInset, KEYBOARD_OPEN_THRESHOLD } from "@/hooks/use-keyboard-inset";
@@ -32,50 +33,55 @@ import { getSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
 /**
- * ARENA-MASTER-ARCHITECTURE.md PART 4 — the new global shell. Structural rebuild for v3,
- * not a restyle of CandidateAppShell: new nav set (Home/Discover/Map/Work/Inbox — Rooms and
- * Messages fold into Inbox per PART 15 Step 7, not migrated yet so both old routes still work
- * standalone in the meantime), a right-rail slot for Home/Discover, and the PART 4-specified
- * mobile tab bar (Home · Discover · + · Map · Work, with Inbox/Profile living in the account
- * sheet instead of taking a 6th tab slot).
- *
- * Deliberately still on the CURRENT dark token set (bg-background/border-border/etc.) — the
- * ivory/champagne/gold system is PART 15 Step 2's job, applied on top of this structure, not
- * built into it. CandidateAppShell is untouched and still serves every route not yet migrated
- * to /home (see ROUTES.md) — this is additive, not a replacement of working pages.
+ * The one shell every talent-facing screen renders inside (Arena restructure, Phase 1).
+ * Five spaces, each the single home for one kind of content:
+ *   Jenny   /home    - the assistant; what needs you. Not a feed.
+ *   Nearby  /map     - activities (time + place), and only activities.
+ *   Discuss /discuss - posts/threads; post detail lives at /feed/[id].
+ *   Work    /work    - jobs and bidding (Discover, Marketplace, Companies sit under it).
+ *   Inbox   /rooms   - every conversation: activity rooms and direct messages.
+ * Same five, same order, in the desktop sidebar and the mobile tab bar - replacing the two
+ * separate nav systems (HomeHeader/HomeTabBar and this file's old Home/Discover/Map/Work set)
+ * that made the app feel like two different products.
  */
-const SIDE_NAV_ITEMS = [
-  { href: "/home", label: "Home", icon: Home },
-  { href: "/discover", label: "Discover", icon: Compass },
-  { href: "/map", label: "Map", icon: MapPinned },
-  { href: "/work", label: "Work", icon: Briefcase },
-  { href: "/rooms", label: "Inbox", icon: InboxIcon },
+type Space = { key: string; href: string; label: string; icon: LucideIcon; prefixes: string[] };
+
+const SPACES: Space[] = [
+  { key: "jenny", href: "/home", label: "Jenny", icon: Sparkles, prefixes: ["/home"] },
+  { key: "nearby", href: "/map", label: "Nearby", icon: MapPinned, prefixes: ["/map"] },
+  { key: "discuss", href: "/discuss", label: "Discuss", icon: MessagesSquare, prefixes: ["/discuss", "/feed"] },
+  {
+    key: "work",
+    href: "/work",
+    label: "Work",
+    icon: Briefcase,
+    prefixes: ["/work", "/discover", "/jobs", "/marketplace", "/companies", "/applications", "/interviews"],
+  },
+  { key: "inbox", href: "/rooms", label: "Inbox", icon: InboxIcon, prefixes: ["/rooms", "/messages"] },
 ];
 
-const SECONDARY_NAV_ITEMS = [
+const SECONDARY_ITEMS = [
   { href: "/work/saved", label: "Saved", icon: Bookmark },
   { href: "/notifications", label: "Notifications", icon: Bell },
+  { href: "/identity", label: "Profile", icon: UserRound },
 ];
 
-const MOBILE_TAB_ITEMS = [
-  { href: "/home", label: "Home", icon: Home },
-  { href: "/discover", label: "Discover", icon: Compass },
-  { href: null, label: "Post", icon: Plus }, // centre raised button, opens composer directly
-  { href: "/map", label: "Map", icon: MapPinned },
-  { href: "/work", label: "Work", icon: Briefcase },
-];
+function activeSpace(pathname: string): string | null {
+  // /work/saved is its own secondary item, not the Work space.
+  if (pathname.startsWith("/work/saved")) return null;
+  const match = SPACES.find((s) => s.prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`)));
+  return match?.key ?? null;
+}
 
-// ARENA-DESIGN-SYSTEM.md §6 "Navigation": selected item = --surface-sunk fill + 1px gold left
-// indicator + black icon (the champagne-hairline signature repeated as a nav rule, not just a
-// section-title rule - see R8).
-function NavRow({ href, label, icon: Icon, active }: { href: string; label: string; icon: typeof Home; active: boolean }) {
+function NavRow({ href, label, icon: Icon, active }: { href: string; label: string; icon: LucideIcon; active: boolean }) {
   return (
     <Link
       href={href}
+      aria-current={active ? "page" : undefined}
       className={cn(
         "relative flex items-center gap-3 rounded-xl py-2.5 pr-3 pl-4 text-sm font-medium transition-colors",
         active
-          ? "bg-secondary text-foreground before:absolute before:top-1.5 before:bottom-1.5 before:left-0 before:w-[2px] before:rounded-full before:bg-gold"
+          ? "bg-secondary text-foreground before:absolute before:top-1.5 before:bottom-1.5 before:left-0 before:w-[2px] before:rounded-full before:bg-foreground"
           : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
       )}
     >
@@ -88,37 +94,37 @@ function NavRow({ href, label, icon: Icon, active }: { href: string; label: stri
 export function AppShell({
   title,
   actions,
-  profile,
+  profile: profileProp,
   rightRail,
+  bleed = false,
   children,
 }: {
   title?: string;
   actions?: React.ReactNode;
   profile?: CandidateProfile | null;
   rightRail?: React.ReactNode;
+  /** Edge-to-edge content (no page padding) - for screens that lay out their own full-width
+   *  surfaces, like the Nearby map. */
+  bleed?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const current = activeSpace(pathname);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [composerSession, setComposerSession] = useState(0);
   const [signInPromptOpen, setSignInPromptOpen] = useState(false);
-  // Same cookie-banner-overlap fix CandidateAppShell already carries - see its own comment.
   const cookieBannerVisible = useCookieConsentVisible();
   const hasUnread = getUnreadCount() > 0;
   const mobileNavRef = useRef<HTMLElement>(null);
-  // ARENA mobile-agent-ux pass - the on-screen keyboard covers the bottom of the viewport (see
-  // use-keyboard-inset's own comment for why this needs visualViewport, not dvh/svh) exactly
-  // where this bar lives. It only matters on /agent today (the one screen with a composer this
-  // low), so this stays scoped to that route rather than changing nav behavior anywhere else.
+  // The on-screen keyboard covers the bottom of the viewport exactly where the tab bar lives.
+  // Only matters on /agent (the one screen with a composer that low), so it stays scoped there.
   const keyboardInset = useKeyboardInset();
   const hideNavForKeyboard = pathname === "/agent" && keyboardInset > KEYBOARD_OPEN_THRESHOLD;
 
-  // Mirrors CookieConsentBanner's own ResizeObserver -> CSS var technique (its comment explains
-  // why: a hardcoded guess at this bar's height previously undershot at real mobile widths).
-  // Publishing the real measured height lets /agent size its keyboard-safe chat panel against
-  // the bar's actual footprint instead of guessing a second constant.
+  // Publishes the tab bar's real measured height so /agent can size its keyboard-safe chat
+  // panel against it instead of guessing a constant.
   useEffect(() => {
     const el = mobileNavRef.current;
     if (!el) return;
@@ -128,106 +134,108 @@ export function AppShell({
     publish();
     return () => observer.disconnect();
   }, []);
-  // ARENA-INVENTORY-FIXES.md FIX 1 - /discover, /people/[id], /companies/[id] now render this
-  // shell for logged-out visitors too, so "profile hasn't loaded yet" and "there's no session
-  // at all" need to look different here instead of both showing "Loading…" forever. Starts
-  // false on both server and first client paint (SSR has no localStorage to read a session
-  // from) and only flips post-hydration - a lazy getSession() read straight into render caused
-  // exactly this class of hydration mismatch the first time it was tried elsewhere in this
-  // codebase (see CandidateAppShell's own comment).
+
+  // Starts false on server and first client paint (SSR has no localStorage) and flips
+  // post-hydration - reading getSession() during render causes a hydration mismatch.
   const [loggedIn, setLoggedIn] = useState(false);
+  // Pages that already fetch the profile pass it in; the rest get it fetched here, so the
+  // account chip is right on every screen without every page having to wire it up.
+  const [ownProfile, setOwnProfile] = useState<CandidateProfile | null>(null);
   useEffect(() => {
+    const session = getSession();
     // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only auth-gate flip
-    setLoggedIn(!!getSession());
-  }, []);
+    setLoggedIn(!!session);
+    if (session && profileProp === undefined) {
+      getMyProfile().then(setOwnProfile).catch(() => {});
+    }
+  }, [profileProp]);
+  const profile = profileProp ?? ownProfile;
 
   const handleLogout = async () => {
     await signOut();
     router.push("/auth");
   };
 
+  function openCreate() {
+    if (!loggedIn) {
+      setSignInPromptOpen(true);
+      return;
+    }
+    // Remount per open so a cancelled draft never resurfaces.
+    setComposerSession((n) => n + 1);
+    setComposerOpen(true);
+  }
+
+  const accountBlock = (placement: "sidebar" | "sheet") =>
+    loggedIn ? (
+      <div className={cn("mx-3 flex items-center gap-3 rounded-xl border border-border bg-white/[0.03] px-3 py-3", placement === "sidebar" ? "mt-3" : "mt-auto")}>
+        <Link href="/identity" className="flex min-w-0 flex-1 items-center gap-3" onClick={() => setMobileNavOpen(false)}>
+          <Avatar className="size-9">
+            <AvatarFallback className="bg-primary/15 text-primary-soft">{profile?.name?.slice(0, 1) ?? "?"}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium">{profile?.name ?? "Your profile"}</p>
+            {profile?.title && <p className="truncate text-xs text-muted-foreground">{profile.title}</p>}
+          </div>
+        </Link>
+        <Button variant="ghost" size="icon-sm" onClick={handleLogout} aria-label="Log out">
+          <LogOut className="size-4" />
+        </Button>
+      </div>
+    ) : (
+      <div className={cn("mx-3 rounded-xl border border-border bg-white/[0.03] p-3", placement === "sidebar" ? "mt-3" : "mt-auto")}>
+        <p className="mb-2 text-xs text-muted-foreground">Browsing as a guest</p>
+        <Button size="sm" className="w-full" render={<Link href="/auth" />} nativeButton={false}>
+          Sign in
+        </Button>
+      </div>
+    );
+
   return (
     <div data-theme="product" className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
-      {/* ARENA-DESIGN-SYSTEM.md kill list: "zero neon orange in the product" - AuraBackground's
-          glow blobs are tuned for the dark marketing theme and stay there; the product shell
-          doesn't render it. The 3D orb stays (never-delete rule) via PersistentOrb below,
-          re-materialling it for the light theme (§9) is separate follow-up work. */}
       <div className="relative z-10 mx-auto flex min-h-svh w-full max-w-[1600px]">
-        {/* desktop side nav (w-248 per PART 4; icon rail on tablet is a later refinement -
-            full-width nav down to lg is an acceptable interim, matches CandidateAppShell's
-            own existing lg breakpoint) */}
+        {/* Desktop sidebar */}
         <aside
           className="sticky top-0 hidden h-svh w-[248px] shrink-0 flex-col border-r border-border py-5 lg:flex"
           style={cookieBannerVisible ? { paddingBottom: "var(--cookie-banner-h, 88px)" } : undefined}
         >
-          <Link href="/home" className="mb-6 flex items-center gap-2.5 px-4">
-            <span className="font-display text-sm font-bold tracking-wide">
-              ARENA<span className="text-primary">.</span>
+          <Link href="/home" className="mb-5 flex items-center gap-2.5 px-4">
+            <span className="font-display text-base font-bold tracking-wide">
+              Arena<span className="text-primary">.</span>
             </span>
           </Link>
-          <nav className="flex flex-col gap-1 px-3">
-            {SIDE_NAV_ITEMS.map((item) => (
-              <NavRow key={item.href} {...item} active={pathname === item.href} />
+          <div className="mb-4 px-3">
+            <Button variant="default" size="sm" className="w-full gap-1.5" onClick={openCreate}>
+              <Plus className="size-4" /> Create
+            </Button>
+          </div>
+          <nav aria-label="Main" className="flex flex-col gap-1 px-3">
+            {SPACES.map((s) => (
+              <NavRow key={s.key} href={s.href} label={s.label} icon={s.icon} active={current === s.key} />
             ))}
           </nav>
           <div className="my-3 border-t border-border" />
-          <nav className="flex flex-1 flex-col gap-1 px-3">
-            {SECONDARY_NAV_ITEMS.map((item) => (
+          <nav aria-label="More" className="flex flex-1 flex-col gap-1 px-3">
+            {SECONDARY_ITEMS.map((item) => (
               <NavRow key={item.href} {...item} active={pathname === item.href} />
             ))}
           </nav>
-          {loggedIn ? (
-            <div className="mx-3 mt-3 flex items-center gap-3 rounded-xl border border-border bg-white/[0.03] px-3 py-3">
-              <Avatar className="size-9">
-                <AvatarFallback className="bg-primary/15 text-primary-soft">
-                  {profile?.name?.slice(0, 1) ?? "?"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{profile?.name ?? "Loading…"}</p>
-                <p className="truncate text-xs text-muted-foreground">{profile?.title ?? ""}</p>
-              </div>
-              <Button variant="ghost" size="icon-sm" onClick={handleLogout} aria-label="Log out">
-                <LogOut className="size-4" />
-              </Button>
-            </div>
-          ) : (
-            <div className="mx-3 mt-3 rounded-xl border border-border bg-white/[0.03] p-3">
-              <p className="mb-2 text-xs text-muted-foreground">Viewing without an account</p>
-              <Button size="sm" className="w-full" render={<Link href="/auth" />} nativeButton={false}>
-                Sign in
-              </Button>
-            </div>
-          )}
+          {accountBlock("sidebar")}
         </aside>
 
         <div className="flex min-h-svh min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 flex min-w-0 items-center gap-3 border-b border-border bg-background/70 px-4 py-3 backdrop-blur-xl sm:px-6">
-            {title && (
-              <h1 className="min-w-0 flex-1 truncate font-display text-lg font-bold tracking-tight sm:text-xl lg:flex-none">
-                {title}
-              </h1>
+          <header className="sticky top-0 z-20 flex min-w-0 items-center gap-3 border-b border-border bg-background/80 px-4 py-3 backdrop-blur-xl sm:px-6">
+            {title ? (
+              <h1 className="min-w-0 flex-1 truncate font-display text-lg font-bold tracking-tight sm:text-xl">{title}</h1>
+            ) : (
+              <Link href="/home" className="min-w-0 flex-1 font-display text-base font-bold tracking-wide lg:invisible">
+                Arena<span className="text-primary">.</span>
+              </Link>
             )}
-            {/* GlobalSearch trigger - desktop only, reuses the existing command palette
-                primitive rather than a second search implementation */}
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              className="hidden min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-white/[0.03] px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-white/[0.06] lg:flex lg:max-w-xs"
-            >
-              <Search className="size-4 shrink-0" />
-              <span className="truncate">Search posts, people, companies…</span>
-              <kbd className="ml-auto shrink-0 rounded border border-border bg-white/5 px-1.5 py-0.5 text-[10px]">⌘K</kbd>
-            </button>
             <div className="ml-auto flex shrink-0 items-center gap-2">
               {actions}
-              <Button
-                variant="default"
-                size="sm"
-                className="hidden gap-1.5 lg:inline-flex"
-                onClick={() => (loggedIn ? setComposerOpen(true) : setSignInPromptOpen(true))}
-              >
-                <Plus className="size-3.5" /> Post
+              <Button variant="default" size="icon-sm" className="lg:hidden" onClick={openCreate} aria-label="Create">
+                <Plus className="size-4" />
               </Button>
               <Button
                 variant="ghost"
@@ -252,25 +260,15 @@ export function AppShell({
           </header>
 
           <div className="flex min-w-0 flex-1">
-            <main className="min-w-0 flex-1 px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-6">{children}</main>
-            {rightRail && (
-              <aside className="hidden w-[320px] shrink-0 border-l border-border px-5 py-6 xl:block">
-                {rightRail}
-              </aside>
-            )}
+            <main className={cn("min-w-0 flex-1 pb-24 lg:pb-6", !bleed && "px-4 py-6 sm:px-6 lg:px-8")}>{children}</main>
+            {rightRail && <aside className="hidden w-[320px] shrink-0 border-l border-border px-5 py-6 xl:block">{rightRail}</aside>}
           </div>
         </div>
       </div>
 
-      {/* mobile side nav sheet - reachable from the TopBar's menu button, carries Inbox/
-          Saved/Notifications/account, since the bottom tab bar only has room for 5 items
-          per PART 4's own spec ("Inbox and Profile live in the TopBar/account sheet").
-          ARENA-STABILIZE.md Phase 2, G9 - deliberately a SIBLING of the z-10 wrapper above,
-          not nested inside it: that wrapper is `relative z-10`, which creates its own
-          stacking context, so a z-index set on something nested inside it (this drawer used
-          to live there) is compared against z-890 as "z-10 vs z-890" - the nested drawer's own
-          higher z-index never mattered. Rendering it here, alongside the z-[890] tab bar below,
-          in the same stacking context, is what makes z-[895] actually win. */}
+      {/* Mobile menu sheet - Saved, Notifications, Profile and account. A sibling of the z-10
+          wrapper above (not nested in it) so its z-index competes in the same stacking context
+          as the tab bar below. */}
       {mobileNavOpen && (
         <div className="fixed inset-0 z-[895] lg:hidden">
           <div className="absolute inset-0 bg-black/60" onClick={() => setMobileNavOpen(false)} />
@@ -279,56 +277,28 @@ export function AppShell({
             style={cookieBannerVisible ? { paddingBottom: "var(--cookie-banner-h, 88px)" } : undefined}
           >
             <div className="mb-6 flex items-center justify-between px-4">
-              <span className="font-display text-sm font-bold tracking-wide">
-                ARENA<span className="text-primary">.</span>
+              <span className="font-display text-base font-bold tracking-wide">
+                Arena<span className="text-primary">.</span>
               </span>
               <button type="button" onClick={() => setMobileNavOpen(false)} aria-label="Close menu">
                 <X className="size-4" />
               </button>
             </div>
-            <nav className="flex flex-col gap-1 px-3">
-              {[...SIDE_NAV_ITEMS, ...SECONDARY_NAV_ITEMS].map((item) => (
+            <nav aria-label="More" className="flex flex-col gap-1 px-3" onClick={() => setMobileNavOpen(false)}>
+              {SECONDARY_ITEMS.map((item) => (
                 <NavRow key={item.href} {...item} active={pathname === item.href} />
               ))}
             </nav>
-            {loggedIn ? (
-              <div className="mx-3 mt-auto flex items-center gap-3 rounded-xl border border-border bg-white/[0.03] px-3 py-3">
-                <Avatar className="size-9">
-                  <AvatarFallback className="bg-primary/15 text-primary-soft">
-                    {profile?.name?.slice(0, 1) ?? "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{profile?.name ?? "Loading…"}</p>
-                </div>
-                <Button variant="ghost" size="icon-sm" onClick={handleLogout} aria-label="Log out">
-                  <LogOut className="size-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="mx-3 mt-auto rounded-xl border border-border bg-white/[0.03] p-3">
-                <p className="mb-2 text-xs text-muted-foreground">Viewing without an account</p>
-                <Button size="sm" className="w-full" render={<Link href="/auth" />} nativeButton={false}>
-                  Sign in
-                </Button>
-              </div>
-            )}
+            {accountBlock("sheet")}
           </div>
         </div>
       )}
 
-      {/* mobile bottom tab bar - Home/Discover/+/Map/Work per PART 4, distinct from the
-          legacy BottomTabBar (Feed/Post/Rooms/Profile) which CandidateAppShell still uses -
-          not touching that one so unmigrated routes keep working exactly as before.
-          ARENA-PERF-AND-MOBILE-FIX.md Track A - this bar had NO cookie-banner reservation at
-          all (unlike BottomTabBar, which at least attempted one), so CookieConsentBanner
-          rendered directly on top of it - Home/Discover/New post/Map/Work were all unreachable
-          on every migrated screen for any first-time mobile visitor until they dismissed the
-          banner. Same measured-height fix as BottomTabBar. */}
+      {/* Mobile tab bar - the same five spaces as the sidebar. Create lives in the top bar so
+          the five spaces keep equal weight here. Clears the cookie banner while it's showing. */}
       <nav
         ref={mobileNavRef}
-        // `inert` (not just aria-hidden) so a hidden tab bar can't still eat keyboard focus
-        // while it's translated off-screen underneath the open keyboard.
+        aria-label="Main"
         inert={hideNavForKeyboard}
         className={cn(
           "fixed inset-x-0 z-[890] flex items-stretch justify-around border-t border-border bg-background/95 backdrop-blur-xl transition-transform duration-200 ease-out lg:hidden",
@@ -339,49 +309,26 @@ export function AppShell({
           paddingBottom: cookieBannerVisible ? 0 : "env(safe-area-inset-bottom)",
         }}
       >
-        {MOBILE_TAB_ITEMS.map((item) => {
-          if (!item.href) {
-            return (
-              <button
-                key="post"
-                type="button"
-                onClick={() => (loggedIn ? setComposerOpen(true) : setSignInPromptOpen(true))}
-                aria-label="New post"
-                className="relative flex flex-1 items-center justify-center py-2"
-              >
-                <span className="-mt-6 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
-                  <Plus className="size-6" />
-                </span>
-              </button>
-            );
-          }
-          const active = pathname === item.href;
-          const Icon = item.icon;
+        {SPACES.map((s) => {
+          const active = current === s.key;
+          const Icon = s.icon;
           return (
             <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
-                active ? "text-primary-soft" : "text-muted-foreground",
-              )}
+              key={s.key}
+              href={s.href}
+              aria-current={active ? "page" : undefined}
+              className={cn("flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium", active ? "text-foreground" : "text-muted-foreground")}
             >
               <Icon className="size-5" />
-              {item.label}
+              {s.label}
             </Link>
           );
         })}
       </nav>
 
       <PersistentOrb />
-      <PostComposer open={composerOpen} onOpenChange={setComposerOpen} onPublished={() => router.refresh()} />
+      <CreateComposer key={composerSession} open={composerOpen} onOpenChange={setComposerOpen} onPublished={() => router.refresh()} />
       <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action="post" />
-      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <CommandInput placeholder="Search posts, people, companies…" />
-        <CommandList>
-          <CommandEmpty>Global search lands with PART 15 Step 5/8 (Discover + full-text search API) — not wired yet.</CommandEmpty>
-        </CommandList>
-      </CommandDialog>
     </div>
   );
 }

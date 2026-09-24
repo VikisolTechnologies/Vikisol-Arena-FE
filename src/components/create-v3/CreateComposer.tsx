@@ -204,14 +204,14 @@ export function CreateComposer({
                     <p style={{ margin: 0, fontSize: 15, color: ARENA_V3.ink }}>{row.label}</p>
                     <p style={{ margin: "2px 0 0", fontSize: 12, color: ARENA_V3.muted }}>{row.description}</p>
                   </div>
-                  <ChevronRight size={16} color="#C9BFB1" style={{ flexShrink: 0 }} />
+                  <ChevronRight size={16} color="#5c5c64" style={{ flexShrink: 0 }} />
                 </button>
               ))}
             </div>
 
             <div style={{ margin: "16px 18px 0", paddingTop: 16, borderTop: `1px solid #DDD3C4`, display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ width: 22, height: 22, borderRadius: "50%", border: `1px solid ${ARENA_V3.gold}`, flexShrink: 0 }} />
-              <p style={{ margin: 0, fontSize: 14, color: "#6B655C" }}>Not sure how to put it? Start typing and I&apos;ll help you write it.</p>
+              <p style={{ margin: 0, fontSize: 14, color: "#a1a1aa" }}>Not sure how to put it? Start typing and I&apos;ll help you write it.</p>
             </div>
           </div>
         ) : (
@@ -262,13 +262,13 @@ export function CreateComposer({
                         display: "flex", alignItems: "center", gap: 5, flexShrink: 0, fontSize: 11, fontWeight: 500,
                         borderRadius: 10, padding: "0 12px", cursor: locating ? "default" : "pointer",
                         border: `1px solid ${coords ? ARENA_V3.gold : ARENA_V3.hairline}`,
-                        background: coords ? "rgba(214,168,79,0.1)" : ARENA_V3.white, color: ARENA_V3.ink,
+                        background: coords ? "rgba(255,107,53,0.1)" : ARENA_V3.white, color: ARENA_V3.ink,
                       }}
                     >
                       <LocateFixed size={13} strokeWidth={1.75} /> {locating ? "Locating…" : coords ? "Located" : "Use my location"}
                     </button>
                   </div>
-                  {locateError && <p style={{ margin: 0, fontSize: 11, color: "#B3432B" }}>{locateError}</p>}
+                  {locateError && <p style={{ margin: 0, fontSize: 11, color: "#f87171" }}>{locateError}</p>}
                   {coords && (
                     <p style={{ margin: 0, fontSize: 11, color: ARENA_V3.muted }}>
                       Only an approximate, jittered pin will ever be shown to others.
@@ -327,7 +327,7 @@ export function CreateComposer({
               <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags, comma-separated (optional)" style={fieldStyle} />
 
               {error && (
-                <p style={{ margin: 0, fontSize: 12, color: "#B3432B" }}>
+                <p style={{ margin: 0, fontSize: 12, color: "#f87171" }}>
                   {error}
                   {error.toLowerCase().includes("settings") && (
                     <>

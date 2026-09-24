@@ -1,595 +1,248 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Bell } from "lucide-react";
 import Link from "next/link";
-import { getMyProfile, updateMyLocation } from "@/lib/api/profile";
-import { getNearby, requestJoin } from "@/lib/api/posts";
-import { getFeedItems } from "@/lib/api/feed";
-import { getJobs } from "@/lib/api/jobs";
-import { getProjects } from "@/lib/api/market";
-import { allowGuestBrowsing } from "@/lib/auth-guard";
-import { getSession } from "@/lib/session";
-import { formatINRRange } from "@/lib/format";
+import { useRouter } from "next/navigation";
+import { Users, MessagesSquare, Briefcase, Hammer, ChevronRight, MapPinned, Bell, Inbox, type LucideIcon } from "lucide-react";
+import { AppShell } from "@/components/app/AppShell";
+import { Button } from "@/components/ui/button";
 import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
-import { ActivityCard } from "./ActivityCard";
-import { NeedCard } from "./NeedCard";
-import { HomeEmptyStateDark } from "./HomeEmptyStateDark";
-import { HomeMobileTabBar } from "./HomeMobileTabBar";
-import { HomeSidebar } from "./HomeSidebar";
-import type { CandidateProfile, FeedItem, Job, Post, Project } from "@/lib/types";
+import { getMyProfile } from "@/lib/api/profile";
+import { getNearby } from "@/lib/api/posts";
+import { getNotifications } from "@/lib/api/notifications";
+import { getMyRooms } from "@/lib/api/rooms";
+import { getConversations } from "@/lib/api/messages";
+import { allowGuestBrowsing } from "@/lib/auth-guard";
+import { getSession } from "@/lib/session";
+import { formatTimeAgo } from "@/lib/format";
+import type { AppNotification, CandidateProfile } from "@/lib/types";
 
-const LOCATION_ASK_DISMISSED_KEY = "arena_home_location_ask_dismissed";
+// Same city-center fallback Nearby uses when there's no saved location.
+const HYDERABAD_CENTER = { lat: 17.385, lng: 78.4867 };
 
-type LoadState = "loading" | "ready" | "error";
+type QuickAction = {
+  key: string;
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  lands: string;
+  href?: string;
+};
 
-// A FeedItem (from the general, non-geo-scoped /feed) doesn't carry every Post field a card
-// needs (joinable/myJoinStatus aren't populated on it) - this fills in the same defaults the
-// card components already treat as "not yet actioned," so the fallback feed renders with the
-// exact same components as the real nearby list rather than needing a second card variant.
-function feedItemToPost(item: FeedItem): Post {
-  return {
-    id: item.id,
-    authorUserId: item.authorUserId ?? "",
-    authorName: item.authorName ?? "Someone",
-    authorEmoji: item.authorEmoji ?? "🧑🏽",
-    intentType: item.itemType === "activity" || item.itemType === "ask" ? item.itemType : "update",
-    title: item.title,
-    body: item.body,
-    locationText: item.locationText,
-    audience: "global",
-    visibility: "public",
-    capacity: item.capacity,
-    spotsFilled: item.spotsFilled ?? 0,
-    status: "open",
-    startsAt: item.startsAt,
-    endsAt: item.endsAt,
-    tags: item.tags,
-    mediaUrls: item.mediaUrls,
-    joinable: item.joinable ?? false,
-    mine: item.mine,
-    myJoinStatus: item.myJoinStatus,
-    roomId: item.roomId,
-    createdAt: item.createdAt,
-    approxLat: item.approxLat,
-    approxLng: item.approxLng,
-    commentCount: item.commentCount ?? 0,
-    reactionCount: item.reactionCount ?? 0,
-    myReacted: item.myReacted,
-    authorJoinCount: item.authorJoinCount ?? 0,
-    authorAccountAgeDays: item.authorAccountAgeDays ?? 0,
-    demoContent: item.demoContent ?? false,
-  };
+// The four things people come to Arena for, each landing in the one space that owns it.
+const QUICK_ACTIONS: QuickAction[] = [
+  { key: "activity", icon: Users, title: "Start an activity", description: "Get people nearby to play, meet up or do something together", lands: "Nearby" },
+  { key: "discuss", icon: MessagesSquare, title: "Ask the community", description: "Questions, recommendations, or just start a conversation", lands: "Discuss", href: "/discuss" },
+  { key: "jobs", icon: Briefcase, title: "Find a job", description: "Open roles, ranked by how well they fit your profile", lands: "Work", href: "/work" },
+  { key: "build", icon: Hammer, title: "Get something built", description: "Post a project and compare bids from freelancers", lands: "Work", href: "/work?tab=bidding" },
+];
+
+function greetingFor(hour: number) {
+  if (hour < 5) return "Good evening";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
 }
 
 /**
- * Home, on Arena's real ecosystem brand (dark background, orange accent, Space Grotesk +
- * Inter - verified against globals.css :root and Vikisol Technologies' own site) instead of
- * the ivory/gold "product theme" this screen used before, which the codebase itself scopes to
- * an unfinished, not-yet-app-wide experiment. Desktop gets a persistent left shell
- * (HomeSidebar) in place of a top nav bar; mobile keeps a top bar + bottom tab bar, both
- * re-themed. All the real behavior below (location, join, composer, guest browsing) is
- * unchanged from before - only the shell and colors around it moved.
+ * Jenny - Arena's home (restructure Phase 1). Deliberately NOT a feed: every kind of content now
+ * has its own space (activities on Nearby, threads in Discuss, jobs and bidding in Work,
+ * conversations in Inbox). This screen answers two questions instead - "what do you want to
+ * do?" and "what needs you?" - and points at Nearby rather than repeating its contents.
+ *
+ * Jenny's conversational input is honestly disabled until JennySol is connected (Phase 3); the
+ * four actions below it are real and go straight to the flow each one names.
  */
 export function HomeContent() {
   const router = useRouter();
-  const [state, setState] = useState<LoadState>("loading");
-  const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [signedIn, setSignedIn] = useState(false);
-  const [feedPosts, setFeedPosts] = useState<Post[]>([]);
-  const [joiningId, setJoiningId] = useState<string | null>(null);
-  const [joinError, setJoinError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<CandidateProfile | null>(null);
+  const [greeting, setGreeting] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<AppNotification[] | null>(null);
+  const [unreadConversations, setUnreadConversations] = useState<number | null>(null);
+  const [nearbyCount, setNearbyCount] = useState<number | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
-  const [composerIntent, setComposerIntent] = useState<Exclude<Post["intentType"], "company"> | null>(null);
-  // CreateComposer resets its internal draft by remounting (initial-state-only, no reset effect)
-  // - bumped on every open so re-opening after a cancel never resurfaces a stale draft.
   const [composerSession, setComposerSession] = useState(0);
-  const [locating, setLocating] = useState(false);
-  const [locationBlocked, setLocationBlocked] = useState(false);
-  const [locationAskDismissed, setLocationAskDismissed] = useState(false);
-  // Jobs and bidding are fetched for every visitor now, not just profiles onboarding flagged as
-  // job-seeking - the filter row below is a direct, explicit "show me jobs/bidding too" control,
-  // which is a stronger signal than an inferred onboarding answer. null = not loaded yet, [] =
-  // loaded and genuinely empty; that distinction is what keeps the empty-state honest.
-  const [jobsList, setJobsList] = useState<Job[] | null>(null);
-  const [biddingList, setBiddingList] = useState<Project[] | null>(null);
-  // Whether this profile said "here for a job" during onboarding - only changes the section's
-  // label ("matching you" vs "on Arena"), not whether it's shown; showing it at all is now the
-  // filter row's job, not this flag's.
-  const [isJobSeeker, setIsJobSeeker] = useState(false);
-  // "Let me choose what I see" - independent toggles, all on by default so a first-time visitor
-  // sees everything with no setup required; turning one off narrows the page, same idea as the
-  // three checkboxes rather than a single confusing "mode" picker.
-  const [showPosts, setShowPosts] = useState(true);
-  const [showJobs, setShowJobs] = useState(true);
-  const [showBidding, setShowBidding] = useState(true);
-  // "Enter as guest" - Home renders fully signed-out; this is the one gate every mutating
-  // action (join, post, turn on location) funnels through instead of a page-load redirect.
   const [signInPromptOpen, setSignInPromptOpen] = useState(false);
-  const [signInAction, setSignInAction] = useState("do that");
 
   useEffect(() => {
-    // Client-only reads (SSR has neither sessionStorage nor a real answer for getSession())
-    // flipping post-hydration state - same pattern AppShell's own loggedIn flag already uses
-    // for the identical class of problem.
+    // Client-only: time of day is the viewer's, and SSR has no session to read.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocationAskDismissed(sessionStorage.getItem(LOCATION_ASK_DISMISSED_KEY) === "1");
+    setGreeting(greetingFor(new Date().getHours()));
     setSignedIn(!!getSession());
   }, []);
-
-  // ARENA-WEB-AND-SEED.md §3.2 "The feed with location off shows... global and city-wide posts...
-  // Never blank." §1.2 named this as "the single worst thing" in the previous build - an empty
-  // viewport below the hero whenever location was off. getFeedItems() (the same general,
-  // recency-ranked feed Home's own pre-rebuild version used) is the real, honest fallback content
-  // source. Extended here to also cover the has-location-but-nearby-is-sparse case (a narrow
-  // 10km/24h geo+time query can legitimately come back empty even when there's plenty of real
-  // content elsewhere) - "never blank" only actually holds if the fallback applies whenever
-  // there's little to show, not only when location is off outright.
-  async function loadGeneralFeed() {
-    const items = await getFeedItems("for-you", 0, 30);
-    return items.filter((i) => i.itemType === "activity" || i.itemType === "ask").map(feedItemToPost);
-  }
 
   useEffect(() => {
     if (!allowGuestBrowsing(router)) return;
     let cancelled = false;
-
-    // Jobs and bidding no longer depend on the profile fetch below - every visitor (guest
-    // included) gets them, since GET /jobs and /marketplace/projects are both already
-    // guest-accessible. Best-effort each: a failure here never blocks the rest of the page.
-    getJobs()
-      .then((jobs) => {
-        if (cancelled) return;
-        setJobsList(jobs.slice().sort((a, b) => b.matchPercentage - a.matchPercentage).slice(0, 8));
-      })
-      .catch(() => {
-        if (!cancelled) setJobsList([]);
-      });
-    getProjects()
-      .then((projects) => {
-        if (cancelled) return;
-        setBiddingList(projects.filter((p) => p.status === "open").slice(0, 8));
-      })
-      .catch(() => {
-        if (!cancelled) setBiddingList([]);
-      });
-
     (async () => {
-      try {
-        // A guest has no CandidateProfile to fetch and no saved location - the general-feed
-        // fallback below is the same honest content a signed-in user with location off already
-        // sees, not a degraded/placeholder guest view.
-        let p: CandidateProfile | null = null;
-        if (getSession()) {
-          p = await getMyProfile();
-          if (cancelled) return;
-          setProfile(p);
-          setIsJobSeeker(p.cameForJob === true);
-        }
+      let center = HYDERABAD_CENTER;
+      if (getSession()) {
+        const p = await getMyProfile().catch(() => null);
+        if (cancelled) return;
+        setProfile(p);
+        if (p?.approxLat != null && p?.approxLng != null) center = { lat: p.approxLat, lng: p.approxLng };
 
-        let nearbyPosts: Post[] = [];
-        if (p?.approxLat != null && p?.approxLng != null) {
-          const posts = await getNearby({ lat: p.approxLat, lng: p.approxLng, radiusKm: 10, withinHours: 24 });
-          if (cancelled) return;
-          nearbyPosts = posts.filter((post) => post.intentType === "activity" || post.intentType === "ask");
-        }
-
-        if (nearbyPosts.length > 0) {
-          setFeedPosts(nearbyPosts);
-        } else {
-          const general = await loadGeneralFeed();
-          if (cancelled) return;
-          setFeedPosts(general);
-        }
-        if (!cancelled) setState("ready");
-      } catch {
-        if (!cancelled) setState("error");
+        getNotifications()
+          .then((all) => !cancelled && setNotifications(all.filter((n) => !n.read).slice(0, 5)))
+          .catch(() => !cancelled && setNotifications([]));
+        Promise.all([getMyRooms().catch(() => []), getConversations().catch(() => [])]).then(([rooms, convos]) => {
+          if (!cancelled) setUnreadConversations(rooms.filter((r) => r.unread).length + convos.filter((c) => c.unread).length);
+        });
       }
+      getNearby({ lat: center.lat, lng: center.lng, radiusKm: 10, withinHours: 24, intentType: "activity" })
+        .then((posts) => !cancelled && setNearbyCount(posts.length))
+        .catch(() => !cancelled && setNearbyCount(0));
     })();
     return () => {
       cancelled = true;
     };
   }, [router]);
 
-  const hasLocation = profile?.approxLat != null && profile?.approxLng != null;
-  const nearbyCount = hasLocation ? feedPosts.length : 0;
-
-  // ARENA-WEB-AND-SEED.md §1.3/§3.3 - a real button that calls the browser's own geolocation
-  // API directly (the exact same call Settings' "Precise" option makes - see updateMyLocation),
-  // not a text link that sends the visitor away to a different page. On success the hero and
-  // feed update IN PLACE (no navigation, no reload); §3.3's "local content is blended into the
-  // feed" - nearby results are merged ahead of whatever the global fallback already showed,
-  // deduped by id, rather than replacing it outright.
-  function enableLocation() {
+  function startActivity() {
     if (!getSession()) {
-      setSignInAction("save your location");
       setSignInPromptOpen(true);
       return;
     }
-    if (!navigator.geolocation) {
-      setLocationBlocked(true);
-      return;
-    }
-    setLocating(true);
-    setLocationBlocked(false);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const updated = await updateMyLocation({ consent: "precise", lat: pos.coords.latitude, lng: pos.coords.longitude });
-          setProfile(updated);
-          const nearby = await getNearby({ lat: pos.coords.latitude, lng: pos.coords.longitude, radiusKm: 10, withinHours: 24 });
-          const nearbyPosts = nearby.filter((post) => post.intentType === "activity" || post.intentType === "ask");
-          setFeedPosts((prev) => {
-            const seen = new Set(nearbyPosts.map((p) => p.id));
-            return [...nearbyPosts, ...prev.filter((p) => !seen.has(p.id))];
-          });
-        } finally {
-          setLocating(false);
-        }
-      },
-      (err) => {
-        setLocating(false);
-        // GeolocationPositionError.PERMISSION_DENIED === 1 - distinct from a generic failure
-        // (§3.4: "hard-denied permission is handled distinctly from 'not yet asked'").
-        if (err.code === 1) setLocationBlocked(true);
-      },
-    );
-  }
-
-  // §3.1 "a secondary text action: 'Show me what's happening everywhere' - dismisses the
-  // location ask for the session." The feed is already showing general content by default
-  // whenever location is off (see loadGeneralFeed above) - this only softens the hero's own
-  // copy so it stops asking, for the rest of this browser session.
-  function dismissLocationAsk() {
-    sessionStorage.setItem(LOCATION_ASK_DISMISSED_KEY, "1");
-    setLocationAskDismissed(true);
-  }
-
-  async function handleJoin(post: Post) {
-    if (!getSession()) {
-      setSignInAction("join this");
-      setSignInPromptOpen(true);
-      return;
-    }
-    setJoiningId(post.id);
-    setJoinError(null);
-    try {
-      await requestJoin(post.id);
-      setFeedPosts((prev) =>
-        prev.map((p) => (p.id === post.id ? { ...p, myJoinStatus: p.visibility === "public" ? "approved" : "pending" } : p)),
-      );
-    } catch (err) {
-      setJoinError(err instanceof Error ? err.message : "Couldn't send that request — try again.");
-    } finally {
-      setJoiningId(null);
-    }
-  }
-
-  // Generic "+" entry points (header, tab bar) show SCREEN 3's intent picker first, rather than
-  // assuming Activity - a suggestion card that already names its intent skips straight there.
-  function openComposerPicker() {
-    if (!getSession()) {
-      setSignInAction("post");
-      setSignInPromptOpen(true);
-      return;
-    }
-    setComposerIntent(null);
     setComposerSession((n) => n + 1);
     setComposerOpen(true);
   }
 
-  function refreshAfterPost() {
-    if (profile?.approxLat != null && profile?.approxLng != null) {
-      getNearby({ lat: profile.approxLat, lng: profile.approxLng, radiusKm: 10, withinHours: 24 })
-        .then((posts) => {
-          const nearby = posts.filter((post) => post.intentType === "activity" || post.intentType === "ask");
-          if (nearby.length > 0) setFeedPosts(nearby);
-          else loadGeneralFeed().then(setFeedPosts).catch(() => {});
-        })
-        .catch(() => {});
-    } else {
-      loadGeneralFeed().then(setFeedPosts).catch(() => {});
-    }
-  }
-
-  const headline =
-    state === "ready"
-      ? hasLocation
-        ? nearbyCount === 0
-          ? "Nothing nearby yet today"
-          : `${nearbyCount} thing${nearbyCount === 1 ? "" : "s"} near you`
-        : locationAskDismissed
-          ? "What's happening in Hyderabad"
-          : "Turn on location to see what's near"
-      : null;
-
-  // Jenny is UI-only in this pass (no AI backend wired up yet) - this line only ever states
-  // numbers already fetched for real above; it never invents activity that isn't there.
-  const jennyNote =
-    jobsList != null && jobsList.length > 0
-      ? `${nearbyCount > 0 ? `${nearbyCount} things nearby, and ` : ""}${jobsList.length} job${jobsList.length === 1 ? "" : "s"} on Arena.`
-      : nearbyCount > 0
-        ? `${nearbyCount} thing${nearbyCount === 1 ? "" : "s"} nearby right now.`
-        : null;
-
-  const visiblePostsCount = showPosts ? feedPosts.length : 0;
-  const visibleJobsCount = showJobs ? jobsList?.length ?? 0 : 0;
-  const visibleBiddingCount = showBidding ? biddingList?.length ?? 0 : 0;
-  const stillLoadingExtras = jobsList === null || biddingList === null;
-  const nothingToShow =
-    state === "ready" && !stillLoadingExtras && visiblePostsCount === 0 && visibleJobsCount === 0 && visibleBiddingCount === 0;
+  const firstName = profile?.name?.trim().split(/\s+/)[0];
+  const heading = signedIn ? (greeting ? `${greeting}${firstName ? `, ${firstName}` : ""}` : " ") : "Welcome to Arena";
+  const nothingNeedsYou = notifications !== null && notifications.length === 0 && unreadConversations === 0;
 
   return (
-    <div className="flex min-h-dvh bg-background">
-      <HomeSidebar profile={profile} signedIn={signedIn} />
+    <AppShell profile={profile}>
+      <div className="mx-auto flex w-full max-w-[780px] flex-col gap-8">
+        <header className="flex flex-col gap-1.5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Jenny</p>
+          <h1 className="font-display text-[26px] font-semibold leading-tight text-foreground sm:text-[30px]">{heading}</h1>
+          <p className="text-[14px] text-muted-foreground">What would you like to do?</p>
+        </header>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Mobile-only top bar - the sidebar covers this on desktop */}
-        <div className="flex items-center justify-between px-4 py-3 md:hidden" style={{ borderBottom: "1px solid var(--border)" }}>
-          <span className="font-display" style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)" }}>
-            Arena<span style={{ color: "var(--primary)" }}>.</span>
-          </span>
-          <Bell size={18} strokeWidth={1.75} color="var(--muted-foreground)" />
-        </div>
-
-        {/* Jenny, mobile - pinned under the top bar rather than a banner that scrolls away.
-            Same "UI only, honestly disabled" treatment as the sidebar's box. */}
-        <div className="px-4 py-2.5 md:hidden" style={{ background: "var(--popover)", borderBottom: "1px solid var(--border)" }}>
-          <div className="flex items-center gap-2 rounded-full pl-3 pr-1.5 py-1.5" style={{ background: "rgba(0,0,0,0.3)" }}>
-            <div style={{ width: 22, height: 22, borderRadius: 999, flexShrink: 0, background: "radial-gradient(circle at 32% 30%, var(--primary-soft), var(--primary) 70%)" }} />
+        {/* Jenny's conversational entry - honestly disabled until JennySol is connected. */}
+        <section aria-label="Ask Jenny" className="relative overflow-hidden rounded-2xl border border-border bg-card p-4">
+          <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 size-36 rounded-full bg-[radial-gradient(circle,rgba(255,107,53,0.28),transparent_70%)]" />
+          <div className="relative flex items-center gap-3">
+            <div aria-hidden className="size-9 shrink-0 rounded-full bg-[radial-gradient(circle_at_32%_30%,var(--primary-soft),var(--primary)_70%)]" />
+            <label htmlFor="jenny-input" className="sr-only">Tell Jenny what you want to do</label>
             <input
+              id="jenny-input"
               type="text"
               disabled
-              placeholder="Ask Jenny anything…"
-              aria-label="Ask Jenny (coming soon)"
-              className="flex-1 bg-transparent text-[12px]"
-              style={{ color: "var(--faint)", border: "none", cursor: "not-allowed" }}
+              placeholder="Tell Jenny what you want to do…"
+              className="min-w-0 flex-1 cursor-not-allowed rounded-full border border-border bg-background/60 px-4 py-2.5 text-[14px] text-muted-foreground placeholder:text-muted-foreground"
             />
           </div>
-        </div>
+          <p className="relative mt-3 text-[12px] text-muted-foreground">
+            Soon you&apos;ll just say it — by voice or text — and Jenny will plan it with you. For now, pick one of these:
+          </p>
+        </section>
 
-        <div className="flex-1 pb-[calc(84px+env(safe-area-inset-bottom))] md:pb-10">
-          <div className="mx-auto w-full max-w-[780px] px-4 pt-5 md:px-9 md:pt-7">
-            <div className="mb-4 flex items-baseline justify-between">
-              {state === "loading" && <div className="h-6 w-48 animate-pulse rounded" style={{ background: "var(--muted)" }} />}
-              {state === "error" && (
-                <h1 className="font-display text-[22px] font-semibold" style={{ color: "var(--foreground)" }}>
-                  Couldn&apos;t load what&apos;s nearby
-                </h1>
-              )}
-              {state === "ready" && (
-                <h1 className="font-display text-[22px] font-semibold md:text-[24px]" style={{ color: "var(--foreground)" }}>
-                  {headline}
-                </h1>
-              )}
+        <section aria-label="What you can do" className="grid gap-3 sm:grid-cols-2">
+          {QUICK_ACTIONS.map((a) => {
+            const Icon = a.icon;
+            const inner = (
+              <>
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-foreground">
+                  <Icon className="size-5" strokeWidth={1.75} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] font-semibold text-foreground">{a.title}</span>
+                  <span className="mt-0.5 block text-[13px] leading-snug text-muted-foreground">{a.description}</span>
+                  <span className="mt-2 block text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">In {a.lands}</span>
+                </span>
+              </>
+            );
+            const cls = "flex w-full items-start gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:bg-secondary";
+            return a.href ? (
+              <Link key={a.key} href={a.href} className={cls}>
+                {inner}
+              </Link>
+            ) : (
+              <button key={a.key} type="button" onClick={startActivity} className={cls}>
+                {inner}
+              </button>
+            );
+          })}
+        </section>
+
+        <section aria-label="Needs you" className="flex flex-col gap-3">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Needs you</h2>
+          {!signedIn ? (
+            <div className="flex flex-col items-start gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[14px] text-muted-foreground">Sign in to see replies, bid updates and invites waiting for you.</p>
+              <Button size="sm" render={<Link href="/auth" />} nativeButton={false}>
+                Sign in
+              </Button>
             </div>
-
-            {state === "ready" && !hasLocation && !locationAskDismissed && (
-              <div
-                className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3"
-                style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-              >
-                <button
-                  type="button"
-                  onClick={enableLocation}
-                  disabled={locating}
-                  className="rounded-full px-4 py-2 text-[12.5px] font-semibold"
-                  style={{ background: "var(--primary)", color: "var(--primary-foreground)", opacity: locating ? 0.7 : 1 }}
-                >
-                  {locating ? "Locating…" : "Turn on location"}
-                </button>
-                <button
-                  type="button"
-                  onClick={dismissLocationAsk}
-                  className="text-[12px] underline"
-                  style={{ color: "var(--muted-foreground)" }}
-                >
-                  Show me what&apos;s happening everywhere
-                </button>
-                {locationBlocked && (
-                  <p className="w-full text-[11px] leading-relaxed" style={{ color: "var(--faint)" }}>
-                    Location is blocked for this site. Look for the site-info icon in your browser&apos;s address bar → Site settings → Location, to turn it back on.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {state === "ready" && jennyNote && (
-              <div
-                className="mb-5 flex items-center gap-3 rounded-2xl px-4 py-3.5"
-                style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-              >
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="var(--primary)" stroke="none" className="shrink-0">
-                  <path d="M12 2 14 9l7 2-7 2-2 7-2-7-7-2 7-2Z" />
-                </svg>
-                <p className="text-[13px]" style={{ color: "var(--foreground)" }}>
-                  <span className="font-semibold">Jenny noticed:</span> {jennyNote}
-                </p>
-              </div>
-            )}
-
-            {/* "Let me choose what I see" - independent toggles, all on by default. Turning one
-                off just hides that section below; nothing here changes what gets fetched. */}
-            <div className="mb-5 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setShowPosts((v) => !v)}
-                className="rounded-full px-3.5 py-1.5 text-[12px] font-semibold"
-                style={
-                  showPosts
-                    ? { background: "var(--foreground)", color: "var(--background)" }
-                    : { background: "var(--card)", color: "var(--muted-foreground)", border: "1px solid var(--border)" }
-                }
-              >
-                Posts
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowJobs((v) => !v)}
-                className="rounded-full px-3.5 py-1.5 text-[12px] font-semibold"
-                style={
-                  showJobs
-                    ? { background: "var(--foreground)", color: "var(--background)" }
-                    : { background: "var(--card)", color: "var(--muted-foreground)", border: "1px solid var(--border)" }
-                }
-              >
-                Jobs
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowBidding((v) => !v)}
-                className="rounded-full px-3.5 py-1.5 text-[12px] font-semibold"
-                style={
-                  showBidding
-                    ? { background: "var(--foreground)", color: "var(--background)" }
-                    : { background: "var(--card)", color: "var(--muted-foreground)", border: "1px solid var(--border)" }
-                }
-              >
-                Bidding
-              </button>
-            </div>
-
-            {showJobs && jobsList != null && jobsList.length > 0 && (
-              <div className="mb-5">
-                <p className="mb-2.5 text-[10px] tracking-[3px]" style={{ color: "var(--muted-foreground)" }}>
-                  {isJobSeeker ? "JOBS MATCHING YOU" : "JOBS ON ARENA"}
-                </p>
-                <div className="flex flex-col gap-2">
-                  {jobsList.map((job) => (
-                    <Link
-                      key={job.id}
-                      href={`/jobs/${job.id}`}
-                      className="flex items-center justify-between gap-3 rounded-xl px-4 py-3.5"
-                      style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-[13.5px] font-semibold" style={{ color: "var(--foreground)" }}>
-                          {job.title}
-                        </p>
-                        <p className="mt-0.5 text-[11.5px]" style={{ color: "var(--muted-foreground)" }}>
-                          {job.company} · {job.remote ? "Remote" : job.location}
-                        </p>
-                      </div>
-                      {job.matchPercentage > 0 && (
-                        <span className="shrink-0 text-[11px] font-bold" style={{ color: "var(--foreground)" }}>
-                          {job.matchPercentage}% match
-                        </span>
-                      )}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {showBidding && biddingList != null && biddingList.length > 0 && (
-              <div className="mb-5">
-                <p className="mb-2.5 text-[10px] tracking-[3px]" style={{ color: "var(--muted-foreground)" }}>
-                  OPEN BIDDING
-                </p>
-                <div className="flex flex-col gap-2">
-                  {biddingList.map((project) => (
-                    <Link
-                      key={project.id}
-                      href={`/marketplace/${project.id}`}
-                      className="flex items-center justify-between gap-3 rounded-xl px-4 py-3.5"
-                      style={{ background: "var(--card)", border: "1px solid var(--border)" }}
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-[13.5px] font-semibold" style={{ color: "var(--foreground)" }}>
-                          {project.title}
-                        </p>
-                        <p className="mt-0.5 text-[11.5px]" style={{ color: "var(--muted-foreground)" }}>
-                          {formatINRRange(project.budgetMin, project.budgetMax)} · {project.durationWeeks}w
-                        </p>
-                      </div>
-                      <span className="shrink-0 text-[11px] font-bold" style={{ color: "var(--foreground)" }}>
-                        {project.bids.length} bid{project.bids.length === 1 ? "" : "s"}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {state === "loading" &&
-              [0, 1].map((i) => (
-                <div key={i} className="mb-3 rounded-2xl" style={{ background: "var(--card)", height: 112 + 78, opacity: 0.5 }} />
+          ) : notifications === null || unreadConversations === null ? (
+            <div className="h-20 animate-pulse rounded-2xl bg-card" />
+          ) : nothingNeedsYou ? (
+            <p className="rounded-2xl border border-border bg-card p-4 text-[14px] text-muted-foreground">You&apos;re all caught up.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {unreadConversations > 0 && (
+                <Link href="/rooms" className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3.5 hover:bg-secondary">
+                  <Inbox className="size-4 shrink-0 text-foreground" />
+                  <span className="flex-1 text-[14px] text-foreground">
+                    {unreadConversations} conversation{unreadConversations === 1 ? "" : "s"} waiting in Inbox
+                  </span>
+                  <ChevronRight className="size-4 text-muted-foreground" />
+                </Link>
+              )}
+              {notifications.map((n) => (
+                <Link key={n.id} href={n.link ?? "/notifications"} className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3.5 hover:bg-secondary">
+                  <Bell className="mt-0.5 size-4 shrink-0 text-foreground" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[14px] font-medium text-foreground">{n.title}</span>
+                    {n.body && <span className="mt-0.5 block line-clamp-2 text-[13px] text-muted-foreground">{n.body}</span>}
+                  </span>
+                  <span className="shrink-0 text-[11px] text-muted-foreground">{formatTimeAgo(n.timestamp)}</span>
+                </Link>
               ))}
-
-            {nothingToShow && (
-              <HomeEmptyStateDark
-                headline={
-                  !showPosts && !showJobs && !showBidding
-                    ? "Nothing to show with every filter off"
-                    : hasLocation
-                      ? "Nothing nearby right now"
-                      : "It's quiet right now"
-                }
-                description={
-                  !showPosts && !showJobs && !showBidding
-                    ? "Turn at least one of Posts, Jobs or Bidding back on above."
-                    : hasLocation
-                      ? "No activities or needs posted near you in the last day. Check the map for a wider radius, or be the first to start something."
-                      : "Nothing posted recently. Be the first to start something today."
-                }
-                primaryActionLabel="Start something"
-                onPrimaryAction={openComposerPicker}
-              />
-            )}
-
-            {showPosts && state === "ready" && feedPosts.length > 0 && (
-              <p className="mb-2.5 text-[10px] tracking-[3px]" style={{ color: "var(--muted-foreground)" }}>
-                HAPPENING NOW
-              </p>
-            )}
-
-            {showPosts &&
-              state === "ready" &&
-              feedPosts.map((post) =>
-                post.intentType === "activity" ? (
-                  <ActivityCard key={post.id} post={post} onJoin={handleJoin} joining={joiningId === post.id} />
-                ) : (
-                  <NeedCard key={post.id} post={post} />
-                ),
+              {notifications.length > 0 && (
+                <Link href="/notifications" className="self-start text-[13px] font-medium text-muted-foreground hover:text-foreground">
+                  All notifications →
+                </Link>
               )}
+            </div>
+          )}
+        </section>
 
-            {joinError && (
-              <p className="px-3 pb-3 text-[12px]" style={{ color: "#f87171" }}>
-                {joinError}
-                {/* ARENA-STABILIZE.md Phase 2, G5's fix, same gap as Post Detail/CreateComposer had
-                    before their own fix - a fresh signup has no date of birth on file, so joining
-                    an Activity 400s with a message pointing at Settings; give a real way there. */}
-                {joinError.toLowerCase().includes("settings") && (
-                  <>
-                    {" "}
-                    <button
-                      type="button"
-                      onClick={() => router.push("/settings")}
-                      className="underline"
-                      style={{ background: "none", border: "none", padding: 0, color: "var(--foreground)", cursor: "pointer", fontSize: 12 }}
-                    >
-                      Go to Settings
-                    </button>
-                  </>
-                )}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <HomeMobileTabBar onCompose={openComposerPicker} />
+        <section aria-label="Around you" className="flex flex-col gap-3">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Around you</h2>
+          <Link href="/map" className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 hover:bg-secondary">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary">
+              <MapPinned className="size-5 text-foreground" strokeWidth={1.75} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-semibold text-foreground">
+                {nearbyCount === null
+                  ? "Checking what's on nearby…"
+                  : nearbyCount === 0
+                    ? "Nothing on near you today"
+                    : `${nearbyCount} activit${nearbyCount === 1 ? "y" : "ies"} near you today`}
+              </span>
+              <span className="mt-0.5 block text-[13px] text-muted-foreground">
+                {nearbyCount === 0 ? "Open Nearby to widen the radius, or start one." : "Open Nearby to see them on the map and join."}
+              </span>
+            </span>
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+          </Link>
+        </section>
       </div>
 
       <CreateComposer
         key={composerSession}
         open={composerOpen}
         onOpenChange={setComposerOpen}
-        onPublished={refreshAfterPost}
-        initialIntent={composerIntent}
+        onPublished={() => router.push("/map")}
+        initialIntent="activity"
       />
-      <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action={signInAction} />
-    </div>
+      <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action="start an activity" />
+    </AppShell>
   );
 }

@@ -51,7 +51,7 @@ export function InboxRow({
     >
       {kind === "room" ? (
         <div style={{ width: 44, height: 44, borderRadius: 14, background: ARENA_V3.mapDark, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <Users size={18} strokeWidth={1.75} color={ARENA_V3.ivory} />
+          <Users size={18} strokeWidth={1.75} color={ARENA_V3.ink} />
         </div>
       ) : kind === "job" ? (
         <div style={{ width: 44, height: 44, borderRadius: 14, background: ARENA_V3.champagne, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
