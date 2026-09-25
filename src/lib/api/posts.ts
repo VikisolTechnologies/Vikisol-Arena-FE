@@ -356,8 +356,8 @@ export async function getComments(postId: string): Promise<PostComment[]> {
   return delay(readComments().filter((c) => c.postId === postId), 200);
 }
 
-export async function addComment(postId: string, content: string): Promise<PostComment> {
-  if (isRealMode()) return apiFetch<PostComment>(`/posts/${postId}/comments`, { method: "POST", body: { content } });
+export async function addComment(postId: string, content: string, parentCommentId?: string): Promise<PostComment> {
+  if (isRealMode()) return apiFetch<PostComment>(`/posts/${postId}/comments`, { method: "POST", body: { content, parentCommentId } });
   const me = getCandidateById(CURRENT_CANDIDATE_ID);
   const comment: PostComment = {
     id: `comment-${Date.now()}`,
@@ -367,6 +367,7 @@ export async function addComment(postId: string, content: string): Promise<PostC
     authorEmoji: me?.avatarEmoji ?? "🧑🏽",
     content,
     createdAt: new Date().toISOString(),
+    parentCommentId: parentCommentId ?? null,
   };
   writeComments([...readComments(), comment]);
   writePosts(readPosts().map((p) => (p.id === postId ? { ...p, commentCount: p.commentCount + 1 } : p)));
@@ -381,6 +382,17 @@ export async function deleteComment(postId: string, commentId: string): Promise<
   writeComments(readComments().filter((c) => c.id !== commentId));
   writePosts(readPosts().map((p) => (p.id === postId ? { ...p, commentCount: Math.max(0, p.commentCount - 1) } : p)));
   await delay(undefined, 200);
+}
+
+/** Discuss votes: 1 = up, -1 = down, 0 = clear. */
+export async function votePost(postId: string, value: 1 | -1 | 0): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch<void>(`/posts/${postId}/vote`, { method: "PUT", body: { value } });
+    return;
+  }
+  // Mock mode keeps only the upvote half (its reactions store is a like-set).
+  if (value === 1) await reactToPost(postId);
+  else await unreactToPost(postId);
 }
 
 export async function reactToPost(postId: string): Promise<void> {

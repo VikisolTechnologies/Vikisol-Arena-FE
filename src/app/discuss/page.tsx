@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Heart, Search, HelpCircle, PenLine } from "lucide-react";
+import { MessageCircle, Search, HelpCircle, PenLine } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import { DemoContentBadge } from "@/components/home-v3/DemoContentBadge";
 import { PostMedia } from "@/components/posts/PostMedia";
+import { VoteControl } from "@/components/posts/VoteControl";
 import { getFeed, getTrending } from "@/lib/api/posts";
 import { search } from "@/lib/api/search";
 import { allowGuestBrowsing } from "@/lib/auth-guard";
@@ -24,7 +25,7 @@ import type { Post } from "@/lib/types";
 //
 // Sorted by New or Trending from the real /posts endpoints. Typing in the search box searches
 // every discussion on Arena (GET /search, type=discussions), not just the ones loaded here.
-type Sort = "new" | "trending";
+type Sort = "new" | "top" | "trending";
 type DiscussIntent = "ask" | "update";
 
 const KIND_LABEL: Record<string, string> = { ask: "Question", update: "Update" };
@@ -59,14 +60,12 @@ function ThreadRow({ post }: { post: Post }) {
         )}
       </Link>
       <PostMedia urls={post.mediaUrls} className="mt-3" width={720} />
-      <Link href={href} className="mt-3 flex items-center gap-4 text-[12px] text-muted-foreground">
-        <span className="flex items-center gap-1.5">
+      <div className="mt-3 flex items-center gap-3 text-[12px] text-muted-foreground">
+        <VoteControl post={post} />
+        <Link href={href} className="flex items-center gap-1.5 rounded-full px-2 py-1.5 hover:bg-secondary hover:text-foreground">
           <MessageCircle className="size-3.5" /> {post.commentCount} {post.commentCount === 1 ? "reply" : "replies"}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <Heart className="size-3.5" /> {post.reactionCount}
-        </span>
-      </Link>
+        </Link>
+      </div>
     </article>
   );
 }
@@ -88,8 +87,10 @@ export default function DiscussPage() {
   useEffect(() => {
     if (!allowGuestBrowsing(router)) return;
     let cancelled = false;
-    (sort === "new" ? getFeed(0, 50) : getTrending(0, 50))
+    (sort === "trending" ? getTrending(0, 50) : getFeed(0, 100))
       .then((all) => all.filter((p) => p.intentType === "ask" || p.intentType === "update"))
+      // Top = most upvoted first (ties: newest first).
+      .then((threads) => (sort === "top" ? threads.slice().sort((a, b) => (b.score ?? 0) - (a.score ?? 0)) : threads))
       .catch(() => [] as Post[])
       .then((threads) => !cancelled && setResult({ key, posts: threads }));
     return () => {
@@ -154,7 +155,7 @@ export default function DiscussPage() {
             />
           </label>
           <div role="tablist" aria-label="Sort" className="flex shrink-0 gap-1 rounded-full border border-border bg-card p-1">
-            {(["new", "trending"] as Sort[]).map((s) => (
+            {(["new", "top", "trending"] as Sort[]).map((s) => (
               <button
                 key={s}
                 type="button"

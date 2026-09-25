@@ -9,6 +9,7 @@ import { OrbLoader } from "@/components/ui/orb-loader";
 import { FollowButton } from "@/components/feed/FollowButton";
 import { BlockButton } from "@/components/feed/BlockButton";
 import { ReactionButton } from "@/components/feed/ReactionButton";
+import { VoteControl } from "@/components/posts/VoteControl";
 import { CommentThread } from "@/components/feed/CommentThread";
 import { JoinRequestsPanel } from "@/components/feed/JoinRequestsPanel";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
@@ -302,7 +303,12 @@ export default function PostDetailPage() {
             )}
 
             <div data-theme="product" className="text-foreground" style={{ marginBottom: post.mine || !post.joinable ? 0 : 16 }}>
-              <ReactionButton postId={post.id} reacted={!!post.myReacted} count={post.reactionCount} className="text-sm" />
+              {/* Discussions are voted up/down (Discuss ranks by it); activities keep a simple like. */}
+              {post.intentType === "activity" ? (
+                <ReactionButton postId={post.id} reacted={!!post.myReacted} count={post.reactionCount} className="text-sm" />
+              ) : (
+                <VoteControl post={post} />
+              )}
             </div>
 
             {/* Mine: join-requests panel to approve/decline. Not mine + joinable: the real CTA. */}

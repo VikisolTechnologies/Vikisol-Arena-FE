@@ -475,6 +475,9 @@ export interface Post {
   commentCount: number;
   reactionCount: number;
   myReacted?: boolean;
+  /** Discuss votes: upvotes minus downvotes, and the viewer's own vote (1, -1, or null). */
+  score?: number;
+  myVote?: number | null;
   // §4 safety-audit additions - trust signals for whoever's about to meet this post's author.
   authorJoinCount: number;
   authorAccountAgeDays: number;
@@ -657,6 +660,10 @@ export interface PostComment {
   authorEmoji: string;
   content: string;
   createdAt: string;
+  /** Threaded replies: the comment this answers (null/absent = top-level). */
+  parentCommentId?: string | null;
+  /** Deleted while it still had replies - shown as "[deleted]" so the thread keeps its shape. */
+  deleted?: boolean;
 }
 
 // The other-viewer-facing view of a CandidateProfile - `/identity` was self-only before Phase C
