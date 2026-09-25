@@ -23,7 +23,7 @@ import { PostMedia } from "@/components/posts/PostMedia";
 import { ARENA_V3 } from "@/components/home-v3/tokens";
 import { formatEyebrowWhen } from "@/components/home-v3/format";
 import { getMyProfile } from "@/lib/api/profile";
-import { getPost, requestJoin, cancelPost, reportPost, savePost, unsavePost } from "@/lib/api/posts";
+import { getPost, requestJoin, withdrawJoin, cancelPost, reportPost, savePost, unsavePost } from "@/lib/api/posts";
 import { formatFriendlyDateTime } from "@/lib/format";
 import { haversineKm } from "@/lib/geo";
 import { getSession } from "@/lib/session";
@@ -40,6 +40,7 @@ export default function PostDetailPage() {
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [post, setPost] = useState<Post | null | undefined>(undefined);
   const [joining, setJoining] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   // Missing detail a join was refused for (date of birth / verified phone) - asked for in a
@@ -95,6 +96,19 @@ export default function PostDetailPage() {
       else setJoinError(err instanceof Error ? err.message : "Couldn't request to join.");
     } finally {
       setJoining(false);
+    }
+  };
+
+  const leave = async () => {
+    setLeaving(true);
+    setJoinError(null);
+    try {
+      await withdrawJoin(post.id);
+      load();
+    } catch (err) {
+      setJoinError(err instanceof Error ? err.message : "Couldn't leave.");
+    } finally {
+      setLeaving(false);
     }
   };
 
@@ -352,19 +366,45 @@ export default function PostDetailPage() {
                   <p style={{ fontSize: 13, color: ARENA_V3.muted }}>
                     {post.status === "cancelled" ? "This was cancelled by the author." : "This activity has ended and is no longer joinable."}
                   </p>
-                ) : post.myJoinStatus === "approved" && post.roomId ? (
-                  <div style={{ display: "flex", gap: 10 }}>
+                ) : post.myJoinStatus === "approved" ? (
+                  <div>
+                    <div style={{ display: "flex", gap: 10 }}>
+                      {post.roomId ? (
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/rooms/${post.roomId}`)}
+                          style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: ARENA_V3.ink, color: ARENA_V3.ivory, fontSize: 14, padding: "14px 0", borderRadius: 26, border: "none", cursor: "pointer" }}
+                        >
+                          <MessageCircle size={16} /> Open room
+                        </button>
+                      ) : (
+                        <p style={{ flex: 1, fontSize: 13, color: ARENA_V3.muted }}>You&apos;re in.</p>
+                      )}
+                      <BookmarkButton saved={saved} saving={saving} onClick={toggleSave} />
+                    </div>
                     <button
                       type="button"
-                      onClick={() => router.push(`/rooms/${post.roomId}`)}
-                      style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: ARENA_V3.ink, color: ARENA_V3.ivory, fontSize: 14, padding: "14px 0", borderRadius: 26, border: "none", cursor: "pointer" }}
+                      disabled={leaving}
+                      onClick={leave}
+                      style={{ marginTop: 10, background: "none", border: "none", cursor: leaving ? "default" : "pointer", color: "#f87171", fontSize: 12, padding: 0 }}
                     >
-                      <MessageCircle size={16} /> Open room
+                      {leaving ? "Leaving…" : "Leave this activity"}
                     </button>
-                    <BookmarkButton saved={saved} saving={saving} onClick={toggleSave} />
+                    {joinError && <p style={{ margin: "8px 0 0", fontSize: 12, color: "#f87171" }}>{joinError}</p>}
                   </div>
                 ) : post.myJoinStatus === "pending" ? (
-                  <p style={{ fontSize: 13, color: ARENA_V3.muted }}>Your request to join is waiting on approval.</p>
+                  <div>
+                    <p style={{ fontSize: 13, color: ARENA_V3.muted }}>Your request to join is waiting on approval.</p>
+                    <button
+                      type="button"
+                      disabled={leaving}
+                      onClick={leave}
+                      style={{ marginTop: 8, background: "none", border: "none", cursor: leaving ? "default" : "pointer", color: "#f87171", fontSize: 12, padding: 0 }}
+                    >
+                      {leaving ? "Withdrawing…" : "Withdraw request"}
+                    </button>
+                    {joinError && <p style={{ margin: "8px 0 0", fontSize: 12, color: "#f87171" }}>{joinError}</p>}
+                  </div>
                 ) : post.myJoinStatus === "declined" ? (
                   <p style={{ fontSize: 13, color: ARENA_V3.muted }}>Your request to join wasn&apos;t accepted this time.</p>
                 ) : post.status === "full" ? (

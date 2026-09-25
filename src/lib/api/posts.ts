@@ -298,6 +298,21 @@ export async function requestJoin(postId: string): Promise<PostJoinRequest> {
   return delay(joinRequest, 250);
 }
 
+export async function withdrawJoin(postId: string): Promise<PostJoinRequest> {
+  if (isRealMode()) return apiFetch<PostJoinRequest>(`/posts/${postId}/joins/me`, { method: "DELETE" });
+  const joins = readJoins();
+  const mine = joins.find((j) => j.postId === postId && (j.status === "pending" || j.status === "approved"));
+  if (!mine) throw new Error("You haven't requested to join this post");
+  const updated = joins.map((j) => (j.id === mine.id ? { ...j, status: "withdrawn" as const } : j));
+  writeJoins(updated);
+  writePosts(readPosts().map((p) => {
+    if (p.id !== postId) return p;
+    const spotsFilled = mine.status === "approved" ? Math.max(0, p.spotsFilled - 1) : p.spotsFilled;
+    return { ...p, myJoinStatus: undefined, spotsFilled, status: p.status === "full" && spotsFilled < (p.capacity ?? Infinity) ? "open" : p.status };
+  }));
+  return delay({ ...mine, status: "withdrawn" }, 200);
+}
+
 export async function getJoinRequests(postId: string): Promise<PostJoinRequest[]> {
   if (isRealMode()) return apiFetch<PostJoinRequest[]>(`/posts/${postId}/joins`);
   return delay(readJoins().filter((j) => j.postId === postId), 200);

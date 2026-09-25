@@ -27,7 +27,7 @@ export function JoinRequestsPanel({ postId, onDecided }: { postId: string; onDec
 
   if (!requests) return null;
   const pending = requests.filter((r) => r.status === "pending");
-  const decided = requests.filter((r) => r.status !== "pending");
+  const decided = requests.filter((r) => r.status === "approved" || r.status === "declined" || r.status === "withdrawn");
 
   return (
     <div className="space-y-3">
@@ -52,7 +52,7 @@ export function JoinRequestsPanel({ postId, onDecided }: { postId: string; onDec
             <div key={r.id} className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
               <span>{r.userEmoji}</span> <span>{r.userName}</span>
               <span className={r.status === "approved" ? "text-emerald-400" : "text-muted-foreground"}>
-                · {r.status === "approved" ? "approved" : "declined"}
+                · {r.status === "approved" ? "approved" : r.status === "withdrawn" ? "left" : "declined"}
               </span>
             </div>
           ))}
