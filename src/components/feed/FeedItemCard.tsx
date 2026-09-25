@@ -18,6 +18,7 @@ import { formatFriendlyDateTime } from "@/lib/format";
 import { savePost, unsavePost } from "@/lib/api/posts";
 import { cn } from "@/lib/utils";
 import type { FeedItem } from "@/lib/types";
+import { isVideoUrl, mediaDisplayUrl, videoPosterUrl } from "@/lib/api/media";
 
 // ARENA-MASTER-ARCHITECTURE.md PART 7.5 "PostCard anatomy (one component, type variants)" - the
 // unified Home feed card. Distinct from feed/PostCard.tsx (kept as-is for pages that only ever
@@ -72,7 +73,9 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
   // PersonAvatar's placeholder photos do - see that component's own comment for the same
   // "ship real images now, not after" reasoning. A real uploaded post image (item.mediaUrls[0])
   // always takes priority over this when one exists.
-  const thumbnailUrl = item.mediaUrls[0] ?? ((isJob || isProjectLike || item.itemType === "activity")
+  // A video attachment shows its still frame here (this card isn't a player).
+  const firstMedia = item.mediaUrls[0];
+  const thumbnailUrl = (firstMedia && (isVideoUrl(firstMedia) ? videoPosterUrl(firstMedia, 640) : mediaDisplayUrl(firstMedia, 640))) ?? ((isJob || isProjectLike || item.itemType === "activity")
     ? `https://picsum.photos/seed/${encodeURIComponent(item.id)}/640/360`
     : null);
 

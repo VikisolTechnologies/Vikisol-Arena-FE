@@ -15,6 +15,7 @@ import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import { AppShell } from "@/components/app/AppShell";
 import { ChampagneAvatar } from "@/components/home-v3/ChampagneAvatar";
 import { DemoContentBadge } from "@/components/home-v3/DemoContentBadge";
+import { PostMedia } from "@/components/posts/PostMedia";
 import { ARENA_V3 } from "@/components/home-v3/tokens";
 import { formatEyebrowWhen } from "@/components/home-v3/format";
 import { getMyProfile } from "@/lib/api/profile";
@@ -138,7 +139,9 @@ export default function PostDetailPage() {
   const myUserId = getSession()?.candidateId;
   const inactive = post.status === "cancelled" || post.status === "expired";
   const spotsLeft = post.capacity ? Math.max(0, post.capacity - post.spotsFilled) : undefined;
-  const heroImage = post.mediaUrls[0] || (post.intentType === "activity" ? ACTIVITY_FALLBACK_IMAGE : null);
+  // A post with its own photos/videos shows them in full under the text (PostMedia); the stock
+  // banner is only a fallback for an activity with none.
+  const heroImage = post.mediaUrls.length === 0 && post.intentType === "activity" ? ACTIVITY_FALLBACK_IMAGE : null;
   const distanceKm =
     profile?.approxLat != null && profile?.approxLng != null && post.approxLat != null && post.approxLng != null
       ? haversineKm(profile.approxLat, profile.approxLng, post.approxLat, post.approxLng)
@@ -195,6 +198,8 @@ export default function PostDetailPage() {
             {post.title && (
               <p style={{ margin: "0 0 16px", fontSize: 14, lineHeight: 1.8, color: ARENA_V3.body, whiteSpace: "pre-wrap" }}>{post.body}</p>
             )}
+
+            <PostMedia urls={post.mediaUrls} className="mb-4" />
 
             {post.tags.length > 0 && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>

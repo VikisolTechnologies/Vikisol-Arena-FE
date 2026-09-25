@@ -1,15 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Briefcase, ChevronRight, HelpCircle, LocateFixed, MessageCircle, ShieldCheck, Sparkles, Users, X } from "lucide-react";
+import { Briefcase, ChevronRight, HelpCircle, ImagePlus, LocateFixed, MessageCircle, Play, ShieldCheck, Sparkles, Users, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ARENA_V3 } from "@/components/home-v3/tokens";
 import { createPost } from "@/lib/api/posts";
+import { MAX_MEDIA_PER_POST, checkMediaFile, getUploadSignature, isVideoFile, uploadMedia, type UploadSignature } from "@/lib/api/media";
 import type { Post, PostAudience, PostVisibility, VerificationLevel } from "@/lib/types";
 
 type PostIntent = Exclude<Post["intentType"], "company">;
 type Step = "pick" | "form";
+
+// One attached photo/video. Uploading starts the moment it's picked, so Publish only waits on
+// whatever is still in flight rather than on every file from scratch.
+type Attachment = {
+  id: string;
+  previewUrl: string;
+  isVideo: boolean;
+  progress: number;
+  url?: string;
+  error?: string;
+};
 
 // ARENA-MOCKUP-REFERENCE.md SCREEN 3 "CREATE" - order and copy are exact: activity, need,
 // project-or-job third ("deliberately... the structural reason Arena is not a job board"), then
@@ -99,6 +111,12 @@ export function CreateComposer({
   const [locateError, setLocateError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // One signature covers every file in this post (Cloudinary accepts it for an hour) - fetched
+  // on the first pick and shared by every upload after it.
+  const signatureRef = useRef<Promise<UploadSignature> | null>(null);
 
   const joinable = intent === "activity" || intent === "ask";
   const isActivity = intent === "activity";
@@ -127,8 +145,50 @@ export function CreateComposer({
     );
   }
 
+  function patchAttachment(id: string, patch: Partial<Attachment>) {
+    setAttachments((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+  }
+
+  function addFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setMediaError(null);
+    const room = MAX_MEDIA_PER_POST - attachments.length;
+    const picked = Array.from(files);
+    if (picked.length > room) setMediaError(`You can attach up to ${MAX_MEDIA_PER_POST} photos or videos.`);
+    for (const file of picked.slice(0, Math.max(0, room))) {
+      const problem = checkMediaFile(file);
+      if (problem) {
+        setMediaError(problem);
+        continue;
+      }
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      setAttachments((prev) => [...prev, { id, previewUrl: URL.createObjectURL(file), isVideo: isVideoFile(file), progress: 0 }]);
+      if (!signatureRef.current) {
+        signatureRef.current = getUploadSignature();
+        // A failed signature (e.g. uploads not configured) must not stick - the next pick retries.
+        signatureRef.current.catch(() => { signatureRef.current = null; });
+      }
+      signatureRef.current
+        .then((sig) => uploadMedia(file, sig, (f) => patchAttachment(id, { progress: f })))
+        .then((url) => patchAttachment(id, { url, progress: 1 }))
+        .catch((err) => patchAttachment(id, { error: err instanceof Error ? err.message : "Upload failed" }));
+    }
+  }
+
+  function removeAttachment(id: string) {
+    setAttachments((prev) => {
+      const gone = prev.find((a) => a.id === id);
+      if (gone) URL.revokeObjectURL(gone.previewUrl);
+      return prev.filter((a) => a.id !== id);
+    });
+  }
+
+  const uploading = attachments.some((a) => !a.url && !a.error);
+  const failedUpload = attachments.some((a) => a.error);
+  const canPublish = !!body.trim() && !publishing && !uploading && !failedUpload;
+
   async function publish() {
-    if (!body.trim()) return;
+    if (!canPublish) return;
     setPublishing(true);
     setError(null);
     try {
@@ -146,6 +206,7 @@ export function CreateComposer({
         lng: isActivity ? coords?.lng : undefined,
         exactMeetingPoint: isActivity && meetingPoint.trim() ? meetingPoint.trim() : undefined,
         requiredVerificationLevel: isActivity && requiredVerification !== "basic" ? requiredVerification : undefined,
+        mediaUrls: attachments.flatMap((a) => (a.url ? [a.url] : [])),
       });
       onOpenChange(false);
       onPublished();
@@ -244,6 +305,78 @@ export function CreateComposer({
                 rows={4}
                 style={{ ...fieldStyle, resize: "vertical", fontFamily: "inherit" }}
               />
+
+              {attachments.length > 0 && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+                  {attachments.map((a) => (
+                    <div key={a.id} style={{ position: "relative", aspectRatio: "1", borderRadius: 10, overflow: "hidden", background: ARENA_V3.white }}>
+                      {a.isVideo ? (
+                        <video src={a.previewUrl} muted playsInline preload="metadata" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element -- local object-URL preview
+                        <img src={a.previewUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      )}
+                      {a.isVideo && (
+                        <Play size={16} fill="#ffffff" color="#ffffff" style={{ position: "absolute", left: 6, bottom: 6, filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }} />
+                      )}
+                      {(a.error || !a.url) && (
+                        <div
+                          style={{
+                            position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: 4,
+                            background: "rgba(0,0,0,0.55)", color: a.error ? "#f87171" : "#ffffff", fontSize: 11, fontWeight: 600, textAlign: "center",
+                          }}
+                        >
+                          {a.error ? "Failed" : `${Math.round(a.progress * 100)}%`}
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeAttachment(a.id)}
+                        aria-label="Remove"
+                        style={{
+                          position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%", border: "none",
+                          background: "rgba(0,0,0,0.65)", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                        }}
+                      >
+                        <X size={13} strokeWidth={2} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {attachments.length < MAX_MEDIA_PER_POST && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 7, width: "100%", fontSize: 13, fontWeight: 500,
+                      padding: "10px 0", borderRadius: 10, cursor: "pointer", color: ARENA_V3.ink,
+                      background: "transparent", border: `1px dashed ${ARENA_V3.hairline}`,
+                    }}
+                  >
+                    <ImagePlus size={16} strokeWidth={1.75} /> Add photos or videos
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*,video/*"
+                    multiple
+                    hidden
+                    onChange={(e) => {
+                      addFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                </>
+              )}
+              {mediaError && <p style={{ margin: 0, fontSize: 11, color: "#f87171" }}>{mediaError}</p>}
+              {failedUpload && (
+                <p style={{ margin: 0, fontSize: 11, color: "#f87171" }}>
+                  {attachments.find((a) => a.error)?.error} - remove it to publish, or add it again.
+                </p>
+              )}
 
               {isActivity && (
                 <>
@@ -346,16 +479,16 @@ export function CreateComposer({
 
               <button
                 type="button"
-                disabled={!body.trim() || publishing}
+                disabled={!canPublish}
                 onClick={publish}
                 style={{
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                   width: "100%", fontSize: 14, fontWeight: 500, padding: "13px 0", borderRadius: 26,
                   border: "none", background: ARENA_V3.ink, color: ARENA_V3.ivory,
-                  opacity: !body.trim() || publishing ? 0.55 : 1, cursor: !body.trim() || publishing ? "default" : "pointer",
+                  opacity: canPublish ? 1 : 0.55, cursor: canPublish ? "pointer" : "default",
                 }}
               >
-                <Sparkles size={14} /> {publishing ? "Publishing…" : "Publish"}
+                <Sparkles size={14} /> {publishing ? "Publishing…" : uploading ? "Uploading…" : "Publish"}
               </button>
             </div>
           </div>

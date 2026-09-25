@@ -6,7 +6,11 @@ const nextConfig: NextConfig = {
   // source.unsplash.com hotlink API - stable, specific photo URLs recorded per-use at the
   // call site (see HomeContent.tsx / ActivityCard usage) with photographer credit and license.
   images: {
-    remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "images.unsplash.com" },
+      // Post photos/videos (see src/lib/api/media.ts).
+      { protocol: "https", hostname: "res.cloudinary.com" },
+    ],
   },
   // Standalone output for the Docker runtime image on Railway - bundles only the traced
   // production dependencies into .next/standalone instead of shipping the full node_modules

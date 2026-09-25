@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import { DemoContentBadge } from "@/components/home-v3/DemoContentBadge";
+import { PostMedia } from "@/components/posts/PostMedia";
 import { getFeed, getTrending } from "@/lib/api/posts";
 import { allowGuestBrowsing } from "@/lib/auth-guard";
 import { getSession } from "@/lib/session";
@@ -30,38 +31,43 @@ const KIND_LABEL: Record<string, string> = { ask: "Question", update: "Update" }
 
 function ThreadRow({ post }: { post: Post }) {
   const text = post.title || post.body;
+  const href = `/feed/${post.id}`;
+  // Media sits between two links rather than inside one - tapping a video must play it.
   return (
-    <Link href={`/feed/${post.id}`} className="block rounded-2xl border border-border bg-card px-4 py-4 transition-colors hover:bg-secondary">
-      <div className="mb-2 flex items-center gap-2 text-[12px] text-muted-foreground">
-        <span className="font-medium text-foreground">{post.authorName}</span>
-        <span aria-hidden>·</span>
-        <span>{formatTimeAgo(post.createdAt)}</span>
-        {post.locationText && (
-          <>
-            <span aria-hidden>·</span>
-            <span className="truncate">{post.locationText}</span>
-          </>
-        )}
-        <span className="ml-auto flex shrink-0 items-center gap-2">
-          {post.demoContent && <DemoContentBadge />}
-          <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-            {KIND_LABEL[post.intentType] ?? "Post"}
+    <article className="rounded-2xl border border-border bg-card px-4 py-4 transition-colors hover:bg-secondary/40">
+      <Link href={href} className="block">
+        <div className="mb-2 flex items-center gap-2 text-[12px] text-muted-foreground">
+          <span className="font-medium text-foreground">{post.authorName}</span>
+          <span aria-hidden>·</span>
+          <span>{formatTimeAgo(post.createdAt)}</span>
+          {post.locationText && (
+            <>
+              <span aria-hidden>·</span>
+              <span className="truncate">{post.locationText}</span>
+            </>
+          )}
+          <span className="ml-auto flex shrink-0 items-center gap-2">
+            {post.demoContent && <DemoContentBadge />}
+            <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+              {KIND_LABEL[post.intentType] ?? "Post"}
+            </span>
           </span>
-        </span>
-      </div>
-      <p className="line-clamp-3 font-display text-[16px] font-medium leading-snug text-foreground">{text}</p>
-      {post.title && post.body && post.body !== post.title && (
-        <p className="mt-1.5 line-clamp-2 text-[13px] text-muted-foreground">{post.body}</p>
-      )}
-      <div className="mt-3 flex items-center gap-4 text-[12px] text-muted-foreground">
+        </div>
+        <p className="line-clamp-3 font-display text-[16px] font-medium leading-snug text-foreground">{text}</p>
+        {post.title && post.body && post.body !== post.title && (
+          <p className="mt-1.5 line-clamp-2 text-[13px] text-muted-foreground">{post.body}</p>
+        )}
+      </Link>
+      <PostMedia urls={post.mediaUrls} className="mt-3" width={720} />
+      <Link href={href} className="mt-3 flex items-center gap-4 text-[12px] text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <MessageCircle className="size-3.5" /> {post.commentCount} {post.commentCount === 1 ? "reply" : "replies"}
         </span>
         <span className="flex items-center gap-1.5">
           <Heart className="size-3.5" /> {post.reactionCount}
         </span>
-      </div>
-    </Link>
+      </Link>
+    </article>
   );
 }
 

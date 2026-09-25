@@ -8,6 +8,7 @@ import { AppShell } from "@/components/app/AppShell";
 import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import { DemoContentBadge } from "./DemoContentBadge";
+import { PostMedia } from "@/components/posts/PostMedia";
 import { getMyProfile } from "@/lib/api/profile";
 import { getFeed } from "@/lib/api/posts";
 import { getJobs } from "@/lib/api/jobs";
@@ -36,19 +37,21 @@ type FeedEntry =
   | { kind: "job"; id: string; job: Job }
   | { kind: "project"; id: string; project: Project };
 
-// Projects carry no created date, so "All" can't sort everything by time - instead jobs and
-// open projects are woven in after every few posts, keeping each kind visible from the top.
+// Round-robin across kinds - activity, discussion, job, bidding, repeat - so the top of "All"
+// always shows every kind rather than whichever one ranks highest (the post feed ranks
+// soon-starting activities first, which made "All" read as an activities-only feed). Each kind
+// keeps its own order; when one runs out the rest carry on.
 function interleave(posts: Post[], jobs: Job[], projects: Project[]): FeedEntry[] {
+  const lanes: FeedEntry[][] = [
+    posts.filter((p) => p.intentType === "activity").map((post) => ({ kind: "post", id: `post-${post.id}`, post })),
+    posts.filter((p) => p.intentType !== "activity").map((post) => ({ kind: "post", id: `post-${post.id}`, post })),
+    jobs.map((job) => ({ kind: "job", id: `job-${job.id}`, job })),
+    projects.map((project) => ({ kind: "project", id: `project-${project.id}`, project })),
+  ];
   const out: FeedEntry[] = [];
-  let j = 0;
-  let p = 0;
-  posts.forEach((post, i) => {
-    out.push({ kind: "post", id: `post-${post.id}`, post });
-    if (i % 3 === 1 && j < jobs.length) out.push({ kind: "job", id: `job-${jobs[j].id}`, job: jobs[j++] });
-    if (i % 4 === 3 && p < projects.length) out.push({ kind: "project", id: `project-${projects[p].id}`, project: projects[p++] });
-  });
-  while (j < jobs.length) out.push({ kind: "job", id: `job-${jobs[j].id}`, job: jobs[j++] });
-  while (p < projects.length) out.push({ kind: "project", id: `project-${projects[p].id}`, project: projects[p++] });
+  for (let i = 0; lanes.some((lane) => i < lane.length); i++) {
+    for (const lane of lanes) if (i < lane.length) out.push(lane[i]);
+  }
   return out;
 }
 
@@ -65,22 +68,26 @@ function KindTag({ icon: Icon, label }: { icon: typeof Users; label: string }) {
 function PostCard({ post }: { post: Post }) {
   const isActivity = post.intentType === "activity";
   const spotsLeft = post.capacity != null ? Math.max(0, post.capacity - post.spotsFilled) : null;
+  const href = `/feed/${post.id}`;
   return (
-    <Link href={`/feed/${post.id}`} className="block rounded-2xl border border-border bg-card p-4 transition-colors hover:bg-secondary">
-      <div className="mb-2 flex items-center gap-2 text-[12px] text-muted-foreground">
-        <span className="truncate font-medium text-foreground">{post.authorName}</span>
-        <span aria-hidden>·</span>
-        <span className="shrink-0">{formatTimeAgo(post.createdAt)}</span>
-        <span className="ml-auto flex shrink-0 items-center gap-2">
-          {post.demoContent && <DemoContentBadge />}
-          <KindTag icon={isActivity ? Users : MessageCircle} label={KIND_LABEL[post.intentType] ?? "Post"} />
-        </span>
-      </div>
-      {post.title && <p className="font-display text-[16px] font-semibold leading-snug text-foreground">{post.title}</p>}
-      {post.body && post.body !== post.title && (
-        <p className={cn("line-clamp-3 text-[14px] leading-relaxed", post.title ? "mt-1 text-muted-foreground" : "text-foreground")}>{post.body}</p>
-      )}
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-muted-foreground">
+    <article className="rounded-2xl border border-border bg-card p-4 transition-colors hover:bg-secondary/40">
+      <Link href={href} className="block">
+        <div className="mb-2 flex items-center gap-2 text-[12px] text-muted-foreground">
+          <span className="truncate font-medium text-foreground">{post.authorName}</span>
+          <span aria-hidden>·</span>
+          <span className="shrink-0">{formatTimeAgo(post.createdAt)}</span>
+          <span className="ml-auto flex shrink-0 items-center gap-2">
+            {post.demoContent && <DemoContentBadge />}
+            <KindTag icon={isActivity ? Users : MessageCircle} label={KIND_LABEL[post.intentType] ?? "Post"} />
+          </span>
+        </div>
+        {post.title && <p className="font-display text-[16px] font-semibold leading-snug text-foreground">{post.title}</p>}
+        {post.body && post.body !== post.title && (
+          <p className={cn("line-clamp-3 text-[14px] leading-relaxed", post.title ? "mt-1 text-muted-foreground" : "text-foreground")}>{post.body}</p>
+        )}
+      </Link>
+      <PostMedia urls={post.mediaUrls} className="mt-3" width={720} />
+      <Link href={href} className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-muted-foreground">
         {post.locationText && (
           <span className="flex items-center gap-1.5">
             <MapPin className="size-3.5" /> {post.locationText}
@@ -106,8 +113,8 @@ function PostCard({ post }: { post: Post }) {
         {isActivity && post.joinable && !post.mine && (
           <span className="ml-auto font-semibold text-primary-soft">{post.myJoinStatus ? "Requested" : "Join →"}</span>
         )}
-      </div>
-    </Link>
+      </Link>
+    </article>
   );
 }
 

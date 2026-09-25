@@ -141,6 +141,8 @@ export interface CreatePostInput {
   lng?: number;
   exactMeetingPoint?: string;
   requiredVerificationLevel?: VerificationLevel;
+  /** Photo/video URLs already uploaded via src/lib/api/media.ts. */
+  mediaUrls?: string[];
 }
 
 // Recency + follows-affinity, mirrors FeedRankingService's scoring shape client-side for mock
@@ -172,7 +174,7 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
       body: {
         intentType: input.intentType, title: input.title, body: input.body, locationText: input.locationText,
         audience: input.audience ?? "global", visibility: input.visibility ?? "public",
-        capacity: input.capacity, tags: input.tags ?? [],
+        capacity: input.capacity, tags: input.tags ?? [], mediaUrls: input.mediaUrls ?? [],
         startsAt: input.startsAt, endsAt: input.endsAt, lat: input.lat, lng: input.lng,
         exactMeetingPoint: input.exactMeetingPoint, requiredVerificationLevel: input.requiredVerificationLevel,
       },
@@ -198,7 +200,7 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
     startsAt: input.startsAt,
     endsAt: input.endsAt,
     tags: input.tags ?? [],
-    mediaUrls: [],
+    mediaUrls: input.mediaUrls ?? [],
     joinable: input.intentType === "activity" || input.intentType === "ask",
     mine: true,
     createdAt: new Date().toISOString(),
