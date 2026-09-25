@@ -37,6 +37,7 @@ interface RequestOptions {
   body?: unknown;
   auth?: boolean;
   formData?: FormData;
+  timeoutMs?: number;
   query?: Record<string, string | number | boolean | undefined>;
 }
 
@@ -96,7 +97,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     if (!formData) headers["Content-Type"] = "application/json";
     if (auth && token) headers.Authorization = `Bearer ${token}`;
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? REQUEST_TIMEOUT_MS);
     return fetch(`${API_BASE_URL}${path}${buildQuery(query)}`, {
       method,
       headers,

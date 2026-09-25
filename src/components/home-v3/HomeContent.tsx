@@ -55,8 +55,7 @@ function interleave(posts: Post[], jobs: Job[], projects: Project[]): FeedEntry[
 
 /**
  * Home - opens on the feed: activities, discussions, jobs and open bidding in one scroll, with
- * chips to narrow it to one kind. Jenny sits above it as a slim bar; her conversational input is
- * honestly disabled until JennySol is connected (Phase 3). Each item still opens in the space
+ * chips to narrow it to one kind. Jenny sits above it as a slim entry into the existing conversation and approval flow. Each item still opens in the space
  * that owns it (activity/thread detail, job, project).
  */
 export function HomeContent() {
@@ -71,6 +70,7 @@ export function HomeContent() {
   const [composerSession, setComposerSession] = useState(0);
   const [signInPromptOpen, setSignInPromptOpen] = useState(false);
   const [reloads, setReloads] = useState(0);
+  const [failedLanes, setFailedLanes] = useState<string[]>([]);
 
   useEffect(() => {
     if (!allowGuestBrowsing(router)) return;
@@ -81,15 +81,18 @@ export function HomeContent() {
         .then((all) => !cancelled && setUnread(all.filter((n) => !n.read).length))
         .catch(() => {});
     }
+    function laneResult(lane: string, failed: boolean) {
+      if (!cancelled) setFailedLanes((previous) => failed ? [...new Set([...previous, lane])] : previous.filter((item) => item !== lane));
+    }
     getFeed(0, 60)
-      .then((all) => !cancelled && setPosts(all.filter((p) => p.status === "open" || p.intentType !== "activity")))
-      .catch(() => !cancelled && setPosts([]));
+      .then((all) => { if (!cancelled) { setPosts(all.filter((p) => p.status === "open" || p.intentType !== "activity")); laneResult("posts", false); } })
+      .catch(() => { if (!cancelled) { setPosts([]); laneResult("posts", true); } });
     getJobs()
-      .then((all) => !cancelled && setJobs(all.slice().sort((a, b) => a.postedDaysAgo - b.postedDaysAgo)))
-      .catch(() => !cancelled && setJobs([]));
+      .then((all) => { if (!cancelled) { setJobs(all.slice().sort((a, b) => a.postedDaysAgo - b.postedDaysAgo)); laneResult("jobs", false); } })
+      .catch(() => { if (!cancelled) { setJobs([]); laneResult("jobs", true); } });
     getProjects()
-      .then((all) => !cancelled && setProjects(all.filter((p) => p.status === "open")))
-      .catch(() => !cancelled && setProjects([]));
+      .then((all) => { if (!cancelled) { setProjects(all.filter((p) => p.status === "open")); laneResult("bidding", false); } })
+      .catch(() => { if (!cancelled) { setProjects([]); laneResult("bidding", true); } });
     return () => {
       cancelled = true;
     };
@@ -120,6 +123,9 @@ export function HomeContent() {
     setComposerOpen(true);
   }
 
+  const relevantFailures = failedLanes.filter((lane) => filter === "all" || lane === filter ||
+    (lane === "posts" && (filter === "activities" || filter === "discussions")));
+
   const seeAll: Partial<Record<Filter, { href: string; label: string }>> = {
     activities: { href: "/map", label: "See them on the map" },
     discussions: { href: "/discuss", label: "Open Discuss" },
@@ -133,14 +139,9 @@ export function HomeContent() {
         {/* Jenny - slim, above the feed rather than in place of it. */}
         <section aria-label="Ask Jenny" className="flex items-center gap-3 rounded-2xl border border-border bg-card px-3 py-2.5">
           <div aria-hidden className="size-8 shrink-0 rounded-full bg-[radial-gradient(circle_at_32%_30%,var(--primary-soft),var(--primary)_70%)]" />
-          <label htmlFor="jenny-input" className="sr-only">Ask Jenny (coming soon)</label>
-          <input
-            id="jenny-input"
-            type="text"
-            disabled
-            placeholder="Ask Jenny anything — coming soon"
-            className="min-w-0 flex-1 cursor-not-allowed bg-transparent text-[14px] text-muted-foreground placeholder:text-muted-foreground focus:outline-none"
-          />
+          <Link href="/agent" className="min-w-0 flex-1 py-2 text-[14px] text-foreground hover:text-primary-soft">
+            Ask Jenny to help you find, plan or post
+          </Link>
           <button
             type="button"
             onClick={openComposer}
@@ -178,13 +179,20 @@ export function HomeContent() {
           ))}
         </div>
 
+        {relevantFailures.length > 0 && (
+          <div role="alert" className="rounded-xl border border-border bg-card p-4 text-sm">
+            <p>Some of your feed couldn&apos;t load. Available items are shown below.</p>
+            <button type="button" className="mt-2 min-h-11 font-semibold text-primary-soft" onClick={() => setReloads((n) => n + 1)}>Try again</button>
+          </div>
+        )}
+
         {entries === null ? (
           <div className="flex flex-col gap-3">
             {[0, 1, 2].map((i) => (
               <div key={i} className="h-32 animate-pulse rounded-2xl bg-card" />
             ))}
           </div>
-        ) : entries.length === 0 ? (
+        ) : entries.length === 0 && relevantFailures.length > 0 ? null : entries.length === 0 ? (
           <div className="rounded-2xl border border-border bg-card px-5 py-10 text-center">
             <p className="mb-2 text-[15px] font-medium text-foreground">Nothing here yet</p>
             <p className="mb-4 text-[13px] text-muted-foreground">Be the first to post something.</p>

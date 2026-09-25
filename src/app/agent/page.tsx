@@ -6,16 +6,13 @@ import { RotateCw, Send, Sparkles, WifiOff } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
 import { AgentOrbAvatar } from "@/components/agent/AgentOrbAvatar";
-import { IntentCardView } from "@/components/agent/IntentCardView";
+import { AgentActionCard } from "@/components/agent/AgentActionCard";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getMyProfile } from "@/lib/api/profile";
 import { getActivityFeed } from "@/lib/api/activity";
-import { applyToJob } from "@/lib/api/applications";
-import { placeBid } from "@/lib/api/market";
-import { agentRealtime } from "@/lib/realtime";
 import { getOrCreateAgentConversation, getAgentMessages, sendAgentMessage, AGENT_UNAVAILABLE_MESSAGE } from "@/lib/api/agent";
 import { useAgentState, setAgentState, type AgentOrbState } from "@/lib/agentState";
 import { requireOnboarded } from "@/lib/auth-guard";
@@ -24,13 +21,13 @@ import { useTypewriter } from "@/hooks/use-typewriter";
 import { useIsMobileViewport } from "@/hooks/use-is-mobile-viewport";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
-import type { CandidateProfile, ChatMessage, AgentActivityEvent, IntentCard } from "@/lib/types";
+import type { CandidateProfile, ChatMessage, AgentActivityEvent, AgentAction } from "@/lib/types";
 
 const SUGGESTIONS = [
-  "What's my best match right now?",
-  "Apply me to the top match",
-  "Is there a project worth bidding on?",
-  "What have you done overnight?",
+  "Find activities I could join",
+  "Find a community for my interests",
+  "Help me draft a post",
+  "Find projects matching my skills",
 ];
 
 const STATUS_LABEL: Record<AgentOrbState, string> = {
@@ -41,15 +38,14 @@ const STATUS_LABEL: Record<AgentOrbState, string> = {
 };
 
 function isUnavailableMessage(message: ChatMessage) {
-  return message.id.startsWith("unavailable-") || message.content === AGENT_UNAVAILABLE_MESSAGE;
+  return message.serviceUnavailable || message.id.startsWith("unavailable-") || message.content === AGENT_UNAVAILABLE_MESSAGE;
 }
 
-function AgentBubble({ message, showAvatar, showRetry, onApprove, onReject, onRetry }: {
+function AgentBubble({ message, showAvatar, showRetry, onActionChange, onRetry }: {
   message: ChatMessage;
   showAvatar: boolean;
   showRetry: boolean;
-  onApprove: (c: IntentCard) => void;
-  onReject: (c: IntentCard) => void;
+  onActionChange: (action: AgentAction) => void;
   onRetry: () => void;
 }) {
   const { shown } = useTypewriter(message.content);
@@ -77,9 +73,7 @@ function AgentBubble({ message, showAvatar, showRetry, onApprove, onReject, onRe
             </Button>
           )}
         </div>
-        {message.intentCard && (
-          <IntentCardView card={message.intentCard} onApprove={onApprove} onReject={onReject} />
-        )}
+        {message.actions?.map((action) => <AgentActionCard key={action.id} action={action} onChange={onActionChange} />)}
       </div>
     );
   }
@@ -95,9 +89,7 @@ function AgentBubble({ message, showAvatar, showRetry, onApprove, onReject, onRe
         <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-border bg-secondary px-3.5 py-2.5 text-sm leading-relaxed sm:max-w-md">
           {shown}
         </div>
-        {message.intentCard && (
-          <IntentCardView card={message.intentCard} onApprove={onApprove} onReject={onReject} />
-        )}
+        {message.actions?.map((action) => <AgentActionCard key={action.id} action={action} onChange={onActionChange} />)}
       </div>
     </div>
   );
@@ -208,8 +200,10 @@ export default function AgentPage() {
       } else {
         setMessages(history);
       }
-    })();
-    getActivityFeed().then(setActivity);
+    })().catch(() => {
+      if (!cancelled) setMessages([{ id: "unavailable-load", role: "agent", content: "Couldn't load your conversation. Reload to try again.", timestamp: new Date().toISOString(), serviceUnavailable: true }]);
+    });
+    getActivityFeed().then(setActivity).catch(() => setActivity([]));
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
@@ -228,56 +222,12 @@ export default function AgentPage() {
     if (lastFailedInput && conversationId) void runSend(conversationId, lastFailedInput);
   };
 
-  const updateIntent = (card: IntentCard) => {
-    setMessages((prev) =>
-      prev.map((m) => (m.intentCard?.id === card.id ? { ...m, intentCard: { ...card } } : m)),
-    );
+  const handleActionChange = (action: AgentAction) => {
+    setMessages((previous) => previous.map((message) => ({
+      ...message, actions: message.actions?.map((item) => item.id === action.id ? action : item),
+    })));
   };
 
-  const handleApprove = async (card: IntentCard) => {
-    setAgentState("acting");
-    if (card.type === "apply") {
-      await applyToJob(String(card.payload.jobId));
-      agentRealtime.emit({
-        id: nextId("evt"),
-        type: "applied",
-        title: `Applied to ${card.payload.title} at ${card.payload.company}`,
-        description: "Approved from Agent chat — resume tailored to this role.",
-        timestamp: new Date().toISOString(),
-        relatedJobId: String(card.payload.jobId),
-        undoable: true,
-      });
-    } else if (card.type === "place_bid") {
-      await placeBid(String(card.payload.projectId), Number(card.payload.amount));
-      agentRealtime.emit({
-        id: nextId("evt"),
-        type: "message",
-        title: "Bid placed",
-        description: "Approved from Agent chat.",
-        timestamp: new Date().toISOString(),
-      });
-    }
-    updateIntent({ ...card, status: "approved" });
-    setAgentState("idle");
-  };
-
-  const handleReject = (card: IntentCard) => {
-    updateIntent({ ...card, status: "rejected" });
-    setAgentState("idle");
-  };
-
-  // Autonomy setting from /settings changes how approval cards behave: on autopilot, the
-  // agent approves its own pending intents instead of waiting on a tap. Dormant today since no
-  // real agent backend proposes intents yet (Noop client just reports unavailable) - stays wired
-  // for when one does.
-  useEffect(() => {
-    if (profile?.autonomy !== "autopilot") return;
-    const pending = messages.find((m) => m.intentCard?.status === "pending")?.intentCard;
-    if (!pending) return;
-    const id = setTimeout(() => handleApprove(pending), 1200);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, profile?.autonomy]);
 
   if (!profile) {
     return (
@@ -324,14 +274,11 @@ export default function AgentPage() {
               </div>
             </div>
 
-            {/* Honest replacement for the old disclosure line, which described buildReply()'s fake
-                matching as if it were real. There is currently no live AI service behind this chat
-                (see AgentServiceClient) - every reply says so rather than pretending otherwise.
-                Nothing is ever applied/bid on your behalf without approval below, regardless.
-                Kept as a slim single line rather than a full block - it's a disclosure, not the
-                main content, and shouldn't compete with the conversation for space. */}
+            {/* Disclosure line. Replies come from JennySol through Arena's backend; if it's
+                unreachable, the reply says so (serviceUnavailable) instead of pretending. Proposed
+                actions only run from the Approve button on their card - never from a reply alone. */}
             <p className="shrink-0 border-b border-border px-4 py-1.5 text-[11px] leading-snug text-muted-foreground">
-              This chat isn&apos;t connected to a live AI service yet — it will tell you honestly when it can&apos;t answer. Nothing is ever applied or bid on your behalf without your approval below.
+              Jenny is an AI assistant and can make mistakes. Nothing is posted, joined, applied to or bid on without your approval below.
             </p>
 
             <div
@@ -350,8 +297,7 @@ export default function AgentPage() {
                     message={m}
                     showAvatar={showAvatar}
                     showRetry={m.id === lastUnavailableId}
-                    onApprove={handleApprove}
-                    onReject={handleReject}
+                    onActionChange={handleActionChange}
                     onRetry={retry}
                   />
                 ) : (
@@ -414,7 +360,7 @@ export default function AgentPage() {
         <TabsContent value="journal">
           <div className="rounded-2xl border border-border bg-card p-6">
             <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-              <Sparkles className="size-4 text-primary-soft" /> Everything your agent has done autonomously.
+              <Sparkles className="size-4 text-primary-soft" /> Recorded activity from your Arena account.
             </div>
             <ActivityFeed initial={activity} />
           </div>

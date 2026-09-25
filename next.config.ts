@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Keep isolated browser-test compilation separate from a developer's running Next server.
+  distDir: process.env.ARENA_NEXT_DIST_DIR || ".next",
   // ARENA-PHASE-1-BUILD.md §2 "Imagery" - real licensed Unsplash photography for the new v3
   // screens (Home first), served via next/image. Unsplash's own CDN, not the deprecated
   // source.unsplash.com hotlink API - stable, specific photo URLs recorded per-use at the

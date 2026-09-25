@@ -51,3 +51,6 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# Isolated local browser tests
+.next-local-tests/

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Build output of the isolated local browser tests (playwright.local.config.ts).
+    ".next-local-tests/**",
   ]),
 ]);
 

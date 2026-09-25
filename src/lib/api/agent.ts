@@ -1,6 +1,6 @@
 import { apiFetch } from "./httpClient";
 import { isRealMode } from "./mode";
-import type { ChatMessage } from "@/lib/types";
+import type { ChatMessage, AgentAction } from "@/lib/types";
 
 // The old /agent page kept its whole conversation in React state, built with buildReply() - a
 // keyword matcher (t.includes("apply"), t.includes("bid")...) that was never a real AI, just a
@@ -21,6 +21,7 @@ interface AgentMessageDto {
   role: "user" | "agent";
   content: string;
   serviceUnavailable: boolean;
+  actions?: AgentAction[];
   createdAt: string;
 }
 
@@ -30,7 +31,7 @@ export const AGENT_UNAVAILABLE_MESSAGE =
   "The agent is temporarily unavailable. Your Arena account is still working normally.";
 
 function toChatMessage(m: AgentMessageDto): ChatMessage {
-  return { id: m.id, role: m.role, content: m.content, timestamp: m.createdAt };
+  return { id: m.id, role: m.role, content: m.content, timestamp: m.createdAt, actions: m.actions ?? [], serviceUnavailable: m.serviceUnavailable };
 }
 
 export async function getOrCreateAgentConversation(): Promise<AgentConversationDto> {
@@ -54,6 +55,7 @@ export async function sendAgentMessage(conversationId: string, content: string):
     const message = await apiFetch<AgentMessageDto>(`/agent/conversations/${conversationId}/messages`, {
       method: "POST",
       body: { content },
+      timeoutMs: 65_000,
     });
     return toChatMessage(message);
   }
@@ -61,4 +63,12 @@ export async function sendAgentMessage(conversationId: string, content: string):
   // doc) - mock mode reports the same honest unavailable state real mode does, rather than a
   // second fake AI implementation.
   return { id: `local-${Date.now()}`, role: "agent", content: AGENT_UNAVAILABLE_MESSAGE, timestamp: new Date().toISOString() };
+}
+
+/** Only the backend-owned proposal ID is accepted. The browser never submits executable args. */
+export async function decideAgentAction(actionId: string, approve: boolean): Promise<AgentAction> {
+  if (!isRealMode()) throw new Error("Jenny actions require a connected Arena backend.");
+  return apiFetch<AgentAction>(`/agent/actions/${encodeURIComponent(actionId)}`, {
+    method: "POST", body: { approve }, timeoutMs: 30_000,
+  });
 }

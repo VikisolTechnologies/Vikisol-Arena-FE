@@ -208,12 +208,24 @@ export interface IntentCard {
   status: "pending" | "approved" | "rejected";
 }
 
+export interface AgentAction {
+  id: string;
+  toolName: string;
+  args: Record<string, unknown>;
+  status: "pending" | "done" | "declined" | "failed" | "expired" | "unknown";
+  result?: Record<string, unknown> | null;
+  error?: string | null;
+  expiresAt?: string | null;
+}
+
 export interface ChatMessage {
   id: string;
   role: ChatRole;
   content: string;
   timestamp: string;
   intentCard?: IntentCard;
+  actions?: AgentAction[];
+  serviceUnavailable?: boolean;
 }
 
 export type NotificationType = "agent" | "interview" | "bid" | "system";

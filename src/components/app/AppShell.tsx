@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 /**
  * The one shell every talent-facing screen renders inside (Arena restructure, Phase 1).
  * Five spaces, each the single home for one kind of content:
- *   Jenny   /home    - the assistant; what needs you. Not a feed.
+ *   Home    /home    - the mixed feed, with an entry to Jenny assistance.
  *   Nearby  /map     - activities (time + place), and only activities.
  *   Discuss /discuss - posts/threads; post detail lives at /feed/[id].
  *   Work    /work    - jobs and bidding (Discover, Marketplace, Companies sit under it).
@@ -48,7 +48,7 @@ import { cn } from "@/lib/utils";
 type Space = { key: string; href: string; label: string; icon: LucideIcon; prefixes: string[] };
 
 const SPACES: Space[] = [
-  { key: "jenny", href: "/home", label: "Jenny", icon: Sparkles, prefixes: ["/home"] },
+  { key: "home", href: "/home", label: "Home", icon: Sparkles, prefixes: ["/home", "/agent"] },
   { key: "nearby", href: "/map", label: "Nearby", icon: MapPinned, prefixes: ["/map"] },
   { key: "discuss", href: "/discuss", label: "Discuss", icon: MessagesSquare, prefixes: ["/discuss", "/feed"] },
   {
