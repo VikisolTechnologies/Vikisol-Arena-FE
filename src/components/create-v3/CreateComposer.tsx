@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Briefcase, ChevronRight, HelpCircle, ImagePlus, LocateFixed, MessageCircle, Play, ShieldCheck, Sparkles, Users, X } from "lucide-react";
+import { Briefcase, ChevronRight, HelpCircle, ImagePlus, LocateFixed, MessageCircle, Play, Sparkles, Users, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ARENA_V3 } from "@/components/home-v3/tokens";
 import { createPost } from "@/lib/api/posts";
 import { MAX_MEDIA_PER_POST, checkMediaFile, getUploadSignature, isVideoFile, isVideoUrl, uploadMedia, type UploadSignature } from "@/lib/api/media";
 import { RequirementForm, requirementFromError, type Requirement } from "@/components/requirements/RequirementForm";
-import type { Post, PostAudience, PostVisibility, VerificationLevel } from "@/lib/types";
+import type { Post, PostAudience, PostVisibility } from "@/lib/types";
 
 type PostIntent = Exclude<Post["intentType"], "company">;
 type Step = "pick" | "form";
@@ -143,7 +143,6 @@ export function CreateComposer({
   const [startsAt, setStartsAt] = useState(initialDraft.startsAt ?? "");
   const [meetingPoint, setMeetingPoint] = useState(initialDraft.meetingPoint ?? "");
   const [restored, setRestored] = useState(() => hasContent(initialDraft));
-  const [requiredVerification, setRequiredVerification] = useState<VerificationLevel>("basic");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState<string | null>(null);
@@ -280,7 +279,6 @@ export function CreateComposer({
         lat: isActivity ? coords?.lat : undefined,
         lng: isActivity ? coords?.lng : undefined,
         exactMeetingPoint: isActivity && meetingPoint.trim() ? meetingPoint.trim() : undefined,
-        requiredVerificationLevel: isActivity && requiredVerification !== "basic" ? requiredVerification : undefined,
         mediaUrls: uploadedUrls,
       });
       try {
@@ -502,16 +500,6 @@ export function CreateComposer({
                     placeholder="Exact meeting point (optional) - shown only to approved joiners"
                     style={fieldStyle}
                   />
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: ARENA_V3.muted }}>
-                      <ShieldCheck size={12} /> Who can join needs:
-                    </span>
-                    {(["basic", "phone"] as const).map((v) => (
-                      <Chip key={v} active={requiredVerification === v} onClick={() => setRequiredVerification(v)}>
-                        {v === "basic" ? "No extra check" : "Phone-verified"}
-                      </Chip>
-                    ))}
-                  </div>
                 </>
               )}
 

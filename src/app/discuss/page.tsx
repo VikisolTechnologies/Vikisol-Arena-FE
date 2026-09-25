@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MessageCircle, Heart, Search, HelpCircle, PenLine } from "lucide-react";
@@ -12,6 +12,7 @@ import { SignInPrompt } from "@/components/auth/SignInPrompt";
 import { DemoContentBadge } from "@/components/home-v3/DemoContentBadge";
 import { PostMedia } from "@/components/posts/PostMedia";
 import { getFeed, getTrending } from "@/lib/api/posts";
+import { search } from "@/lib/api/search";
 import { allowGuestBrowsing } from "@/lib/auth-guard";
 import { getSession } from "@/lib/session";
 import { formatTimeAgo } from "@/lib/format";
@@ -21,9 +22,8 @@ import type { Post } from "@/lib/types";
 // Discuss: the one home for posts that aren't activities - questions, needs, updates (Arena
 // restructure, Phase 1). Activities live on Nearby; a thread opens at /feed/[id].
 //
-// Phase 1 scope, stated plainly: sorted by New or Trending from the real /posts endpoints, and
-// the search box filters the threads already loaded here. Communities, upvotes, full-text
-// search across all threads, and anonymous posting are Phase 2 backend work - not faked here.
+// Sorted by New or Trending from the real /posts endpoints. Typing in the search box searches
+// every discussion on Arena (GET /search, type=discussions), not just the ones loaded here.
 type Sort = "new" | "trending";
 type DiscussIntent = "ask" | "update";
 
@@ -98,12 +98,25 @@ export default function DiscussPage() {
   }, [router, sort, key]);
   const posts = result?.key === key ? result.posts : null;
 
-  const visible = useMemo(() => {
-    if (!posts) return null;
-    const q = query.trim().toLowerCase();
-    if (!q) return posts;
-    return posts.filter((p) => `${p.title ?? ""} ${p.body} ${p.authorName} ${p.locationText ?? ""}`.toLowerCase().includes(q));
-  }, [posts, query]);
+  const q = query.trim();
+  const searchKey = q.toLowerCase();
+  // Same keyed-result pattern as the list above: a result only shows under the query it answers.
+  const [found, setFound] = useState<{ key: string; posts: Post[] } | null>(null);
+  useEffect(() => {
+    if (searchKey.length < 2) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      search(searchKey, "discussions", 50)
+        .then((r) => !cancelled && setFound({ key: searchKey, posts: r.discussions }))
+        .catch(() => !cancelled && setFound({ key: searchKey, posts: [] }));
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchKey]);
+  const searching = searchKey.length >= 2;
+  const visible = searching ? (found?.key === searchKey ? found.posts : null) : posts;
 
   function start(intent: DiscussIntent) {
     if (!getSession()) {
@@ -129,14 +142,14 @@ export default function DiscussPage() {
 
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
           <label htmlFor="discuss-search" className="relative flex-1">
-            <span className="sr-only">Search threads</span>
+            <span className="sr-only">Search discussions</span>
             <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               id="discuss-search"
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search these threads…"
+              placeholder="Search all discussions…"
               className="w-full rounded-full border border-border bg-card py-2.5 pl-10 pr-4 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </label>

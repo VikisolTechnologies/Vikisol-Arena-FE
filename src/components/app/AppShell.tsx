@@ -11,6 +11,7 @@ import {
   Inbox as InboxIcon,
   Bookmark,
   Bell,
+  Search,
   Plus,
   LogOut,
   Menu,
@@ -208,6 +209,17 @@ export function AppShell({
             <Button variant="default" size="sm" className="w-full gap-1.5" onClick={openCreate}>
               <Plus className="size-4" /> Create
             </Button>
+            {/* Search across every space - opens the Search page (activities, discussions, jobs,
+                projects, companies). */}
+            <Link
+              href="/search"
+              className={cn(
+                "mt-2 flex w-full items-center gap-2 rounded-full border border-border px-3.5 py-2 text-[13px] text-muted-foreground transition-colors hover:text-foreground",
+                pathname === "/search" && "border-ring text-foreground",
+              )}
+            >
+              <Search className="size-4" /> Search Arena
+            </Link>
           </div>
           <nav aria-label="Main" className="flex flex-col gap-1 px-3">
             {SPACES.map((s) => (
@@ -237,6 +249,18 @@ export function AppShell({
               <Button variant="default" size="icon-sm" className="lg:hidden" onClick={openCreate} aria-label="Create">
                 <Plus className="size-4" />
               </Button>
+              {pathname !== "/search" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Search"
+                  className="relative before:absolute before:inset-[-6px] before:content-[''] lg:hidden"
+                  render={<Link href="/search" />}
+                  nativeButton={false}
+                >
+                  <Search className="size-[18px]" />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
