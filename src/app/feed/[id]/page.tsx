@@ -10,6 +10,7 @@ import { FollowButton } from "@/components/feed/FollowButton";
 import { BlockButton } from "@/components/feed/BlockButton";
 import { ReactionButton } from "@/components/feed/ReactionButton";
 import { VoteControl } from "@/components/posts/VoteControl";
+import { CommunityPostBar } from "@/components/discuss/CommunityPostBar";
 import { CommentThread } from "@/components/feed/CommentThread";
 import { JoinRequestsPanel } from "@/components/feed/JoinRequestsPanel";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
@@ -166,7 +167,7 @@ export default function PostDetailPage() {
               <Image src={heroImage} alt="" fill sizes="640px" style={{ objectFit: "cover" }} priority />
               <button
                 type="button"
-                onClick={() => router.push(post.intentType === "activity" ? "/map" : "/discuss")}
+                onClick={() => router.push(post.intentType === "activity" ? "/map" : post.communitySlug ? `/discuss/c/${post.communitySlug}` : "/discuss")}
                 style={{ position: "absolute", top: 16, left: 16, background: "none", border: "none", cursor: "pointer", color: "#ffffff" }}
                 aria-label="Back"
               >
@@ -178,7 +179,7 @@ export default function PostDetailPage() {
             <div style={{ padding: "16px 20px 0" }}>
               <button
                 type="button"
-                onClick={() => router.push(post.intentType === "activity" ? "/map" : "/discuss")}
+                onClick={() => router.push(post.intentType === "activity" ? "/map" : post.communitySlug ? `/discuss/c/${post.communitySlug}` : "/discuss")}
                 style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: ARENA_V3.body, fontSize: 13, padding: 0 }}
               >
                 <ArrowLeft size={16} strokeWidth={1.75} /> Back
@@ -187,6 +188,7 @@ export default function PostDetailPage() {
           )}
 
           <div style={{ padding: "20px" }}>
+            <CommunityPostBar post={post} />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
               <p style={{ margin: 0, fontSize: 10, letterSpacing: 3, color: ARENA_V3.goldText }}>
                 {post.intentType.toUpperCase()}{post.startsAt ? ` · ${formatEyebrowWhen(post.startsAt)}` : ""}

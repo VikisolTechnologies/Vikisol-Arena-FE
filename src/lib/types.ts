@@ -478,6 +478,11 @@ export interface Post {
   /** Discuss votes: upvotes minus downvotes, and the viewer's own vote (1, -1, or null). */
   score?: number;
   myVote?: number | null;
+  /** The community a discussion was posted in (absent = general Discuss). */
+  communityId?: string | null;
+  communitySlug?: string | null;
+  communityName?: string | null;
+  communityEmoji?: string | null;
   // §4 safety-audit additions - trust signals for whoever's about to meet this post's author.
   authorJoinCount: number;
   authorAccountAgeDays: number;
@@ -690,3 +695,27 @@ export interface PublicCandidateProfile {
   viewerFollows?: boolean;
 }
 
+
+/** A user-created Discuss community (Phase 2). viewerRole is null when not joined / signed out. */
+export interface Community {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  emoji: string;
+  memberCount: number;
+  postCount: number;
+  allowAnonymous: boolean;
+  viewerRole: "owner" | "moderator" | "member" | null;
+  viewerBanned: boolean;
+  createdAt: string;
+  demoContent: boolean;
+}
+
+export interface CommunityMember {
+  userId: string;
+  name: string;
+  emoji: string;
+  role: "owner" | "moderator" | "member";
+  banned: boolean;
+}

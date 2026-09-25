@@ -143,6 +143,8 @@ export interface CreatePostInput {
   requiredVerificationLevel?: VerificationLevel;
   /** Photo/video URLs already uploaded via src/lib/api/media.ts. */
   mediaUrls?: string[];
+  /** Discuss community (id) to post a question/update into; absent = general Discuss. */
+  communityId?: string;
 }
 
 // Recency + follows-affinity, mirrors FeedRankingService's scoring shape client-side for mock
@@ -174,7 +176,7 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
       body: {
         intentType: input.intentType, title: input.title, body: input.body, locationText: input.locationText,
         audience: input.audience ?? "global", visibility: input.visibility ?? "public",
-        capacity: input.capacity, tags: input.tags ?? [], mediaUrls: input.mediaUrls ?? [],
+        capacity: input.capacity, tags: input.tags ?? [], mediaUrls: input.mediaUrls ?? [], communityId: input.communityId,
         startsAt: input.startsAt, endsAt: input.endsAt, lat: input.lat, lng: input.lng,
         exactMeetingPoint: input.exactMeetingPoint, requiredVerificationLevel: input.requiredVerificationLevel,
       },

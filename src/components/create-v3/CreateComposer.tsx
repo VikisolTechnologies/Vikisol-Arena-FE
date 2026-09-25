@@ -8,6 +8,8 @@ import { ARENA_V3 } from "@/components/home-v3/tokens";
 import { createPost } from "@/lib/api/posts";
 import { MAX_MEDIA_PER_POST, checkMediaFile, getUploadSignature, isVideoFile, isVideoUrl, uploadMedia, type UploadSignature } from "@/lib/api/media";
 import { RequirementForm, requirementFromError, type Requirement } from "@/components/requirements/RequirementForm";
+import { myCommunities } from "@/lib/api/communities";
+import type { Community } from "@/lib/types";
 import type { Post, PostAudience, PostVisibility } from "@/lib/types";
 
 type PostIntent = Exclude<Post["intentType"], "company">;
@@ -121,11 +123,14 @@ export function CreateComposer({
   onOpenChange,
   onPublished,
   initialIntent = null,
+  initialCommunity = null,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPublished: () => void;
   initialIntent?: PostIntent | null;
+  /** Opened from a community's page - questions/updates go into it unless changed. */
+  initialCommunity?: Pick<Community, "id" | "name" | "emoji"> | null;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>(() => (initialIntent ? "form" : "pick"));
@@ -152,6 +157,10 @@ export function CreateComposer({
   // A missing detail the last publish attempt was refused for (e.g. date of birth) - asked for
   // right here in the form, then publishing carries on.
   const [requirement, setRequirement] = useState<Requirement | null>(null);
+  // Discuss communities the author has joined - loaded once the form is open (questions and
+  // updates only; activities belong to Nearby, not a community).
+  const [communities, setCommunities] = useState<Pick<Community, "id" | "name" | "emoji">[]>(() => (initialCommunity ? [initialCommunity] : []));
+  const [communityId, setCommunityId] = useState<string>(initialCommunity?.id ?? "");
   const [mediaError, setMediaError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // One signature covers every file in this post (Cloudinary accepts it for an hour) - fetched
@@ -182,6 +191,25 @@ export function CreateComposer({
     setIntent(key);
     setStep("form");
   }
+
+  const canHaveCommunity = intent === "ask" || intent === "update";
+  useEffect(() => {
+    if (!open || step !== "form" || !canHaveCommunity) return;
+    let cancelled = false;
+    myCommunities()
+      .then((mine) => {
+        if (cancelled) return;
+        setCommunities((prev) => {
+          const byId = new Map(prev.map((c) => [c.id, c]));
+          mine.forEach((c) => byId.set(c.id, c));
+          return Array.from(byId.values());
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [open, step, canHaveCommunity]);
 
   const uploadedUrls = attachments.flatMap((a) => (a.url ? [a.url] : []));
   const uploadedKey = uploadedUrls.join("|");
@@ -280,6 +308,7 @@ export function CreateComposer({
         lng: isActivity ? coords?.lng : undefined,
         exactMeetingPoint: isActivity && meetingPoint.trim() ? meetingPoint.trim() : undefined,
         mediaUrls: uploadedUrls,
+        communityId: canHaveCommunity && communityId ? communityId : undefined,
       });
       try {
         localStorage.removeItem(draftKey(intent));
@@ -532,6 +561,20 @@ export function CreateComposer({
                   </Chip>
                 ))}
               </div>
+
+              {canHaveCommunity && communities.length > 0 && (
+                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 11, color: ARENA_V3.muted, flexShrink: 0 }}>Post in:</span>
+                  <select value={communityId} onChange={(e) => setCommunityId(e.target.value)} style={{ ...fieldStyle, padding: "8px 10px" }}>
+                    <option value="">Discuss (everyone)</option>
+                    {communities.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.emoji} {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
 
               <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags, comma-separated (optional)" style={fieldStyle} />
 
