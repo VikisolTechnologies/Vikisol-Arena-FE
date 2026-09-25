@@ -67,7 +67,9 @@ export function PostCard({ post }: { post: Post }) {
           <Heart className="size-3.5" /> {post.reactionCount}
         </span>
         {isActivity && post.joinable && !post.mine && (
-          <span className="ml-auto font-semibold text-primary-soft">{post.myJoinStatus ? "Requested" : "Join →"}</span>
+          <span className="ml-auto font-semibold text-primary-soft">
+            {post.myJoinStatus === "approved" ? "You're in" : post.myJoinStatus === "pending" ? "Requested" : post.myJoinStatus === "declined" ? "Declined" : "Join →"}
+          </span>
         )}
       </Link>
     </article>

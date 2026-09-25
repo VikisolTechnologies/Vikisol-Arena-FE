@@ -522,6 +522,7 @@ export interface PostJoinRequest {
   userEmoji: string;
   status: PostJoinStatus;
   createdAt: string;
+  outcome?: "attended" | "no_show" | null;
 }
 
 // ---- v3: unified Home feed (ARENA-MASTER-ARCHITECTURE.md PART 6/7.5) ----

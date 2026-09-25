@@ -64,6 +64,7 @@ export default function WorkPage() {
   const [signedIn, setSignedIn] = useState(false);
   const [jobs, setJobs] = useState<Job[] | null>(null);
   const [projects, setProjects] = useState<Project[] | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
   const [mine, setMine] = useState<ActiveItem[] | null>(null);
   const [signInPromptOpen, setSignInPromptOpen] = useState(false);
 
@@ -79,10 +80,10 @@ export default function WorkPage() {
     if (!allowGuestBrowsing(router)) return;
     getJobs()
       .then((j) => setJobs(j.slice().sort((a, b) => b.matchPercentage - a.matchPercentage || a.postedDaysAgo - b.postedDaysAgo)))
-      .catch(() => setJobs([]));
+      .catch(() => { setJobs([]); setListError("Jobs couldn't load."); });
     getProjects()
       .then((p) => setProjects(p.filter((x) => x.status === "open")))
-      .catch(() => setProjects([]));
+      .catch(() => { setProjects([]); setListError("Bidding couldn't load."); });
   }, [router]);
 
   // "Mine" = things you're actively in: live bids and interviews with a real slot. Joined
@@ -91,6 +92,15 @@ export default function WorkPage() {
     if (tab !== "mine" || mine !== null || !getSession()) return;
     (async () => {
       const [bids, apps] = await Promise.all([getMyBids().catch(() => []), getMyApplications().catch(() => [])]);
+      const applicationItems = apps
+        .filter((a) => a.stage !== "interview" && a.stage !== "rejected")
+        .map((a): ActiveItem => ({
+          id: `app-${a.id}`,
+          title: "Application",
+          state: a.stage === "offer" ? "You have an offer" : a.stage === "screening" ? "In screening" : "Applied",
+          pill: a.stage === "offer" ? "Offer" : a.stage === "screening" ? "Screening" : "Applied",
+          href: `/applications/${a.id}`,
+        }));
       const bidItems = await Promise.all(
         bids
           .filter((b) => b.status === "pending" || b.status === "shortlisted")
@@ -125,7 +135,7 @@ export default function WorkPage() {
             }),
         )
       ).filter((x): x is ActiveItem => x !== null);
-      setMine([...interviewItems, ...bidItems]);
+      setMine([...interviewItems, ...applicationItems, ...bidItems]);
     })();
   }, [tab, mine]);
 
@@ -157,6 +167,8 @@ export default function WorkPage() {
             </button>
           ))}
         </div>
+
+        {listError && <p className="mb-4 text-sm text-muted-foreground">{listError}</p>}
 
         {tab === "jobs" && (
           <section aria-label="Jobs">

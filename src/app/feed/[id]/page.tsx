@@ -356,7 +356,11 @@ export default function PostDetailPage() {
             {post.joinable && !inactive && post.mine && (
               <div data-theme="product" className="text-foreground" style={{ marginTop: 16 }}>
                 <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 600, color: ARENA_V3.ink }}>Join requests</p>
-                <JoinRequestsPanel postId={post.id} onDecided={load} />
+                <JoinRequestsPanel
+                  postId={post.id}
+                  onDecided={load}
+                  recordOutcome={!post.startsAt || new Date(post.startsAt).getTime() <= Date.now()}
+                />
               </div>
             )}
 

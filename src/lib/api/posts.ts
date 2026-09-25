@@ -313,6 +313,16 @@ export async function withdrawJoin(postId: string): Promise<PostJoinRequest> {
   return delay({ ...mine, status: "withdrawn" }, 200);
 }
 
+export async function recordJoinOutcome(postId: string, joinId: string, outcome: "attended" | "no_show"): Promise<PostJoinRequest> {
+  if (isRealMode()) return apiFetch<PostJoinRequest>(`/posts/${postId}/joins/${joinId}/outcome`, { method: "PUT", body: { outcome } });
+  const joins = readJoins();
+  const updated = joins.map((j) => (j.id === joinId ? { ...j, outcome } : j));
+  writeJoins(updated);
+  const result = updated.find((j) => j.id === joinId);
+  if (!result) throw new Error("Join request not found");
+  return delay(result, 200);
+}
+
 export async function getJoinRequests(postId: string): Promise<PostJoinRequest[]> {
   if (isRealMode()) return apiFetch<PostJoinRequest[]>(`/posts/${postId}/joins`);
   return delay(readJoins().filter((j) => j.postId === postId), 200);

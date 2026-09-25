@@ -4,15 +4,26 @@ import { useEffect, useState } from "react";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { getJoinRequests, decideJoin } from "@/lib/api/posts";
+import { getJoinRequests, decideJoin, recordJoinOutcome } from "@/lib/api/posts";
 import type { PostJoinRequest } from "@/lib/types";
 
-export function JoinRequestsPanel({ postId, onDecided }: { postId: string; onDecided?: () => void }) {
+export function JoinRequestsPanel({ postId, onDecided, recordOutcome = false }: { postId: string; onDecided?: () => void; recordOutcome?: boolean }) {
   const [requests, setRequests] = useState<PostJoinRequest[] | null>(null);
   const [deciding, setDeciding] = useState<string | null>(null);
 
   const load = () => { getJoinRequests(postId).then(setRequests); };
   useEffect(load, [postId]);
+
+  const mark = async (joinId: string, outcome: "attended" | "no_show") => {
+    setDeciding(joinId);
+    try {
+      await recordJoinOutcome(postId, joinId, outcome);
+      load();
+      onDecided?.();
+    } finally {
+      setDeciding(null);
+    }
+  };
 
   const decide = async (joinId: string, approve: boolean) => {
     setDeciding(joinId);
@@ -50,10 +61,16 @@ export function JoinRequestsPanel({ postId, onDecided }: { postId: string; onDec
         <div className="space-y-1.5 pt-1">
           {decided.map((r) => (
             <div key={r.id} className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
-              <span>{r.userEmoji}</span> <span>{r.userName}</span>
+              <span>{r.userEmoji}</span> <span className="truncate">{r.userName}</span>
               <span className={r.status === "approved" ? "text-emerald-400" : "text-muted-foreground"}>
-                · {r.status === "approved" ? "approved" : r.status === "withdrawn" ? "left" : "declined"}
+                · {r.outcome === "attended" ? "showed up" : r.outcome === "no_show" ? "no-show" : r.status === "approved" ? "approved" : r.status === "withdrawn" ? "left" : "declined"}
               </span>
+              {recordOutcome && r.status === "approved" && (
+                <span className="ml-auto flex gap-2">
+                  <button type="button" disabled={deciding === r.id} className="font-semibold text-foreground" onClick={() => mark(r.id, "attended")}>Present</button>
+                  <button type="button" disabled={deciding === r.id} onClick={() => mark(r.id, "no_show")}>No-show</button>
+                </span>
+              )}
             </div>
           ))}
         </div>
