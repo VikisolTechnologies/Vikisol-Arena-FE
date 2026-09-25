@@ -9,17 +9,27 @@ import type { Post } from "@/lib/types";
 export function MapDetailSheet({
   post,
   onJoin,
+  onLeave,
   onViewPost,
   joining,
 }: {
   post: Post;
   onJoin: () => void;
+  onLeave: () => void;
   onViewPost: () => void;
   joining: boolean;
 }) {
-  const pillLabel =
-    post.myJoinStatus === "approved" ? "You're in" : post.myJoinStatus === "pending" ? "Requested" : joining ? "Requesting…" : post.visibility === "public" ? "Join" : "Request";
-  const pillDisabled = post.myJoinStatus === "approved" || post.myJoinStatus === "pending" || joining;
+  const inOrPending = post.myJoinStatus === "approved" || post.myJoinStatus === "pending";
+  const pillLabel = joining
+    ? inOrPending ? "Leaving…" : "Requesting…"
+    : post.myJoinStatus === "approved"
+      ? "Leave"
+      : post.myJoinStatus === "pending"
+        ? "Withdraw"
+        : post.visibility === "public"
+          ? "Join"
+          : "Request";
+  const pillDisabled = joining;
   const canSeeExact = !!post.exactMeetingPoint;
 
   return (
@@ -59,7 +69,7 @@ export function MapDetailSheet({
           <button
             type="button"
             disabled={pillDisabled}
-            onClick={onJoin}
+            onClick={inOrPending ? onLeave : onJoin}
             style={{
               fontSize: 13,
               background: ARENA_V3.ink,

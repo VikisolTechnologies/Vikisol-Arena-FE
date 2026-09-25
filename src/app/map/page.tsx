@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { LocateFixed } from "lucide-react";
 import { getMyProfile, updateMyLocation } from "@/lib/api/profile";
-import { getNearby, requestJoin } from "@/lib/api/posts";
+import { getNearby, requestJoin, withdrawJoin } from "@/lib/api/posts";
 import { allowGuestBrowsing } from "@/lib/auth-guard";
 import { getSession } from "@/lib/session";
 import { GoogleMapView, googleMapsConfigured } from "@/components/map/GoogleMapView";
@@ -147,6 +147,20 @@ export default function MapPage() {
     }
   }
 
+  async function leave(post: Post) {
+    if (!getSession()) return;
+    setJoining(true);
+    setJoinError(null);
+    try {
+      await withdrawJoin(post.id);
+      setPosts(await loadActivities());
+    } catch (err) {
+      setJoinError({ postId: post.id, message: err instanceof Error ? err.message : "Couldn't leave - try again." });
+    } finally {
+      setJoining(false);
+    }
+  }
+
   return (
     <AppShell bleed profile={profile}>
       <div className="h-[300px] md:h-[380px]" style={{ position: "relative", flexShrink: 0, background: ARENA_V3.mapDark }}>
@@ -209,6 +223,7 @@ export default function MapPage() {
               post={selected}
               joining={joining}
               onJoin={() => join(selected)}
+              onLeave={() => leave(selected)}
               onViewPost={() => router.push(`/feed/${selected.id}`)}
             />
           ) : null}
