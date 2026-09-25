@@ -12,6 +12,7 @@ import { ReactionButton } from "@/components/feed/ReactionButton";
 import { CommentThread } from "@/components/feed/CommentThread";
 import { JoinRequestsPanel } from "@/components/feed/JoinRequestsPanel";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
+import { RequirementDialog, requirementFromError, type Requirement } from "@/components/requirements/RequirementForm";
 import { AppShell } from "@/components/app/AppShell";
 import { ChampagneAvatar } from "@/components/home-v3/ChampagneAvatar";
 import { DemoContentBadge } from "@/components/home-v3/DemoContentBadge";
@@ -38,6 +39,9 @@ export default function PostDetailPage() {
   const [joining, setJoining] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
+  // Missing detail a join was refused for (date of birth / verified phone) - asked for in a
+  // popup, then the join is retried.
+  const [joinRequirement, setJoinRequirement] = useState<Requirement | null>(null);
   const [reported, setReported] = useState(false);
   const [shared, setShared] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -83,7 +87,9 @@ export default function PostDetailPage() {
       await requestJoin(post.id);
       load();
     } catch (err) {
-      setJoinError(err instanceof Error ? err.message : "Couldn't request to join.");
+      const missing = requirementFromError(err);
+      if (missing) setJoinRequirement(missing);
+      else setJoinError(err instanceof Error ? err.message : "Couldn't request to join.");
     } finally {
       setJoining(false);
     }
@@ -344,12 +350,7 @@ export default function PostDetailPage() {
                       <BookmarkButton saved={saved} saving={saving} onClick={toggleSave} />
                     </div>
                     {joinError && (
-                      <p style={{ margin: "8px 0 0", fontSize: 12, color: "#f87171" }}>
-                        {joinError}
-                        {joinError.toLowerCase().includes("settings") && (
-                          <> <button type="button" onClick={() => router.push("/settings")} style={{ background: "none", border: "none", padding: 0, color: ARENA_V3.ink, textDecoration: "underline", cursor: "pointer", fontSize: 12 }}>Go to Settings</button></>
-                        )}
-                      </p>
+                      <p style={{ margin: "8px 0 0", fontSize: 12, color: "#f87171" }}>{joinError}</p>
                     )}
                   </>
                 )}
@@ -374,6 +375,14 @@ export default function PostDetailPage() {
 
       <div data-theme="product" className="text-foreground">
         <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action={signInAction} />
+        <RequirementDialog
+          requirement={joinRequirement}
+          onOpenChange={(open) => !open && setJoinRequirement(null)}
+          onDone={() => {
+            setJoinRequirement(null);
+            join();
+          }}
+        />
       </div>
     </AppShell>
   );

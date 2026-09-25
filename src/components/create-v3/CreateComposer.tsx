@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Briefcase, ChevronRight, HelpCircle, ImagePlus, LocateFixed, MessageCircle, Play, ShieldCheck, Sparkles, Users, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ARENA_V3 } from "@/components/home-v3/tokens";
 import { createPost } from "@/lib/api/posts";
-import { MAX_MEDIA_PER_POST, checkMediaFile, getUploadSignature, isVideoFile, uploadMedia, type UploadSignature } from "@/lib/api/media";
+import { MAX_MEDIA_PER_POST, checkMediaFile, getUploadSignature, isVideoFile, isVideoUrl, uploadMedia, type UploadSignature } from "@/lib/api/media";
+import { RequirementForm, requirementFromError, type Requirement } from "@/components/requirements/RequirementForm";
 import type { Post, PostAudience, PostVisibility, VerificationLevel } from "@/lib/types";
 
 type PostIntent = Exclude<Post["intentType"], "company">;
@@ -53,6 +54,40 @@ const fieldStyle: React.CSSProperties = {
   outline: "none",
 };
 
+// Drafts are kept per post type in this browser, so closing the form, reloading, or stepping
+// away to fix something never throws away what was typed. Cleared once the post publishes.
+type Draft = {
+  title: string;
+  body: string;
+  location: string;
+  startsAt: string;
+  meetingPoint: string;
+  capacity: string;
+  tags: string;
+  visibility: PostVisibility;
+  audience: PostAudience;
+  mediaUrls: string[];
+};
+
+const draftKey = (intent: PostIntent) => `arena_post_draft_${intent}`;
+
+function readDraft(intent: PostIntent | null): Partial<Draft> {
+  if (!intent || typeof window === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(draftKey(intent)) ?? "{}") as Partial<Draft>;
+  } catch {
+    return {};
+  }
+}
+
+function hasContent(d: Partial<Draft>) {
+  return !!(d.title?.trim() || d.body?.trim() || d.location?.trim() || d.meetingPoint?.trim() || d.tags?.trim() || d.mediaUrls?.length);
+}
+
+function attachmentsFromUrls(urls: string[] | undefined): Attachment[] {
+  return (urls ?? []).map((url) => ({ id: url, previewUrl: url, isVideo: isVideoUrl(url), progress: 1, url }));
+}
+
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
@@ -96,22 +131,28 @@ export function CreateComposer({
   const [step, setStep] = useState<Step>(() => (initialIntent ? "form" : "pick"));
   const [intent, setIntent] = useState<PostIntent>(() => initialIntent ?? "activity");
 
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [location, setLocation] = useState("");
-  const [visibility, setVisibility] = useState<PostVisibility>("public");
-  const [audience, setAudience] = useState<PostAudience>("global");
-  const [capacity, setCapacity] = useState("");
-  const [tags, setTags] = useState("");
-  const [startsAt, setStartsAt] = useState("");
-  const [meetingPoint, setMeetingPoint] = useState("");
+  // Read once per mount - callers remount this component on every open (see the doc comment).
+  const [initialDraft] = useState(() => readDraft(initialIntent));
+  const [title, setTitle] = useState(initialDraft.title ?? "");
+  const [body, setBody] = useState(initialDraft.body ?? "");
+  const [location, setLocation] = useState(initialDraft.location ?? "");
+  const [visibility, setVisibility] = useState<PostVisibility>(initialDraft.visibility ?? "public");
+  const [audience, setAudience] = useState<PostAudience>(initialDraft.audience ?? "global");
+  const [capacity, setCapacity] = useState(initialDraft.capacity ?? "");
+  const [tags, setTags] = useState(initialDraft.tags ?? "");
+  const [startsAt, setStartsAt] = useState(initialDraft.startsAt ?? "");
+  const [meetingPoint, setMeetingPoint] = useState(initialDraft.meetingPoint ?? "");
+  const [restored, setRestored] = useState(() => hasContent(initialDraft));
   const [requiredVerification, setRequiredVerification] = useState<VerificationLevel>("basic");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>(() => attachmentsFromUrls(initialDraft.mediaUrls));
+  // A missing detail the last publish attempt was refused for (e.g. date of birth) - asked for
+  // right here in the form, then publishing carries on.
+  const [requirement, setRequirement] = useState<Requirement | null>(null);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // One signature covers every file in this post (Cloudinary accepts it for an hour) - fetched
@@ -124,11 +165,44 @@ export function CreateComposer({
   function pickRow(key: (typeof ROWS)[number]["key"]) {
     if (key === "project") {
       onOpenChange(false);
-      router.push("/marketplace");
+      router.push("/marketplace?post=1");
       return;
     }
+    const d = readDraft(key);
+    setTitle(d.title ?? "");
+    setBody(d.body ?? "");
+    setLocation(d.location ?? "");
+    setVisibility(d.visibility ?? "public");
+    setAudience(d.audience ?? "global");
+    setCapacity(d.capacity ?? "");
+    setTags(d.tags ?? "");
+    setStartsAt(d.startsAt ?? "");
+    setMeetingPoint(d.meetingPoint ?? "");
+    setAttachments(attachmentsFromUrls(d.mediaUrls));
+    setRestored(hasContent(d));
     setIntent(key);
     setStep("form");
+  }
+
+  const uploadedUrls = attachments.flatMap((a) => (a.url ? [a.url] : []));
+  const uploadedKey = uploadedUrls.join("|");
+  useEffect(() => {
+    if (step !== "form") return;
+    const draft: Draft = { title, body, location, startsAt, meetingPoint, capacity, tags, visibility, audience, mediaUrls: uploadedKey ? uploadedKey.split("|") : [] };
+    try {
+      if (hasContent(draft)) localStorage.setItem(draftKey(intent), JSON.stringify(draft));
+      else localStorage.removeItem(draftKey(intent));
+    } catch {
+      // Storage full or blocked (private mode) - the form still works, just without a saved draft.
+    }
+  }, [step, intent, title, body, location, startsAt, meetingPoint, capacity, tags, visibility, audience, uploadedKey]);
+
+  function discardDraft() {
+    try {
+      localStorage.removeItem(draftKey(intent));
+    } catch {}
+    setTitle(""); setBody(""); setLocation(""); setCapacity(""); setTags(""); setStartsAt(""); setMeetingPoint("");
+    setVisibility("public"); setAudience("global"); setAttachments([]); setRestored(false);
   }
 
   function useMyLocation() {
@@ -191,6 +265,7 @@ export function CreateComposer({
     if (!canPublish) return;
     setPublishing(true);
     setError(null);
+    setRequirement(null);
     try {
       await createPost({
         intentType: intent,
@@ -206,12 +281,17 @@ export function CreateComposer({
         lng: isActivity ? coords?.lng : undefined,
         exactMeetingPoint: isActivity && meetingPoint.trim() ? meetingPoint.trim() : undefined,
         requiredVerificationLevel: isActivity && requiredVerification !== "basic" ? requiredVerification : undefined,
-        mediaUrls: attachments.flatMap((a) => (a.url ? [a.url] : [])),
+        mediaUrls: uploadedUrls,
       });
+      try {
+        localStorage.removeItem(draftKey(intent));
+      } catch {}
       onOpenChange(false);
       onPublished();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't publish that post.");
+      const missing = requirementFromError(err);
+      if (missing) setRequirement(missing);
+      else setError(err instanceof Error ? err.message : "Couldn't publish that post.");
     } finally {
       setPublishing(false);
     }
@@ -292,6 +372,14 @@ export function CreateComposer({
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {restored && (
+                <p style={{ margin: 0, fontSize: 11, color: ARENA_V3.muted }}>
+                  Picked up where you left off.{" "}
+                  <button type="button" onClick={discardDraft} style={{ background: "none", border: "none", padding: 0, color: ARENA_V3.ink, textDecoration: "underline", cursor: "pointer", fontSize: 11 }}>
+                    Start fresh
+                  </button>
+                </p>
+              )}
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -459,22 +547,20 @@ export function CreateComposer({
 
               <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags, comma-separated (optional)" style={fieldStyle} />
 
-              {error && (
-                <p style={{ margin: 0, fontSize: 12, color: "#f87171" }}>
-                  {error}
-                  {error.toLowerCase().includes("settings") && (
-                    <>
-                      {" "}
-                      <button
-                        type="button"
-                        onClick={() => { onOpenChange(false); router.push("/settings"); }}
-                        style={{ background: "none", border: "none", padding: 0, color: ARENA_V3.ink, textDecoration: "underline", cursor: "pointer", fontSize: 12 }}
-                      >
-                        Go to Settings
-                      </button>
-                    </>
-                  )}
-                </p>
+              {error && <p style={{ margin: 0, fontSize: 12, color: "#f87171" }}>{error}</p>}
+
+              {requirement && (
+                <div style={{ border: `1px solid ${ARENA_V3.gold}`, borderRadius: 12, padding: 14, background: ARENA_V3.white }}>
+                  <RequirementForm
+                    key={requirement}
+                    requirement={requirement}
+                    onDone={() => {
+                      setRequirement(null);
+                      publish();
+                    }}
+                    onCancel={() => setRequirement(null)}
+                  />
+                </div>
               )}
 
               <button

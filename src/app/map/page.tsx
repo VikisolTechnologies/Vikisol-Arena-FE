@@ -19,6 +19,7 @@ import { MapDetailSheet } from "@/components/map-v3/MapDetailSheet";
 import { CreateComposer } from "@/components/create-v3/CreateComposer";
 import { HomeEmptyStateDark } from "@/components/home-v3/HomeEmptyStateDark";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
+import { RequirementDialog, requirementFromError, type Requirement } from "@/components/requirements/RequirementForm";
 import type { CandidateProfile, Post } from "@/lib/types";
 
 const MapRadarScene = dynamic(() => import("@/components/map/MapRadarScene").then((m) => m.MapRadarScene), {
@@ -45,6 +46,11 @@ export default function MapPage() {
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  // Keyed by post so an error never shows under a different activity after switching selection.
+  const [joinError, setJoinError] = useState<{ postId: string; message: string } | null>(null);
+  // A join refused for a missing detail (date of birth / verified phone) - asked for in a popup,
+  // then that same join is retried.
+  const [joinRequirement, setJoinRequirement] = useState<{ requirement: Requirement; post: Post } | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerSession, setComposerSession] = useState(0);
   const [signInPromptOpen, setSignInPromptOpen] = useState(false);
@@ -128,9 +134,14 @@ export default function MapPage() {
       return;
     }
     setJoining(true);
+    setJoinError(null);
     try {
       await requestJoin(post.id);
       setPosts(await loadActivities());
+    } catch (err) {
+      const missing = requirementFromError(err);
+      if (missing) setJoinRequirement({ requirement: missing, post });
+      else setJoinError({ postId: post.id, message: err instanceof Error ? err.message : "Couldn't join - try again." });
     } finally {
       setJoining(false);
     }
@@ -200,7 +211,9 @@ export default function MapPage() {
               onJoin={() => join(selected)}
               onViewPost={() => router.push(`/feed/${selected.id}`)}
             />
-          ) : (
+          ) : null}
+          {selected && joinError?.postId === selected.id && <p style={{ margin: "8px 0 0", fontSize: 12, color: "#f87171" }}>{joinError.message}</p>}
+          {selected ? null : (
             <>
               <p style={{ margin: "0 0 12px", fontSize: 10, color: ARENA_V3.muted, letterSpacing: 3 }}>
                 {posts === null ? "LOADING" : `${posts.length} ACTIVIT${posts.length === 1 ? "Y" : "IES"} NEARBY`}
@@ -229,6 +242,15 @@ export default function MapPage() {
         initialIntent="activity"
       />
       <SignInPrompt open={signInPromptOpen} onOpenChange={setSignInPromptOpen} action={signInAction} />
+      <RequirementDialog
+        requirement={joinRequirement?.requirement ?? null}
+        onOpenChange={(open) => !open && setJoinRequirement(null)}
+        onDone={() => {
+          const post = joinRequirement?.post;
+          setJoinRequirement(null);
+          if (post) join(post);
+        }}
+      />
     </AppShell>
   );
 }

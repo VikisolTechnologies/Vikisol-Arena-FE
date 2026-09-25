@@ -20,6 +20,28 @@ import { formatINRRange } from "@/lib/format";
 import type { CandidateProfile, Project } from "@/lib/types";
 
 const EMPTY_DRAFT = { title: "", description: "", budgetMin: "", budgetMax: "", durationWeeks: "", skills: "" };
+type ProjectDraft = typeof EMPTY_DRAFT;
+
+// Kept in this browser until the project publishes - closing the dialog or leaving the page no
+// longer throws the brief away.
+const DRAFT_KEY = "arena_project_draft";
+
+function readProjectDraft(): ProjectDraft {
+  try {
+    return { ...EMPTY_DRAFT, ...JSON.parse(localStorage.getItem(DRAFT_KEY) ?? "{}") };
+  } catch {
+    return EMPTY_DRAFT;
+  }
+}
+
+function writeProjectDraft(draft: ProjectDraft) {
+  try {
+    if (Object.values(draft).some((v) => v.trim())) localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    else localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // Storage blocked (private mode) - the form still works, just without a saved draft.
+  }
+}
 
 function hoursLeft(endsAt: string) {
   return Math.max(0, Math.round((new Date(endsAt).getTime() - Date.now()) / 3600000));
@@ -31,7 +53,11 @@ export default function MarketplacePage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [posting, setPosting] = useState(false);
-  const [draft, setDraft] = useState(EMPTY_DRAFT);
+  const [draft, setDraftState] = useState(EMPTY_DRAFT);
+  const setDraft = (next: ProjectDraft) => {
+    setDraftState(next);
+    writeProjectDraft(next);
+  };
   const [publishing, setPublishing] = useState(false);
   const [signInPromptOpen, setSignInPromptOpen] = useState(false);
 
@@ -61,8 +87,12 @@ export default function MarketplacePage() {
     if (getSession()) getMyProfile().then(setProfile);
     load();
     // Work > Bidding > "Post a project" lands here with ?post=1 - open the form directly.
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only URL read
-    if (getSession() && new URLSearchParams(window.location.search).get("post") === "1") setPosting(true);
+    // Client-only URL + localStorage reads.
+    if (getSession() && new URLSearchParams(window.location.search).get("post") === "1") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only localStorage read
+      setDraftState(readProjectDraft());
+      setPosting(true);
+    }
   }, [router]);
 
   function startPosting() {
@@ -70,6 +100,7 @@ export default function MarketplacePage() {
       setSignInPromptOpen(true);
       return;
     }
+    setDraftState(readProjectDraft());
     setPosting(true);
   }
 
@@ -161,7 +192,7 @@ export default function MarketplacePage() {
         ))}
       </div>
 
-      <Dialog open={posting} onOpenChange={(open) => { setPosting(open); if (!open) setDraft(EMPTY_DRAFT); }}>
+      <Dialog open={posting} onOpenChange={setPosting}>
         <DialogContent className="border-border bg-popover sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Post a project</DialogTitle>
