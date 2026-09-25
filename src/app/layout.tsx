@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Inter, Manrope, Poppins } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { CommandPalette } from "@/components/command-palette/CommandPalette";
@@ -10,32 +10,21 @@ import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 import { BuildStamp } from "@/components/BuildStamp";
 
-const spaceGrotesk = Space_Grotesk({
+// Self-hosted (src/app/fonts, OFL - licences alongside) rather than next/font/google: the
+// Google variant downloads the fonts at build time, and Vercel builds kept failing when that
+// download did ("next/font/google queries have exactly one entry"). Same families, variable
+// weights, no network needed to build.
+const spaceGrotesk = localFont({
+  src: "./fonts/space-grotesk-latin-var.woff2",
   variable: "--font-space-grotesk",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: "300 700",
+  display: "swap",
 });
 
-const inter = Inter({
+const inter = localFont({
+  src: "./fonts/inter-latin-var.woff2",
   variable: "--font-inter",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
-
-const manrope = Manrope({
-  variable: "--font-manrope",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-});
-
-// ARENA-DESIGN-SYSTEM.md §3 - the product theme's body/UI typeface (Space Grotesk stays on
-// the marketing hero only, per that doc's own carve-out). Loaded alongside the existing three
-// rather than replacing them, since the marketing routes aren't migrating off Space Grotesk/
-// Inter/Manrope in this pass.
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: "100 900",
   display: "swap",
 });
 
@@ -67,8 +56,6 @@ export default function RootLayout({
         "h-full antialiased",
         spaceGrotesk.variable,
         inter.variable,
-        manrope.variable,
-        poppins.variable,
       )}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">

@@ -167,8 +167,8 @@
 
   --font-display: var(--font-space-grotesk);
   --font-sans: var(--font-inter);
-  --font-label: var(--font-manrope);
-  --font-product: var(--font-poppins);
+  --font-label: var(--font-inter);
+  --font-product: var(--font-inter);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
