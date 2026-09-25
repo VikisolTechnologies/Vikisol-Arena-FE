@@ -37,6 +37,8 @@ export function ThreadScreen({
   onSend,
   headerActions,
   backHref = "/rooms",
+  notice,
+  closedMessage,
 }: {
   thumbnail: React.ReactNode;
   title: string;
@@ -46,6 +48,10 @@ export function ThreadScreen({
   onSend: (content: string) => Promise<void> | void;
   headerActions?: React.ReactNode;
   backHref?: string;
+  /** A line above the messages (e.g. "You're anonymous in this chat"). */
+  notice?: React.ReactNode;
+  /** Set when the chat is closed - replaces the composer. */
+  closedMessage?: string | null;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState("");
@@ -93,6 +99,11 @@ export function ThreadScreen({
 
       {/* Messages */}
       <div style={{ flex: 1, padding: "14px 14px 20px", display: "flex", flexDirection: "column", gap: 10, overflowY: "auto" }}>
+        {notice && (
+          <div style={{ alignSelf: "center", maxWidth: 420, textAlign: "center", fontSize: 12, lineHeight: 1.5, color: ARENA_V3.muted, background: ARENA_V3.white, borderRadius: 12, padding: "8px 12px" }}>
+            {notice}
+          </div>
+        )}
         {messages.length === 0 && (
           <p style={{ textAlign: "center", fontSize: 12, color: ARENA_V3.muted, marginTop: 24 }}>No messages yet - say hello.</p>
         )}
@@ -131,7 +142,12 @@ export function ThreadScreen({
         <div ref={bottomRef} />
       </div>
 
-      {/* Composer */}
+      {closedMessage ? (
+        <div style={{ background: ARENA_V3.white, padding: "16px 14px", paddingBottom: "max(16px, env(safe-area-inset-bottom))", textAlign: "center", fontSize: 13, color: ARENA_V3.muted }}>
+          {closedMessage}
+        </div>
+      ) : (
+      /* Composer */
       <div style={{ background: ARENA_V3.white, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
         <Plus size={20} strokeWidth={1.75} color={ARENA_V3.muted} style={{ flexShrink: 0 }} />
         <form
@@ -158,6 +174,7 @@ export function ThreadScreen({
           </button>
         </form>
       </div>
+      )}
     </div>
   );
 }

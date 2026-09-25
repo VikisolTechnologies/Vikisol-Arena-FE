@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Ban, ShieldCheck, ShieldOff } from "lucide-react";
-import { banMember, getCommunity, removeCommunityPost, setModerator } from "@/lib/api/communities";
+import { banPostAuthor, getCommunity, removeCommunityPost, setModerator } from "@/lib/api/communities";
 import { getSession } from "@/lib/session";
 import type { Community, Post } from "@/lib/types";
 
@@ -69,12 +69,12 @@ export function CommunityPostBar({ post }: { post: Post }) {
           <button
             type="button"
             disabled={busy}
-            onClick={() => run(() => banMember(slug, post.authorUserId, true), `${post.authorName} can no longer post in ${post.communityName}.`)}
+            onClick={() => run(() => banPostAuthor(slug, post.id), `${post.authorName} can no longer post in ${post.communityName}.`)}
             className="flex items-center gap-1 rounded-full px-2 py-1 hover:bg-secondary hover:text-red-400"
           >
             <Ban className="size-3.5" /> Ban author
           </button>
-          {role === "owner" && (
+          {role === "owner" && !post.anonymous && (
             <button
               type="button"
               disabled={busy}

@@ -122,7 +122,7 @@ function InboxContent() {
                       kind={t.kind}
                       name={t.conversation.participantName}
                       title={t.conversation.participantName}
-                      subtitle={t.conversation.context || "Direct message"}
+                      subtitle={`${t.conversation.meAnonymous ? "You're anonymous · " : ""}${t.conversation.closed ? "Closed · " : ""}${t.conversation.context || (t.conversation.anonymous || t.conversation.meAnonymous ? "Anonymous chat" : "Direct message")}`}
                       timestamp={t.conversation.lastMessageAt}
                       unread={t.conversation.unread}
                     />

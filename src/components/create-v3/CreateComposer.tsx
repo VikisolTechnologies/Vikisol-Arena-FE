@@ -69,6 +69,9 @@ type Draft = {
   visibility: PostVisibility;
   audience: PostAudience;
   mediaUrls: string[];
+  // Kept with the draft so a restored draft can never quietly lose "anonymous" and publish
+  // under the author's real name.
+  anonymous?: boolean;
 };
 
 const draftKey = (intent: PostIntent) => `arena_post_draft_${intent}`;
@@ -130,7 +133,7 @@ export function CreateComposer({
   onPublished: () => void;
   initialIntent?: PostIntent | null;
   /** Opened from a community's page - questions/updates go into it unless changed. */
-  initialCommunity?: Pick<Community, "id" | "name" | "emoji"> | null;
+  initialCommunity?: Pick<Community, "id" | "name" | "emoji" | "allowAnonymous"> | null;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>(() => (initialIntent ? "form" : "pick"));
@@ -159,7 +162,10 @@ export function CreateComposer({
   const [requirement, setRequirement] = useState<Requirement | null>(null);
   // Discuss communities the author has joined - loaded once the form is open (questions and
   // updates only; activities belong to Nearby, not a community).
-  const [communities, setCommunities] = useState<Pick<Community, "id" | "name" | "emoji">[]>(() => (initialCommunity ? [initialCommunity] : []));
+  const [communities, setCommunities] = useState<Pick<Community, "id" | "name" | "emoji" | "allowAnonymous">[]>(() => (initialCommunity ? [initialCommunity] : []));
+  // Post under an alias instead of your name - questions/updates only, and only where the
+  // chosen community allows it (the server enforces the same rules).
+  const [anonymous, setAnonymous] = useState(() => !!initialDraft.anonymous);
   const [communityId, setCommunityId] = useState<string>(initialCommunity?.id ?? "");
   const [mediaError, setMediaError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -187,6 +193,7 @@ export function CreateComposer({
     setStartsAt(d.startsAt ?? "");
     setMeetingPoint(d.meetingPoint ?? "");
     setAttachments(attachmentsFromUrls(d.mediaUrls));
+    setAnonymous(!!d.anonymous);
     setRestored(hasContent(d));
     setIntent(key);
     setStep("form");
@@ -211,25 +218,29 @@ export function CreateComposer({
     };
   }, [open, step, canHaveCommunity]);
 
+  const chosenCommunity = communities.find((c) => c.id === communityId);
+  const anonymousAllowed = canHaveCommunity && (!chosenCommunity || chosenCommunity.allowAnonymous);
+  const postAnonymously = anonymous && anonymousAllowed;
+
   const uploadedUrls = attachments.flatMap((a) => (a.url ? [a.url] : []));
   const uploadedKey = uploadedUrls.join("|");
   useEffect(() => {
     if (step !== "form") return;
-    const draft: Draft = { title, body, location, startsAt, meetingPoint, capacity, tags, visibility, audience, mediaUrls: uploadedKey ? uploadedKey.split("|") : [] };
+    const draft: Draft = { title, body, location, startsAt, meetingPoint, capacity, tags, visibility, audience, mediaUrls: uploadedKey ? uploadedKey.split("|") : [], anonymous };
     try {
       if (hasContent(draft)) localStorage.setItem(draftKey(intent), JSON.stringify(draft));
       else localStorage.removeItem(draftKey(intent));
     } catch {
       // Storage full or blocked (private mode) - the form still works, just without a saved draft.
     }
-  }, [step, intent, title, body, location, startsAt, meetingPoint, capacity, tags, visibility, audience, uploadedKey]);
+  }, [step, intent, title, body, location, startsAt, meetingPoint, capacity, tags, visibility, audience, uploadedKey, anonymous]);
 
   function discardDraft() {
     try {
       localStorage.removeItem(draftKey(intent));
     } catch {}
     setTitle(""); setBody(""); setLocation(""); setCapacity(""); setTags(""); setStartsAt(""); setMeetingPoint("");
-    setVisibility("public"); setAudience("global"); setAttachments([]); setRestored(false);
+    setVisibility("public"); setAudience("global"); setAttachments([]); setAnonymous(false); setRestored(false);
   }
 
   function useMyLocation() {
@@ -299,7 +310,8 @@ export function CreateComposer({
         title: title.trim() || undefined,
         body: body.trim(),
         locationText: location.trim() || undefined,
-        audience,
+        // Anonymous posts are always visible to everyone - followers-only would say who posted.
+        audience: postAnonymously ? "global" : audience,
         visibility: joinable ? visibility : "public",
         capacity: joinable && capacity ? Number(capacity) : undefined,
         tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
@@ -309,6 +321,7 @@ export function CreateComposer({
         exactMeetingPoint: isActivity && meetingPoint.trim() ? meetingPoint.trim() : undefined,
         mediaUrls: uploadedUrls,
         communityId: canHaveCommunity && communityId ? communityId : undefined,
+        anonymous: postAnonymously || undefined,
       });
       try {
         localStorage.removeItem(draftKey(intent));
@@ -555,7 +568,7 @@ export function CreateComposer({
 
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 11, color: ARENA_V3.muted }}>Visible to:</span>
-                {(["global", "followers"] as const).map((a) => (
+                {(postAnonymously ? (["global"] as const) : (["global", "followers"] as const)).map((a) => (
                   <Chip key={a} active={audience === a} onClick={() => setAudience(a)}>
                     {a === "global" ? "Everyone" : "Followers only"}
                   </Chip>
@@ -573,6 +586,32 @@ export function CreateComposer({
                       </option>
                     ))}
                   </select>
+                </label>
+              )}
+
+              {canHaveCommunity && (
+                <label
+                  style={{
+                    display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", borderRadius: 10,
+                    border: `1px solid ${postAnonymously ? ARENA_V3.gold : ARENA_V3.hairline}`, background: postAnonymously ? "rgba(255,107,53,0.08)" : "transparent",
+                    opacity: anonymousAllowed ? 1 : 0.5, cursor: anonymousAllowed ? "pointer" : "default",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={postAnonymously}
+                    disabled={!anonymousAllowed}
+                    onChange={(e) => setAnonymous(e.target.checked)}
+                    style={{ marginTop: 2, accentColor: ARENA_V3.gold }}
+                  />
+                  <span>
+                    <span style={{ display: "block", fontSize: 13, color: ARENA_V3.ink }}>🎭 Post anonymously</span>
+                    <span style={{ display: "block", fontSize: 11, color: ARENA_V3.muted, marginTop: 2 }}>
+                      {anonymousAllowed
+                        ? "People see an alias, not your name or profile. Replies you make on it stay anonymous too. Moderators can still act on reports."
+                        : `${chosenCommunity?.name} doesn't allow anonymous posts.`}
+                    </span>
+                  </span>
                 </label>
               )}
 

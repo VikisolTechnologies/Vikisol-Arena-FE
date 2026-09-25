@@ -11,6 +11,7 @@ import { BlockButton } from "@/components/feed/BlockButton";
 import { ReactionButton } from "@/components/feed/ReactionButton";
 import { VoteControl } from "@/components/posts/VoteControl";
 import { CommunityPostBar } from "@/components/discuss/CommunityPostBar";
+import { MessageAuthorButton } from "@/components/discuss/MessageAuthorButton";
 import { CommentThread } from "@/components/feed/CommentThread";
 import { JoinRequestsPanel } from "@/components/feed/JoinRequestsPanel";
 import { SignInPrompt } from "@/components/auth/SignInPrompt";
@@ -218,12 +219,34 @@ export default function PostDetailPage() {
               </div>
             )}
 
-            {/* Host row */}
+            {/* Host row - an anonymous post shows only its alias: no profile link, no follow or
+                block (those would all point at the real account), just report and a way to
+                message the author without either side learning who the other is. */}
+            {post.anonymous && !post.mine ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 11, paddingBottom: 16, marginBottom: 16, borderBottom: `1px solid ${ARENA_V3.hairline}` }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: ARENA_V3.espressoLight, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
+                {post.authorEmoji}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, fontSize: 15, color: ARENA_V3.ink }}>{post.authorName}</p>
+                <p style={{ margin: "2px 0 0", fontSize: 12, color: ARENA_V3.muted }}>Posted anonymously</p>
+              </div>
+              <div data-theme="product" className="text-foreground" style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                <MessageAuthorButton post={post} />
+                <button type="button" disabled={reported} onClick={report} aria-label="Report this post" title={reported ? "Reported" : "Report"} style={{ background: "none", border: "none", cursor: reported ? "default" : "pointer", color: reported ? "#f87171" : ARENA_V3.muted, padding: 4 }}>
+                  <Flag size={14} strokeWidth={1.75} />
+                </button>
+              </div>
+            </div>
+            ) : (
             <div style={{ display: "flex", alignItems: "center", gap: 11, paddingBottom: 16, marginBottom: 16, borderBottom: `1px solid ${ARENA_V3.hairline}` }}>
               <ChampagneAvatar name={post.authorName} sizePx={40} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 {post.mine ? (
-                  <p style={{ margin: 0, fontSize: 15, color: ARENA_V3.ink }}>{post.authorName}</p>
+                  <p style={{ margin: 0, fontSize: 15, color: ARENA_V3.ink }}>
+                    {post.authorName}
+                    {post.anonymous && <span style={{ display: "block", fontSize: 12, color: ARENA_V3.muted }}>🎭 Posted anonymously - only you see it&apos;s yours</span>}
+                  </p>
                 ) : (
                   <Link
                     href={post.authorCompanyId ? `/companies/${post.authorCompanyId}` : `/people/${post.authorUserId}`}
@@ -242,12 +265,14 @@ export default function PostDetailPage() {
                 <div data-theme="product" className="text-foreground" style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                   <FollowButton userId={post.authorUserId} />
                   <BlockButton userId={post.authorUserId} />
+                  {post.intentType !== "activity" && <MessageAuthorButton post={post} />}
                   <button type="button" disabled={reported} onClick={report} aria-label="Report this post" title={reported ? "Reported" : "Report"} style={{ background: "none", border: "none", cursor: reported ? "default" : "pointer", color: reported ? "#f87171" : ARENA_V3.muted, padding: 4 }}>
                     <Flag size={14} strokeWidth={1.75} />
                   </button>
                 </div>
               )}
             </div>
+            )}
 
             {/* Participants - real counts only; no fabricated avatar stack (no participant-list
                 endpoint backs one - same "don't invent what isn't there" call as Map's dropped
@@ -375,7 +400,11 @@ export default function PostDetailPage() {
           <div style={{ padding: "0 20px 20px" }}>
             <p style={{ margin: "0 0 10px", fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>COMMENTS</p>
             <div data-theme="product" className="text-foreground" style={{ background: ARENA_V3.white, borderRadius: 14, padding: 14 }}>
-              <CommentThread postId={post.id} postAuthorUserId={post.authorUserId} />
+              <CommentThread
+                postId={post.id}
+                postAuthorUserId={post.authorUserId}
+                anonymousMode={post.intentType === "activity" ? undefined : post.anonymous && post.mine ? "forced" : "choice"}
+              />
             </div>
           </div>
         </div>

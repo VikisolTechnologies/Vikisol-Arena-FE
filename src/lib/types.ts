@@ -407,6 +407,14 @@ export interface Conversation {
   context?: string;
   lastMessageAt: string;
   unread: boolean;
+  /** Anonymous chats: the other person is hidden (participantId is blank, name is an alias). */
+  anonymous?: boolean;
+  /** You are hidden from the other person. */
+  meAnonymous?: boolean;
+  /** Closed by either person - no more messages. */
+  closed?: boolean;
+  /** The post an anonymous chat started from ("message the author"). */
+  postId?: string | null;
 }
 
 export interface ThreadMessage {
@@ -483,6 +491,8 @@ export interface Post {
   communitySlug?: string | null;
   communityName?: string | null;
   communityEmoji?: string | null;
+  /** Posted anonymously: for everyone but the author, authorUserId is blank and the name is an alias. */
+  anonymous?: boolean;
   // §4 safety-audit additions - trust signals for whoever's about to meet this post's author.
   authorJoinCount: number;
   authorAccountAgeDays: number;
@@ -669,6 +679,12 @@ export interface PostComment {
   parentCommentId?: string | null;
   /** Deleted while it still had replies - shown as "[deleted]" so the thread keeps its shape. */
   deleted?: boolean;
+  /** Written under a per-thread alias; authorUserId is then null unless it's yours. */
+  anonymous?: boolean;
+  /** Written by the post's author. */
+  op?: boolean;
+  /** Written by you. */
+  mine?: boolean;
 }
 
 // The other-viewer-facing view of a CandidateProfile - `/identity` was self-only before Phase C

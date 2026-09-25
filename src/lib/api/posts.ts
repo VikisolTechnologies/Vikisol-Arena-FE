@@ -145,6 +145,8 @@ export interface CreatePostInput {
   mediaUrls?: string[];
   /** Discuss community (id) to post a question/update into; absent = general Discuss. */
   communityId?: string;
+  /** Show under an alias instead of your name (questions/updates only). */
+  anonymous?: boolean;
 }
 
 // Recency + follows-affinity, mirrors FeedRankingService's scoring shape client-side for mock
@@ -176,7 +178,7 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
       body: {
         intentType: input.intentType, title: input.title, body: input.body, locationText: input.locationText,
         audience: input.audience ?? "global", visibility: input.visibility ?? "public",
-        capacity: input.capacity, tags: input.tags ?? [], mediaUrls: input.mediaUrls ?? [], communityId: input.communityId,
+        capacity: input.capacity, tags: input.tags ?? [], mediaUrls: input.mediaUrls ?? [], communityId: input.communityId, anonymous: input.anonymous,
         startsAt: input.startsAt, endsAt: input.endsAt, lat: input.lat, lng: input.lng,
         exactMeetingPoint: input.exactMeetingPoint, requiredVerificationLevel: input.requiredVerificationLevel,
       },
@@ -358,8 +360,8 @@ export async function getComments(postId: string): Promise<PostComment[]> {
   return delay(readComments().filter((c) => c.postId === postId), 200);
 }
 
-export async function addComment(postId: string, content: string, parentCommentId?: string): Promise<PostComment> {
-  if (isRealMode()) return apiFetch<PostComment>(`/posts/${postId}/comments`, { method: "POST", body: { content, parentCommentId } });
+export async function addComment(postId: string, content: string, parentCommentId?: string, anonymous = false): Promise<PostComment> {
+  if (isRealMode()) return apiFetch<PostComment>(`/posts/${postId}/comments`, { method: "POST", body: { content, parentCommentId, anonymous } });
   const me = getCandidateById(CURRENT_CANDIDATE_ID);
   const comment: PostComment = {
     id: `comment-${Date.now()}`,

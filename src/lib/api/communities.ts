@@ -58,6 +58,11 @@ export function banMember(slug: string, userId: string, value: boolean): Promise
   return apiFetch<CommunityMember>(`/communities/${encodeURIComponent(slug)}/members/${userId}/ban`, { method: "PUT", body: { value } });
 }
 
+/** Ban a post's author from the community without learning who they are (works for anonymous posts). */
+export async function banPostAuthor(slug: string, postId: string): Promise<void> {
+  await apiFetch<void>(`/communities/${encodeURIComponent(slug)}/posts/${postId}/ban-author`, { method: "POST" });
+}
+
 export async function removeCommunityPost(slug: string, postId: string, reason?: string): Promise<void> {
   await apiFetch<void>(`/communities/${encodeURIComponent(slug)}/posts/${postId}/remove`, { method: "POST", body: { reason } });
 }
