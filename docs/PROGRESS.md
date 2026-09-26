@@ -4,7 +4,7 @@ Updated 27 Sep 2026. Resume from here.
 
 ## Current step
 
-M1A functionality is on `feature/arena-vnext-mobile-jenny` at `d746cf9`. The visual correction is in the following commit on the same branch. The comparison is `docs/reviews/m1a-visual-correction/REVIEW.md`. Old screenshots stay in `docs/reviews/m1a/`. Do not merge PR #1. Do not deploy this branch to production.
+M1A functionality is on `feature/arena-vnext-mobile-jenny` at `d746cf9`. The visual correction is `1e8bf98`. The comparison is `docs/reviews/m1a-visual-correction/REVIEW.md`. Old screenshots stay in `docs/reviews/m1a/`. Do not merge PR #1. Do not deploy this branch to production.
 
 ## Done
 

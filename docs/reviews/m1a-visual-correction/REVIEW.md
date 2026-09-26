@@ -1,6 +1,6 @@
 # M1A visual correction
 
-The M1A journey at `d746cf9` stays the foundation. This pass changes presentation only: brand, type, surfaces, entry composition, onboarding options, the privacy card, the ready summary, and the empty feed. Authentication, profile writes, privacy rules, and production infrastructure are unchanged.
+Commit `1e8bf98` on `feature/arena-vnext-mobile-jenny`. The M1A journey at `d746cf9` stays the foundation. This pass changes presentation only: brand, type, surfaces, entry composition, onboarding options, the privacy card, the ready summary, and the empty feed. Authentication, profile writes, privacy rules, and production infrastructure are unchanged.
 
 Approved references, not embedded in the app:
 
