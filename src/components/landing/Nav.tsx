@@ -9,7 +9,7 @@ const LINKS = [
   { href: "#overnight", label: "How it works" },
   { href: "#universe", label: "People" },
   { href: "#market", label: "Projects" },
-  { href: "#cta", label: "Companies" },
+  { href: "#cta", label: "Join" },
 ];
 
 export function Nav() {

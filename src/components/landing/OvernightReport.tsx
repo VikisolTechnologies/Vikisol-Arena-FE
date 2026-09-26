@@ -24,16 +24,16 @@ const CARDS: { icon: LucideIcon; title: string; body: string; tagline: string; h
   },
   {
     icon: Briefcase,
-    title: "A project or job",
-    body: "Bid on freelance work in the open, or apply to a real role. Hire on proof, not just a resume.",
-    tagline: "BROWSE WORK ›",
+    title: "Work nearby",
+    body: "A project someone posted, or a role a company posted. You only see the ones that exist.",
+    tagline: "SEE THE WORK ›",
     href: "/marketplace",
   },
   {
     icon: MessageCircle,
-    title: "An update",
-    body: "Share something with the people who already follow you — no algorithm deciding who sees it.",
-    tagline: "SAY SOMETHING ›",
+    title: "An offer",
+    body: "Say what you can do for someone nearby. Jenny can help you write it.",
+    tagline: "OFFER SOMETHING ›",
     href: "/home",
   },
 ];
@@ -53,8 +53,7 @@ export function OvernightReport() {
           Not one box to fit into.
         </Reveal>
         <Reveal as="p" delay={0.1} className="mt-4 text-[16.5px] leading-relaxed text-muted-foreground">
-          Arena isn&apos;t a job board. These are the same four ways real people already use it —
-          the project or job sits third, deliberately.
+          Arena is a network for needs, people, activities and work nearby. Jenny helps.
         </Reveal>
       </div>
 

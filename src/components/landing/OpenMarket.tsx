@@ -56,11 +56,10 @@ export function OpenMarket() {
       <div className="grid gap-10 pb-10 pt-8 lg:grid-cols-2 lg:items-center">
         <div>
           <Reveal as="h2" className="font-display text-[clamp(30px,4.4vw,52px)] font-bold leading-[1.1] tracking-tight">
-            Every skill has a <span className="text-primary-soft">market.</span>
+            Work nearby, in the <span className="text-primary-soft">open.</span>
           </Reveal>
           <Reveal as="p" delay={0.05} className="my-4.5 max-w-[440px] text-[16.5px] leading-relaxed text-muted-foreground">
-            Post a project and take bids in the open. Hire on proof, not resumes — from developers
-            to designers to doctors. Every bid shows a real match percentage against your brief.
+            When a project is open, the bids on it are the real ones. Jenny does not invent a match.
           </Reveal>
           <Reveal delay={0.1} className="flex flex-wrap gap-3.5">
             {/* "Enter as guest" - Marketplace itself renders fully logged-out now; posting a

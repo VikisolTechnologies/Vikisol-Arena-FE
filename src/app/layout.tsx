@@ -39,9 +39,9 @@ export const metadata: Metadata = {
   // and every other product screen have none of their own) - fixing it here is what actually
   // reaches the browser tab on the screens the founder was looking at, not just the marketing
   // root path itself.
-  title: "Arena — Real things happening near you",
+  title: "Arena — needs, people, activities and work nearby",
   description:
-    "Arena is where your city shows up: join activities, ask for help, find work, and build a real track record of following through.",
+    "A network for needs, people, activities and work nearby. Jenny helps when there is something real to say.",
 };
 
 export default function RootLayout({
