@@ -170,9 +170,9 @@ jobs:
 
 # ── Setup required before this workflow can pass ──────────────────────────────────────────────
 # Add these as repository secrets (Settings → Secrets and variables → Actions → New repository
-# secret). Values are the shared demo-account password documented in TEST-LOGINS.md.
-# Keep the five secrets separate so one account can be rotated without editing this file.
-# Do not write the password into this workflow.
+# secret). Values are the shared demo-account password documented in TEST-LOGINS.md - all five
+# secrets currently hold the same value (`Demo@12345`), listed separately so each account's
+# credential can be rotated independently later without touching this file:
 #   ARENA_TALENT_PASSWORD
 #   ARENA_COMPANY_ADMIN_PASSWORD
 #   ARENA_RECRUITER_PASSWORD
