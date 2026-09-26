@@ -1,8 +1,8 @@
 # Blockers
 
-## Sentry ingest 403
+## Sentry
 
-Production pages report a 403 from Sentry's ingest host. The app still loads. Fixing it means allowing `arena.vikisol.in` on the Sentry project, which needs the Sentry dashboard. `sentry-cli` is not installed here. The test monitor ignores that third-party 403 so a blocked error reporter does not hide a real Arena failure. Do not paste the DSN into chat or git.
+The previous ingest 403 came from a DSN whose project no longer exists. Arena web and Arena API now use new Sentry projects. The DSNs live only in Vercel and Railway environment variables. `sendDefaultPii` is false, Session Replay is not registered, and `beforeSend` strips cookies, auth headers, and request bodies. The test monitor no longer ignores a Sentry ingest response.
 
 ## Initial JavaScript budget
 
