@@ -1,36 +1,25 @@
-# Progress
+# Arena VNext progress
 
-Updated 26 Sep 2026. Resume from here. Do not redo STEP 1 or the VNext shell.
+Another agent can resume from this file alone. Updated 2026-09-26, after the preview build.
 
-## Current step
+## Phase
 
-STEP 4 through STEP 7 of `docs/ARENA-MISSION.md`, on `feature/arena-vnext`. The unmerged pull request is https://github.com/VikisolTechnologies/Vikisol-Arena-FE/pull/1. Do not merge it.
+Step 2 cleanup is on `main` at `5a1b52d`. `https://arena.vikisol.in/version` returns that commit.
 
-## Done
+Step 3 blueprint and mockups are in `docs/ARENA-VNEXT-BLUEPRINT.md` and `docs/design/vnext.html`. The running UI uses near-black and orange. Ivory is comparison-only in the mockup file.
 
-- STEP 1 cleanup is on `main` at `5a1b52d`. `https://arena.vikisol.in/version` returned that commit. Isolated mobile first paint held the 2.5s budget. The budget was not loosened.
-- STEP 2: company-admin 2FA was never forced. Written in `docs/ARENA-CURRENT-STATE.md`, `docs/DECISIONS.md`, and `docs/SECURITY-FINDINGS.md`. Auth was not changed.
-- STEP 3: Jenny write-body and scope contract tests are on the backend branch `feature/arena-jenny-contract`. A token without `arena.createPost`, and a token for a different user, both get 403 on `POST /posts`.
-- STEP 4: `docs/ARENA-VNEXT-BLUEPRINT.md` and `docs/design/vnext.html` are on `feature/arena-vnext`. Dark and orange is the built UI. Ivory is the comparison in the mockup file.
-- STEP 5: the shell, Feed, Create, Work, Discover, Map, Profile, and Jenny slots are in `src/components/vnext/`. Protected preview for `f3cb239`: https://arena-245mpnx8x-vikisol-technologies-projects.vercel.app (Vercel SSO).
+Step 4 is the code in `src/components/vnext/` on `feature/arena-vnext`. It is not merged.
 
-## Next
+Step 5 and 6 are the local suite, the unmerged pull request, and `docs/ARENA-VNEXT-REPORT.md`.
 
-Finish the STEP 6 gaps that are still open, then update `docs/ARENA-VNEXT-REPORT.md` to the STEP 7 checklist. Leave the pull request unmerged.
+## Cleanup suite
 
-Still open on STEP 6:
-
-- Playwright for every route and every role on the preview, desktop plus Android plus iPhone.
-- The twelve-step mobile golden path with two test accounts, including signup, a Need, a response, a room, an outcome, notifications, logout, and a deep link.
-- The enterprise path through post, review, interview, and hire.
-- IDOR coverage on every write.
-- First JS on `/home` is still over 200KB gzipped. Do not hide the number or loosen the assertion.
-- The public landing page is only partly rewritten for the network positioning.
+One worker, local cleanup server: 236 passed, 4 skipped, 2 failed. The failures were cold mobile FCP (landing 3780ms, `/home` 4248ms) while a second Next build was running. The same spec alone: 7 passed in 37s, both budgets held at 2.5s. That is why `main` was updated. The budget was not changed to make it pass.
 
 ## Do not
 
-- Merge `feature/arena-vnext`.
-- Change Jenny's write JSON.
-- Turn on company-admin 2FA in this run.
+- Merge `feature/arena-vnext` until the founder approves the preview.
+- Change Jenny's write-body shapes. The lock is `feature/arena-jenny-contract`.
+- Change company-admin 2FA. The finding is `docs/SECURITY-FINDINGS.md`.
 - Touch Vikisol One.
 - Commit `mvnw` mode changes, `.env.test`, or Playwright auth JSON.

@@ -217,7 +217,7 @@ function AuthForm() {
             Your agent is ready to work.
           </p>
           <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-            Sign in to keep it hunting openings, applying, and booking interviews for you.
+            Sign in to join what is happening near you, ask for help, and keep a record of what you follow through on.
           </p>
         </div>
 

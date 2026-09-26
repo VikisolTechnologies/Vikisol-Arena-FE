@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { getSession } from "@/lib/session";
-import { CreateSheet } from "./CreateSheet";
+
+const CreateSheet = dynamic(() => import("./CreateSheet").then((m) => m.CreateSheet), { ssr: false });
 
 const LINKS = [
   { href: "/home", label: "Feed" },
@@ -37,7 +39,7 @@ export function VNextShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-svh bg-background text-foreground">
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-background/90 px-4 py-3 backdrop-blur">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-background/90 px-4 py-3 pr-16 backdrop-blur">
         <Link href="/home" className="font-display text-lg font-bold">
           Arena<span className="text-primary">.</span>
         </Link>
@@ -65,7 +67,7 @@ export function VNextShell({ children }: { children: ReactNode }) {
           </Link>
         ))}
       </nav>
-      <CreateSheet open={createOpen} onClose={() => setCreateOpen(false)} guest={guest} />
+      {createOpen && <CreateSheet open={createOpen} onClose={() => setCreateOpen(false)} guest={guest} />}
     </div>
   );
 }

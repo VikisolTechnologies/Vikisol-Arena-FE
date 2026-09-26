@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -7,10 +6,9 @@ import { ApiDownBanner } from "@/components/ApiDownBanner";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 import { BuildStamp } from "@/components/BuildStamp";
-
-const CommandPalette = dynamic(() => import("@/components/command-palette/CommandPalette").then((m) => m.CommandPalette), { ssr: false });
-const RouteTransition = dynamic(() => import("@/components/RouteTransition").then((m) => m.RouteTransition), { ssr: false });
-const PageTransition = dynamic(() => import("@/components/PageTransition").then((m) => m.PageTransition), { ssr: false });
+import { PageTransition } from "@/components/PageTransition";
+import { RouteTransition } from "@/components/RouteTransition";
+import { DeferredCommandPalette } from "@/components/vnext/DeferredCommandPalette";
 
 // Self-hosted (src/app/fonts, OFL - licences alongside) rather than next/font/google: the
 // Google variant downloads the fonts at build time, and Vercel builds kept failing when that
@@ -64,7 +62,7 @@ export default function RootLayout({
         <ApiDownBanner />
         <RouteTransition />
         <PageTransition>{children}</PageTransition>
-        <CommandPalette />
+        <DeferredCommandPalette />
         <CookieConsentBanner />
         <WebVitalsReporter />
         <BuildStamp />

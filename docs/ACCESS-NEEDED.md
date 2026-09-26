@@ -15,7 +15,7 @@ Checked 2026-09-26 from this Mac. Secrets were not printed.
 ## Still missing
 
 1. **Sentry read.** `sentry-cli` is not installed, and no Sentry project was opened. Not required to keep building. Useful later for production errors.
-2. **Playwright browsers on this Mac.** The suite could not launch (`npx playwright install` was started). This is a local tool install, not an account the founder needs to share.
+2. **GitHub `workflow` scope.** Pushing a change to `.github/workflows/e2e.yml` is rejected. The demo-password comment in that file is still on `main` because of this. A token with `workflow` scope is required before that comment can be removed.
 3. **Railway service link inside the backend folder.** `railway status` shows project `arena-staging` but "Linked service: None". Deploys already happen from GitHub, so this does not block a normal push. Linking `arena-api` is only needed for service logs from the CLI.
 
 No new API keys are requested. Do not paste Gemini, Cloudinary, Resend, database, or JWT values into chat.
