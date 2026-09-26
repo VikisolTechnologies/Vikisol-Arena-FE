@@ -12,7 +12,7 @@ Backend write shapes used by Jenny are locked by `JennyArenaWriteBodyContractTes
 
 ## Preview
 
-The first Vercel preview of `78ab5a0` failed to build. Next.js 16 rejects `ssr: false` inside a Server Component, and the shell had put that in `layout.tsx`. The command palette now loads from a client wrapper. A later push of this branch is the preview to open. The URL is recorded in the pull request. If that preview is public, it is listed in `docs/BLOCKERS.md`. Do not point DNS at it.
+The first Vercel preview of `78ab5a0` failed to build. Next.js 16 rejects `ssr: false` inside a Server Component, and the shell had put that in `layout.tsx`. The command palette now loads from a client wrapper. The preview for `f3cb239` built and sits behind Vercel SSO: https://arena-245mpnx8x-vikisol-technologies-projects.vercel.app. It is not a public URL. Do not point DNS at it.
 
 Test logins stay in `TEST-LOGINS.md` and the gitignored `.env.test`. They are not copied here.
 
