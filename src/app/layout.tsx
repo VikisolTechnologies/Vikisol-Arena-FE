@@ -9,6 +9,7 @@ import { BuildStamp } from "@/components/BuildStamp";
 import { PageTransition } from "@/components/PageTransition";
 import { RouteTransition } from "@/components/RouteTransition";
 import { DeferredCommandPalette } from "@/components/vnext/DeferredCommandPalette";
+import { SentryClient } from "@/components/SentryClient";
 
 // Self-hosted (src/app/fonts, OFL - licences alongside) rather than next/font/google: the
 // Google variant downloads the fonts at build time, and Vercel builds kept failing when that
@@ -63,6 +64,7 @@ export default function RootLayout({
         <RouteTransition />
         <PageTransition>{children}</PageTransition>
         <DeferredCommandPalette />
+        <SentryClient />
         <CookieConsentBanner />
         <WebVitalsReporter />
         <BuildStamp />

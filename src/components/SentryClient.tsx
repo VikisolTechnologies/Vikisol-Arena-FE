@@ -3,20 +3,18 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 
-const CommandPalette = dynamic(
-  () => import("@/components/command-palette/CommandPalette").then((m) => m.CommandPalette),
-  { ssr: false },
-);
+const SentryInit = dynamic(() => import("./SentryInit").then((m) => m.SentryInit), { ssr: false });
 
-/** The palette chunk loads after idle, so lucide and the dialog stay off /home's first JS. */
-export function DeferredCommandPalette() {
+/** Mounts the Sentry SDK after idle, so it is not part of /home's first JS. */
+export function SentryClient() {
   const [armed, setArmed] = useState(false);
   useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return;
     const start = () => setArmed(true);
     const idle = window.requestIdleCallback?.(start);
     if (idle != null) return () => window.cancelIdleCallback(idle);
     const id = window.setTimeout(start, 1);
     return () => window.clearTimeout(id);
   }, []);
-  return armed ? <CommandPalette /> : null;
+  return armed ? <SentryInit /> : null;
 }
