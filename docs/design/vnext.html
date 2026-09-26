@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Arena VNext mockups</title>
+<style>
+  body { margin: 0; background: #1c1c20; color: #f5f5f6; font-family: Inter, system-ui, sans-serif; }
+  h1 { font-family: "Space Grotesk", Inter, sans-serif; font-weight: 600; padding: 28px 28px 0; }
+  p.note { padding: 8px 28px 20px; color: #a1a1aa; max-width: 720px; }
+  .row { display: flex; gap: 28px; padding: 12px 28px 36px; align-items: flex-start; flex-wrap: wrap; }
+  .pair { display: flex; gap: 16px; }
+  figure { margin: 0; }
+  figcaption { font-size: 12px; color: #a1a1aa; margin-bottom: 8px; }
+  .phone, .desk { border-radius: 28px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+  .phone { width: 280px; }
+  .desk { width: 640px; }
+  .dark { background: #09090b; color: #f5f5f6; }
+  .ivory { background: #f6f1e8; color: #1c1c20; }
+  .bar { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; font-family: "Space Grotesk", sans-serif; font-weight: 650; }
+  .orange { color: #ff6b35; }
+  .chip { display: inline-block; background: #ff6b35; color: #160a05; border-radius: 999px; padding: 8px 12px; font-size: 12px; font-weight: 650; }
+  .card { margin: 10px 14px; padding: 14px; border-radius: 18px; }
+  .dark .card { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); }
+  .ivory .card { background: #fff; border: 1px solid rgba(28,28,32,.08); }
+  .muted { color: #a1a1aa; font-size: 12px; }
+  .ivory .muted { color: #5c5348; }
+  .tabs { display: flex; justify-content: space-around; padding: 12px 8px 16px; font-size: 11px; }
+  .jenny { margin: 10px 14px; padding: 12px 14px; border-radius: 18px; background: radial-gradient(circle at 20% 20%, rgba(255,138,91,.35), transparent 55%), rgba(255,107,53,.12); }
+  h2 { margin: 0 0 6px; font-size: 18px; font-family: "Space Grotesk", sans-serif; }
+  .atlas { letter-spacing: .04em; text-transform: uppercase; font-size: 11px; color: #ff8a5b; }
+  .ledger { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<h1>Arena VNext</h1>
+<p class="note">Left of each pair is the live palette, near-black and orange. Right is ivory, black, and orange, for comparison. The preview is built from the left. Jenny is a warm slot. Discover and Map are the atlas. Work is the ledger.</p>
+
+<section class="row">
+  <div>
+    <figcaption>Feed · phone · near-black (build this)</figcaption>
+    <div class="phone dark">
+      <div class="bar">Arena<span class="orange">.</span> <span class="chip">Create</span></div>
+      <div class="jenny"><div class="muted">Jenny</div>One activity tonight matches the time you set. Review it before you join.</div>
+      <div style="padding:0 16px" class="muted">3 things in this feed</div>
+      <div class="card"><strong>Badminton, KBR Park</strong><div class="muted">Activity · 4 spots · tonight</div></div>
+      <div class="card"><strong>Need a hand moving a table</strong><div class="muted">Need · Banjara Hills</div></div>
+      <div class="card"><strong>Site for a clinic</strong><div class="muted">Project · bids open</div></div>
+      <div class="tabs"><span>Feed</span><span>Discover</span><span>Map</span><span>Work</span><span>You</span></div>
+    </div>
+  </div>
+  <div>
+    <figcaption>Feed · phone · ivory alternative</figcaption>
+    <div class="phone ivory">
+      <div class="bar">Arena<span class="orange">.</span> <span class="chip">Create</span></div>
+      <div class="jenny"><div class="muted">Jenny</div>One activity tonight matches the time you set. Review it before you join.</div>
+      <div style="padding:0 16px" class="muted">3 things in this feed</div>
+      <div class="card"><strong>Badminton, KBR Park</strong><div class="muted">Activity · 4 spots · tonight</div></div>
+      <div class="card"><strong>Need a hand moving a table</strong><div class="muted">Need · Banjara Hills</div></div>
+      <div class="tabs"><span>Feed</span><span>Discover</span><span>Map</span><span>Work</span><span>You</span></div>
+    </div>
+  </div>
+  <div>
+    <figcaption>Feed · desktop · near-black</figcaption>
+    <div class="desk dark">
+      <div class="bar">Arena<span class="orange">.</span><span class="muted">Feed · Discover · Map · Work</span><span class="chip">Create</span></div>
+      <div style="display:grid;grid-template-columns:1.4fr .8fr;gap:8px">
+        <div>
+          <div class="card"><strong>Badminton, KBR Park</strong><div class="muted">Activity · tonight · 4 spots left</div></div>
+          <div class="card"><strong>Need a hand moving a table</strong><div class="muted">Need</div></div>
+        </div>
+        <div class="jenny">Jenny · one real next step, or this slot is absent.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="row">
+  <div class="phone dark"><figcaption style="padding:8px 0 0 8px">Discover · atlas</figcaption><div class="atlas" style="padding:8px 16px">Who is here</div><div class="card">Aarav · design</div><div class="card">Clinic website · project</div><div class="card">Zoho · company</div></div>
+  <div class="phone ivory"><figcaption style="padding:8px">Discover · ivory</figcaption><div class="card">Aarav · design</div><div class="card">Clinic website · project</div></div>
+  <div class="desk dark"><div class="atlas" style="padding:16px">Map · what is around you, not job pins</div><div class="card">2 activities within 10 km. The map canvas loads only on this screen.</div></div>
+</section>
+
+<section class="row">
+  <div class="phone dark"><div class="bar">Work</div><div class="card ledger"><strong>Sales Manager</strong><div class="muted">Applied · Zoho</div></div><div class="card ledger"><strong>Visual Designer</strong><div class="muted">Interview · Delivery</div></div><div class="muted" style="padding:0 16px 16px">Empty columns stay empty. No fake pipeline.</div></div>
+  <div class="phone ivory"><div class="bar">Work</div><div class="card"><strong>Sales Manager</strong><div class="muted">Applied · Zoho</div></div></div>
+  <div class="phone dark"><div class="bar">Create</div><div class="card">I need something</div><div class="card">I can offer something</div><div class="card">Start a project</div><div class="card">Create a job</div><div class="card">Create an activity</div></div>
+  <div class="phone dark"><div class="bar">You</div><div class="card"><strong>Aarav Sharma</strong><div class="muted">Built from posts, joins, and applications. Not a résumé headline.</div></div></div>
+</section>
+</body>
+</html>
