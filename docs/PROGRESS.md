@@ -17,7 +17,7 @@ Review `docs/reviews/24b488d.md` is answered on `feature/arena-vnext`. The unmer
 
 ## Next
 
-The new read and close endpoints are on backend `feature/arena-vnext-api` and are not on the live API yet, so `/work` and `/identity` log a 400 for `GET /posts/joined`. The twelve-step two-account path and the enterprise hire path were not run. Leave the frontend pull request unmerged.
+The new read and close endpoints are on backend `main` at `667df7c`. An unauthenticated `GET /posts/joined` now returns 403, which means the route exists. `/work` and `/identity` were re-run after that and passed. The twelve-step two-account path and the enterprise hire path were not run. Leave the frontend pull request unmerged. It conflicts with `main`.
 
 ## Do not
 

@@ -12,7 +12,7 @@ Backend `main` is `ab6dcc6`. Jenny's write JSON is unchanged. `JennyArenaWriteBo
 
 ## Preview
 
-The first Vercel preview of `78ab5a0` failed to build. Next.js 16 rejects `ssr: false` inside a Server Component, and the shell had put that in `layout.tsx`. The command palette now loads from a client wrapper. The preview for `f3cb239` built and sits behind Vercel SSO: https://arena-245mpnx8x-vikisol-technologies-projects.vercel.app. It is not a public URL. Do not point DNS at it.
+Protected preview for `e14a482`, behind Vercel SSO: https://arena-web-git-feature-arena-vnext-vikisol-technologies-projects.vercel.app. It is not a public URL. Do not point DNS at it. The earlier preview for `f3cb239` was https://arena-245mpnx8x-vikisol-technologies-projects.vercel.app.
 
 Test logins stay in `TEST-LOGINS.md` and the gitignored `.env.test`. They are not copied here.
 
@@ -48,7 +48,7 @@ Sentry and the command palette load after idle. GSAP, the 3D scenes, the create 
 Local server `http://127.0.0.1:3456`, API proxied to production, one worker, 26 Sep 2026:
 
 - VNext surfaces and landing: 13 passed on desktop Chrome at 1440×900. Pixel 7 (412×915) and iPhone 13 (390×844) then passed the same files, 21 passed.
-- Axe and the static route sweep, desktop Chrome: 57 passed, 2 failed. `/work` and `/identity` each record a 400 from `GET /posts/joined`. That path is not on the live API yet, so Spring treats `joined` as a post id. Both pages still render. The signed-in profile showed Needs resolved 0, Activities hosted 10, Activities joined 0, Projects won 0.
+- Axe and the static route sweep, desktop Chrome: 57 passed, then 2 failed on `/work` and `/identity` because `GET /posts/joined` was not deployed. After backend `main` `667df7c`, those two routes passed on a re-run.
 - The twelve-step two-account journey and the enterprise hire path were not run.
 
 ## Phone checks
@@ -63,7 +63,7 @@ Local server `http://127.0.0.1:3456`, API proxied to production, one worker, 26 
 
 - Sentry ingest still returns 403 until the project allows `arena.vikisol.in`.
 - GitHub's OAuth token cannot edit `.github/workflows/e2e.yml` (missing `workflow` scope). The demo-password comment in that file is still on `main`.
-- `GET /posts/joined` and `PUT /posts/{id}/status` are on `feature/arena-vnext-api`, not on the live API. The preview will 400 the joined read until that branch is deployed.
+- `GET /posts/joined` is on the live API as of backend `667df7c`. Before that deploy, `/work` and `/identity` logged a 400.
 - Map's 10 km search around Hyderabad returned no activities in an earlier session, while the feed shows Kondapur activities. The screen says so. It does not invent pins.
 - Vercel preview protection was not changed.
 - The twelve-step golden path and the enterprise hire path are still open. They were not run against production.
