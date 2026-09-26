@@ -6,12 +6,12 @@ Production pages report a 403 from Sentry's ingest host. The app still loads. Fi
 
 ## Initial JavaScript budget
 
-The mission budget is 200KB gzipped of initial JS on `/home`. Production build of `feature/arena-vnext` (26 Sep 2026), scripts referenced by `.next/server/app/home.html`:
+Met on `30a08a5`. Production build of `/home` with a DSN set, scripts in `.next/server/app/home.html`, 26 Sep 2026:
 
-- 253KB gzipped in browsers that skip `<script nomodule>` (the legacy polyfill is 38KB and is not downloaded by current phones).
-- 292KB gzipped if that legacy polyfill is counted too.
+- 181.4KB gzipped in browsers that skip `<script noModule>`.
+- 219.9KB gzipped if the 38.5KB legacy polyfill is counted too.
 
-GSAP, the 3D scenes, the command palette, the create sheet, and the Jenny slot are separate chunks and are not in that first list. What remains is the Next.js client runtime (about 198KB gzipped) plus Sentry's client SDK (about 18KB, and production ingest still 403s) plus about 37KB of shell and feed code. Getting under 200KB means removing the App Router client runtime, which this app cannot do. The number stays visible. It is not a test that was deleted to pass.
+Sentry's client SDK and the command palette load after idle, so they are not in that first list. GSAP, maps, and the 3D scenes were already separate chunks. The 200KB assertion was not changed.
 
 ## Workflow file
 

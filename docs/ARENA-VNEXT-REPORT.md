@@ -22,12 +22,12 @@ Primary look: near-black `#09090b` and orange `#ff6b35`. The ivory, black, and o
 
 | Surface | Route | What it does |
 |---|---|---|
-| Feed | `/home` | Real feed items. Pulse is the count of that response. Empty copy is "Arena is quiet right now." |
+| Feed | `/home` | Real feed items. No page-size count. Empty copy is "Arena is quiet right now." |
 | Discover | `/discover` | The same public list until a search is submitted, then people, activities, jobs, projects, and companies. |
 | Map | `/map` | Nearby activities, Hyderabad centre, 10 km. No map library on first load. |
-| Work | `/work` | This person's applications. A guest is asked to sign in. |
-| Create | sheet | Ask, offer, project, activity, or a job. A job needs a company seat. Nothing publishes until the person submits. |
-| Profile | `/identity` | Name, title, and posts this account actually made. |
+| Work | `/work` | Applications, bids, interviews for a hiring manager, hosted needs and activities, and approved joins. Active or Done. A guest is asked to sign in. |
+| Create | sheet | Ask, offer, project, activity, or a job. An offer is stored as offer. A job needs a company seat. Nothing publishes until the person submits. |
+| Profile | `/identity` | Name, title, posts, and four counts: needs resolved, activities hosted, activities joined, projects won. |
 | Jenny | slot | One real note from Arena's agent API, which already calls the live gateway. Empty when there is no session, no sentence, `NONE`, or the unavailable message. |
 
 Sessions stay activity posts. Waitlist, maybe, recurrence, cost, and co-host UI are not built. The flag name `sessions-extended` is off and has no code path.
@@ -36,39 +36,37 @@ New UI code is about 520 lines in `src/components/vnext/`.
 
 ## Bundle
 
-Production build of `/home`, scripts in the document:
+Production build of `/home` on `30a08a5`, with a DSN set so Sentry stays in the graph, scripts in the document:
 
-- 253KB gzipped in a browser that skips `<script nomodule>`.
-- 292KB if the 38KB legacy polyfill is counted.
+- 181.4KB gzipped in a browser that skips `<script noModule>`.
+- 219.9KB if the 38.5KB legacy polyfill is counted.
 
-About 198KB of that is the Next.js client runtime, about 18KB is the Sentry client SDK, and about 37KB is the shell and feed. GSAP, the 3D scenes, the command palette, the create sheet, and the Jenny slot are separate chunks. The 200KB budget is not met. The number is in `docs/BLOCKERS.md`. The assertion was not removed.
+Sentry and the command palette load after idle. GSAP, the 3D scenes, the create sheet, and the Jenny slot stay separate chunks. The 200KB budget is met on the modern number. The assertion was not removed.
 
 ## Tests
 
-Local preview `http://localhost:3001`, one worker, desktop Chrome, Pixel 7, and iPhone 13:
+Local server `http://127.0.0.1:3456`, API proxied to production, one worker, 26 Sep 2026:
 
-- Surface spec, golden path, access control, and axe: 88 passed, 10 failed. The failures were the old expectation that `/identity` redirects to `/auth`, the old "Sign in to post" heading, and one WebKit contrast hit on the landing page.
-- Those expectations now match the guest profile and the create sheet. Access control then passed on desktop and Pixel 7 (29) and, with the WebKit axe file, on iPhone (25). The landing contrast miss did not repeat.
-- Enterprise dashboard axe passed in the first run. Company-admin sign-in without a second factor is the finding in `docs/SECURITY-FINDINGS.md`, not a change.
-- A fresh review of this diff re-ran the candidate golden path on a phone-sized Chrome: 9 passed. It also caught the create sheet inventing a project budget. A project now asks for the minimum, maximum, and weeks, and publishes only those.
-
-Enterprise company-admin sign-in was already proven on the cleanup suite: the account signs in with no second factor, because enrollment was never required. That is `docs/SECURITY-FINDINGS.md`. Auth was not changed.
+- VNext surfaces and landing: 13 passed on desktop Chrome at 1440×900. Pixel 7 (412×915) and iPhone 13 (390×844) then passed the same files, 21 passed.
+- Axe and the static route sweep, desktop Chrome: 57 passed, 2 failed. `/work` and `/identity` each record a 400 from `GET /posts/joined`. That path is not on the live API yet, so Spring treats `joined` as a post id. Both pages still render. The signed-in profile showed Needs resolved 0, Activities hosted 10, Activities joined 0, Projects won 0.
+- The twelve-step two-account journey and the enterprise hire path were not run.
 
 ## Phone checks
 
 1. Bottom bar: Feed, Discover, Map, Work, You. Each target is 44px tall on a 390px width.
 2. Create is a 44px orange button and stays clear of the build stamp.
-3. The signed-in name is in the header.
+3. The signed-in name is in the header, next to an Inbox link to `/rooms`.
 4. Jenny shows a real job link when the gateway has one, and nothing when it does not.
-5. The feed count matches the cards on the page. Map does not load Google Maps.
+5. The feed does not print a page-size count. Map does not load Google Maps.
 
 ## Blockers
 
 - Sentry ingest still returns 403 until the project allows `arena.vikisol.in`.
 - GitHub's OAuth token cannot edit `.github/workflows/e2e.yml` (missing `workflow` scope). The demo-password comment in that file is still on `main`.
-- First JS on `/home` is 253KB gzipped. See above.
-- Map's 10 km search around Hyderabad returned no activities in this session, while the feed shows Kondapur activities. The screen says so. It does not invent pins.
+- `GET /posts/joined` and `PUT /posts/{id}/status` are on `feature/arena-vnext-api`, not on the live API. The preview will 400 the joined read until that branch is deployed.
+- Map's 10 km search around Hyderabad returned no activities in an earlier session, while the feed shows Kondapur activities. The screen says so. It does not invent pins.
 - Vercel preview protection was not changed.
+- The twelve-step golden path and the enterprise hire path are still open. They were not run against production.
 
 ## Merge and rollback
 

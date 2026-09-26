@@ -53,9 +53,14 @@ test.describe("VNext surfaces, talent", () => {
     await expect(page).toHaveURL(/\/applications\//);
   });
 
-  test("profile shows the signed-in name", async ({ page }) => {
+  test("profile shows the signed-in name and real outcome counts", async ({ page }) => {
     await page.goto("/identity");
     await expect(page.getByRole("heading", { name: "Aarav Sharma" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Needs resolved")).toBeVisible();
+    await expect(page.getByText("Activities hosted")).toBeVisible();
+    await expect(page.getByText("Activities joined")).toBeVisible();
+    await expect(page.getByText("Projects won")).toBeVisible();
+    await expect(page.getByText(/reliability|reputation/i)).toHaveCount(0);
   });
 
   test("create offers the five kinds and does not publish on its own", async ({ page }) => {
