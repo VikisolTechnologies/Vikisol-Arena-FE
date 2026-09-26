@@ -4,6 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { getMyRooms } from "@/lib/api/rooms";
 import { getSession } from "@/lib/session";
 
 const CreateSheet = dynamic(() => import("./CreateSheet").then((m) => m.CreateSheet), { ssr: false });
@@ -51,6 +52,7 @@ export function VNextShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-3">
+          <InboxLink />
           {name && <span className="max-w-[40vw] truncate text-sm font-medium">{name}</span>}
           {guest && <span className="text-xs text-muted-foreground">Browsing as a guest</span>}
           <button type="button" className="min-h-11 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground" onClick={() => setCreateOpen(true)}>
@@ -69,6 +71,30 @@ export function VNextShell({ children }: { children: ReactNode }) {
       </nav>
       {createOpen && <CreateSheet open={createOpen} onClose={() => setCreateOpen(false)} guest={guest} />}
     </div>
+  );
+}
+
+function InboxLink() {
+  const [unread, setUnread] = useState<number | null>(null);
+  useEffect(() => {
+    if (!getSession()) return;
+    getMyRooms()
+      .then((rooms) => setUnread(rooms.filter((room) => room.unread).length))
+      .catch(() => setUnread(null));
+  }, []);
+  const label = unread != null && unread > 0 ? `Inbox, ${unread} unread` : "Inbox";
+  return (
+    <Link href="/rooms" aria-label={label} className="relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-full">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 6h16v12H4V6Z" stroke="currentColor" strokeWidth="1.75" />
+        <path d="M4 7l8 6 8-6" stroke="currentColor" strokeWidth="1.75" />
+      </svg>
+      {unread != null && unread > 0 && (
+        <span className="absolute right-0 top-1 min-w-4 rounded-full bg-primary px-1 text-center text-[10px] font-semibold leading-4 text-primary-foreground">
+          {unread}
+        </span>
+      )}
+    </Link>
   );
 }
 

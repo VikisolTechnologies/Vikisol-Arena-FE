@@ -13,6 +13,7 @@ test.describe("VNext surfaces, logged out", () => {
     await page.goto("/home");
     await acceptCookies(page);
     await expect(page.getByText("Browsing as a guest")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Inbox" })).toHaveAttribute("href", "/rooms");
     await page.getByRole("button", { name: "Create" }).click();
     await expect(page.getByText("Sign in to publish")).toBeVisible();
   });
