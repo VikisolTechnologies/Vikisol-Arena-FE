@@ -7,7 +7,7 @@ import { getMyAssignedInterviews } from "@/lib/api/interviews";
 import { getMyBids } from "@/lib/api/myBids";
 import { closeNeed, getJoinedPosts, getJoinRequests, getMyPosts, recordJoinOutcome } from "@/lib/api/posts";
 import { getSession } from "@/lib/session";
-import type { Post } from "@/lib/types";
+import type { Post, PostJoinRequest } from "@/lib/types";
 import { JennySlot, Card, useLoad } from "./shared";
 import { Status, VNextShell } from "./Shell";
 
@@ -28,7 +28,7 @@ function finished(status: string) {
 export function WorkScreen() {
   const [resolveId, setResolveId] = useState<string | null>(null);
   const [attendanceId, setAttendanceId] = useState<string | null>(null);
-  const [joins, setJoins] = useState<{ id: string; userName: string; status: string; outcome?: string }[]>([]);
+  const [joins, setJoins] = useState<PostJoinRequest[]>([]);
   const [actionError, setActionError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [guest, setGuest] = useState<boolean | null>(null);
@@ -127,12 +127,15 @@ export function WorkScreen() {
       {!guest && data && data.length === 0 && <Status kind="empty" title="You are not in anything yet" detail="When you apply, join, or start a project, it will be listed here." />}
       {!guest && data && data.length > 0 && (
         <div className="grid gap-6">
-          {[["Active", active], ["Done", done]].map(([label, rows]) => (
+          {([
+            { label: "Active", rows: active },
+            { label: "Done", rows: done },
+          ]).map(({ label, rows }) => (
             <section key={String(label)}>
               <h2 className="mb-2 font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground">{label}</h2>
-              {(rows as Row[]).length === 0 && <p className="text-sm text-muted-foreground">Nothing here.</p>}
+              {rows.length === 0 && <p className="text-sm text-muted-foreground">Nothing here.</p>}
               <div className="grid gap-3">
-                {(rows as Row[]).map((row) => (
+                {rows.map((row) => (
                   row.href ? (
                     <Card key={row.id} href={row.href} title={row.title} meta={row.meta} />
                   ) : (

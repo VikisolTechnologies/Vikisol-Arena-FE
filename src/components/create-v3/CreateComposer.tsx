@@ -42,7 +42,7 @@ const PLACEHOLDERS: Record<PostIntent, string> = {
   activity: "e.g. Badminton at 6pm today, need 2 more for doubles",
   ask: "e.g. Anyone used a good invoicing tool for freelance work?",
   update: "What's on your mind?",
-  offer: "e.g. I can help with React for the next two weeks",
+  offer: "e.g. I can help you move a table this weekend",
 };
 
 const fieldStyle: React.CSSProperties = {
