@@ -187,6 +187,7 @@ Duplicates and near-duplicates to consolidate later, without a visual change:
   - WebKit performance tests call `browserContext.newCDPSession`, which Playwright only provides in Chromium, so those four fail by harness, not by the page.
   - Mobile golden path: the talent name is in the page but hidden (a truncated sidebar label), so "Aarav Sharma" is not visible. `/terms` and `/onboarding` on WebKit report a Sentry ingest 403. The key is not copied here.
 - Enterprise path, checked after that with the company-admin demo account: password sign-in returned 200 and did not show a 2FA step. `/enterprise/admin` loaded "Admin dashboard" from `GET /api/v1/enterprise/admin/dashboard` (200). `/enterprise/talent` loaded "Every talent. One search." from `GET /api/v1/enterprise/talent/search` (200). `/enterprise/postings` loaded "Postings" from `GET /api/v1/enterprise/postings` (200). Waiting for `DOMContentLoaded` on talent exceeded 30s; the page itself was up and calling the real API.
+- Enterprise 2FA finding (26 Sep 2026): it was never a forced enrollment. `AuthService` challenges `COMPANY_ADMIN` and `PLATFORM_ADMIN` only when `totpEnabled` is already true. That flag defaults to false, and the demo company admin is seeded without it. `/auth/2fa/setup`, `/enable`, `/disable`, and `/verify` exist. Recommendation: require enrollment before those roles receive a normal session. Auth behaviour was not changed. Detail is in `docs/SECURITY-FINDINGS.md` and `docs/DECISIONS.md`.
 - Backend: 17 test classes, 71 tests. The last Surefire reports on disk show 0 failures and 0 errors, including `PostJoinSafetyTest` from the attendance commit. This session did not re-run `./mvnw test`.
 - Do not treat old frontend "suite is green" notes in other markdown files as current.
 
@@ -196,7 +197,7 @@ Duplicates and near-duplicates to consolidate later, without a visual change:
 |---|---|
 | `ROUTES.md` | Says `/home` is unfinished, forgot-password does not exist, `/messages` should redirect to `/inbox`, profile should be `/me`. Live app uses `/home`, `/rooms`, `/identity`. |
 | `PRODUCT_BIBLE.md` | Says the visual system is ivory/champagne/gold and that production `GET /feed` 500s because the API was not deployed. Feed returned 200 today. Theme tokens are dark. |
-| `GROUND-TRUTH.md` | Hosting facts (Vercel + Railway `arena-staging`) still match. Commit hashes and the "feed 500" era do not. Enterprise 2FA was reported clear on 2026-09-12 for `demo.enterprise@vikisol.dev`. Not re-checked today. |
+| `GROUND-TRUTH.md` | Hosting facts (Vercel + Railway `arena-staging`) still match. Commit hashes and the "feed 500" era do not. Enterprise 2FA was re-checked on 26 Sep 2026: password-only sign-in is the current behaviour because enrollment was never required. |
 | `docs/ARENA-FLOW-AND-MOBILE-REVIEW.md` | Accurate bug list (past activity times, onboarding consent defaults, orb, cookie banner, build stamp). Not implemented. |
 | No `ARENA-VNEXT-BLUEPRINT.md` | The Track 2 blueprint was not in the repo. Phase 3 has to write it. |
 
