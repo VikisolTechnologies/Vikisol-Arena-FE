@@ -1,4 +1,4 @@
-import { Bookmark, Briefcase, CalendarClock, MapPin, MessageCircle, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Bookmark, Briefcase, CalendarClock, Gift, MapPin, MessageCircle, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ReactionButton } from "@/components/feed/ReactionButton";
 import { formatFriendlyDateTime } from "@/lib/format";
@@ -9,6 +9,7 @@ const INTENT_LABEL: Record<Post["intentType"], string> = {
   ask: "Ask",
   update: "Update",
   company: "Company",
+  offer: "Offer",
 };
 
 const INTENT_ICON: Record<Post["intentType"], typeof Sparkles> = {
@@ -16,6 +17,7 @@ const INTENT_ICON: Record<Post["intentType"], typeof Sparkles> = {
   ask: Sparkles,
   update: CalendarClock,
   company: Briefcase,
+  offer: Gift,
 };
 
 // §4 safety-audit addition: "Show join-count ... and account age" - a fresh, zero-track-record

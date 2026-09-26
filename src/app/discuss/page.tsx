@@ -46,7 +46,7 @@ export default function DiscussPage() {
     if (!allowGuestBrowsing(router)) return;
     let cancelled = false;
     (sort === "trending"
-      ? getTrending(0, 50).then((all) => all.filter((p) => p.intentType === "ask" || p.intentType === "update"))
+      ? getTrending(0, 50).then((all) => all.filter((p) => p.intentType === "ask" || p.intentType === "update" || p.intentType === "offer"))
       : getThreads({ sort, size: 50 })
     )
       .catch(() => [] as Post[])

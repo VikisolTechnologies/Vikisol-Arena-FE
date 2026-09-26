@@ -11,7 +11,7 @@ import type { Company, Job, Post, Project } from "@/lib/types";
 // The cards Home's feed and Search both render - one per kind of content, each opening in the
 // space that owns it.
 
-const KIND_LABEL: Record<string, string> = { activity: "Activity", ask: "Question", update: "Update" };
+const KIND_LABEL: Record<string, string> = { activity: "Activity", ask: "Question", update: "Update", offer: "Offer" };
 
 export function KindTag({ icon: Icon, label }: { icon: typeof Users; label: string }) {
   return (

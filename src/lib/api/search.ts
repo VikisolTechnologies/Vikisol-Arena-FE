@@ -34,7 +34,7 @@ export async function search(q: string, type: SearchType = "all", limit = 20): P
   return {
     query: q,
     activities: want("activities") ? posts.filter((p) => p.intentType === "activity" && postHit(p)).slice(0, limit) : [],
-    discussions: want("discussions") ? posts.filter((p) => (p.intentType === "ask" || p.intentType === "update") && postHit(p)).slice(0, limit) : [],
+    discussions: want("discussions") ? posts.filter((p) => (p.intentType === "ask" || p.intentType === "update" || p.intentType === "offer") && postHit(p)).slice(0, limit) : [],
     jobs: want("jobs") ? jobs.filter((j) => matches(j.title, j.company, j.location, j.skills, j.description)).slice(0, limit) : [],
     projects: want("projects") ? projects.filter((p) => matches(p.title, p.description, p.skills)).slice(0, limit) : [],
     companies: [],

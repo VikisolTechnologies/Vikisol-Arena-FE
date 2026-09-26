@@ -104,7 +104,7 @@ export function HomeContent() {
       case "activities":
         return posts && toPosts(posts.filter((p) => p.intentType === "activity"));
       case "discussions":
-        return posts && toPosts(posts.filter((p) => p.intentType === "ask" || p.intentType === "update"));
+        return posts && toPosts(posts.filter((p) => p.intentType === "ask" || p.intentType === "update" || p.intentType === "offer"));
       case "jobs":
         return jobs && jobs.map((job) => ({ kind: "job", id: `job-${job.id}`, job }));
       case "bidding":

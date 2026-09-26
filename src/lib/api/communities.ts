@@ -11,7 +11,7 @@ export async function getThreads(opts: { community?: string; sort?: ThreadSort; 
   const { community, sort = "new", page = 0, size = 30 } = opts;
   if (isRealMode()) return apiFetch<Post[]>("/discuss/threads", { query: { community, sort, page, size } });
   if (community) return [];
-  const posts = (await getFeed(0, 200)).filter((p) => p.intentType === "ask" || p.intentType === "update");
+  const posts = (await getFeed(0, 200)).filter((p) => p.intentType === "ask" || p.intentType === "update" || p.intentType === "offer");
   const sorted = sort === "top" ? posts.slice().sort((a, b) => (b.score ?? b.reactionCount) - (a.score ?? a.reactionCount)) : posts;
   return sorted.slice(page * size, page * size + size);
 }

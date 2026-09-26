@@ -10,7 +10,7 @@ import { getMyRooms, getRoomMessages, sendRoomMessage, markRoomRead, setRoomMute
 import { getPost } from "@/lib/api/posts";
 import type { Room } from "@/lib/types";
 
-const INTENT_LABEL: Record<Room["postIntentType"], string> = { activity: "Activity", ask: "Ask", update: "Update", company: "Company" };
+const INTENT_LABEL: Record<Room["postIntentType"], string> = { activity: "Activity", ask: "Ask", update: "Update", company: "Company", offer: "Offer" };
 
 export default function RoomDetailPage() {
   const params = useParams<{ id: string }>();

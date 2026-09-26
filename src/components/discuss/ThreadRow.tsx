@@ -8,7 +8,7 @@ import { VoteControl } from "@/components/posts/VoteControl";
 import { formatTimeAgo } from "@/lib/format";
 import type { Post } from "@/lib/types";
 
-const KIND_LABEL: Record<string, string> = { ask: "Question", update: "Update" };
+const KIND_LABEL: Record<string, string> = { ask: "Question", update: "Update", offer: "Offer" };
 
 /**
  * One Discuss thread in a list. Media sits between two links rather than inside one (tapping a

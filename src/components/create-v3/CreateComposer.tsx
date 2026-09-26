@@ -42,6 +42,7 @@ const PLACEHOLDERS: Record<PostIntent, string> = {
   activity: "e.g. Badminton at 6pm today, need 2 more for doubles",
   ask: "e.g. Anyone used a good invoicing tool for freelance work?",
   update: "What's on your mind?",
+  offer: "e.g. I can help with React for the next two weeks",
 };
 
 const fieldStyle: React.CSSProperties = {
@@ -199,7 +200,7 @@ export function CreateComposer({
     setStep("form");
   }
 
-  const canHaveCommunity = intent === "ask" || intent === "update";
+  const canHaveCommunity = intent === "ask" || intent === "update" || intent === "offer";
   useEffect(() => {
     if (!open || step !== "form" || !canHaveCommunity) return;
     let cancelled = false;
@@ -406,7 +407,7 @@ export function CreateComposer({
                 <X size={20} strokeWidth={1.75} />
               </button>
               <p style={{ flex: 1, textAlign: "center", margin: 0, fontSize: 10, letterSpacing: 3, color: ARENA_V3.muted }}>
-                {intent === "activity" ? "AN ACTIVITY" : intent === "ask" ? "A NEED" : "AN UPDATE"}
+                {intent === "activity" ? "AN ACTIVITY" : intent === "ask" ? "A NEED" : intent === "offer" ? "AN OFFER" : "AN UPDATE"}
               </p>
               <span style={{ width: 28 }} />
             </div>

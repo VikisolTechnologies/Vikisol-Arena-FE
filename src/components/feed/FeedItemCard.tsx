@@ -5,6 +5,7 @@ import {
   Briefcase,
   CalendarClock,
   Coins,
+  Gift,
   MapPin,
   MessageCircle,
   ShieldCheck,
@@ -33,6 +34,7 @@ const TYPE_LABEL: Record<string, string> = {
   ask: "Ask",
   update: "Update",
   company: "Company",
+  offer: "Offer",
 };
 
 const TYPE_ICON: Record<string, typeof Sparkles> = {
@@ -43,6 +45,7 @@ const TYPE_ICON: Record<string, typeof Sparkles> = {
   ask: Sparkles,
   update: CalendarClock,
   company: Briefcase,
+  offer: Gift,
 };
 
 // §4 safety-audit: a fresh, zero-track-record account posting an in-person meetup is the exact
@@ -58,7 +61,7 @@ function formatComp(min?: number, max?: number): string | null {
 export function FeedItemCard({ item }: { item: FeedItem }) {
   const [saved, setSaved] = useState(false);
   const Icon = TYPE_ICON[item.itemType] ?? Sparkles;
-  const isPostOrigin = ["activity", "ask", "update", "company"].includes(item.itemType);
+  const isPostOrigin = ["activity", "ask", "update", "company", "offer"].includes(item.itemType);
   const isJob = item.itemType === "job";
   const isProjectLike = item.itemType === "project" || item.itemType === "freelance";
 
