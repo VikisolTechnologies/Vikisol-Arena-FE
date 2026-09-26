@@ -124,7 +124,11 @@ test.describe("two-account mobile golden path", () => {
       if (hostToken && needId) cleanup.push(`need ${needId} ${await safe(() => removePost(hostToken, needId))}`);
       if (hostToken && activityId) cleanup.push(`activity ${activityId} ${await safe(() => removePost(hostToken, activityId))}`);
       if (hostToken && host) cleanup.push(`host ${host.email} ${await safe(() => eraseAccount(hostToken))}`);
-      if (guest) cleanup.push(`guest ${guest.email} ${await safe(() => eraseAccount(guest.token))}`);
+      if (guest) {
+        const guestEmail = guest.email;
+        const guestToken = guest.token;
+        cleanup.push(`guest ${guestEmail} ${await safe(() => eraseAccount(guestToken))}`);
+      }
       const file = path.join("test-results", "b4-golden-cleanup.json");
       fs.mkdirSync("test-results", { recursive: true });
       fs.writeFileSync(file, JSON.stringify({ stamp, cleanup }, null, 2));

@@ -1,18 +1,18 @@
 # Arena VNext report
 
-26 September 2026. The new screens are on `feature/arena-vnext`. That branch is not merged. Production still serves the cleanup that landed on `main`.
+26 September 2026. The new screens are on `feature/arena-vnext`. That branch is not merged. Production `main` has the offer labels; the new screens stay on the preview.
 
 ## What is live
 
-Frontend `main` in git is `72775dd` (the mission and the 2FA note). `https://arena.vikisol.in/version` still returns the cleanup commit `5a1b52d`, built `2026-09-26T06:48:42Z`, until that docs push finishes deploying. The cleanup is contrast, the guest home label, the companies card, dead-component removal, and the dev-only API proxy. It does not change the product screens.
+Frontend `main` in git is `8c11dbc`. That commit labels an offer everywhere the live app maps an intent, and the Discuss filter includes offers. `https://arena.vikisol.in/version` was still the cleanup commit `5a1b52d` when this report was last checked; Vercel deploys `main` from GitHub.
 
-The full local suite against that cleanup, one worker, was 236 passed, 4 skipped, 2 failed. The two failures were cold mobile FCP on the landing page (3780ms) and `/home` (4248ms) while this machine was also building the preview. The same file, run alone, passed in 37 seconds, including both of those assertions at the 2.5s budget. The budget was not loosened.
+Backend `main` is `d3b5eff`. `https://api-arena.vikisol.in/api/v1/version` returned that commit, built `2026-09-26T13:11:48Z`. A guest `GET /posts/joined` returns 401. Jenny's write JSON is unchanged. `JennyArenaWriteBodyContractTest` locks the bodies. `JennyArenaWriteScopeContractTest` calls `POST /posts` and expects 403 for a service token that lacks `arena.createPost`, and 403 for a token whose subject is a company admin. Both passed before the fast-forward.
 
-Backend `main` is `ab6dcc6`. Jenny's write JSON is unchanged. `JennyArenaWriteBodyContractTest` locks the bodies. `JennyArenaWriteScopeContractTest` calls `POST /posts` and expects 403 for a service token that lacks `arena.createPost`, and 403 for a token whose subject is a company admin. Both passed before the fast-forward.
+The full local suite against the cleanup, one worker, was 236 passed, 4 skipped, 2 failed. The two failures were cold mobile FCP on the landing page (3780ms) and `/home` (4248ms) while this machine was also building the preview. The same file, run alone, passed in 37 seconds, including both of those assertions at the 2.5s budget. The budget was not loosened.
 
 ## Preview
 
-Protected preview for `e14a482`, behind Vercel SSO: https://arena-web-git-feature-arena-vnext-vikisol-technologies-projects.vercel.app. It is not a public URL. Do not point DNS at it. The earlier preview for `f3cb239` was https://arena-245mpnx8x-vikisol-technologies-projects.vercel.app.
+Protected preview, behind Vercel SSO: https://arena-web-git-feature-arena-vnext-vikisol-technologies-projects.vercel.app. It is not a public URL. Do not point DNS at it. The branch was rebased onto `main` (`8c11dbc`) and is not merged. Pull request: https://github.com/VikisolTechnologies/Vikisol-Arena-FE/pull/1. The earlier preview for `f3cb239` was https://arena-245mpnx8x-vikisol-technologies-projects.vercel.app.
 
 Test logins stay in `TEST-LOGINS.md` and the gitignored `.env.test`. They are not copied here.
 
@@ -49,7 +49,9 @@ Local server `http://127.0.0.1:3456`, API proxied to production, one worker, 26 
 
 - VNext surfaces and landing: 13 passed on desktop Chrome at 1440×900. Pixel 7 (412×915) and iPhone 13 (390×844) then passed the same files, 21 passed.
 - Axe and the static route sweep, desktop Chrome: 57 passed, then 2 failed on `/work` and `/identity` because `GET /posts/joined` was not deployed. After backend `main` `667df7c`, those two routes passed on a re-run.
-- The twelve-step two-account journey and the enterprise hire path were not run.
+- The twelve-step two-account journey passed on iPhone 13 (390×844) against the live API through the local preview proxy (`bdfdb48`, 1.1m). Cleanup signed in again after logout and recorded `need … closed`, `activity … deleted`, and both throwaway accounts erased.
+- The enterprise path passed on desktop Chrome (1440×900): post, review, interview, offer. The application was withdrawn and the posting was closed.
+- Visual QA passed 33 shots at 1440×900, 412×915, and 390×844 for the logged-out shell, the talent shell, and company postings. Feed, Work, Map, and Profile render. The Next.js dev badge overlaps the first bottom-nav label in local `next dev`; it is not in the Vercel build. At 390px the enterprise nav clips the last item. Map still says nothing is nearby in 10 km around Hyderabad.
 
 ## Phone checks
 
@@ -63,10 +65,10 @@ Local server `http://127.0.0.1:3456`, API proxied to production, one worker, 26 
 
 - Sentry ingest still returns 403 until the project allows `arena.vikisol.in`.
 - GitHub's OAuth token cannot edit `.github/workflows/e2e.yml` (missing `workflow` scope). The demo-password comment in that file is still on `main`.
-- `GET /posts/joined` is on the live API as of backend `667df7c`. Before that deploy, `/work` and `/identity` logged a 400.
-- Map's 10 km search around Hyderabad returned no activities in an earlier session, while the feed shows Kondapur activities. The screen says so. It does not invent pins.
+- `GET /posts/joined` requires a signed-in caller as of backend `c68a22b`. A guest gets 401. `d3b5eff` rejects resolving someone else's need, and resolving anything that is not a need.
+- Map's 10 km search around Hyderabad returned no activities, while the feed shows Kondapur activities. The screen says so. It does not invent pins.
 - Vercel preview protection was not changed.
-- The twelve-step golden path and the enterprise hire path are still open. They were not run against production.
+- Preview runs wrote to production. Throwaway accounts were `b2.host.*` and `b2.guest.*`. Bodies were prefixed `TEST B2`. The last golden run closed the need (a room message blocks hard delete), deleted the activity, and erased both accounts. Public `GET /posts/feed` then had no `TEST B2` or `Golden path test` rows. Six older `Golden path test activity` posts on the demo talent are `cancelled`, so they stay off the feed and still appear on that profile. Four `TEST B2 role` jobs on the demo company are `closed` (the API has no hard delete) and are not in the public feed. They remain on the company postings page.
 
 ## Merge and rollback
 
