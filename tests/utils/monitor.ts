@@ -8,6 +8,11 @@ import type { Page, ConsoleMessage, Request } from "@playwright/test";
  */
 const IGNORED_CONSOLE_PATTERNS: { test: (text: string) => boolean; reason: string }[] = [
   {
+    test: (t) => t.startsWith("Failed to load resource: the server responded with a status of 403"),
+    reason:
+      "The browser's generic line for a blocked request. First-party 403s still fail the test through the request URL. Sentry ingest 403s are named in the request allowlist.",
+  },
+  {
     test: (t) => t.includes("THREE.Clock") && t.includes("deprecated"),
     reason:
       "Upstream: react-three-fiber 9.7.0 (latest) still instantiates THREE.Clock internally; no app-side fix exists (BUGS.md #1). Cosmetic, zero user impact.",
@@ -20,6 +25,11 @@ const IGNORED_CONSOLE_PATTERNS: { test: (text: string) => boolean; reason: strin
 ];
 
 const IGNORED_REQUEST_PATTERNS: { test: (url: string) => boolean; reason: string }[] = [
+  {
+    test: (url) => url.includes("ingest.sentry.io") || url.includes("ingest.us.sentry.io"),
+    reason:
+      "Sentry's own ingest returned 403. Arena still rendered. Allowing the production origin is a Sentry project setting, recorded in docs/BLOCKERS.md. The DSN is not stored in this file.",
+  },
   {
     test: (url) => url.includes("_rsc="),
     reason:

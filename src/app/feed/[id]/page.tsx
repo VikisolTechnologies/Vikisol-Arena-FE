@@ -274,7 +274,7 @@ export default function PostDetailPage() {
                   {post.authorJoinCount > 0 && ` · ${post.authorJoinCount} sessions`}
                 </p>
               </div>
-              {!post.mine && <ChevronRight size={16} color="#5c5c64" style={{ flexShrink: 0 }} />}
+              {!post.mine && <ChevronRight size={16} color="#a1a1aa" style={{ flexShrink: 0 }} />}
               {!post.mine && myUserId !== post.authorUserId && !post.authorCompanyId && (
                 <div data-theme="product" className="text-foreground" style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                   <FollowButton userId={post.authorUserId} />

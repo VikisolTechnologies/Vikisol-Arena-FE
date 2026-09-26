@@ -24,7 +24,7 @@ test.describe("Candidate golden path", () => {
     // demo.talent@vikisol.dev is seeded as "Aarav Sharma" (TEST-LOGINS.md) - asserting the real
     // name renders somewhere on the authenticated shell confirms this isn't a generic/placeholder
     // render, it's genuinely this account's data.
-    await expect(page.getByText("Aarav Sharma", { exact: false }).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Aarav Sharma", { exact: false }).filter({ visible: true }).first()).toBeVisible({ timeout: 10_000 });
     expect(monitor.unexpected()).toEqual([]);
   });
 
@@ -57,7 +57,7 @@ test.describe("Candidate golden path", () => {
   test("Identity/profile renders real seeded data", async ({ page }) => {
     await page.goto("/identity");
     await page.waitForTimeout(1500);
-    await expect(page.getByText("Aarav Sharma", { exact: false }).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Aarav Sharma", { exact: false }).filter({ visible: true }).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("Settings: 'Reduce motion effects' toggle survives a reload (real persistence, not just a UI flip)", async ({

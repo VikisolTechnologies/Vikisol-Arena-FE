@@ -13,7 +13,7 @@ export function BuildStamp() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed bottom-0.5 right-1 z-[999] select-none font-mono text-[9px] leading-none tracking-tight text-foreground/25"
+      className="pointer-events-none fixed top-2 right-2 z-[999] select-none font-mono text-[9px] leading-none tracking-tight text-muted-foreground"
     >
       {short}
     </div>

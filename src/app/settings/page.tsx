@@ -280,7 +280,7 @@ export default function SettingsPage() {
                 const locked = key === "autopilot" && !isPro;
                 if (locked) {
                   return (
-                    <div key={key} className="flex w-full items-start gap-3 rounded-2xl border border-border bg-secondary/60 px-4 py-3.5 opacity-60">
+                    <div key={key} className="flex w-full items-start gap-3 rounded-2xl border border-border bg-secondary/60 px-4 py-3.5">
                       <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-2 border-border" />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-1.5 text-sm font-semibold">

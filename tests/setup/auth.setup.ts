@@ -1,6 +1,7 @@
 import { test as setup, expect } from "@playwright/test";
 import { DEMO_ACCOUNTS, type DemoAccount } from "../fixtures/accounts";
 import { escapeRegExp } from "../utils/escape-regexp";
+import { revealPasswordSignIn } from "../utils/password-sign-in";
 
 /**
  * Runs once before every other project (see playwright.config.ts's `dependencies: ["setup"]`),
@@ -19,6 +20,7 @@ async function signInAs(page: import("@playwright/test").Page, account: DemoAcco
   // text too (e.g. "Talent Find opportunities"), confirmed live; a substring match against just
   // the label is safe since no two role buttons on this page share a prefix.
   await page.getByRole("button", { name: account.roleButtonLabel, exact: false }).click();
+  await revealPasswordSignIn(page);
   await page.getByLabel("Email").fill(account.email);
   await page.getByLabel("Password").fill(account.password);
   await page.locator('button[type="submit"]').click();

@@ -12,7 +12,7 @@
 :root {
   --background: #09090b;
   --foreground: #f5f5f6;
-  --faint: #5c5c64;
+  --faint: #a1a1aa;
 
   --primary: #ff6b35;
   --primary-soft: #ff8a5b;
@@ -83,7 +83,7 @@
   --ink-800: #26262b;
   --ink-600: #3a3a40;
   --ink-400: #a1a1aa;
-  --ink-300: #5c5c64;
+  --ink-300: #a1a1aa;
 
   --line: rgba(255, 255, 255, 0.12);
   --line-strong: rgba(255, 255, 255, 0.2);

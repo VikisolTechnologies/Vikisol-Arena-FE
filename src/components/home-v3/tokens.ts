@@ -25,5 +25,5 @@ export const ARENA_V3 = {
   goldText: "#ff8a5b",
   champagne: "#ff8a5b",
   champagneText: "#160a05",
-  inactiveTab: "#5c5c64",
+  inactiveTab: "#a1a1aa",
 } as const;

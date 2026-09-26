@@ -385,7 +385,7 @@ export function CreateComposer({
                     <p style={{ margin: 0, fontSize: 15, color: ARENA_V3.ink }}>{row.label}</p>
                     <p style={{ margin: "2px 0 0", fontSize: 12, color: ARENA_V3.muted }}>{row.description}</p>
                   </div>
-                  <ChevronRight size={16} color="#5c5c64" style={{ flexShrink: 0 }} />
+                  <ChevronRight size={16} color="#a1a1aa" style={{ flexShrink: 0 }} />
                 </button>
               ))}
             </div>

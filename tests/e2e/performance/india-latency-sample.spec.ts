@@ -87,6 +87,9 @@ const fmtStats = (label: string, s: Stats) =>
 
 test.describe(`India-latency sample (${INDIA_SFO_RTT_MS}ms emulated RTT, unthrottled CPU/bandwidth-realistic, ${RUNS} runs)`, () => {
   test.setTimeout(600_000);
+  test.beforeEach(({ browserName }) => {
+    test.skip(browserName !== "chromium", "Network emulation uses CDP, which Playwright only provides in Chromium.");
+  });
 
   test("landing page (/) — logged out, first visit", async ({ browser }, testInfo) => {
     const samples: Sample[] = [];

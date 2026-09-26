@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { DEMO_ACCOUNTS } from "../../fixtures/accounts";
 import { attachMonitor } from "../../utils/monitor";
+import { revealPasswordSignIn } from "../../utils/password-sign-in";
 
 /** @auth @security — protected-route and cross-role access control (spec §4/§21). This exact
  * class of bug (wrong-role sessions stranded in the wrong onboarding wizard instead of a real
@@ -18,12 +19,20 @@ const DENIED_HEADING = "This page isn't in my database.";
 test.describe("Logged out — protected routes redirect to /auth", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  for (const path of ["/home", "/identity", "/settings", "/applications"]) {
+  for (const path of ["/identity", "/settings", "/applications"]) {
     test(`${path} → /auth`, async ({ page }) => {
       await page.goto(path);
       await expect(page).toHaveURL(/\/auth$/, { timeout: 10_000 });
     });
   }
+
+  test("/home stays readable for a guest and does not show a private profile", async ({ page }) => {
+    await page.goto("/home");
+    await expect(page).toHaveURL(/\/home$/, { timeout: 10_000 });
+    await expect(page.getByText("Browsing as a guest").filter({ visible: true }).first()).toBeVisible();
+    await page.getByRole("button", { name: "Create" }).filter({ visible: true }).click();
+    await expect(page.getByRole("heading", { name: "Sign in to post" })).toBeVisible();
+  });
 
   test("/enterprise/dashboard → /auth", async ({ page }) => {
     await page.goto("/enterprise/dashboard");
@@ -99,6 +108,7 @@ test.describe("Post-login redirect target", () => {
     await page.goto("/identity");
     await expect(page).toHaveURL(/\/auth$/);
     await page.getByRole("button", { name: "Talent", exact: false }).click();
+    await revealPasswordSignIn(page);
     await page.getByLabel("Email").fill(DEMO_ACCOUNTS.talent.email);
     await page.getByLabel("Password").fill(DEMO_ACCOUNTS.talent.password);
     await page.locator('button[type="submit"]').click();

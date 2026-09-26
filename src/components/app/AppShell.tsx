@@ -139,6 +139,7 @@ export function AppShell({
   // Starts false on server and first client paint (SSR has no localStorage) and flips
   // post-hydration - reading getSession() during render causes a hydration mismatch.
   const [loggedIn, setLoggedIn] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   // Pages that already fetch the profile pass it in; the rest get it fetched here, so the
   // account chip is right on every screen without every page having to wire it up.
   const [ownProfile, setOwnProfile] = useState<CandidateProfile | null>(null);
@@ -146,6 +147,7 @@ export function AppShell({
     const session = getSession();
     // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only auth-gate flip
     setLoggedIn(!!session);
+    setAuthReady(true);
     if (session && profileProp === undefined) {
       getMyProfile().then(setOwnProfile).catch(() => {});
     }
@@ -240,8 +242,16 @@ export function AppShell({
             {title ? (
               <h1 className="min-w-0 flex-1 truncate font-display text-lg font-bold tracking-tight sm:text-xl">{title}</h1>
             ) : (
-              <Link href="/home" className="min-w-0 flex-1 font-display text-base font-bold tracking-wide lg:invisible">
-                Arena<span className="text-primary">.</span>
+              <Link href="/home" className="flex min-w-0 flex-1 items-baseline gap-2 font-display text-base font-bold tracking-wide lg:invisible">
+                <span>
+                  Arena<span className="text-primary">.</span>
+                </span>
+                {loggedIn && profile?.name && (
+                  <span className="truncate text-sm font-medium tracking-normal text-foreground">{profile.name}</span>
+                )}
+                {authReady && !loggedIn && (
+                  <span className="truncate text-xs font-medium tracking-normal text-muted-foreground">Browsing as a guest</span>
+                )}
               </Link>
             )}
             <div className="ml-auto flex shrink-0 items-center gap-2">

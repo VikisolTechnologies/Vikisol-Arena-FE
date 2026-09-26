@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { DEMO_ACCOUNTS } from "../../fixtures/accounts";
+import { revealPasswordSignIn } from "../../utils/password-sign-in";
 
 /** @auth @smoke — sign-in lifecycle against the real /auth form and the real API. Valid-login
  * coverage for all 5 roles already happens in tests/setup/auth.setup.ts (it IS the login test,
@@ -14,6 +15,7 @@ test.describe("Sign-in validation", () => {
 
   test("empty email and password shows a validation error, does not call the API", async ({ page }) => {
     await page.goto("/auth");
+    await revealPasswordSignIn(page);
     await page.locator('button[type="submit"]').click();
     await expect(page.getByText("Email and password are required")).toBeVisible();
     await expect(page).toHaveURL(/\/auth$/);
@@ -21,6 +23,7 @@ test.describe("Sign-in validation", () => {
 
   test("malformed email is rejected by the browser before submit", async ({ page }) => {
     await page.goto("/auth");
+    await revealPasswordSignIn(page);
     await page.getByLabel("Email").fill("not-an-email");
     await page.getByLabel("Password").fill("whatever123");
     await page.locator('button[type="submit"]').click();
@@ -34,6 +37,7 @@ test.describe("Sign-in validation", () => {
   test("wrong password for a real account shows an error, stays on /auth", async ({ page }) => {
     await page.goto("/auth");
     await page.getByRole("button", { name: "Talent", exact: false }).click();
+    await revealPasswordSignIn(page);
     await page.getByLabel("Email").fill(DEMO_ACCOUNTS.talent.email);
     await page.getByLabel("Password").fill("definitely-the-wrong-password-123");
     await page.locator('button[type="submit"]').click();
@@ -44,6 +48,7 @@ test.describe("Sign-in validation", () => {
   test("submit button shows a loading state and disables while submitting", async ({ page }) => {
     await page.goto("/auth");
     await page.getByRole("button", { name: "Talent", exact: false }).click();
+    await revealPasswordSignIn(page);
     await page.getByLabel("Email").fill(DEMO_ACCOUNTS.talent.email);
     await page.getByLabel("Password").fill("definitely-the-wrong-password-123");
     const submit = page.locator('button[type="submit"]');

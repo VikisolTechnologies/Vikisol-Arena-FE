@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
@@ -52,14 +53,12 @@ export default function CompaniesPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {companies.map((c) => (
-            <button
+            <div
               key={c.id}
-              type="button"
-              onClick={() => router.push(`/companies/${c.id}`)}
-              className="w-full rounded-[24px] border border-border bg-card p-5 text-left transition-transform hover:-translate-y-0.5"
+              className="w-full rounded-[24px] border border-border bg-card p-5 text-left"
             >
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2.5">
+                <Link href={`/companies/${c.id}`} className="flex min-w-0 items-center gap-2.5">
                   {/* R2 - company logo; seeded placeholder until real company logos exist. */}
                   {/* eslint-disable-next-line @next/next/no-img-element -- seeded placeholder, see PersonAvatar */}
                   <img
@@ -72,14 +71,14 @@ export default function CompaniesPage() {
                     <p className="text-sm font-semibold">{c.name}</p>
                     <p className="text-xs text-muted-foreground">{c.industry} · {c.size}</p>
                   </div>
-                </div>
+                </Link>
                 <CompanyFollowButton companyId={c.id} initialFollowing={!!c.viewerFollows} />
               </div>
-              <div className="mt-3.5 flex items-center gap-2">
+              <Link href={`/companies/${c.id}`} className="mt-3.5 flex items-center gap-2">
                 <Badge variant="secondary" className="bg-secondary text-[11px] text-muted-foreground">{c.openJobCount} open role{c.openJobCount === 1 ? "" : "s"}</Badge>
                 <Badge variant="secondary" className="bg-secondary text-[11px] text-muted-foreground">{c.followerCount} follower{c.followerCount === 1 ? "" : "s"}</Badge>
-              </div>
-            </button>
+              </Link>
+            </div>
           ))}
         </div>
       )}
