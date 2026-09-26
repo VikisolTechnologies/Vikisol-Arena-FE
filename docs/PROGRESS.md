@@ -10,9 +10,9 @@ STEP 4 through STEP 7 of `docs/ARENA-MISSION.md`, on `feature/arena-vnext`. The 
 
 - STEP 1 cleanup is on `main` at `5a1b52d`. `https://arena.vikisol.in/version` returned that commit. Isolated mobile first paint held the 2.5s budget. The budget was not loosened.
 - STEP 2: company-admin 2FA was never forced. Written in `docs/ARENA-CURRENT-STATE.md`, `docs/DECISIONS.md`, and `docs/SECURITY-FINDINGS.md`. Auth was not changed.
-- STEP 3: Jenny write-body and scope contract tests are on the backend branch `feature/arena-jenny-contract`. A token without `arena.createPost`, and a token for a different user, both get 403 on `POST /posts`.
-- STEP 4: `docs/ARENA-VNEXT-BLUEPRINT.md` and `docs/design/vnext.html` are on `feature/arena-vnext`. Dark and orange is the built UI. Ivory is the comparison in the mockup file.
-- STEP 5: the shell, Feed, Create, Work, Discover, Map, Profile, and Jenny slots are in `src/components/vnext/`. Protected preview for `f3cb239`: https://arena-245mpnx8x-vikisol-technologies-projects.vercel.app (Vercel SSO).
+- STEP 3: Jenny write-body and scope contract tests are on backend `main` at `ab6dcc6`. A token without `arena.createPost`, and a token for a different user, both get 403 on `POST /posts`. The write JSON did not change.
+- STEP 4: `docs/ARENA-VNEXT-BLUEPRINT.md` answers the mission's ten questions, and `docs/design/vnext.html` has phone and desktop frames for the six screens, dark beside ivory.
+- STEP 5: the shell, Feed, Create, Work, Discover, Map, Profile, and Jenny slots are in `src/components/vnext/`. The public landing nav now says People, Projects, and Companies, and the people section uses the real count or no number. Protected preview for `f3cb239`: https://arena-245mpnx8x-vikisol-technologies-projects.vercel.app (Vercel SSO). A later commit will get its own preview.
 
 ## Next
 

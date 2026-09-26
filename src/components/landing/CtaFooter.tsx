@@ -17,7 +17,7 @@ export function CtaFooter() {
           </span>
         </Reveal>
         <Reveal as="p" delay={0.05} className="my-5 text-[17px] text-muted-foreground">
-          Free for talent. Enterprise plans for teams that hire.
+          A living network. Free to join. Companies hire from the same place.
         </Reveal>
         <Reveal delay={0.1}>
           {/* "Enter as guest" - "Enter Arena" now means exactly that: straight into the real
@@ -32,7 +32,7 @@ export function CtaFooter() {
         <span>
           ARENA<span className="text-primary">.</span> — a Vikisol Technologies product
         </span>
-        <span>Identity · Map · Marketplace · Enterprise</span>
+        <span>Feed · Discover · Map · Work</span>
       </footer>
     </>
   );

@@ -53,7 +53,63 @@ Jenny’s five writes stay exactly:
 - `POST /marketplace/projects/{id}/bids` with `arena.placeBid`
 - `POST /applications` with `arena.applyToJob`
 
-Those bodies are locked by `JennyArenaWriteBodyContractTest` on the backend branch `feature/arena-jenny-contract`. Do not rename them.
+Those bodies are locked by `JennyArenaWriteBodyContractTest`. A token that lacks the write scope, and a token for a different user, both get 403 from `JennyArenaWriteScopeContractTest`. That branch is on backend `main` at `ab6dcc6`. The write JSON was not changed.
+
+## The mission's ten questions
+
+These sit on top of the ten above. They are the questions in `docs/ARENA-MISSION.md`.
+
+1. **Why open Arena on a day you are not job hunting?** Because something is happening near you, or something you already started is waiting. A game tonight, a neighbour's ask, a project you bid on, a room that still has a message. The front door is that life, not a list of openings.
+
+2. **What is in Feed, and how is it ranked?** The items `GET /feed` already returns: activities, asks, updates, projects, and company posts. The order is `FeedRankingService`, which scores the newest 500 posts and does not use distance. The client does not re-rank. A distance-aware rank is a later backend change, not a number we invent on the page.
+
+3. **How do jobs, projects, needs, offers, people, sessions, and activities sit together?** One card. The kind is a label: Need, Offer, Activity, Project, Job, Update, Company. A job is a need a company posted. A project is a need with bids. A session is an activity that already has a time. People are not posts. They show up in Discover and in the room the post opens.
+
+4. **What does Discover do that Feed does not?** Feed is what is happening now. Discover is the directory you search when you already know who or what you want, including people and companies that are not in today's feed.
+
+5. **What does Map do that Discover does not?** Place. The same kinds of posts, limited to what is around the person. The list is the screen. The map canvas loads only here.
+
+6. **How does Jenny appear without a chatbot tab?** A slot on Feed, Discover, Map, Work, Create, and Profile. One real sentence, then the person confirms. The phone bar does not have an Agent tab. `/agent` stays for the full thread.
+
+7. **What does Create do?** A sheet, not a Post Job button.
+   - Need: `POST /posts` with intent ask.
+   - Offer: `POST /posts` with intent update.
+   - Project: minimum, maximum, and weeks, then `POST /marketplace/projects`. No invented budget.
+   - Job: only with a company seat, and it links to the existing enterprise posting flow.
+   - Activity: `POST /posts` with intent activity.
+   - Ask Jenny: a draft in the slot. Nothing publishes until the person confirms.
+
+8. **What is Work beyond applications?** Joins, bids, interviews, and recorded outcomes, as well as applications. This preview lists applications, because that is the list this screen loads. The other records stay on the routes that already own them. The screen does not pretend an application list is the whole of a person's work.
+
+9. **The first 10 seconds.** Logged out: the landing says this is a network, then the guest feed shows real posts or "Arena is quiet right now." Create asks them to sign in. Logged in: their name, the real pulse count, Jenny only when there is a real note, and Create ready.
+
+10. **What needs no new backend, and what does?** No new backend: the shell, the nav, empty copy, the pulse count, guest states, Jenny through the existing agent API, and project fields the API already accepts. Later: a feed rank that includes distance, a map of needs and people, one Work list that unions applications, bids, joins, and outcomes, session waitlist and recurrence, and forced admin 2FA.
+
+## Today's nav, mapped
+
+| Today | Becomes |
+|---|---|
+| Home | Feed `/home` |
+| Nearby | Map `/map` |
+| Discuss | Stays `/discuss`. It is not a phone-bar tab. Needs still open from Feed and Create. |
+| Work | Work `/work`, outcomes rather than a job board |
+| Inbox | Stays `/rooms`. Reached from the post or the activity, not from a sixth tab. |
+
+## Every current screen
+
+| Screen | Decision |
+|---|---|
+| `/` landing | Redesign the public copy around the network. Keep the dark brand and the real counts. |
+| `/home` | Recompose into Feed. |
+| `/discover` | Redesign. It stops being a job swipe. |
+| `/map` | Recompose. Activities nearby. No job pins. |
+| `/discuss` | Keep. Off the primary bar. |
+| `/work` | Redesign into the ledger of what this person is in. |
+| `/rooms` | Keep. |
+| `/identity` | Recompose into Profile. |
+| `/agent` | Keep the thread. The new bar does not add a chatbot tab. |
+| Enterprise, admin, applications, marketplace, interviews | Keep. |
+| Sessions as a new object | New, and not in v1. Flag `sessions-extended` stays off. |
 
 ## Pulse and a quiet network
 

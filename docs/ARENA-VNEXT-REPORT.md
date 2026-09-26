@@ -4,11 +4,11 @@
 
 ## What is live
 
-Frontend `main` is `5a1b52d`. `https://arena.vikisol.in/version` returns that commit, built `2026-09-26T06:48:42Z`. The cleanup is contrast, the guest home label, the companies card, dead-component removal, and the dev-only API proxy. It does not change the product screens.
+Frontend `main` in git is `72775dd` (the mission and the 2FA note). `https://arena.vikisol.in/version` still returns the cleanup commit `5a1b52d`, built `2026-09-26T06:48:42Z`, until that docs push finishes deploying. The cleanup is contrast, the guest home label, the companies card, dead-component removal, and the dev-only API proxy. It does not change the product screens.
 
 The full local suite against that cleanup, one worker, was 236 passed, 4 skipped, 2 failed. The two failures were cold mobile FCP on the landing page (3780ms) and `/home` (4248ms) while this machine was also building the preview. The same file, run alone, passed in 37 seconds, including both of those assertions at the 2.5s budget. The budget was not loosened.
 
-Backend write shapes used by Jenny are locked by `JennyArenaWriteBodyContractTest` on `feature/arena-jenny-contract` (`d9940fa`). That branch is not merged. The live endpoints were not changed.
+Backend `main` is `ab6dcc6`. Jenny's write JSON is unchanged. `JennyArenaWriteBodyContractTest` locks the bodies. `JennyArenaWriteScopeContractTest` calls `POST /posts` and expects 403 for a service token that lacks `arena.createPost`, and 403 for a token whose subject is a company admin. Both passed before the fast-forward.
 
 ## Preview
 

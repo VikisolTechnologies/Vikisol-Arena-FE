@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "#overnight", label: "How it works" },
-  { href: "#universe", label: "Talent Universe" },
+  { href: "#universe", label: "People" },
   { href: "#market", label: "Projects" },
-  { href: "#cta", label: "Enterprise" },
+  { href: "#cta", label: "Companies" },
 ];
 
 export function Nav() {

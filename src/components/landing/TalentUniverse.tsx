@@ -41,12 +41,12 @@ export function TalentUniverse() {
         <div className="relative z-[2] w-full px-5 py-[70px] sm:px-6">
           <Reveal as="div" className="mb-4 flex items-center justify-center gap-2.5 font-display text-xs font-bold tracking-[5px] text-primary-soft">
             <span className="text-[#5a5a63]">02</span>
-            FOR ENTERPRISES
+            PEOPLE
           </Reveal>
           <Reveal as="h2" delay={0.05} className="font-display text-[clamp(30px,4.4vw,52px)] font-bold">
-            Every talent.{" "}
+            People you can{" "}
             <span className="bg-linear-to-r from-primary-soft to-primary bg-clip-text text-transparent">
-              One universe.
+              actually find.
             </span>
           </Reveal>
           <Reveal
@@ -55,8 +55,8 @@ export function TalentUniverse() {
             className="mx-auto mb-7.5 mt-3.5 max-w-[560px] text-base text-muted-foreground"
           >
             {stats && stats.openToWorkCount > 0
-              ? `${stats.openToWorkCount.toLocaleString("en-IN")} people open to work — every industry, contract or full-time. Search them from your own enterprise login.`
-              : "People open to work across every industry, contract or full-time. Search them from your own enterprise login."}
+              ? `${stats.openToWorkCount.toLocaleString("en-IN")} people have chosen to be found — every industry. A company searches them from its own login. The count is the real one.`
+              : "People who have chosen to be found, across every industry. A company searches them from its own login. When the count is quiet, this sentence stays without a number."}
           </Reveal>
 
           <Reveal delay={0.15} className="mx-auto mb-5.5 flex max-w-[640px] items-center gap-3 rounded-full border border-border bg-white/5 py-1.5 pl-5.5 pr-1.5 backdrop-blur-xl">
