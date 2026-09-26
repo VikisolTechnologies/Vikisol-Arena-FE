@@ -4,10 +4,11 @@ import { ResetPasswordForm } from "@/components/vnext/entry/ResetPasswordForm";
 
 export const metadata: Metadata = { title: "New password · Arena" };
 
-export default function ResetPasswordPage() {
+export default async function ResetTokenPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params;
   return (
     <Suspense fallback={null}>
-      <ResetPasswordForm />
+      <ResetPasswordForm pathToken={token} />
     </Suspense>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signOut } from "@/lib/api/auth";
 import { getJoinedPosts, getMyPosts } from "@/lib/api/posts";
 import { getMyBids } from "@/lib/api/myBids";
 import { getMyProfile } from "@/lib/api/profile";
@@ -8,6 +10,7 @@ import { JennySlot, Card, useLoad } from "./shared";
 import { Status, useGuest, VNextShell } from "./Shell";
 
 export function ProfileScreen() {
+  const router = useRouter();
   const guest = useGuest();
   const { data, error } = useLoad(async () => {
     if (guest !== false) return null;
@@ -53,6 +56,15 @@ export function ProfileScreen() {
             ))}
           </div>
         </>
+      )}
+      {guest === false && (
+        <button
+          type="button"
+          className="mt-6 inline-flex min-h-11 items-center text-sm font-semibold"
+          onClick={() => { void signOut().then(() => router.push("/auth?mode=signin")); }}
+        >
+          Sign out
+        </button>
       )}
     </VNextShell>
   );

@@ -14,6 +14,7 @@ export default defineConfig({
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
     { name: "mobile", use: { ...devices["Pixel 7"] } },
+    { name: "mobile-webkit", use: { ...devices["iPhone 13"] } },
   ],
   webServer: {
     command: "npm run dev -- --port 3107 --webpack",
