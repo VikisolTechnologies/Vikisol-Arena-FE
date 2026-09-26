@@ -12,9 +12,9 @@ const Animator = dynamic(() => import("./AgentOrbAnimator").then((m) => m.AgentO
 // (SEE_LANDING_REFERENCE SCREEN 3) - things a real person actually did on Arena, not what an
 // agent supposedly did for them.
 const CHIPS = [
-  { className: "left-[-4%] top-[6%] rotate-[-5deg]", icon: "✓", label: "Joined", value: "Badminton tonight" },
-  { className: "right-[-6%] top-[26%] rotate-[5deg]", icon: "🤝", label: "Asked", value: "Help moving Sat" },
-  { className: "bottom-[8%] left-[12%] rotate-[3deg]", icon: "💼", label: "Bid", value: "₹62,000 sent" },
+  { className: "left-[-4%] top-[6%] rotate-[-5deg]", icon: "✓", label: "Need", value: "A hand nearby" },
+  { className: "right-[-6%] top-[26%] rotate-[5deg]", icon: "🤝", label: "Activity", value: "Something this week" },
+  { className: "bottom-[8%] left-[12%] rotate-[3deg]", icon: "✦", label: "Offer", value: "A skill you have" },
 ];
 
 /** The orb — eyes, orbit rings, floating activity chips. Matches arena-prototype.html's #orb exactly. */

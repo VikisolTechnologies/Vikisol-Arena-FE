@@ -171,6 +171,23 @@ export async function getMyPosts(): Promise<Post[]> {
   return delay(readPosts().filter((p) => p.mine), 200);
 }
 
+export async function getJoinedPosts(): Promise<Post[]> {
+  if (isRealMode()) {
+    const page = await apiFetch<PagedResponse<Post>>("/posts/joined", { query: { page: 0, size: 100 } });
+    return page.content;
+  }
+  return delay(readPosts().filter((p) => p.myJoinStatus === "approved"), 200);
+}
+
+export async function closeNeed(postId: string): Promise<Post> {
+  if (isRealMode()) return apiFetch<Post>(`/posts/${postId}/status`, { method: "PUT" });
+  const updated = readPosts().map((post) => (post.id === postId ? { ...post, status: "closed" as const } : post));
+  writePosts(updated);
+  const post = updated.find((item) => item.id === postId);
+  if (!post) throw new Error("Post not found");
+  return delay(post, 200);
+}
+
 export async function createPost(input: CreatePostInput): Promise<Post> {
   if (isRealMode()) {
     return apiFetch<Post>("/posts", {

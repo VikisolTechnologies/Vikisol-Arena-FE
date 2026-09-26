@@ -10,14 +10,14 @@ export function CtaFooter() {
           as="h2"
           className="max-w-[820px] font-display text-[clamp(36px,6vw,72px)] font-bold leading-[1.05] tracking-tight"
         >
-          Stop scrolling listings.
+          Find what is happening nearby.
           <br />
           <span className="bg-linear-to-r from-primary-soft to-primary bg-clip-text text-transparent">
-            Start something real.
+            Jenny can help.
           </span>
         </Reveal>
         <Reveal as="p" delay={0.05} className="my-5 text-[17px] text-muted-foreground">
-          Free for talent. Enterprise plans for teams that hire.
+          A network for needs, people, activities and work nearby. Free to join. Jenny helps.
         </Reveal>
         <Reveal delay={0.1}>
           {/* "Enter as guest" - "Enter Arena" now means exactly that: straight into the real
@@ -32,7 +32,7 @@ export function CtaFooter() {
         <span>
           ARENA<span className="text-primary">.</span> — a Vikisol Technologies product
         </span>
-        <span>Identity · Map · Marketplace · Enterprise</span>
+        <span>Feed · Discover · Map · Work</span>
       </footer>
     </>
   );

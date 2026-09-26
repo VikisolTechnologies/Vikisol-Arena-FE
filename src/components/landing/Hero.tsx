@@ -36,21 +36,20 @@ export function Hero() {
       <div>
         <Badge variant="glass" {...revealProps()}>
           <span className="size-2 rounded-full bg-[#3ddc84]" />
-          Not a job board
+          Nearby
         </Badge>
 
         <h1
           {...revealProps("mt-5 font-display text-[clamp(44px,6.4vw,88px)] font-bold leading-[1.02] tracking-tight")}
         >
-          Real things,{" "}
+          A network for needs, people,{" "}
           <span className="bg-linear-to-r from-primary-soft to-primary bg-clip-text text-transparent">
-            happening near you.
+            activities and work nearby.
           </span>
         </h1>
 
         <p {...revealProps("mt-5.5 max-w-[480px] text-[17px] leading-relaxed text-muted-foreground")}>
-          Join a pickup game, ask your neighborhood for a hand, bid on a freelance project, or apply
-          to a real role — all in one place, all real people nearby.
+          Jenny helps when there is something real to say. Counts on this page are the live ones, or the sentence stays without a number.
         </p>
 
         <div {...revealProps("mt-6.5 mb-6.5 flex flex-wrap gap-3.5")}>

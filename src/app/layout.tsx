@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { CommandPalette } from "@/components/command-palette/CommandPalette";
-import { RouteTransition } from "@/components/RouteTransition";
-import { PageTransition } from "@/components/PageTransition";
 import { ApiDownBanner } from "@/components/ApiDownBanner";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 import { BuildStamp } from "@/components/BuildStamp";
+import { PageTransition } from "@/components/PageTransition";
+import { RouteTransition } from "@/components/RouteTransition";
+import { DeferredCommandPalette } from "@/components/vnext/DeferredCommandPalette";
+import { SentryClient } from "@/components/SentryClient";
 
 // Self-hosted (src/app/fonts, OFL - licences alongside) rather than next/font/google: the
 // Google variant downloads the fonts at build time, and Vercel builds kept failing when that
@@ -39,9 +40,9 @@ export const metadata: Metadata = {
   // and every other product screen have none of their own) - fixing it here is what actually
   // reaches the browser tab on the screens the founder was looking at, not just the marketing
   // root path itself.
-  title: "Arena — Real things happening near you",
+  title: "Arena — needs, people, activities and work nearby",
   description:
-    "Arena is where your city shows up: join activities, ask for help, find work, and build a real track record of following through.",
+    "A network for needs, people, activities and work nearby. Jenny helps when there is something real to say.",
 };
 
 export default function RootLayout({
@@ -62,7 +63,8 @@ export default function RootLayout({
         <ApiDownBanner />
         <RouteTransition />
         <PageTransition>{children}</PageTransition>
-        <CommandPalette />
+        <DeferredCommandPalette />
+        <SentryClient />
         <CookieConsentBanner />
         <WebVitalsReporter />
         <BuildStamp />
