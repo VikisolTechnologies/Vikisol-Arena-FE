@@ -4,7 +4,7 @@
 
 ## What is live
 
-Frontend `main` in git is `8c11dbc`. That commit labels an offer everywhere the live app maps an intent, and the Discuss filter includes offers. `https://arena.vikisol.in/version` was still the cleanup commit `5a1b52d` when this report was last checked; Vercel deploys `main` from GitHub.
+Frontend `main` in git is `a104eb7`. Offer labels are `8c11dbc`: an offer is named everywhere the live app maps an intent, and the Discuss filter includes offers. `https://arena.vikisol.in/version` was still the cleanup commit `5a1b52d` when this report was last checked; Vercel deploys `main` from GitHub.
 
 Backend `main` is `d3b5eff`. `https://api-arena.vikisol.in/api/v1/version` returned that commit, built `2026-09-26T13:11:48Z`. A guest `GET /posts/joined` returns 401. Jenny's write JSON is unchanged. `JennyArenaWriteBodyContractTest` locks the bodies. `JennyArenaWriteScopeContractTest` calls `POST /posts` and expects 403 for a service token that lacks `arena.createPost`, and 403 for a token whose subject is a company admin. Both passed before the fast-forward.
 
@@ -12,7 +12,7 @@ The full local suite against the cleanup, one worker, was 236 passed, 4 skipped,
 
 ## Preview
 
-Protected preview, behind Vercel SSO: https://arena-web-git-feature-arena-vnext-vikisol-technologies-projects.vercel.app. It is not a public URL. Do not point DNS at it. The branch was rebased onto `main` (`8c11dbc`) and is not merged. Pull request: https://github.com/VikisolTechnologies/Vikisol-Arena-FE/pull/1. The earlier preview for `f3cb239` was https://arena-245mpnx8x-vikisol-technologies-projects.vercel.app.
+Protected preview, behind Vercel SSO: https://arena-web-git-feature-arena-vnext-vikisol-technologies-projects.vercel.app. It is not a public URL. Do not point DNS at it. The branch was rebased onto `main` (`a104eb7`) and is not merged. Pull request: https://github.com/VikisolTechnologies/Vikisol-Arena-FE/pull/1. The earlier preview for `f3cb239` was https://arena-245mpnx8x-vikisol-technologies-projects.vercel.app.
 
 Test logins stay in `TEST-LOGINS.md` and the gitignored `.env.test`. They are not copied here.
 
@@ -49,7 +49,7 @@ Local server `http://127.0.0.1:3456`, API proxied to production, one worker, 26 
 
 - VNext surfaces and landing: 13 passed on desktop Chrome at 1440×900. Pixel 7 (412×915) and iPhone 13 (390×844) then passed the same files, 21 passed.
 - Axe and the static route sweep, desktop Chrome: 57 passed, then 2 failed on `/work` and `/identity` because `GET /posts/joined` was not deployed. After backend `main` `667df7c`, those two routes passed on a re-run.
-- The twelve-step two-account journey passed on iPhone 13 (390×844) against the live API through the local preview proxy (`bdfdb48`, 1.1m). Cleanup signed in again after logout and recorded `need … closed`, `activity … deleted`, and both throwaway accounts erased.
+- The twelve-step two-account journey passed on iPhone 13 (390×844) against the live API through the local preview proxy (`892e906`, 1.1m). Cleanup signed in again after logout and recorded `need … closed`, `activity … deleted`, and both throwaway accounts erased.
 - The enterprise path passed on desktop Chrome (1440×900): post, review, interview, offer. The application was withdrawn and the posting was closed.
 - Visual QA passed 33 shots at 1440×900, 412×915, and 390×844 for the logged-out shell, the talent shell, and company postings. Feed, Work, Map, and Profile render. The Next.js dev badge overlaps the first bottom-nav label in local `next dev`; it is not in the Vercel build. At 390px the enterprise nav clips the last item. Map still says nothing is nearby in 10 km around Hyderabad.
 
