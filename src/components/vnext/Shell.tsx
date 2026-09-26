@@ -3,11 +3,42 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { getMyRooms } from "@/lib/api/rooms";
 import { getSession } from "@/lib/session";
 
 const CreateSheet = dynamic(() => import("./CreateSheet").then((m) => m.CreateSheet), { ssr: false });
+
+function subscribeSession(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+}
+
+function subscribeNetwork(onChange: () => void) {
+  window.addEventListener("online", onChange);
+  window.addEventListener("offline", onChange);
+  return () => {
+    window.removeEventListener("online", onChange);
+    window.removeEventListener("offline", onChange);
+  };
+}
+
+/** null during server render, then whether localStorage has no session. */
+export function useGuest(): boolean | null {
+  return useSyncExternalStore(subscribeSession, () => getSession() == null, () => null);
+}
+
+function useSessionName(): string | null {
+  return useSyncExternalStore(subscribeSession, () => getSession()?.name ?? null, () => null);
+}
+
+function useOffline(): boolean {
+  return useSyncExternalStore(
+    subscribeNetwork,
+    () => typeof navigator !== "undefined" && !navigator.onLine,
+    () => false,
+  );
+}
 
 const LINKS = [
   { href: "/home", label: "Feed" },
@@ -19,24 +50,10 @@ const LINKS = [
 
 export function VNextShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [name, setName] = useState<string | null>(null);
-  const [guest, setGuest] = useState(false);
+  const name = useSessionName();
+  const guest = useGuest();
   const [createOpen, setCreateOpen] = useState(false);
-  const [offline, setOffline] = useState(false);
-
-  useEffect(() => {
-    const session = getSession();
-    setGuest(!session);
-    setName(session?.name ?? null);
-    const sync = () => setOffline(typeof navigator !== "undefined" && !navigator.onLine);
-    sync();
-    window.addEventListener("online", sync);
-    window.addEventListener("offline", sync);
-    return () => {
-      window.removeEventListener("online", sync);
-      window.removeEventListener("offline", sync);
-    };
-  }, []);
+  const offline = useOffline();
 
   return (
     <div className="min-h-svh bg-background text-foreground">
@@ -54,7 +71,7 @@ export function VNextShell({ children }: { children: ReactNode }) {
         <div className="ml-auto flex items-center gap-3">
           <InboxLink />
           {name && <span className="max-w-[40vw] truncate text-sm font-medium">{name}</span>}
-          {guest && <span className="text-xs text-muted-foreground">Browsing as a guest</span>}
+          {guest === true && <span className="text-xs text-muted-foreground">Browsing as a guest</span>}
           <button type="button" className="min-h-11 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground" onClick={() => setCreateOpen(true)}>
             Create
           </button>
@@ -69,7 +86,7 @@ export function VNextShell({ children }: { children: ReactNode }) {
           </Link>
         ))}
       </nav>
-      {createOpen && <CreateSheet open={createOpen} onClose={() => setCreateOpen(false)} guest={guest} />}
+      {createOpen && <CreateSheet open={createOpen} onClose={() => setCreateOpen(false)} guest={guest === true} />}
     </div>
   );
 }

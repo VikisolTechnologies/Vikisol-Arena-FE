@@ -12,14 +12,16 @@ export function useLoad<T>(load: () => Promise<T>, deps: readonly unknown[]) {
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
-    setData(null);
-    setError(null);
     load()
       .then((value) => {
-        if (!cancelled) setData(value);
+        if (cancelled) return;
+        setError(null);
+        setData(value);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Could not load this.");
+        if (cancelled) return;
+        setData(null);
+        setError(err instanceof Error ? err.message : "Could not load this.");
       });
     return () => {
       cancelled = true;

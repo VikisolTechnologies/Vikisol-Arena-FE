@@ -52,12 +52,17 @@ export default function PostDetailPage() {
   const [saving, setSaving] = useState(false);
   const [signInPromptOpen, setSignInPromptOpen] = useState(false);
   const [signInAction, setSignInAction] = useState("do that");
+  // Clock is captured after paint so render stays pure. A missing start time means the
+  // host can record an outcome immediately; a scheduled activity waits until that time.
+  const [now, setNow] = useState<number | null>(null);
 
   const load = () => { getPost(params.id).then((p) => setPost(p ?? null)); };
 
   useEffect(() => {
+    const clock = window.setTimeout(() => setNow(Date.now()), 0);
     if (getSession()) getMyProfile().then(setProfile);
     load();
+    return () => window.clearTimeout(clock);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
@@ -359,7 +364,7 @@ export default function PostDetailPage() {
                 <JoinRequestsPanel
                   postId={post.id}
                   onDecided={load}
-                  recordOutcome={!post.startsAt || new Date(post.startsAt).getTime() <= Date.now()}
+                  recordOutcome={!post.startsAt || (now != null && new Date(post.startsAt).getTime() <= now)}
                 />
               </div>
             )}

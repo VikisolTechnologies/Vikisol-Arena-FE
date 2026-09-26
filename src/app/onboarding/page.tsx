@@ -56,6 +56,18 @@ const OPEN_TO_OPTIONS: { key: OpenTo; label: string; desc: string; icon: typeof 
   { key: "projects", label: "Projects", desc: "Bid on one-off project work", icon: Laptop },
 ];
 
+function SkipLink({ label = "Skip for now", onSkip }: { label?: string; onSkip: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onSkip}
+      className="mx-auto mt-4 block text-center text-xs text-muted-foreground hover:text-foreground"
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -178,16 +190,6 @@ export default function OnboardingPage() {
     setTimeout(() => router.push("/home"), 600);
   };
 
-  const SkipLink = ({ label = "Skip for now" }: { label?: string }) => (
-    <button
-      type="button"
-      onClick={handleSkip}
-      className="mx-auto mt-4 block text-center text-xs text-muted-foreground hover:text-foreground"
-    >
-      {label}
-    </button>
-  );
-
   return (
     <OnboardingShell
       step={step}
@@ -285,7 +287,7 @@ export default function OnboardingPage() {
               </button>
             ))}
           </div>
-          {cameForJob === false && <SkipLink />}
+          {cameForJob === false && <SkipLink onSkip={handleSkip} />}
         </div>
       )}
 
@@ -310,7 +312,7 @@ export default function OnboardingPage() {
             >
               Continue
             </button>
-            <SkipLink />
+            <SkipLink onSkip={handleSkip} />
           </div>
         </div>
       )}
@@ -341,7 +343,7 @@ export default function OnboardingPage() {
             placeholder="e.g. Techolution"
             className="mt-7 h-14 rounded-2xl border-border bg-white/5 text-center text-lg backdrop-blur-xl"
           />
-          <SkipLink label="I'd rather not say" />
+          <SkipLink onSkip={handleSkip} label="I'd rather not say" />
         </div>
       )}
 
@@ -378,7 +380,7 @@ export default function OnboardingPage() {
             <span className="text-xs text-muted-foreground">PDF or Word, up to 10MB</span>
           </label>
           {resumeError && <p className="mt-3 text-sm text-red-400">{resumeError}</p>}
-          <SkipLink label="Skip — I'll add it later" />
+          <SkipLink onSkip={handleSkip} label="Skip — I'll add it later" />
         </div>
       )}
 
@@ -412,7 +414,7 @@ export default function OnboardingPage() {
               />
             </div>
           </div>
-          <SkipLink label="I'd rather not say" />
+          <SkipLink onSkip={handleSkip} label="I'd rather not say" />
         </div>
       )}
 
@@ -429,7 +431,7 @@ export default function OnboardingPage() {
             placeholder="e.g. Bengaluru, or Remote"
             className="mt-7 h-14 rounded-2xl border-border bg-white/5 text-center text-lg backdrop-blur-xl"
           />
-          <SkipLink />
+          <SkipLink onSkip={handleSkip} />
         </div>
       )}
 

@@ -46,23 +46,16 @@ export function Nav() {
           const dist = Math.abs(e.boundingClientRect.top);
           return dist < bestDist ? e : best;
         });
-        setActiveHref(`#${closest.target.id}`);
+        const href = `#${closest.target.id}`;
+        setActiveHref(href);
+        const el = linkRefs.current[href];
+        setPillStyle(el ? { left: el.offsetLeft, width: el.offsetWidth } : null);
       },
       { rootMargin: "-45% 0px -45% 0px", threshold: 0 },
     );
     targets.forEach((t) => observer.observe(t));
     return () => observer.disconnect();
   }, []);
-
-  useEffect(() => {
-    if (!activeHref) {
-      setPillStyle(null);
-      return;
-    }
-    const el = linkRefs.current[activeHref];
-    if (!el) return;
-    setPillStyle({ left: el.offsetLeft, width: el.offsetWidth });
-  }, [activeHref]);
 
   return (
     <nav

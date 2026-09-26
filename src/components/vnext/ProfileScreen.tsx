@@ -1,19 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { getJoinedPosts, getMyPosts } from "@/lib/api/posts";
 import { getMyBids } from "@/lib/api/myBids";
 import { getMyProfile } from "@/lib/api/profile";
-import { getSession } from "@/lib/session";
 import { JennySlot, Card, useLoad } from "./shared";
-import { Status, VNextShell } from "./Shell";
+import { Status, useGuest, VNextShell } from "./Shell";
 
 export function ProfileScreen() {
-  const [guest, setGuest] = useState<boolean | null>(null);
-  useEffect(() => {
-    setGuest(!getSession());
-  }, []);
+  const guest = useGuest();
   const { data, error } = useLoad(async () => {
     if (guest !== false) return null;
     const [profile, posts, joined, bids] = await Promise.all([getMyProfile(), getMyPosts(), getJoinedPosts().catch(() => []), getMyBids().catch(() => [])]);

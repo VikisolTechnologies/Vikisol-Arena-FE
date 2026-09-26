@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { getMyApplications } from "@/lib/api/applications";
 import { getMyAssignedInterviews } from "@/lib/api/interviews";
 import { getMyBids } from "@/lib/api/myBids";
@@ -9,7 +9,7 @@ import { closeNeed, getJoinedPosts, getJoinRequests, getMyPosts, recordJoinOutco
 import { getSession } from "@/lib/session";
 import type { Post, PostJoinRequest } from "@/lib/types";
 import { JennySlot, Card, useLoad } from "./shared";
-import { Status, VNextShell } from "./Shell";
+import { Status, useGuest, VNextShell } from "./Shell";
 
 type Row = { id: string; group: "Active" | "Done"; title: string; meta: string; href?: string; action?: "resolve" | "attendance"; postId?: string };
 
@@ -31,10 +31,7 @@ export function WorkScreen() {
   const [joins, setJoins] = useState<PostJoinRequest[]>([]);
   const [actionError, setActionError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  const [guest, setGuest] = useState<boolean | null>(null);
-  useEffect(() => {
-    setGuest(!getSession());
-  }, []);
+  const guest = useGuest();
   const { data, error } = useLoad(async () => {
     if (guest !== false) return null;
     const role = getSession()?.role;
