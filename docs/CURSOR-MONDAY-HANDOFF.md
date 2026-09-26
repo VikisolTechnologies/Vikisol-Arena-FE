@@ -17,6 +17,10 @@ Uncommitted control-plane docs are still in the worktree (`AGENTS.md`, `CLAUDE.m
 - Print or commit demo passwords.
 - Touch Vikisol One or JennySol.
 
+## Preview
+
+`https://preview-arena.vikisol.in` points at deployment `d0661b1` (implementation `d746cf9`, review `efa4234`, version stamp `d0661b1`). `/version` returned that commit. The preview stays behind Vercel SSO. Production was not changed.
+
 ## Founder check
 
 1. Open the protected preview on a phone, or a 390px window.
