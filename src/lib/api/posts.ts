@@ -171,6 +171,14 @@ export async function getMyPosts(): Promise<Post[]> {
   return delay(readPosts().filter((p) => p.mine), 200);
 }
 
+export async function getJoinedPosts(): Promise<Post[]> {
+  if (isRealMode()) {
+    const page = await apiFetch<PagedResponse<Post>>("/posts/joined", { query: { page: 0, size: 100 } });
+    return page.content;
+  }
+  return delay(readPosts().filter((p) => p.myJoinStatus === "approved"), 200);
+}
+
 export async function createPost(input: CreatePostInput): Promise<Post> {
   if (isRealMode()) {
     return apiFetch<Post>("/posts", {
