@@ -179,6 +179,15 @@ export async function getJoinedPosts(): Promise<Post[]> {
   return delay(readPosts().filter((p) => p.myJoinStatus === "approved"), 200);
 }
 
+export async function closeNeed(postId: string): Promise<Post> {
+  if (isRealMode()) return apiFetch<Post>(`/posts/${postId}/status`, { method: "PUT" });
+  const updated = readPosts().map((post) => (post.id === postId ? { ...post, status: "closed" as const } : post));
+  writePosts(updated);
+  const post = updated.find((item) => item.id === postId);
+  if (!post) throw new Error("Post not found");
+  return delay(post, 200);
+}
+
 export async function createPost(input: CreatePostInput): Promise<Post> {
   if (isRealMode()) {
     return apiFetch<Post>("/posts", {

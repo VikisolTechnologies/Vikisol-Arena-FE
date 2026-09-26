@@ -5,13 +5,13 @@ import { useEffect, useState } from "react";
 import { getMyApplications } from "@/lib/api/applications";
 import { getMyAssignedInterviews } from "@/lib/api/interviews";
 import { getMyBids } from "@/lib/api/myBids";
-import { getJoinedPosts, getMyPosts } from "@/lib/api/posts";
+import { closeNeed, getJoinedPosts, getJoinRequests, getMyPosts, recordJoinOutcome } from "@/lib/api/posts";
 import { getSession } from "@/lib/session";
 import type { Post } from "@/lib/types";
 import { JennySlot, Card, useLoad } from "./shared";
 import { Status, VNextShell } from "./Shell";
 
-type Row = { id: string; group: "Active" | "Done"; title: string; meta: string; href: string };
+type Row = { id: string; group: "Active" | "Done"; title: string; meta: string; href?: string; action?: "resolve" | "attendance"; postId?: string };
 
 function settled<T>(result: PromiseSettledResult<T>, empty: T): T {
   return result.status === "fulfilled" ? result.value : empty;
@@ -26,6 +26,11 @@ function finished(status: string) {
 }
 
 export function WorkScreen() {
+  const [resolveId, setResolveId] = useState<string | null>(null);
+  const [attendanceId, setAttendanceId] = useState<string | null>(null);
+  const [joins, setJoins] = useState<{ id: string; userName: string; status: string; outcome?: string }[]>([]);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [guest, setGuest] = useState<boolean | null>(null);
   useEffect(() => {
     setGuest(!getSession());
@@ -85,7 +90,9 @@ export function WorkScreen() {
         group: done ? "Done" : "Active",
         title: `${post.intentType === "ask" ? "Need" : "Activity"} · ${post.title || post.body.slice(0, 80)}`,
         meta: `${post.status} · ${next}`,
-        href: next === "Open room" && post.roomId ? `/rooms/${post.roomId}` : `/feed/${post.id}`,
+        href: next === "Close need" || next === "Mark attendance" ? undefined : next === "Open room" && post.roomId ? `/rooms/${post.roomId}` : `/feed/${post.id}`,
+        action: next === "Close need" ? "resolve" : next === "Mark attendance" ? "attendance" : undefined,
+        postId: post.id,
       });
     }
     for (const post of settled(joined, []).filter((post) => post.intentType === "activity")) {
@@ -98,7 +105,7 @@ export function WorkScreen() {
       });
     }
     return rows;
-  }, [guest]);
+  }, [guest, reloadKey]);
 
   const active = data?.filter((row) => row.group === "Active") ?? [];
   const done = data?.filter((row) => row.group === "Done") ?? [];
@@ -126,11 +133,90 @@ export function WorkScreen() {
               {(rows as Row[]).length === 0 && <p className="text-sm text-muted-foreground">Nothing here.</p>}
               <div className="grid gap-3">
                 {(rows as Row[]).map((row) => (
-                  <Card key={row.id} href={row.href} title={row.title} meta={row.meta} />
+                  row.href ? (
+                    <Card key={row.id} href={row.href} title={row.title} meta={row.meta} />
+                  ) : (
+                    <button
+                      key={row.id}
+                      type="button"
+                      className="block min-h-11 w-full rounded-3xl border border-border bg-card px-4 py-4 text-left"
+                      onClick={() => {
+                        setActionError(null);
+                        if (row.action === "resolve") setResolveId(row.postId ?? null);
+                        if (row.action === "attendance" && row.postId) {
+                          setAttendanceId(row.postId);
+                          getJoinRequests(row.postId).then(setJoins).catch((err: unknown) => {
+                            setActionError(err instanceof Error ? err.message : "Attendance did not load.");
+                          });
+                        }
+                      }}
+                    >
+                      <p className="font-medium">{row.title}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{row.meta}</p>
+                    </button>
+                  )
                 ))}
               </div>
             </section>
           ))}
+        </div>
+      )}
+      {resolveId && (
+        <div className="fixed inset-0 z-40 flex items-end bg-black/50" onClick={() => setResolveId(null)}>
+          <div className="w-full rounded-t-3xl bg-background p-5" onClick={(event) => event.stopPropagation()}>
+            <p className="font-display text-lg font-semibold">Mark this need resolved?</p>
+            <p className="mt-2 text-sm text-muted-foreground">This sets it to closed. People can still read it.</p>
+            {actionError && <p className="mt-2 text-sm text-red-400">{actionError}</p>}
+            <button
+              type="button"
+              className="mt-4 min-h-11 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground"
+              onClick={() => {
+                void closeNeed(resolveId).then(() => {
+                  setResolveId(null);
+                  setReloadKey((key) => key + 1);
+                }).catch((err: unknown) => setActionError(err instanceof Error ? err.message : "That did not close."));
+              }}
+            >
+              Mark resolved
+            </button>
+            <button type="button" className="mt-2 block min-h-11 text-sm text-muted-foreground" onClick={() => setResolveId(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {attendanceId && (
+        <div className="fixed inset-0 z-40 flex items-end bg-black/50" onClick={() => setAttendanceId(null)}>
+          <div className="max-h-[80svh] w-full overflow-auto rounded-t-3xl bg-background p-5" onClick={(event) => event.stopPropagation()}>
+            <p className="font-display text-lg font-semibold">Who showed up?</p>
+            {actionError && <p className="mt-2 text-sm text-red-400">{actionError}</p>}
+            <div className="mt-3 grid gap-3">
+              {joins.filter((join) => join.status === "approved").map((join) => (
+                <div key={join.id} className="rounded-2xl border border-border px-3 py-3">
+                  <p className="text-sm font-medium">{join.userName}</p>
+                  <p className="text-xs text-muted-foreground">{join.outcome ? join.outcome : "Not recorded"}</p>
+                  {!join.outcome && (
+                    <div className="mt-2 flex gap-2">
+                      {(["attended", "no_show"] as const).map((outcome) => (
+                        <button
+                          key={outcome}
+                          type="button"
+                          className="min-h-11 rounded-full border border-border px-3 text-sm"
+                          onClick={() => {
+                            void recordJoinOutcome(attendanceId, join.id, outcome).then(() => {
+                              setJoins((current) => current.map((item) => (item.id === join.id ? { ...item, outcome } : item)));
+                            }).catch((err: unknown) => setActionError(err instanceof Error ? err.message : "That did not save."));
+                          }}
+                        >
+                          {outcome === "attended" ? "Attended" : "No show"}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {joins.filter((join) => join.status === "approved").length === 0 && <p className="text-sm text-muted-foreground">Nobody has joined yet.</p>}
+            </div>
+            <button type="button" className="mt-3 min-h-11 text-sm text-muted-foreground" onClick={() => setAttendanceId(null)}>Close</button>
+          </div>
         </div>
       )}
     </VNextShell>

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getMyPosts } from "@/lib/api/posts";
+import { getJoinedPosts, getMyPosts } from "@/lib/api/posts";
+import { getMyBids } from "@/lib/api/myBids";
 import { getMyProfile } from "@/lib/api/profile";
 import { getSession } from "@/lib/session";
 import { JennySlot, Card, useLoad } from "./shared";
@@ -15,8 +16,17 @@ export function ProfileScreen() {
   }, []);
   const { data, error } = useLoad(async () => {
     if (guest !== false) return null;
-    const [profile, posts] = await Promise.all([getMyProfile(), getMyPosts()]);
-    return { profile, posts };
+    const [profile, posts, joined, bids] = await Promise.all([getMyProfile(), getMyPosts(), getJoinedPosts().catch(() => []), getMyBids().catch(() => [])]);
+    return {
+      profile,
+      posts,
+      counts: {
+        needsResolved: posts.filter((post) => post.intentType === "ask" && post.status === "closed").length,
+        activitiesHosted: posts.filter((post) => post.intentType === "activity").length,
+        activitiesJoined: joined.filter((post) => post.intentType === "activity").length,
+        projectsWon: bids.filter((bid) => bid.status === "won").length,
+      },
+    };
   }, [guest]);
   return (
     <VNextShell>
@@ -35,6 +45,12 @@ export function ProfileScreen() {
         <>
           <h1 className="font-display text-3xl font-semibold">{data.profile.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{data.profile.title || "No title yet. It fills in from what you actually do here."}</p>
+          <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
+            <div><dt className="text-muted-foreground">Needs resolved</dt><dd className="font-display text-2xl font-semibold">{data.counts.needsResolved}</dd></div>
+            <div><dt className="text-muted-foreground">Activities hosted</dt><dd className="font-display text-2xl font-semibold">{data.counts.activitiesHosted}</dd></div>
+            <div><dt className="text-muted-foreground">Activities joined</dt><dd className="font-display text-2xl font-semibold">{data.counts.activitiesJoined}</dd></div>
+            <div><dt className="text-muted-foreground">Projects won</dt><dd className="font-display text-2xl font-semibold">{data.counts.projectsWon}</dd></div>
+          </dl>
           <div className="mt-5 grid gap-3">
             {data.posts.length === 0 && <Status kind="empty" title="No outcomes yet" detail="Publish a need or join an activity and it will show on this page." />}
             {data.posts.map((post) => (
