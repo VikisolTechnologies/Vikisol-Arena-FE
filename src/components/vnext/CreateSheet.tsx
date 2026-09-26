@@ -9,7 +9,7 @@ import { getSession } from "@/lib/session";
 
 const KINDS = [
   { id: "ask", label: "I need something" },
-  { id: "update", label: "I can offer something" },
+  { id: "offer", label: "I can offer something" },
   { id: "project", label: "Start a project" },
   { id: "job", label: "Create a job" },
   { id: "activity", label: "Create an activity" },
@@ -53,7 +53,7 @@ export function CreateSheet({ open, onClose, guest }: { open: boolean; onClose: 
         router.push(`/marketplace/${project.id}`);
         return;
       }
-      if (kind === "ask" || kind === "update" || kind === "activity") {
+      if (kind === "ask" || kind === "offer" || kind === "activity") {
         const post = await createPost({
           intentType: kind,
           body: text,

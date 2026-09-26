@@ -46,6 +46,7 @@ export function hrefFor(item: FeedItem) {
 }
 
 export function labelFor(item: FeedItem) {
+  const kind = item.itemType === "offer" ? "Offer" : item.itemType;
   const who = item.authorName || item.authorCompanyName || "Someone";
-  return `${item.itemType} · ${who}${item.locationText ? ` · ${item.locationText}` : ""}`;
+  return `${kind} · ${who}${item.locationText ? ` · ${item.locationText}` : ""}`;
 }
