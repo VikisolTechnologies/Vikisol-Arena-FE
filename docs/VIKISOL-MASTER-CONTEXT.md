@@ -75,18 +75,19 @@ It is **people + intelligence + organizations + outcomes** working together.
 ```
                  SYAM  — product owner, final approval
                    │
-                 CLAUDE (chat) — architect, reviewer, mission writer
+                 CLAUDE (chat, linked to the Mac) — THE architect + reviewer
             ┌──────┴───────┐
         CURSOR           CLAUDE CODE (VS Code)
       builds Arena       builds JennySol
             └──────┬───────┘
-          CODEX — backup coder when Claude is out of tokens
-          CHATGPT — strategy / market thinking
+          CODEX / CHATGPT — idea expander only (ideas become work
+                            only via the architect)
                    │
                 GITHUB (VikisolTechnologies)
 ```
 
 - **Git.** Work on `feature/*` branches. Merge to `main` only when tests are green. Never force-push `main`.
+- **Operating protocol.** `docs/AGENT-COLLABORATION-PROTOCOL.md` (written by Codex) is the rulebook for how agents work in parallel: git sync, one owner per repo, review files in `docs/reviews/<SHA>.md`, visual QA, quality gates. Every agent follows it. **Roles (decided by Syam, 26 Sep 2026):** Claude (architect chat, linked to the Mac) is the single **architect and reviewer**. It writes the missions and review files (`docs/reviews/<SHA>.md`) that Cursor and Claude Code execute. Codex is an **idea expander** only.
 - **Handoff.** Every agent keeps `docs/PROGRESS.md` (phase, branch, done, next, open questions) so another agent can resume from it alone.
 - **Secrets.** Never paste keys into any chat. Agents read them from `.env` or the Railway/Vercel CLIs and never print or commit them.
 - **Active missions** (26 Sep 2026):
@@ -604,10 +605,45 @@ No ads-first strategy and no chasing millions of free users.
 | 10 | **Provider order.** Live chat is almost all paid Gemini; Ollama is last. | Turn on keep-warm, then make local first for general and fast tasks, with Gemini as the fallback. Measure latency and cost before and after. |
 | 11 | **Privacy defaults.** | Arena traffic: PUBLIC_CLOUD, because it is public posts. JennySol documents and memory: PRIVATE (local), failing honestly if local is unavailable. Shadow mode first. |
 | 12 | **Run dashboard design.** | Option A, the timeline: mobile-first, it shows the plan step by step, and it has Stop. |
+| 14 | **One architect.** | **Decided:** Claude is architect + reviewer; Codex is the idea expander. |
 | 13 | **Admin 2FA.** It is optional today. | Require enrollment for company_admin and platform_admin behind a flag, with seeded TOTP for test accounts, then switch the flag on. |
 | 7 | **Arena launch-gate items** carried over: lawyer-reviewed privacy policy/ToS, GST + Razorpay KYC, pentest, backups. | Clear these before real money or a public marketing push. |
 | 8 | **Arena safety features:** a women-only activity option would need gender data the app doesn't hold today; activity ratings don't exist. | Decide during the Sessions design. |
 | 9 | **Pricing.** | Validate with 3–5 design partners; don't hard-code it. |
+
+---
+
+## 14. Go-to-market decisions (architect, 26 Sep 2026, from Codex's idea document)
+
+Source: `CODEX-IDEAS-LAUNCH-AND-AGENCY.md` (Project docs). These are decisions; the rest of Codex's document stays reference material.
+
+### Arena local launch
+| # | Decision |
+|---|---|
+| 1 | **Zone:** one tight zone of about 5 km covering Gopanapally, Gachibowli, Financial District and Nanakramguda. Tellapur, Kondapur, Nallagandla and Manikonda come later. |
+| 2 | **Sequence:** 15–20 hosts first (week 0), then a **50-person core cohort** (week 1). **200 is the week-4 milestone**, not the launch target. No expansion until the week-4 health gates pass. |
+| 3 | **Categories at launch (18+ only):** **not allowed**: dating/romance, childcare/babysitting, loans or money requests, medical advice, anything requiring entry into someone's home (flatmate search, in-home pet sitting). **Moderated**: paid services, tutoring, events with more than 20 people. |
+| 4 | **Community desk:** the founder plus one part-time community manager for the first month. The desk never posts as users, invents responses or marks attendance. |
+| 5 | **Attendance:** the host marks it, and the participant can dispute within 72h. Attendance is **private** (visible only to the user and host) and never becomes a public score in v1. The profile shows only hosted, joined, needs resolved and projects won. |
+| 6 | **Women-only activities:** **no gender field is collected.** The host labels the activity "Women-only" and it is **approval-required**; the host decides. This avoids storing sensitive data. |
+| 7 | **Health gates (week 4):** 50% activation in 7 days; 60% of needs answered within 48h; activities reach at least 50% of capacity; fewer than 20% unexplained no-shows; at least 25 real outcomes in month 1; 35% of users return in week 2 and 25% in week 4. |
+| 8 | **Launch message:** "Need a badminton group, a project collaborator, local help or people to learn with? Arena helps you find useful people and real activities near Gachibowli and Gopanapally. Every post comes from a real person." |
+
+**Product work this creates (Arena, after the VNext preview is approved):** see `ARENA-MISSION.md` STEP 8.
+
+### JennySol Agency Desk (first paid product)
+| # | Decision |
+|---|---|
+| 9 | **Product:** an agency recruiting-operations assistant with 3 workflows: (1) requirement → scorecard and search strategy, (2) database rediscovery → evidence-backed shortlist, (3) candidate coordination → client submission. Recruiters make every decision. |
+| 10 | **Ingestion:** CSV/Excel + pasted or forwarded JD and email only. **No ATS integration, no scraping.** |
+| 11 | **Channel in the pilot:** **email only** (Resend) plus a web form link for candidates. WhatsApp later (Business API cost and template approval). |
+| 12 | **Data:** the agency is the data controller and Vikisol the processor (a DPDP data processing agreement). Pilot data is exported and deleted within 30 days of the pilot ending. Candidates are contacted only with agency-approved templates that carry the agency's identity plus an opt-out. No protected attributes, names or photos are used as ranking signals, and no automatic rejection. |
+| 13 | **Pilot:** 3–5 boutique/mid agencies (3–20 recruiters), **IT/professional roles only**, 45 days, **₹12,000 + GST**, no auto-renew. Test ₹14,999/month afterwards. |
+| 14 | **Success gate** before more engineering: at least 3 complete, at least 2 keep paying, median saving of at least 20 hours per agency per month, shortlist time down at least 30%, at least 60% of outputs accepted or lightly edited, and zero policy or privacy incidents. |
+| 15 | **Build order:** workflow (1) replaces the "developer sandbox" workflow as JennySol v1's third real workflow (see `JENNYSOL-NEXT.md`). Workflows (2) and (3) are built only after at least 2 agencies sign the paid pilot. |
+| 17 | **Outreach gates** (Codex's outreach pack, `OUTREACH-PACK.md`). **Host messages** go out only after the VNext preview is approved and STEP 8 is live; until then, never promise a feature that isn't live. **Agency offers** go out only after all of: workflow 1 is live, the candidate-data location and subprocessors are decided (a **paid, no-training AI tier or Vikisol-controlled infrastructure, never a free tier and never the founder's personal Mac**), a lawyer-reviewed DPA + pilot agreement exists, GST invoicing is ready, and **agency tenant isolation** is built and tested. The offer states honestly that workflows 2 and 3 are delivered during the pilot. |
+| 18 | **Agency data privacy: ADR-007** (`jennysol-ai/docs/architecture/ADR-007-agency-desk-privacy.md`). Private-first. Class A (identifiable) data goes to private infrastructure only. Class B (redacted) may go to **paid** Gemini (CONTROLLED_CLOUD) with agency permission. There is never silent escalation, and enforcement is always on for agency tenants. Stage 1 (JD → scorecard) needs no candidate data. Stage 2 is blocked on the Class A location decision (Vertex Mumbai recommended), a DPA and tenant isolation. **Hosted DeepSeek is withdrawn** as a backup. **Production Gemini must move to a paid project** (the free tier may train on prompts). |
+| 16 | **Kept separate from Arena.** Arena's launch is not filled with recruitment posts. A future link happens only via explicit opt-in discoverability and a scoped API. |
 
 ---
 
