@@ -7,7 +7,7 @@ Read these before doing anything:
 4. `docs/PROGRESS.md`: where the last agent stopped. Continue from there; don't restart.
 5. `docs/ARENA-CURRENT-STATE.md`: the ground-truth audit (26 Sep 2026).
 
-Older root-level `.md` plans and reports are history, not instructions. If they disagree with the four files above, the four files win.
+Older root-level `.md` plans and reports are history, not instructions. If they disagree with the files above, those files win.
 
 ## The short version
 - **Arena is a living network, not a job board:** NEED → RESPONSE → CONVERSATION → OUTCOME → IDENTITY.
