@@ -18,7 +18,7 @@ suite existed); and a PA7 gate bug where a wrong-role visitor's own page compone
 real API request regardless of what the shell rendered (see DECISIONS.md for all of these).
 
 Real mode was verified live against `arena-api` running on local Postgres (seeded demo accounts:
-`demo.talent@vikisol.dev` / `demo.enterprise@vikisol.dev`, password `Demo@12345`, plus ad hoc
+`demo.talent@vikisol.dev` / `demo.enterprise@vikisol.dev`, password from `ARENA_DEMO_PASSWORD`, plus ad hoc
 fresh signups for onboarding/two-account flows), not just read from code. This gap sweep found
 and fixed eleven real bugs across two passes — see arena-web and arena-api git log for all of
 them: real-mode sign-in bouncing already-onboarded accounts back into the wizard; Talent Universe

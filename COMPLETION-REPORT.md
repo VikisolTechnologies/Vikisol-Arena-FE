@@ -794,7 +794,7 @@ Syam's ask: test the whole app carefully, forgot-password still isn't visibly wo
   round trip again end-to-end against `demo.talent@vikisol.dev` - triggered `/forgot-password`,
   read the emitted token straight from Railway's logs (`NoopEmailProvider` logs the full body),
   called `/reset-password` with it, confirmed the old password stopped working and the new one
-  (reset back to the original `Demo@12345` so the shared demo account wasn't left in a different
+  (reset back to the original shared demo password so the shared demo account wasn't left in a different
   state) signed in cleanly. The reset link itself is now correct (last pass's `frontend-url` fix).
   **The only reason no email lands in an inbox is that `RESEND_API_KEY` is still unset on Railway**
   (confirmed via `railway variables`) - `NoopEmailProvider` only logs, it was never wired to a real

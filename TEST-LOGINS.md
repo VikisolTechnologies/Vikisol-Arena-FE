@@ -7,19 +7,18 @@ Staging URLs (private — see access note below):
 **Access gate:** the frontend requires an HTTP Basic Auth prompt before anything loads (keeps
 this out of search engines and off-limits to anyone without the link — see DECISIONS.md).
 Credentials for that gate are separate from the app logins below and were shared with the
-founder directly, not written into this file (a repo-committed staging password isn't a
-staging-only throwaway the same way a demo account is).
+founder directly, not written into this file.
 
-All accounts below use the same password: **`Demo@12345`**. These are staging-only demo
-accounts on a private database with no real user data — not to be reused anywhere real.
+Demo passwords are not written here. Local and test runs read `ARENA_DEMO_PASSWORD` (and the
+per-role variables in `.env.test`). The demo platform-admin address is disabled.
 
 | Role | Email | What to test here |
 |---|---|---|
 | Talent (candidate) | `demo.talent@vikisol.dev` | Onboarded profile (Aarav Sharma), resume/CV already uploaded, live application history across several postings, agent chat + activity journal, settings (consent toggles, data export, account deletion). |
 | Company Admin | `demo.enterprise@vikisol.dev` | Full admin console: dashboard (real activity now seeded — see below), team (3 members: itself + a recruiter + a hiring manager), audit log (a few real events pre-seeded so it's not empty on first look), billing & plan, company profile, consent view. This is the account for demoing CA1 (dashboard) and CA3 (audit log) — the sales-pitch surface. |
-| Recruiter | `demo.recruiter@vikisol.dev` | Same tenant as the Company Admin above (Techolution), full recruiter workspace: postings, pipeline, Talent Universe search, interviews, messages — everything short of the admin console itself. |
+| Recruiter | `demo.recruiter@vikisol.dev` | Same tenant as the Company Admin above, full recruiter workspace: postings, pipeline, Talent Universe search, interviews, messages — everything short of the admin console itself. |
 | Hiring Manager | `demo.hiringmanager@vikisol.dev` | Lite workspace: lands directly on "My interviews," no pipeline/search/postings access (by design — verify this restriction holds). Has at least one interview assigned already. |
-| Platform Admin | `admin@vikisol.dev` | Internal console at `/admin`: 10 tenants, 53 users, cross-tenant activity feed, moderation queue, analytics, feature flags. Confirm a non-platform-admin session gets a real 404 here, not a redirect (see DECISIONS.md's PA7 note). |
+| Platform Admin | retired demo address, disabled | Internal console at `/admin` is for the real platform admin created from the environment. Confirm a non-platform-admin session gets a real 404 here, not a redirect (see DECISIONS.md's PA7 note). |
 
 ## What's already seeded
 

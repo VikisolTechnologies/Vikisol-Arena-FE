@@ -12,9 +12,9 @@ import type { Project } from "@/lib/types";
 
 const Animator = dynamic(() => import("./OpenMarketAnimator").then((m) => m.OpenMarketAnimator), { ssr: false });
 
-function formatCountdown(endsAt: string) {
+function formatCountdown(endsAt: string): string | null {
   const totalSeconds = Math.floor((new Date(endsAt).getTime() - Date.now()) / 1000);
-  if (totalSeconds <= 0) return "closing";
+  if (totalSeconds <= 0) return null;
   const h = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
   const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
   const s = String(totalSeconds % 60).padStart(2, "0");
@@ -60,7 +60,7 @@ export function OpenMarket() {
           </Reveal>
           <Reveal as="p" delay={0.05} className="my-4.5 max-w-[440px] text-[16.5px] leading-relaxed text-muted-foreground">
             Post a project and take bids in the open. Hire on proof, not resumes — from developers
-            to designers to doctors. Every bid shows a real match percentage against your brief.
+            to designers to doctors.
           </Reveal>
           <Reveal delay={0.1} className="flex flex-wrap gap-3.5">
             {/* "Enter as guest" - Marketplace itself renders fully logged-out now; posting a
@@ -81,13 +81,19 @@ export function OpenMarket() {
           {project ? (
             <>
               <span className="inline-flex items-center gap-2 rounded-full border border-primary/50 bg-primary/[0.14] px-3.5 py-1.5 text-xs font-semibold tracking-wide text-primary-soft">
-                <span className="size-2 animate-pulse rounded-full bg-primary" />
-                LIVE BID
+                Open project
               </span>
               <h3 className="mt-4 font-display text-[22px] font-bold">{project.title}</h3>
               <div className="mb-5 mt-1.5 text-[13.5px] text-[#8b8b93]">
-                {formatINRRange(project.budgetMin, project.budgetMax)} · {project.durationWeeks} weeks · ends in{" "}
-                <b className="text-[#d4d4d8]">{formatCountdown(project.endsAt)}</b>
+                {formatINRRange(project.budgetMin, project.budgetMax)} · {project.durationWeeks} weeks
+                {formatCountdown(project.endsAt) ? (
+                  <>
+                    {" "}
+                    · ends in <b className="text-[#d4d4d8]">{formatCountdown(project.endsAt)}</b>
+                  </>
+                ) : (
+                  <> · bidding has closed</>
+                )}
               </div>
 
               <div className="space-y-3">
@@ -100,9 +106,7 @@ export function OpenMarket() {
                       <div className={`font-display text-[19px] font-bold ${i === 0 ? "text-primary-soft" : ""}`}>
                         {formatINR(bid.amount)}
                       </div>
-                      <div className="mt-0.5 text-[13.5px] text-[#8b8b93]">
-                        {bid.bidderName} · {bid.matchPercentage}% match
-                      </div>
+                      <div className="mt-0.5 text-[13.5px] text-[#8b8b93]">{bid.bidderName}</div>
                     </div>
                     {/* ARENA-FINISH-IT.md §4 - bid.agentPick is never actually set true on the
                         real bid-creation path (ProjectService always writes false); the "agent

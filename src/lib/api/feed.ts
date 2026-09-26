@@ -42,6 +42,7 @@ function postToFeedItem(post: Post): FeedItem {
     myReacted: post.myReacted,
     authorJoinCount: post.authorJoinCount,
     authorAccountAgeDays: post.authorAccountAgeDays,
+    demoContent: post.demoContent,
   };
 }
 

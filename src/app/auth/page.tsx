@@ -349,30 +349,6 @@ function AuthForm() {
               ))}
             </div>
 
-            {/* Recruiter/hiring_manager/platform_admin only ever exist via invite or internal
-                seeding (see ROLES above / DECISIONS.md) - never a signup choice, but still need
-                a way to sign in as one. Keeps the primary talent/enterprise cards as the two
-                on-brand choices rather than diluting them into a 5-way grid. */}
-            {mode === "signin" && (
-              <div className="mb-6 flex flex-wrap gap-2">
-                {(["recruiter", "hiring_manager", "platform_admin"] as const).map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => { setRole(key); setMethod("email-otp"); setAccountNotFound(false); }}
-                    className={cn(
-                      "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                      role === key
-                        ? "border-primary/60 bg-primary/10 text-primary-soft"
-                        : "border-border bg-white/[0.03] text-muted-foreground hover:border-white/20",
-                    )}
-                  >
-                    {key === "recruiter" ? "Recruiter" : key === "hiring_manager" ? "Hiring manager" : "Platform admin"}
-                  </button>
-                ))}
-              </div>
-            )}
-
             {method === "phone" ? (
               <>
                 <PhoneAuthForm

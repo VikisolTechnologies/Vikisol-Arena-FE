@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { LayoutDashboard, Building2, Users, ShieldAlert, BarChart3, ToggleLeft, LogOut } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import NotFound from "@/app/not-found";
-import { signOut } from "@/lib/api/auth";
+import { signOut, getAccount, setupTotp, enableTotp } from "@/lib/api/auth";
 import { getSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -35,13 +37,25 @@ const NAV_ITEMS = [
  * @PreAuthorize rejects it either way (no data leaks), but a stray authenticated-looking
  * request to the platform console's API is exactly the kind of noise this surface shouldn't
  * make - found live-testing PA7 with a signed-in wrong-role session, not hypothetical. */
-export function usePlatformAdminGate(): "checking" | "ready" | "denied" {
-  const [state, setState] = useState<"checking" | "ready" | "denied">("checking");
+export function usePlatformAdminGate(): "checking" | "ready" | "enroll" | "denied" {
+  const [state, setState] = useState<"checking" | "ready" | "enroll" | "denied">("checking");
   useEffect(() => {
     const session = getSession();
-    // Deliberate: this is the client-only auth-gate flip itself, not a data sync side-effect.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setState(session && session.role === "platform_admin" ? "ready" : "denied");
+    if (!session || session.role !== "platform_admin") {
+      setState("denied");
+      return;
+    }
+    let cancelled = false;
+    getAccount()
+      .then((account) => {
+        if (!cancelled) setState(account.totpEnabled ? "ready" : "enroll");
+      })
+      .catch(() => {
+        if (!cancelled) setState("enroll");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
   return state;
 }
@@ -66,6 +80,7 @@ export function PlatformAdminShell({
 
   if (state === "checking") return null;
   if (state === "denied") return <NotFound />;
+  if (state === "enroll") return <PlatformAdminEnroll />;
 
   return (
     <div data-theme="product" className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
@@ -120,6 +135,67 @@ export function PlatformAdminShell({
         )}
         {children}
       </main>
+    </div>
+  );
+}
+
+function PlatformAdminEnroll() {
+  const [secret, setSecret] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setupTotp()
+      .then((result) => {
+        if (!cancelled) setSecret(result.secret);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Could not start two-factor setup. Sign in again and retry.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleEnable = async (e: FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSubmitting(true);
+    try {
+      await enableTotp(code.trim());
+      window.location.assign("/admin");
+    } catch {
+      setError("That code didn't match. Check the authenticator and try again.");
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div data-theme="product" className="flex min-h-svh items-center justify-center bg-background px-4 text-foreground">
+      <form onSubmit={handleEnable} className="w-full max-w-md space-y-4 rounded-[24px] border border-border bg-secondary p-6">
+        <h1 className="font-display text-xl font-bold">Turn on two-factor authentication</h1>
+        <p className="text-sm text-muted-foreground">
+          Platform admin stays locked until an authenticator app has a code for this account. Add the secret below, then enter the current code.
+        </p>
+        {secret && (
+          <div>
+            <Label htmlFor="totp-secret">Authenticator secret</Label>
+            <p id="totp-secret" className="mt-2 break-all rounded-2xl border border-border bg-background px-3 py-2 font-mono text-sm">
+              {secret}
+            </p>
+          </div>
+        )}
+        <div>
+          <Label htmlFor="totp-code">Code</Label>
+          <Input id="totp-code" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value)} className="mt-2" />
+        </div>
+        {error && <p className="text-sm text-red-400">{error}</p>}
+        <Button type="submit" disabled={submitting || code.trim().length < 6} className="w-full">
+          {submitting ? "Checking…" : "Enable and continue"}
+        </Button>
+      </form>
     </div>
   );
 }
