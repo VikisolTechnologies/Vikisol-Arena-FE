@@ -1,7 +1,7 @@
-// Client-side Sentry init (Next.js's instrumentation-client.ts convention, auto-loaded before
-// hydration - no next.config.ts wrapping needed). Dormant unless NEXT_PUBLIC_SENTRY_DSN is set,
-// same pattern as instrumentation.ts's server side.
+// Client-side Sentry init. Dormant unless NEXT_PUBLIC_SENTRY_DSN is set. Session Replay is not
+// registered.
 import * as Sentry from "@sentry/nextjs";
+import { scrubSentryEvent } from "@/lib/sentryScrub";
 
 if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
   Sentry.init({
@@ -9,5 +9,9 @@ if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
     environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ?? "local",
     tracesSampleRate: Number(process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE ?? 0.1),
     sendDefaultPii: false,
+    beforeSend(event) {
+      scrubSentryEvent(event);
+      return event;
+    },
   });
 }
