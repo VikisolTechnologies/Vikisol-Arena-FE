@@ -50,6 +50,7 @@ Local preview `http://localhost:3001`, one worker, desktop Chrome, Pixel 7, and 
 - Surface spec, golden path, access control, and axe: 88 passed, 10 failed. The failures were the old expectation that `/identity` redirects to `/auth`, the old "Sign in to post" heading, and one WebKit contrast hit on the landing page.
 - Those expectations now match the guest profile and the create sheet. Access control then passed on desktop and Pixel 7 (29) and, with the WebKit axe file, on iPhone (25). The landing contrast miss did not repeat.
 - Enterprise dashboard axe passed in the first run. Company-admin sign-in without a second factor is the finding in `docs/SECURITY-FINDINGS.md`, not a change.
+- A fresh review of this diff re-ran the candidate golden path on a phone-sized Chrome: 9 passed. It also caught the create sheet inventing a project budget. A project now asks for the minimum, maximum, and weeks, and publishes only those.
 
 Enterprise company-admin sign-in was already proven on the cleanup suite: the account signs in with no second factor, because enrollment was never required. That is `docs/SECURITY-FINDINGS.md`. Auth was not changed.
 

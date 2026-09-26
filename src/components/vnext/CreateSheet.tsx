@@ -19,6 +19,9 @@ export function CreateSheet({ open, onClose, guest }: { open: boolean; onClose: 
   const router = useRouter();
   const [kind, setKind] = useState<(typeof KINDS)[number]["id"] | null>(null);
   const [text, setText] = useState("");
+  const [budgetMin, setBudgetMin] = useState("");
+  const [budgetMax, setBudgetMax] = useState("");
+  const [weeks, setWeeks] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -30,12 +33,20 @@ export function CreateSheet({ open, onClose, guest }: { open: boolean; onClose: 
     setError(null);
     try {
       if (kind === "project") {
+        const min = Number(budgetMin);
+        const max = Number(budgetMax);
+        const durationWeeks = Number(weeks);
+        if (!Number.isFinite(min) || !Number.isFinite(max) || !Number.isFinite(durationWeeks) || min < 0 || max < min || durationWeeks < 1) {
+          setError("Enter a minimum, a maximum that is at least that high, and a duration in weeks.");
+          setBusy(false);
+          return;
+        }
         const project = await createMyProject({
-          title: text.slice(0, 80) || "Untitled project",
+          title: text.slice(0, 80),
           description: text,
-          budgetMin: 10000,
-          budgetMax: 50000,
-          durationWeeks: 2,
+          budgetMin: min,
+          budgetMax: max,
+          durationWeeks,
           skills: [],
         });
         onClose();
@@ -100,6 +111,13 @@ export function CreateSheet({ open, onClose, guest }: { open: boolean; onClose: 
             }}
           >
             <textarea value={text} onChange={(event) => setText(event.target.value)} required minLength={2} rows={4} className="rounded-2xl border border-border bg-card px-3 py-2 text-sm" placeholder="What should happen?" />
+            {kind === "project" && (
+              <div className="grid gap-2">
+                <input value={budgetMin} onChange={(event) => setBudgetMin(event.target.value)} required inputMode="numeric" min={0} className="min-h-11 rounded-2xl border border-border bg-card px-3 text-sm" placeholder="Minimum budget" aria-label="Minimum budget" />
+                <input value={budgetMax} onChange={(event) => setBudgetMax(event.target.value)} required inputMode="numeric" min={0} className="min-h-11 rounded-2xl border border-border bg-card px-3 text-sm" placeholder="Maximum budget" aria-label="Maximum budget" />
+                <input value={weeks} onChange={(event) => setWeeks(event.target.value)} required inputMode="numeric" min={1} className="min-h-11 rounded-2xl border border-border bg-card px-3 text-sm" placeholder="Duration in weeks" aria-label="Duration in weeks" />
+              </div>
+            )}
             {error && <p className="text-sm text-red-400">{error}</p>}
             <button type="submit" disabled={busy} className="min-h-11 rounded-full bg-primary text-sm font-semibold text-primary-foreground">
               {busy ? "Publishing" : "Publish"}
