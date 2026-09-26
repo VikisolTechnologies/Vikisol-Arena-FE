@@ -37,10 +37,12 @@ test.describe("VNext surfaces, logged out", () => {
 test.describe("VNext surfaces, talent", () => {
   test.use({ storageState: DEMO_ACCOUNTS.talent.storageStatePath });
 
-  test("feed counts only what came back, and Jenny may speak", async ({ page }) => {
+  test("feed does not invent a pulse count, and Jenny may speak", async ({ page }) => {
     await page.goto("/home");
     await expect(page.getByText("Aarav Sharma").first()).toBeVisible();
-    await expect(page.getByText(/things in this feed|Arena is quiet right now/)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Loading")).toHaveCount(0, { timeout: 15_000 });
+    await expect(page.getByText(/things in this feed/)).toHaveCount(0);
+    await expect(page.getByText(/Arena is quiet right now/).or(page.getByRole("link").nth(6))).toBeVisible();
   });
 
   test("work opens a real application record", async ({ page }) => {
