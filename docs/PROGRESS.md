@@ -1,6 +1,27 @@
 # Progress
 
-Updated 26 Sep 2026. Resume from here. Do not redo STEP 1 or the VNext shell.
+## Architect status (current, 27 Sep 2026, 01:00 IST)
+- **Gate 0 is complete** (architect). New blueprint: `docs/ARENA-VNEXT-MOBILE-JENNY-BLUEPRINT.md`.
+- **Mission sequence:** Cursor **P0** (security and honesty fixes) → **M1** (`docs/missions/CURSOR-M1.md`) → M2…M8 → founder preview.
+- **Branches and SHAs:**
+  - FE `main` = `db768bf`; BE `main` = `b376449`;
+  - `origin/feature/arena-vnext` = `f310ee6` (PR #1, **open, NOT merged, never merge**);
+  - JennySol `main` = `ca5ec1c`.
+- **Cursor, now:** P0 is committed on `fix/p0-security-honesty` and pushed for architect review. FE `43fe4ea`. BE `a504ef0`. Feed flag is `demoContent`. `bash mvnw test` passed before the rename of that flag (the rename is the record field only). Production env was not changed. GitHub rejected the frontend workflow-file edit, so `.github/workflows/e2e.yml` still matches `main`.
+- **Next, after P0 review:** M1 on `feature/arena-vnext-mobile-jenny`, created from `f310ee6`. Not started.
+- **Gemini:** production returns 402 (prepaid credit depleted). UI, fixtures, contracts and tests continue; live AI validation waits for the founder's top-up.
+- **Deployment gate:**
+  - VNext goes only to the protected preview `preview-arena.vikisol.in`;
+  - production promotion needs green checks + architect review + founder visual approval + a verified commit stamp + a mobile smoke test;
+  - P0 fixes follow their own reviewed release path.
+- **Docs to commit** (architect-written, on the docs branch `docs/control-plane`):
+  - `CLAUDE.md`, `AGENTS.md`;
+  - `docs/VIKISOL-MASTER-CONTEXT.md`, `docs/ARENA-MISSION.md`, `docs/ARENA-VNEXT-MOBILE-JENNY-BLUEPRINT.md`;
+  - `docs/missions/CURSOR-M1.md`, `docs/reviews/AUDIT-2026-09-26.md`, this file.
+
+---
+
+The sections below the architect status are the history of 26 Sep 2026; the **architect status** directly below is the current state.
 
 ## Sentry
 
