@@ -6,6 +6,7 @@ import { getSession } from "@/lib/session";
 import { Card, hrefFor, labelFor, useLoad } from "./shared";
 import { Status, VNextShell } from "./Shell";
 import { readEntryDraft, subscribeEntryDraft, type EntryIntent } from "./entry/draft";
+import { HonestEmptyState } from "./entry/chrome";
 
 export function JennyBrief() {
   return null;
@@ -17,10 +18,12 @@ export function FeedScreen() {
   const name = useSyncExternalStore(subscribeEntryDraft, () => getSession()?.name ?? "", () => "");
   const intents = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().intents.join(","), () => "");
   const picked = intents.split(",").filter(Boolean) as EntryIntent[];
+  const area = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().area.trim(), () => "");
+  const located = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().locationChoice ?? "", () => "");
   return (
     <VNextShell>
       <JennyBrief />
-      <p className="font-display text-2xl font-bold">{name ? `Good to see you, ${name}` : "Good to see you"}</p>
+      <p className="font-editorial text-[1.7rem] font-medium leading-tight">{name ? `Good to see you, ${name}` : "Good to see you"}</p>
       <p className="mt-1 text-sm text-muted-foreground">{priorityLine(picked)}</p>
       {error && (
         <div className="mt-4">
@@ -30,8 +33,8 @@ export function FeedScreen() {
       )}
       {!error && !data && <div className="mt-4"><Status kind="loading" title="Loading" /></div>}
       {data && data.length === 0 && (
-        <div className="mt-4">
-          <Status kind="empty" title="Nothing here yet" detail={emptyDetail(picked)} />
+        <div className="mt-4 motion-safe:animate-[entry-in_220ms_ease]">
+          <HonestEmptyState title="Nothing here yet" detail={emptyDetail(picked)} showArea={!area && located !== "approximate"} />
         </div>
       )}
       {data && data.length > 0 && (

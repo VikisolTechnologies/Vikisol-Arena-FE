@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // The dev tools badge is not part of the product. Preview screenshots must not show it.
+  devIndicators: false,
   // Keep isolated browser-test compilation separate from a developer's running Next server.
   distDir: process.env.ARENA_NEXT_DIST_DIR || ".next",
   // ARENA-PHASE-1-BUILD.md §2 "Imagery" - real licensed Unsplash photography for the new v3

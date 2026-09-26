@@ -8,24 +8,23 @@ import { getSession, setOnboarded } from "@/lib/session";
 import type { Industry } from "@/lib/types";
 import { clearEntryPending, EMPTY_DRAFT, INTENTS, readEntryDraft, subscribeEntryDraft, writeEntryDraft, type EntryDraft, type EntryIntent } from "./draft";
 import { EntryButton, EntryFrame, fieldClass } from "./EntryFrame";
+import { EntryCard, EntryField, IntentOption, PrivacyPreviewCard, ReadySummary } from "./chrome";
 
 const STEPS = 7;
 const FIXTURE_AREA = process.env.NEXT_PUBLIC_ENTRY_FIXTURE_AREA;
 
 const INDUSTRIES: Industry[] = ["Engineering", "Design", "Sales", "Healthcare", "Logistics"];
 
-function Chip({ on, children, onClick }: { on: boolean; children: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={on}
-      onClick={onClick}
-      className={`min-h-11 rounded-full border px-3 text-sm transition-transform duration-150 motion-reduce:transition-none active:scale-[0.97] motion-reduce:active:scale-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${on ? "border-primary bg-primary/15 text-primary-soft" : "border-border"}`}
-    >
-      {children}
-    </button>
-  );
-}
+const INTENT_META: Record<EntryIntent, { detail: string; icon: string }> = {
+  meet: { detail: "People who are actually around.", icon: "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM16 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM3 19c.4-2.4 2.4-4 5-4s4.6 1.6 5 4M13 15.2c1.4-.8 3-.9 4.5-.2 1.6.8 2.6 2.3 2.8 4" },
+  activities: { detail: "Games, walks, and gatherings.", icon: "M5 19c2-6 4-9 7-9s5 3 7 9M12 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" },
+  ask: { detail: "A specific request for help.", icon: "M12 18h.01M9.5 9a2.5 2.5 0 1 1 3.8 2.1C12.4 11.7 12 12.3 12 13" },
+  offer: { detail: "Something you can do for someone.", icon: "M12 4v16M4 12h16" },
+  projects: { detail: "Build something with other people.", icon: "M4 7h16v12H4zM8 7V5h8v2" },
+  "explore-work": { detail: "See what work looks like here.", icon: "M4 8h16v10H4zM8 8V6h8v2" },
+  job: { detail: "Opportunities stay private until you say so.", icon: "M8 7V5h8v2M4 7h16v12H4z" },
+  hire: { detail: "Local people, through a company account.", icon: "M5 19V9l7-4 7 4v10M9 19v-5h6v5" },
+};
 
 export function OnboardingJourney() {
   const router = useRouter();
@@ -105,6 +104,7 @@ export function OnboardingJourney() {
       lede={LEDES[step]}
       step={step}
       steps={STEPS}
+      stepLabel={TITLES[step]}
       footer={
         <div className="mt-6 space-y-3">
           {error && <p className="text-sm text-red-400" role="alert">{error}</p>}
@@ -122,28 +122,39 @@ export function OnboardingJourney() {
         </div>
       }
     >
-      {step === 0 && <p className="text-sm leading-relaxed text-muted-foreground">You can look around first. Nothing here is required, and you can change it later.</p>}
+      {step === 0 && (
+        <EntryCard>
+          <p className="text-[15px] leading-relaxed">You can look around first. Nothing here is required, and you can change it later.</p>
+        </EntryCard>
+      )}
       {step === 1 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
           {INTENTS.map((intent) => (
-            <Chip key={intent.id} on={draft.intents.includes(intent.id)} onClick={() => toggleIntent(intent.id)}>{intent.label}</Chip>
+            <IntentOption
+              key={intent.id}
+              on={draft.intents.includes(intent.id)}
+              label={intent.label}
+              detail={INTENT_META[intent.id].detail}
+              icon={INTENT_META[intent.id].icon}
+              onClick={() => toggleIntent(intent.id)}
+            />
           ))}
         </div>
       )}
       {step === 2 && (
         <div className="space-y-3">
-          <Choice on={draft.locationChoice === "approximate"} onClick={() => save({ ...draft, locationChoice: "approximate" })} label="Use approximate location" />
-          <Choice on={draft.locationChoice === "manual"} onClick={() => save({ ...draft, locationChoice: "manual" })} label="Choose an area manually" />
-          <Choice on={draft.locationChoice === "none"} onClick={() => save({ ...draft, locationChoice: "none", area: "" })} label="Continue without location" />
+          <IntentOption on={draft.locationChoice === "approximate"} onClick={() => save({ ...draft, locationChoice: "approximate" })} label="Use approximate location" detail="A rough point, not your address." icon="M12 21s6-5.2 6-10a6 6 0 1 0-12 0c0 4.8 6 10 6 10Z" />
+          <IntentOption on={draft.locationChoice === "manual"} onClick={() => save({ ...draft, locationChoice: "manual" })} label="Choose an area manually" detail="Type a neighborhood or district." icon="M4 6h16M4 12h10M4 18h16" />
+          <IntentOption on={draft.locationChoice === "none"} onClick={() => save({ ...draft, locationChoice: "none", area: "" })} label="Continue without location" detail="You can add an area later." icon="M5 12h14" />
           {draft.locationChoice === "manual" && (
             <input aria-label="Area" placeholder="Area name" value={draft.area} onChange={(e) => save({ ...draft, area: e.target.value })} className={fieldClass} />
           )}
           {FIXTURE_AREA && (
-            <button type="button" className="min-h-11 text-left text-sm text-muted-foreground underline" onClick={() => save({ ...draft, locationChoice: "manual", area: FIXTURE_AREA })}>
+            <button type="button" className="min-h-11 text-left text-[13px] text-muted-foreground underline" onClick={() => save({ ...draft, locationChoice: "manual", area: FIXTURE_AREA })}>
               Use the labelled development area: {FIXTURE_AREA}
             </button>
           )}
-          <p className="text-xs text-muted-foreground">Your exact home location is never public. Approximate means a rough point, not an address.</p>
+          <p className="text-[13px] leading-relaxed text-muted-foreground">Your exact home location is never public. Approximate means a rough point, not an address.</p>
         </div>
       )}
       {step === 3 && (
@@ -154,13 +165,13 @@ export function OnboardingJourney() {
         </div>
       )}
       {step === 4 && (
-        <div className="space-y-4">
-          <Field id="display-name" label="Name" autoComplete="name" value={draft.displayName} placeholder={accountName} onChange={(value) => save({ ...draft, displayName: value })} />
-          <Field id="intro" label="Short introduction" value={draft.intro} onChange={(value) => save({ ...draft, intro: value })} />
-          <Field id="availability" label="Availability" value={draft.availability} placeholder="Weekdays, weekends, evenings" onChange={(value) => save({ ...draft, availability: value })} />
-          <Field id="title" label="Professional title" value={draft.professionalTitle} placeholder="Optional" onChange={(value) => save({ ...draft, professionalTitle: value })} />
+        <EntryCard className="space-y-4">
+          <EntryField id="display-name" label="Name" autoComplete="name" value={draft.displayName} placeholder={accountName} onChange={(value) => save({ ...draft, displayName: value })} />
+          <EntryField id="intro" label="Short introduction" value={draft.intro} onChange={(value) => save({ ...draft, intro: value })} />
+          <EntryField id="availability" label="Availability" value={draft.availability} placeholder="Weekdays, weekends, evenings" onChange={(value) => save({ ...draft, availability: value })} />
+          <EntryField id="title" label="Professional title" value={draft.professionalTitle} placeholder="Optional" onChange={(value) => save({ ...draft, professionalTitle: value })} />
           {draft.professionalTitle.trim() && (
-            <label className="block text-sm">
+            <label className="block text-[13px] font-medium">
               Field
               <select aria-label="Field" value={draft.industry} onChange={(e) => save({ ...draft, industry: e.target.value })} className={`${fieldClass} mt-1.5`}>
                 <option value="">Choose only if this title should be saved</option>
@@ -168,30 +179,24 @@ export function OnboardingJourney() {
               </select>
             </label>
           )}
-          <p className="text-xs text-muted-foreground">A title is saved only when you also choose a field. Arena will not invent one.</p>
-        </div>
+          <p className="text-[13px] leading-relaxed text-muted-foreground">A title is saved only when you also choose a field. Arena will not invent one.</p>
+        </EntryCard>
       )}
       {step === 5 && (
-        <div className="space-y-3 rounded-[24px] border border-border p-4 text-sm">
-          <p>Nearby people can see:</p>
-          <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-            <li>Name: {shownName}</li>
-            <li>{locationLine(draft)}</li>
-            <li>{draft.offerSkills.length ? `Skills you offered: ${draft.offerSkills.join(", ")}` : "No skills, unless you add them."}</li>
-            <li>{draft.careerPublic ? "Career information will be visible to companies because you turned that on." : "Career information stays private."}</li>
-          </ul>
-          <p className="text-muted-foreground">Your introduction, availability, interests, and photo are not published. There is no profile field for them yet.</p>
-          <label className="flex min-h-11 items-center justify-between gap-3">
-            <span>Let companies see career information</span>
-            <input type="checkbox" checked={draft.careerPublic} onChange={(e) => save({ ...draft, careerPublic: e.target.checked })} className="size-5" />
-          </label>
-        </div>
+        <PrivacyPreviewCard
+          name={shownName}
+          location={locationLine(draft)}
+          skills={draft.offerSkills.length ? `Skills you offered: ${draft.offerSkills.join(", ")}` : "No skills, unless you add them."}
+          careerPublic={draft.careerPublic}
+          onCareer={(careerPublic) => save({ ...draft, careerPublic })}
+        />
       )}
       {step === 6 && (
-        <div className="space-y-3 text-sm">
-          <p className="text-muted-foreground">{priorityCopy(draft.intents)}</p>
-          <p className="rounded-[24px] border border-border p-4">Arena will not invent people, activities, or a job title to fill the feed.</p>
-        </div>
+        <ReadySummary
+          intents={draft.intents.map((id) => INTENTS.find((item) => item.id === id)?.label ?? id)}
+          location={locationLine(draft)}
+          priority={priorityCopy(draft.intents)}
+        />
       )}
     </EntryFrame>
   );
@@ -217,28 +222,11 @@ const LEDES = [
   "Here is what Arena will look for first.",
 ];
 
-function Choice({ on, label, onClick }: { on: boolean; label: string; onClick: () => void }) {
-  return (
-    <button type="button" aria-pressed={on} onClick={onClick} className={`min-h-11 w-full rounded-2xl border px-3 text-left text-sm ${on ? "border-primary bg-primary/15" : "border-border"}`}>
-      {label}
-    </button>
-  );
-}
-
-function Field({ id, label, value, onChange, placeholder, autoComplete }: { id: string; label: string; value: string; onChange: (value: string) => void; placeholder?: string; autoComplete?: string }) {
-  return (
-    <label className="block text-sm font-medium" htmlFor={id}>
-      {label}
-      <input id={id} autoComplete={autoComplete} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} className={`${fieldClass} mt-1.5`} />
-    </label>
-  );
-}
-
 function TagBox({ label, hint, value, tags, onChange, onAdd, onRemove }: { label: string; hint: string; value: string; tags: string[]; onChange: (value: string) => void; onAdd: () => void; onRemove: (tag: string) => void }) {
   return (
-    <div>
-      <p className="text-sm font-medium">{label}</p>
-      <p className="text-xs text-muted-foreground">{hint}</p>
+    <EntryCard>
+      <p className="text-[13px] font-medium">{label}</p>
+      <p className="text-[13px] leading-relaxed text-muted-foreground">{hint}</p>
       <div className="mt-2 flex gap-2">
         <input aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onAdd(); } }} className={fieldClass} />
         <button type="button" className="min-h-11 shrink-0 rounded-2xl border border-border px-3 text-sm" onClick={onAdd}>Add</button>
@@ -248,7 +236,7 @@ function TagBox({ label, hint, value, tags, onChange, onAdd, onRemove }: { label
           <button key={tag} type="button" className="min-h-11 rounded-full border border-border px-3 text-sm" onClick={() => onRemove(tag)}>{tag} · remove</button>
         ))}
       </div>
-    </div>
+    </EntryCard>
   );
 }
 

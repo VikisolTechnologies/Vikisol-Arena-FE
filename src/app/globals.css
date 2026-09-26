@@ -3,7 +3,12 @@
 @import "shadcn/tailwind.css";
 
 @keyframes entry-in {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes entry-sheet {
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: none; }
 }
 
@@ -12,6 +17,14 @@
     from { opacity: 0; }
     to { opacity: 1; }
   }
+  @keyframes entry-sheet {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+.font-editorial {
+  font-family: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
 }
 
 /*
@@ -313,5 +326,27 @@ body {
     width: 100%;
     box-shadow: none !important;
     border: none !important;
+  }
+}
+
+.font-editorial {
+  font-family: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+}
+
+@keyframes entry-in {
+  from { opacity: 0.85; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes entry-sheet {
+  from { opacity: 1; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe\:animate-\[entry-in_200ms_ease\],
+  .motion-safe\:animate-\[entry-in_220ms_ease\],
+  .motion-safe\:animate-\[entry-sheet_260ms_ease\] {
+    animation: none;
   }
 }

@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { getMyRooms } from "@/lib/api/rooms";
 import { getSession } from "@/lib/session";
-import { readEntryDraft } from "./entry/draft";
+import { readEntryDraft, subscribeEntryDraft } from "./entry/draft";
+import { ArenaBrand } from "./entry/chrome";
 
 const CreateSheet = dynamic(() => import("./CreateSheet").then((m) => m.CreateSheet), { ssr: false });
 
@@ -55,6 +56,11 @@ export function VNextShell({ children }: { children: ReactNode }) {
   const [createOpen, setCreateOpen] = useState(false);
   const createRef = useRef<HTMLButtonElement>(null);
   const offline = useOffline();
+  useEffect(() => {
+    const open = () => setCreateOpen(true);
+    window.addEventListener("arena-open-create", open);
+    return () => window.removeEventListener("arena-open-create", open);
+  }, []);
   const closeCreate = () => {
     setCreateOpen(false);
     createRef.current?.focus();
@@ -63,9 +69,7 @@ export function VNextShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-svh bg-background text-foreground">
       <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-background/90 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
-        <Link href="/home" className="font-display text-lg font-bold">
-          Arena<span className="text-primary">.</span>
-        </Link>
+        <ArenaBrand href="/home" />
         <nav className="hidden gap-4 text-sm lg:flex">
           {LINKS.map((link) => (
             <Link key={link.href} href={link.href} className={pathname === link.href ? "text-foreground" : "text-muted-foreground"}>
@@ -88,12 +92,12 @@ export function VNextShell({ children }: { children: ReactNode }) {
       </header>
       {offline && <p className="bg-destructive/15 px-4 py-2 text-sm">You are offline. This screen will retry when the connection comes back.</p>}
       <main className="mx-auto w-full max-w-3xl px-4 py-5 pb-24">{children}</main>
-      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden" aria-label="Primary">
-        <div className="mx-auto flex max-w-lg items-end justify-between">
+      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-[#0d0d10]/95 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5 lg:hidden" aria-label="Primary">
+        <div className="mx-auto grid max-w-lg grid-cols-5 items-end">
           {LINKS.slice(0, 2).map((link) => (
             <TabLink key={link.href} href={link.href} label={link.label} active={pathname === link.href} />
           ))}
-          <button type="button" aria-label="Create" onClick={() => setCreateOpen(true)} className="grid size-14 -translate-y-2 place-items-center rounded-full bg-primary text-2xl font-semibold text-primary-foreground active:scale-[0.97] motion-reduce:active:scale-100 lg:hidden">
+          <button type="button" aria-label="Create" onClick={() => setCreateOpen(true)} className="mx-auto grid size-14 -translate-y-3 place-items-center rounded-full bg-primary text-2xl font-semibold text-primary-foreground shadow-[0_8px_20px_rgba(255,107,53,0.35)] active:scale-[0.98] motion-reduce:active:scale-100">
             +
           </button>
           {LINKS.slice(2).map((link) => (
@@ -108,7 +112,7 @@ export function VNextShell({ children }: { children: ReactNode }) {
 
 function TabLink({ href, label, active }: { href: string; label: string; active: boolean }) {
   return (
-    <Link href={href} aria-current={active ? "page" : undefined} className={`flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center text-[11px] font-medium ${active ? "text-foreground" : "text-muted-foreground"}`}>
+    <Link href={href} aria-current={active ? "page" : undefined} className={`flex min-h-11 min-w-11 flex-col items-center justify-center text-[13px] font-medium ${active ? "text-foreground" : "text-muted-foreground"}`}>
       {label}
     </Link>
   );
@@ -116,7 +120,7 @@ function TabLink({ href, label, active }: { href: string; label: string; active:
 
 function LocationChip() {
   const guest = useGuest();
-  const area = useSyncExternalStore(subscribeSession, () => readEntryDraft().area.trim(), () => "");
+  const area = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().area.trim(), () => "");
   return (
     <Link href={guest === true ? "/auth" : "/onboarding"} className="inline-flex min-h-11 max-w-[34vw] items-center truncate rounded-full border border-border px-3 text-xs">
       {area || "Add your area"}

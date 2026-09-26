@@ -41,15 +41,16 @@ async function dismissCookies(page: import("@playwright/test").Page) {
   if (await accept.isVisible().catch(() => false)) await accept.click();
 }
 
-async function shot(page: import("@playwright/test").Page, name: string) {
+async function shot(page: import("@playwright/test").Page, name: string, capture: boolean) {
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 844 });
-    await page.screenshot({ path: `docs/reviews/m1a/${name}-${width}.png` });
+    await page.waitForTimeout(280);
+    if (capture) await page.screenshot({ path: `docs/reviews/m1a-visual-correction/${name}-${width}.png` });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
   }
 }
 
-test("entry journey does not invent a profession or offer internal roles", async ({ page }) => {
+test("entry journey does not invent a profession or offer internal roles", async ({ page }, testInfo) => {
   const calls: string[] = [];
   await stubApi(page, calls);
   await page.setViewportSize({ width: 390, height: 844 });
@@ -61,11 +62,12 @@ test("entry journey does not invent a profession or offer internal roles", async
   await expect(page.getByRole("button", { name: "Recruiter" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Hiring manager" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Platform admin" })).toHaveCount(0);
-  await shot(page, "welcome");
+  const capture = testInfo.project.name === "desktop";
+  await shot(page, "welcome", capture);
 
   await page.getByRole("button", { name: "Join Arena" }).click();
   await expect(page.getByRole("button", { name: "Join as a person" })).toBeVisible();
-  await shot(page, "signup");
+  await shot(page, "signup", capture);
   await page.getByLabel("Full name").fill("Priya");
   await page.getByLabel("Email address").fill("priya@example.com");
   await page.getByLabel("Password").fill("short");
@@ -77,39 +79,45 @@ test("entry journey does not invent a profession or offer internal roles", async
 
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "Join activities" }).click();
-  await shot(page, "intent");
+  await shot(page, "intent", capture);
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "Continue without location" }).click();
-  await shot(page, "location");
+  await shot(page, "location", capture);
   await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Interests" })).toBeVisible();
+  await shot(page, "interests", capture);
   await page.getByRole("button", { name: "Skip" }).click();
-  await shot(page, "identity");
+  await shot(page, "identity", capture);
   await expect(page.getByLabel("Professional title")).toHaveValue("");
   await page.getByRole("button", { name: "Skip" }).click();
   await expect(page.getByText("No location.")).toBeVisible();
   await expect(page.getByText("Career information stays private.")).toBeVisible();
-  await shot(page, "privacy");
+  await shot(page, "privacy", capture);
   await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await shot(page, "ready");
+  await shot(page, "ready", capture);
   await page.getByRole("button", { name: "Enter Arena" }).click();
   await expect(page.getByText("Nothing here yet")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("Frontend Engineer")).toHaveCount(0);
   await expect(page.getByText("Bengaluru")).toHaveCount(0);
   await expect(page.getByText("Gachibowli")).toHaveCount(0);
-  await shot(page, "feed");
+  await shot(page, "feed", capture);
   expect(calls.some((call) => call.startsWith("PUT") && call.includes("/location"))).toBe(true);
   expect(calls.some((call) => call.includes("/profile/me/details"))).toBe(false);
 });
 
-test("sign in, forgot password, expired reset, and resume", async ({ page }) => {
+test("sign in, forgot password, expired reset, and resume", async ({ page }, testInfo) => {
   const calls: string[] = [];
   await stubApi(page, calls);
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto("/auth?mode=signin");
   await dismissCookies(page);
-  await page.screenshot({ path: "docs/reviews/m1a/signin-320.png" });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.screenshot({ path: "docs/reviews/m1a/signin-390.png" });
+  if (testInfo.project.name === "desktop") {
+    await page.screenshot({ path: "docs/reviews/m1a-visual-correction/signin-320.png" });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: "docs/reviews/m1a-visual-correction/signin-390.png" });
+  } else {
+    await page.setViewportSize({ width: 390, height: 844 });
+  }
   await page.setViewportSize({ width: 320, height: 700 });
   const show = page.getByRole("button", { name: "Show" });
   await expect(show).toBeVisible();
@@ -124,7 +132,7 @@ test("sign in, forgot password, expired reset, and resume", async ({ page }) => 
   await page.getByLabel("Password").fill("long-enough");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/home/);
-  await page.getByRole("link", { name: "You", exact: true }).click();
+  await page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "You", exact: true }).click();
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
 
@@ -165,4 +173,11 @@ test("welcome and signup have no serious accessibility violations", async ({ pag
   await page.waitForTimeout(300);
   const signup = await new AxeBuilder({ page }).analyze();
   expect(signup.violations.filter((item) => item.impact === "serious" || item.impact === "critical")).toEqual([]);
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/auth");
+  const join = page.getByRole("button", { name: "Join Arena" });
+  await expect(join).toBeVisible();
+  const duration = await join.evaluate((node) => getComputedStyle(node).transitionDuration);
+  expect(duration === "0s" || duration === "0ms").toBe(true);
 });

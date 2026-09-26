@@ -9,6 +9,7 @@ import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import type { Role } from "@/lib/types";
 import { entryIsPending, markEntryPending } from "./draft";
 import { EntryButton, EntryFrame, fieldClass } from "./EntryFrame";
+import { EntryCard, EntryField, PasswordField, WelcomeComposition } from "./chrome";
 
 type View = "welcome" | "signin" | "signup";
 
@@ -130,8 +131,13 @@ export function AuthJourney() {
 
   if (view === "welcome") {
     return (
-      <EntryFrame title="Local people. Real outcomes." lede="Meet neighbors, join activities, ask for help, and make your skills useful nearby.">
-        <div className="mb-6 h-36 rounded-[24px] bg-[radial-gradient(circle_at_30%_20%,#ff6b35_0%,transparent_42%),linear-gradient(160deg,#1c120e,#09090b)]" aria-hidden />
+      <EntryFrame
+        wide
+        aside={<WelcomeComposition />}
+        title="Local people. Real outcomes."
+        lede="Meet neighbors, join activities, ask for help, and make your skills useful nearby."
+      >
+        <div className="mb-5 lg:hidden"><WelcomeComposition /></div>
         <div className="mt-auto space-y-3">
           <EntryButton onClick={() => setView("signup")}>Join Arena</EntryButton>
           <EntryButton tone="ghost" onClick={() => setView("signin")}>Sign in</EntryButton>
@@ -159,9 +165,12 @@ export function AuthJourney() {
   const signup = view === "signup";
   return (
     <EntryFrame
+      wide
+      aside={<WelcomeComposition />}
       title={signup ? "Create your account" : "Welcome back"}
       lede={signup ? "Join as yourself, or open a company account. Recruiters join only with an invitation." : "Good to see you again."}
     >
+      <EntryCard>
       <form method="post" action={signup ? "/auth?mode=signup" : "/auth?mode=signin"} onSubmit={submit} className="space-y-4">
         {expired && <p className="rounded-2xl border border-border px-3 py-2 text-sm" role="status">Your session expired. Sign in again.</p>}
         {invited && <p className="rounded-2xl border border-border px-3 py-2 text-sm">This invitation is for a company role. Open the invite link you were sent.</p>}
@@ -173,32 +182,19 @@ export function AuthJourney() {
           </fieldset>
         )}
         {signup && (
-          <div>
-            <label className="text-sm font-medium" htmlFor="name">Full name</label>
-            <input id="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} className={`${fieldClass} mt-1.5`} />
-          </div>
+          <EntryField id="name" label="Full name" autoComplete="name" value={name} onChange={setName} />
         )}
-        <div>
-          <label className="text-sm font-medium" htmlFor="email">Email address</label>
-          <input id="email" type="email" autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} className={`${fieldClass} mt-1.5`} />
-        </div>
-        <div>
-          <label className="text-sm font-medium" htmlFor="password">Password</label>
-          <div className="mt-1.5 flex gap-2">
-            <input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              autoComplete={signup ? "new-password" : "current-password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={fieldClass}
-            />
-            <button type="button" className="min-h-11 shrink-0 rounded-2xl border border-border px-3 text-sm" onClick={() => setShowPassword((v) => !v)} aria-pressed={showPassword}>
-              {showPassword ? "Hide" : "Show"}
-            </button>
-          </div>
-          {signup && <p className="mt-1.5 text-xs text-muted-foreground">At least 6 characters.</p>}
-        </div>
+        <EntryField id="email" label="Email address" type="email" autoComplete="email" inputMode="email" value={email} onChange={setEmail} />
+        <PasswordField
+          id="password"
+          label="Password"
+          value={password}
+          onChange={setPassword}
+          shown={showPassword}
+          onToggle={() => setShowPassword((v) => !v)}
+          autoComplete={signup ? "new-password" : "current-password"}
+          hint={signup ? "At least 6 characters." : undefined}
+        />
         {!signup && (
           <Link href="/auth/forgot" className="inline-flex min-h-11 items-center text-sm text-primary-soft">Forgot password?</Link>
         )}
@@ -212,16 +208,17 @@ export function AuthJourney() {
             <button type="button" className="min-h-11 underline-offset-4 hover:underline" onClick={() => setView("signup")}>New here? Create an account</button>
           )}
         </p>
-        <p className="text-center text-xs text-muted-foreground">
+        <p className="text-center text-[13px] text-muted-foreground">
           <Link href="/terms" className="underline-offset-4 hover:underline">Terms</Link>
           {" · "}
           <Link href="/privacy" className="underline-offset-4 hover:underline">Privacy</Link>
         </p>
       </form>
+      </EntryCard>
     </EntryFrame>
   );
 }
 
 function choiceClass(on: boolean) {
-  return `min-h-11 rounded-2xl border px-2 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${on ? "border-primary bg-primary/15 text-primary-soft" : "border-border"}`;
+  return `min-h-11 rounded-2xl border px-3 text-left text-[13px] font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${on ? "border-primary bg-[#2a1812] text-foreground" : "border-white/12 bg-[#1c1c21]"}`;
 }
