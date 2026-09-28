@@ -24,6 +24,7 @@ Conventions used below:
 ## Board: B+ core (Concept B+, restyled — "Living Local Companion")
 
 ### 1. Feed — `/home` (existing route)
+- **Think (P2):** a daily glance — "what's happening near me right now". The premium moment is the hero activity card (photo, time chip, one orange Join) arriving with a 40ms stagger under a calm greeting. Everything shown is real: distance only when both coordinates exist, "going" only from real counts, a DEMO badge when the item is seeded. States: skeleton (same shapes), honest empty with Discover + Create, error + retry, offline banner with the cached list.
 - **Layout**: header (avatar, area selector "Gachibowli ▾", bell) → greeting card ("Good morning, Sameer" / "Around you today", warm photo background) → horizontal "People near you" row (See all) → "Activities" row → "Skills" row → "Projects" row → "Community pulse" activity ticker → Jenny suggestion card (orb icon, not photo — correction #2).
 - **Strings**: "Good morning, {name}" (time-of-day aware) / "Real people. Real things happening nearby." / "Around you today" / section labels as above / "Jenny suggests — A skill share that matches your interests".
 - **Components**: AreaSelector, GreetingHero (photo bg), PersonTile, ActivityTile, SkillTile, ProjectTile, JennyCard (orb).
@@ -32,6 +33,7 @@ Conventions used below:
 - **Motion**: hero Ken Burns is onboarding-only, not here; card list stagger 40ms; Jenny card breathing glow 1.6s.
 
 ### 2. Discover (list mode) — `/discover` (existing route)
+- **Think (P2):** browsing with intent. Search is the first thing to touch; filter chips narrow instantly (200ms). Rows scroll horizontally inside their own container with an edge fade (never the page). People/Skills have no endpoint yet → labelled preview fixtures with initials, never stock faces; Popular = real trending posts.
 - **Layout**: search bar → segmented tabs (All · People · Activities · Skills · Projects) → "People near you" grid (See all) → "Popular this week" → "Skills & support" → "Projects" grid.
 - **Strings**: "Discover" / "People, activities and ideas near you." / "Search people, activities, skills…".
 - **Components**: SegmentedTabs, SearchBar, PersonTile, ActivityTile, SkillChipTile, ProjectTile.
@@ -40,6 +42,7 @@ Conventions used below:
 - **Motion**: tab switch content cross-fade 200ms; grid stagger 40ms (cap 8).
 
 ### 3. Map (Discover's map mode) — `/discover` with a view toggle, not a separate bottom-bar tab (correction #1)
+- **Think (P2):** "what's physically around me" without feeling watched. The "You (approximate)" ring and the privacy card are always visible. Pins are real approximate coordinates; the peek card rises with the gentle spring when a pin is chosen. Google tiles when a key exists, otherwise a light drawn map (no heavy 3D).
 - **Layout**: location bar ("Gachibowli / Gopanapally ▾") → segmented tabs (All/People/Activities/Needs/Offers) → map canvas with pins + "You" centre dot + approximate-radius ring → bottom sheet peek: nearest upcoming activity card (photo, title, time, distance, Join).
 - **Strings**: "Looking in this area" / "Showing approximate location for your privacy" (must always be present — Arena's exact-location rule) / activity card content as in Discover & Join board #3.
 - **Components**: MapCanvas, LocationBar, ActivityPeekCard, RadiusIndicator.
@@ -48,6 +51,7 @@ Conventions used below:
 - **Motion**: pin drop-in stagger 40ms on load; sheet peek→expand spring 260ms.
 
 ### 4. Work — `/work` (existing route)
+- **Think (P2):** accountability and momentum. Each row says what *you* are doing ("You're helping"), sections read Active → Upcoming → Completed, and completed rows get the calm check. The quote at the bottom is the reward. Actions (close a need, attendance) keep the existing real calls.
 - **Layout**: header "Work" → segmented tabs (All · Active · Upcoming · Completed) → "Active" section (See all) with need/offer/activity cards showing role ("You're helping" / "You're going") → "Upcoming" section → "Completed" section with a quiet "Small actions, real change" closing line.
 - **Strings**: section labels as above; per-card role line e.g. "You're helping", "You're going", "You're mentoring".
 - **Components**: SegmentedTabs, WorkItemCard (photo + title + meta + role chip).
@@ -56,6 +60,7 @@ Conventions used below:
 - **Motion**: list stagger 40ms; tab content cross-fade 200ms.
 
 ### 5. Create — bottom sheet, not a route (opened from the `(+)` tab)
+- **Think (P2):** a moment of initiative — make it feel light. The (+) rotates 45° as the sheet springs up; rows stagger in; drag down or Esc to dismiss and focus returns to (+). Guests see the sheet but are asked to sign in before writing anything.
 - **Layout**: sheet header "What do you want to make happen?" + close (×) → "A small step can create a big ripple nearby." → six tappable rows: Post a Need, Make an Offer, Create an Activity, Start a Project, Post a Job, Ask Jenny (pink-orange gradient icon per category colours).
 - **Strings**: exact row labels/subtitles as on board (see Need→Outcome board #1 for the fuller version of this same sheet).
 - **Components**: BottomSheet, CreateOptionRow (icon tile + label + subtitle + chevron).
@@ -64,6 +69,7 @@ Conventions used below:
 - **Motion**: sheet spring-in 260ms; rows stagger 40ms; the `(+)` FAB rotates 45° while this rises (mission §4).
 
 ### 6. Profile ("You") — `/identity` (existing route)
+- **Think (P2):** pride and control. Name in the serif, real counts that count up once, outcomes as proof. No "Online" badge (no presence data). Interests/availability/photo come from this device's draft and are labelled as such until the backend stores them.
 - **Layout**: header (back / Edit) → avatar + name + tagline + location/availability line → bio → interest chips → stat row (Hosted / Joined / Helped / Projects, count up once on mount) → Availability (editable chips) → "Recent outcomes" (See all) → Privacy & visibility (Manage) link.
 - **Strings**: "{Name}" / role/interest tagline / "Recent outcomes" / "Privacy & visibility" / "Manage".
 - **Components**: ProfileHeader, StatRow (count-up), ChipList, OutcomeRow.
@@ -72,6 +78,7 @@ Conventions used below:
 - **Motion**: stat count-up once per mount, instant under reduced motion.
 
 ### 7. Jenny home — reached via Create sheet "Ask Jenny", Feed's Jenny card, or header — not a bottom-bar tab (correction #1)
+- **Think (P2):** warmth without pretending. The orb breathes only when the gateway is reachable; otherwise it rests and says "Offline". The suggestion card is preview data (pill) until P8/the v2 contract; Approve on preview data does nothing and says so.
 - **Layout**: header "Jenny" + status pill (Online/Offline, must reflect real gateway reachability — correction #2) + info icon → segmented tabs (For you · Automations · Reminders · History) → chat-style message list starting with a greeting + "Today's plan" card → "Automations you control" (toggles) → "Recent activity" list → composer ("Ask me anything…", mic icon).
 - **Strings**: "Hi {name}! Here's your plan for today." / "Today's plan" / "Automations you control" / "Manage" / "Recent activity" / "See all".
 - **Components**: JennyOrb (status-aware: online pulses gently per §4, offline is static/desaturated), SegmentedTabs, PlanCard, AutomationToggleRow, ActivityRow, Composer.

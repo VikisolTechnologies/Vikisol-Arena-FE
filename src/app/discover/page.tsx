@@ -1,7 +1,10 @@
-"use client";
-
-import { DiscoverScreen } from "@/components/vnext/DiscoverScreen";
+import { Suspense } from "react";
+import { DiscoverScreen } from "@/components/screens/DiscoverScreen";
 
 export default function DiscoverPage() {
-  return <DiscoverScreen />;
+  return (
+    <Suspense fallback={null}>
+      <DiscoverScreen />
+    </Suspense>
+  );
 }

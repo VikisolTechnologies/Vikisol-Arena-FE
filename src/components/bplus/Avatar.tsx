@@ -13,7 +13,7 @@ export function Avatar({ src, name, className }: { src?: string | null; name: st
     return <img src={src} alt="" className={cn("size-12 rounded-full object-cover", className)} />;
   }
   return (
-    <span aria-hidden className={cn("grid size-12 place-items-center rounded-full bg-primary/20 font-display-serif text-[18px] text-paper-ink", className)}>
+    <span aria-hidden className={cn("grid size-12 place-items-center rounded-full bg-[color-mix(in_oklch,var(--primary)_24%,var(--paper))] font-display-serif text-[18px] text-paper-ink", className)}>
       {initials(name)}
     </span>
   );

@@ -65,6 +65,15 @@ export const kenBurns: { animate: TargetAndTransition; transition: Transition } 
   transition: { duration: 12, ease: "linear", repeat: Infinity, repeatType: "reverse" },
 };
 
+/** Profile stats count up once on mount. */
+export const countUp = { duration: 0.6, ease: ease.out } satisfies Transition;
+
+/** Jenny's orb: a subtle 1.6s breathing loop (ambient — exempt from the 400ms cap). */
+export const breathe: { animate: TargetAndTransition; transition: Transition } = {
+  animate: { scale: [1, 1.035, 1], opacity: [0.92, 1, 0.92] },
+  transition: { duration: 1.6, ease: "easeInOut", repeat: Infinity },
+};
+
 /** Confetti-lite on success moments only. The one timing over 400ms outside ambient loops —
  *  a celebration that finishes in 300ms reads as a glitch, not a moment. */
 export const celebrate = { duration: 0.7, ease: ease.out, delay: 0.05 } satisfies Transition;

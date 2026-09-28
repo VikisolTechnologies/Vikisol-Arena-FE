@@ -1,6 +1,7 @@
-"use client";
+import type { Metadata } from "next";
+import { WorkScreen } from "@/components/screens/WorkScreen";
 
-import { WorkScreen } from "@/components/vnext/WorkScreen";
+export const metadata: Metadata = { title: "Work · Arena" };
 
 export default function WorkPage() {
   return <WorkScreen />;
