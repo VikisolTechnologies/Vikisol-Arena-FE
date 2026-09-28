@@ -42,7 +42,7 @@ export function Pills<T extends string>({
             transition={spring.snappy}
             className={cn(
               "relative inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[14px] font-medium outline-none after:absolute after:-inset-y-1 after:inset-x-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-              on ? (tone === "orange" ? "text-white" : "text-paper-ink") : "border border-field-line text-foreground/90",
+              on ? "text-paper-ink" : "border border-field-line text-foreground/90",
             )}
           >
             {on && (
@@ -145,7 +145,8 @@ export function HScroll({ children, label }: { children: ReactNode; label: strin
     <div
       role="list"
       aria-label={label}
-      className="no-scrollbar -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-5 px-5 pb-1 [mask-image:linear-gradient(to_right,transparent,black_20px,black_calc(100%-24px),transparent)]"
+      tabIndex={0}
+      className="no-scrollbar rounded-tile outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-5 px-5 pb-1 [mask-image:linear-gradient(to_right,transparent,black_20px,black_calc(100%-24px),transparent)]"
     >
       {children}
     </div>

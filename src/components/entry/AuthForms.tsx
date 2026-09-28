@@ -155,7 +155,7 @@ export function SignUpView({ onBack, onSignIn, land }: { onBack: () => void; onS
         </>
       )}
 
-      <form noValidate onSubmit={submit} className={GOOGLE_SIGN_IN_ENABLED && account === "talent" ? "space-y-3.5" : "mt-6 space-y-3.5"}>
+      <form method="post" noValidate onSubmit={submit} className={GOOGLE_SIGN_IN_ENABLED && account === "talent" ? "space-y-3.5" : "mt-6 space-y-3.5"}>
         <TextField id="signup-name" label="Full name" icon={User} autoComplete="name" value={name} onChange={edit(setName, "name")} onBlur={blur("name")} error={shown("name")} shakeSignal={shakeSignal} />
         <TextField id="signup-email" label="Email address" icon={Mail} type="email" inputMode="email" autoComplete="email" value={email} onChange={edit(setEmail, "email")} onBlur={blur("email")} error={shown("email")} shakeSignal={shakeSignal} />
         <PasswordField
@@ -290,7 +290,7 @@ export function SignInView({
         </p>
       )}
 
-      <form noValidate onSubmit={submit} className="mt-6 space-y-3.5">
+      <form method="post" noValidate onSubmit={submit} className="mt-6 space-y-3.5">
         <TextField id="signin-email" label="Email address" icon={Mail} type="email" inputMode="email" autoComplete="email" value={email} onChange={setEmail} onBlur={() => setTouched((t) => ({ ...t, email: true }))} error={shown("email")} shakeSignal={shakeSignal} />
         <PasswordField id="signin-password" label="Password" icon={Lock} autoComplete="current-password" value={password} onChange={setPassword} onBlur={() => setTouched((t) => ({ ...t, password: true }))} error={shown("password")} shakeSignal={shakeSignal} />
         <div className="flex justify-center">
@@ -353,7 +353,7 @@ function MfaView({ pendingToken, onBack, onDone }: { pendingToken: string; onBac
       <TopBar onBack={onBack} />
       <Title className="mt-2">Verification code</Title>
       <Lede>Enter the code from your authenticator app.</Lede>
-      <form noValidate onSubmit={submit} className="mt-6 space-y-4">
+      <form method="post" noValidate onSubmit={submit} className="mt-6 space-y-4">
         <TextField id="mfa-code" label="6-digit code" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={setCode} error={error} shakeSignal={shakeSignal} />
         <Button type="submit" loading={loading}>
           Continue

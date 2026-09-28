@@ -110,7 +110,7 @@ export function DiscoverMap() {
             <div className="min-w-0 flex-1">
               <h3 className="line-clamp-2 text-[16px] font-semibold">{pick.title || pick.body.slice(0, 60)}</h3>
               <p className="mt-0.5 text-[13px] text-paper-ink-muted">{[whenLabel(pick.startsAt), pick.locationText].filter(Boolean).join(" · ")}</p>
-              <ButtonLink href={`/feed/${pick.id}`} className="mt-2 h-11 w-auto px-5 text-[17px]">{pick.intentType === "activity" ? "Join" : "View"}</ButtonLink>
+              <ButtonLink href={`/feed/${pick.id}`} className="mt-2 h-11 w-auto px-5">{pick.intentType === "activity" ? "Join" : "View"}</ButtonLink>
             </div>
           </m.article>
         )}

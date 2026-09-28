@@ -76,8 +76,8 @@
   "index": 1,
   "title": "Feed",
   "route": "/home",
-  "status": "in-progress",
-  "commit": "b8423b1"
+  "status": "done",
+  "commit": "P2"
  },
  {
   "id": "discover",
@@ -86,8 +86,8 @@
   "index": 2,
   "title": "Discover",
   "route": "/discover",
-  "status": "in-progress",
-  "commit": "b8423b1"
+  "status": "done",
+  "commit": "P2"
  },
  {
   "id": "map",
@@ -96,8 +96,8 @@
   "index": 3,
   "title": "Map (Discover map mode)",
   "route": "/discover?view=map",
-  "status": "in-progress",
-  "commit": "b8423b1"
+  "status": "done",
+  "commit": "P2"
  },
  {
   "id": "work",
@@ -106,8 +106,8 @@
   "index": 4,
   "title": "Work",
   "route": "/work",
-  "status": "in-progress",
-  "commit": "b8423b1"
+  "status": "done",
+  "commit": "P2"
  },
  {
   "id": "create",
@@ -116,8 +116,8 @@
   "index": 5,
   "title": "Create sheet",
   "route": "/home?create=1",
-  "status": "in-progress",
-  "commit": "b8423b1"
+  "status": "done",
+  "commit": "P2"
  },
  {
   "id": "profile",
@@ -126,8 +126,8 @@
   "index": 6,
   "title": "You (profile)",
   "route": "/identity",
-  "status": "in-progress",
-  "commit": "b8423b1"
+  "status": "done",
+  "commit": "P2"
  },
  {
   "id": "jenny-home",
@@ -136,8 +136,8 @@
   "index": 7,
   "title": "Jenny",
   "route": "/agent",
-  "status": "in-progress",
-  "commit": "b8423b1"
+  "status": "done",
+  "commit": "P2"
  },
  {
   "id": "personal-feed",

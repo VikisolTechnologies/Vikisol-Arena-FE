@@ -53,7 +53,7 @@ export function HeroActivityCard({ item, km }: { item: FeedItem; km: number | nu
                 {formatKm(km)}
               </span>
             )}
-            <h3 className="font-display-serif text-[24px] font-medium leading-tight text-foreground">{titleOf(item)}</h3>
+            <h3 className="line-clamp-2 font-display-serif text-[22px] font-medium leading-tight text-foreground">{titleOf(item)}</h3>
           </div>
         </div>
       </Link>
@@ -73,7 +73,7 @@ export function HeroActivityCard({ item, km }: { item: FeedItem; km: number | nu
               </>
             ) : null}
           </p>
-          <ButtonLink href={href} className="h-11 w-auto shrink-0 px-5 text-[17px]">
+          <ButtonLink href={href} className="h-11 w-auto shrink-0 px-5">
             {item.myJoinStatus === "approved" ? "View" : item.joinable ? "Join activity" : "View details"}
           </ButtonLink>
         </div>

@@ -17,9 +17,11 @@ export default defineConfig({
     { name: "mobile-webkit", use: { ...devices["iPhone 13"] } },
   ],
   webServer: {
-    command: "npm run dev -- --port 3107 --webpack",
+    // A production build, not `next dev`: on-demand compiles raced the tests (reloads mid-navigation,
+    // clicks before hydration). This is also closer to what ships.
+    command: "npx next build && npx next start -p 3107",
     url: "http://localhost:3107/api/health",
-    timeout: 120_000,
+    timeout: 300_000,
     reuseExistingServer: false,
     env: {
       ARENA_NEXT_DIST_DIR: ".next-local-tests", NEXT_PUBLIC_API_MODE: "real",

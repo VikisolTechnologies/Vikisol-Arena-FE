@@ -69,7 +69,7 @@ export function ForgotPasswordView() {
             </ButtonLink>
           </>
         ) : (
-          <form noValidate onSubmit={submit} className="mt-6 space-y-3.5">
+          <form method="post" noValidate onSubmit={submit} className="mt-6 space-y-3.5">
             <TextField id="forgot-email" label="Email address" icon={Mail} type="email" inputMode="email" autoComplete="email" value={email} onChange={setEmail} onBlur={() => setTouched(true)} error={fieldError} shakeSignal={shakeSignal} />
             <AnimatePresence initial={false}>
               {error && (
@@ -148,7 +148,7 @@ export function ResetPasswordView({ pathToken }: { pathToken?: string }) {
           <>
             <Title className="mt-2">Choose a new password</Title>
             <Lede>For {email}</Lede>
-            <form noValidate onSubmit={submit} className="mt-6 space-y-3.5">
+            <form method="post" noValidate onSubmit={submit} className="mt-6 space-y-3.5">
               <PasswordField
                 id="reset-password"
                 label="New password"

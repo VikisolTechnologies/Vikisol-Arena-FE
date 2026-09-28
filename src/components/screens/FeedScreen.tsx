@@ -32,7 +32,7 @@ type Load = { items: FeedItem[]; me: { lat?: number; lng?: number; city?: string
 export function FeedScreen() {
   const guest = useGuest();
   const draftArea = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().area, () => "");
-  const [filter, setFilter] = useState<FeedFilter>("all");
+  const [filter, setFilter] = useState<FeedFilter>("nearby");
   const [data, setData] = useState<Load | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -67,7 +67,10 @@ export function FeedScreen() {
 
   const area = draftArea || data?.me?.city || "";
   const { text: hello, icon: TimeIcon } = greeting(hour);
-  const shown = useMemo(() => (data ? filterFeed(data.items, filter) : []), [data, filter]);
+  const filtered = useMemo(() => (data ? filterFeed(data.items, filter) : []), [data, filter]);
+  // Nearby is the board's default; when nothing is location-tagged yet, show everything and say so.
+  const fellBack = filter === "nearby" && filtered.length === 0 && (data?.items.length ?? 0) > 0;
+  const shown = fellBack ? (data?.items ?? []) : filtered;
   const hero = shown.find((i) => i.itemType === "activity" && i.mediaUrls.length > 0) ?? shown.find((i) => i.itemType === "activity");
   const needs = shown.filter((i) => i.itemType === "ask");
   const rest = shown.filter((i) => i !== hero && i.itemType !== "ask");
@@ -133,6 +136,7 @@ export function FeedScreen() {
               </m.div>
             ) : (
               <m.div key={`list-${filter}`} initial="hidden" animate="shown" className="space-y-3">
+                {fellBack && <p className="text-[14px] text-faint">Nothing is tagged near you yet — showing everything.</p>}
                 {hero && (
                   <m.div variants={rise} custom={0}>
                     <HeroActivityCard item={hero} km={km(hero)} />

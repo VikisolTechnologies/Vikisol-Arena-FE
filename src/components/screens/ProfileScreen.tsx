@@ -34,8 +34,13 @@ export function ProfileScreen() {
     if (guest !== false) return;
     let cancelled = false;
     Promise.all([getMyProfile(), getMyPosts(), getJoinedPosts().catch(() => []), getMyBids().catch(() => [])])
-      .then(([profile, posts, joined, bids]) => {
+      .then(([profile, rawPosts, rawJoined, rawBids]) => {
         if (cancelled) return;
+        // One malformed source shouldn't blank the page; treat it as empty.
+        const list = <T,>(v: T[] | unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
+        const posts = list<Post>(rawPosts);
+        const joined = list<Post>(rawJoined);
+        const bids = list<{ status: string }>(rawBids);
         const now = Date.now();
         const outcomes = [...posts, ...joined].filter((p) => p.status === "closed" || (p.startsAt && new Date(p.startsAt).getTime() < now)).slice(0, 4);
         setError(null);

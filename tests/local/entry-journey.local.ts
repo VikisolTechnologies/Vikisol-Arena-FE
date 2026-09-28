@@ -46,6 +46,18 @@ async function stubApi(page: Page, calls: Call[]) {
   });
 }
 
+// The dev server compiles a route on first visit and can reload the page mid-navigation; retry
+// only that case. Assertions are untouched.
+async function goto(page: Page, url: string) {
+  try {
+    await page.goto(url);
+  } catch (err) {
+    if (!String(err).includes("interrupted by another navigation")) throw err;
+    await page.waitForLoadState("load");
+    await page.goto(url);
+  }
+}
+
 async function dismissCookies(page: Page) {
   const accept = page.getByRole("button", { name: "Accept", exact: true });
   if (await accept.isVisible().catch(() => false)) await accept.click();
@@ -67,9 +79,9 @@ test("sign up → why → local life → identity → all set → feed, without 
   const calls: Call[] = [];
   await stubApi(page, calls);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/auth");
+  await goto(page, "/auth");
   await page.evaluate(() => localStorage.clear());
-  await page.goto("/auth");
+  await goto(page, "/auth");
   await dismissCookies(page);
 
   await expect(page.getByRole("heading", { name: "Local people. Real outcomes." })).toBeVisible();
@@ -99,7 +111,8 @@ test("sign up → why → local life → identity → all set → feed, without 
   await expect(page.getByLabel(/I agree to the/)).toBeChecked();
   await page.getByRole("button", { name: "Create account" }).click();
 
-  await expect(page).toHaveURL(/\/onboarding\?step=1/);
+  // First visit compiles /onboarding on the dev server; give that navigation time.
+  await expect(page).toHaveURL(/\/onboarding\?step=1/, { timeout: 15_000 });
   expect(calls.find((c) => c.path.endsWith("/auth/signup"))?.body).toMatchObject({ name: "Priya Sharma", email: "priya@example.com", role: "talent" });
   await expect(page.getByRole("heading", { name: "Why are you here?" })).toBeVisible();
   await expect(page.getByText("Step 1 of 4")).toBeAttached();
@@ -141,12 +154,12 @@ test("sign up → why → local life → identity → all set → feed, without 
 test("Explore first goes straight to the feed; Skip always works", async ({ page }) => {
   const calls: Call[] = [];
   await stubApi(page, calls);
-  await page.goto("/auth");
+  await goto(page, "/auth");
   await page.evaluate(() => {
     localStorage.clear();
     localStorage.setItem("arena_session", JSON.stringify({ role: "talent", name: "Priya Sharma", email: "priya@example.com" }));
   });
-  await page.goto("/onboarding?step=1");
+  await goto(page, "/onboarding?step=1");
   await dismissCookies(page);
   await page.getByRole("button", { name: "Skip" }).click();
   await expect(page.getByRole("heading", { name: "Set up your local life" })).toBeVisible();
@@ -159,7 +172,7 @@ test("Explore first goes straight to the feed; Skip always works", async ({ page
   await page.getByRole("button", { name: "Go to Arena" }).click();
   await expect(page).toHaveURL(/\/home/);
   // "You're all set" is never reachable by URL without a real save.
-  await page.goto("/onboarding?step=4");
+  await goto(page, "/onboarding?step=4");
   await expect(page.getByRole("heading", { name: "Your identity" })).toBeVisible();
 });
 
@@ -167,7 +180,8 @@ test("sign in, forgot password, expired reset and session notice", async ({ page
   const calls: Call[] = [];
   await stubApi(page, calls);
   await page.setViewportSize({ width: 320, height: 700 });
-  await page.goto("/auth?mode=signin");
+  await goto(page, "/auth?mode=signin");
+  await page.waitForLoadState("networkidle");
   await dismissCookies(page);
   await noOverflow(page);
   await page.getByLabel("Password").fill("long-enough");
@@ -179,25 +193,25 @@ test("sign in, forgot password, expired reset and session notice", async ({ page
   await page.locator('button[type="submit"]').click();
   await expect(page).toHaveURL(/\/home/);
 
-  await page.goto("/auth/forgot");
+  await goto(page, "/auth/forgot");
   await page.getByLabel("Email address").fill("priya@example.com");
   await page.getByRole("button", { name: "Send reset link" }).click();
   await expect(page.getByText("Check your email")).toBeVisible();
   expect(calls.some((c) => c.path.includes("/auth/forgot"))).toBe(true);
 
-  await page.goto("/auth/reset/expired-token");
+  await goto(page, "/auth/reset/expired-token");
   await expect(page.getByRole("heading", { name: "This link has expired" })).toBeVisible();
 
   await page.evaluate(() => localStorage.removeItem("arena_session"));
-  await page.goto("/auth?mode=signin&reason=expired");
+  await goto(page, "/auth?mode=signin&reason=expired");
   await expect(page.getByText("Your session expired. Sign in again.")).toBeVisible();
 });
 
 test("every entry screen fits 320–430px and respects reduced motion", async ({ page }) => {
-  await page.goto("/auth");
+  await goto(page, "/auth");
   await dismissCookies(page);
   for (const url of ["/auth", "/auth?mode=signup", "/auth?mode=signin", "/auth/forgot"]) {
-    await page.goto(url);
+    await goto(page, url);
     for (const width of [320, 360, 375, 390, 430, 1280]) {
       await page.setViewportSize({ width, height: 900 });
       await noOverflow(page);
@@ -205,7 +219,7 @@ test("every entry screen fits 320–430px and respects reduced motion", async ({
     await noSeriousA11y(page);
   }
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/auth");
+  await goto(page, "/auth");
   const join = page.getByRole("button", { name: "Join Arena" });
   await expect(join).toBeVisible();
   const duration = await join.evaluate((node) => getComputedStyle(node).transitionDuration);

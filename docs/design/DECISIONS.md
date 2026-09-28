@@ -3,6 +3,31 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **28 Sep (P2)** — People tiles and Skills use **initials, not stock faces**, and are preview
+  fixtures (Preview data pill) until a people-nearby/skills endpoint exists; hidden in api mode.
+- **28 Sep (P2)** — Cards without media show a warm gradient, never a stand-in photo.
+- **28 Sep (P2)** — Feed opens on **Nearby** (board); if nothing is location-tagged it shows
+  everything with a one-line note, rather than an empty first screen.
+- **28 Sep (P2)** — Feed header adds an **Inbox** icon beside the bell (board shows the bell only;
+  the Inbox must stay reachable and has no tab).
+- **28 Sep (P2)** — Discover's top-right icon toggles **map mode** (board shows search there; the
+  search field is already right below). `/map` deep-links into map mode. Without a Google Maps
+  key the map is a light drawn map with real approximate pins — no 3D, no fake geography labels;
+  it says "launch area" until the person's approximate area is known.
+- **28 Sep (P2)** — Active orange pills use **ink text** (white on #FF5A1F at 14px is 3.11:1);
+  buttons keep white 19px bold (large text).
+- **28 Sep (P2)** — Profile: **no Online badge** (no presence data, correction #9); interests,
+  photo and availability come from this device's draft and say so; cover image is the brand
+  Durgam Cheruvu photo, not the person's.
+- **28 Sep (P2)** — Jenny home: status pill appears **only after a real reply** (Online/Offline);
+  the "For you" card is labelled preview data and its Approve/Not now do nothing and say so. A
+  back button replaces the board's kebab because Jenny has no tab to return to.
+- **28 Sep (P2)** — Create sheet's rows open a short real composer for Need/Offer/Activity/Project
+  (existing endpoints) until P4's full forms; Post a Job goes to the company postings flow (or
+  explains for personal accounts); Ask Jenny opens Jenny.
+- **28 Sep (P2)** — Auth forms use `method="post"`: a submit before hydration must never put an
+  email or password into the URL.
+- **28 Sep (P2)** — `/dev/progress` board frames are WebP (PNG crops were 83MB).
 - **28 Sep (P1)** — Primary button keeps the board's white-on-orange; white on `#FF5A1F` is
   3.12:1, so the label is WCAG "large text" (19px bold, needs 3:1) instead of darkening the brand
   orange or switching to dark text. Orange *text on cream* uses `--primary-on-paper` `#B83A0A`

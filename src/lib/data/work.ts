@@ -26,7 +26,8 @@ export interface WorkRow {
   replies?: number;
 }
 
-const settled = <T,>(r: PromiseSettledResult<T>, empty: T): T => (r.status === "fulfilled" ? r.value : empty);
+/** One failing or malformed source must never blank the whole Work screen. */
+const settled = <T,>(r: PromiseSettledResult<T[]>, empty: T[]): T[] => (r.status === "fulfilled" && Array.isArray(r.value) ? r.value : empty);
 const finished = (status: string) => status === "closed" || status === "cancelled" || status === "expired";
 const future = (iso?: string) => !!iso && new Date(iso).getTime() > Date.now();
 const past = (iso?: string) => !!iso && new Date(iso).getTime() <= Date.now();
