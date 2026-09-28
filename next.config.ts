@@ -51,7 +51,9 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "X-Frame-Options", value: "DENY" },
+          // Production: DENY. Dev/preview: SAMEORIGIN, so /dev/compare can show the live screen
+          // next to its board; other origins still can't frame the app.
+          { key: "X-Frame-Options", value: process.env.VERCEL_ENV === "production" ? "DENY" : "SAMEORIGIN" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
         ],

@@ -54,3 +54,4 @@ next-env.d.ts
 
 # Isolated local browser tests
 .next-local-tests/
+.next-founder/
