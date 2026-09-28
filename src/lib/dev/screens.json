@@ -356,8 +356,8 @@
     "index": 1,
     "title": "My profile (career entry)",
     "route": "/identity",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "b9d03ce"
   },
   {
     "id": "career-intent",
@@ -366,8 +366,8 @@
     "index": 2,
     "title": "Career intent",
     "route": "/identity/career",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "b9d03ce"
   },
   {
     "id": "career-setup",
@@ -376,8 +376,8 @@
     "index": 3,
     "title": "Job preferences",
     "route": "/identity/career?step=setup",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "b9d03ce"
   },
   {
     "id": "privacy-preview",
@@ -386,8 +386,8 @@
     "index": 4,
     "title": "Visibility preview",
     "route": "/identity/career?step=privacy",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "b9d03ce"
   },
   {
     "id": "work-jobs",
@@ -396,8 +396,8 @@
     "index": 5,
     "title": "Work \u2192 Jobs",
     "route": "/jobs",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "b9d03ce"
   },
   {
     "id": "job-details",
@@ -406,8 +406,8 @@
     "index": 6,
     "title": "Job details",
     "route": "/dev/screen/job-details",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "b9d03ce"
   },
   {
     "id": "apply-track",
@@ -416,8 +416,8 @@
     "index": 7,
     "title": "Apply & track",
     "route": "/dev/screen/apply-track",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "b9d03ce"
   },
   {
     "id": "career-status",
@@ -426,8 +426,8 @@
     "index": 0,
     "title": "Career \u00b7 Where you are now (status, notice)",
     "route": "/identity/career?step=setup",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "b9d03ce",
     "note": "No board \u2014 designed in B+"
   },
   {
@@ -437,8 +437,8 @@
     "index": 0,
     "title": "Career \u00b7 Skills & stack (proficiency, SAP)",
     "route": "/identity/career?step=setup",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "b9d03ce",
     "note": "No board \u2014 designed in B+"
   },
   {
@@ -448,8 +448,8 @@
     "index": 0,
     "title": "Career \u00b7 Compensation (only me)",
     "route": "/identity/career?step=setup",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "b9d03ce",
     "note": "No board \u2014 designed in B+"
   },
   {
@@ -459,8 +459,8 @@
     "index": 0,
     "title": "Career \u00b7 What you're looking for",
     "route": "/identity/career?step=setup",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "b9d03ce",
     "note": "No board \u2014 designed in B+"
   },
   {
@@ -470,8 +470,8 @@
     "index": 0,
     "title": "Career \u00b7 Resume & proof",
     "route": "/identity/career?step=setup",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "b9d03ce",
     "note": "No board \u2014 designed in B+"
   },
   {
@@ -481,8 +481,8 @@
     "index": 0,
     "title": "Career \u00b7 Review answers",
     "route": "/identity/career?step=setup",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "b9d03ce",
     "note": "No board \u2014 designed in B+"
   },
   {
@@ -492,8 +492,8 @@
     "index": 0,
     "title": "Apply sheet (what's shared + consent)",
     "route": "/dev/screen/apply-sheet",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "b9d03ce",
     "note": "No board \u2014 designed in B+"
   },
   {
