@@ -1,5 +1,7 @@
 # Progress
 
+**FE owner: Claude Code. Mission: docs/missions/FE-BPLUS-BUILD.md**
+
 Updated 27 Sep 2026. Resume from here.
 
 ## Current step

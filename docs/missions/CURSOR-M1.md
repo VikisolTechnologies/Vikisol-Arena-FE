@@ -1,3 +1,5 @@
+**Superseded by FE-BPLUS-BUILD.md (founder, 28 Sep 2026).**
+
 # Cursor Mission M1 — Mobile shell, tokens, navigation, rich Feed card
 
 **Issued by** the architect, 27 Sep 2026 (reissued 01:00 IST).
