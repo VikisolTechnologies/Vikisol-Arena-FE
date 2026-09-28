@@ -20,7 +20,7 @@ const ACTIVITY_KEY = "arena_platform_activity";
 
 function seedTenants(): TenantSummary[] {
   return [
-    { id: "t-1", companyName: "Techolution", logoEmoji: "🏢", plan: "pro", status: "active", seatsUsed: 3, seatsTotal: 10, unlockCreditsUsed: 27, unlockCreditsTotal: 50, ownerEmail: "demo.enterprise@vikisol.dev", createdAt: new Date(Date.now() - 90 * 86400000).toISOString() },
+    { id: "t-1", companyName: "Lakeshore Tech", logoEmoji: "🏢", plan: "pro", status: "active", seatsUsed: 3, seatsTotal: 10, unlockCreditsUsed: 27, unlockCreditsTotal: 50, ownerEmail: "demo.enterprise@vikisol.dev", createdAt: new Date(Date.now() - 90 * 86400000).toISOString() },
     { id: "t-2", companyName: "Nimbus Health", logoEmoji: "🩺", plan: "free", status: "active", seatsUsed: 1, seatsTotal: 3, unlockCreditsUsed: 4, unlockCreditsTotal: 10, ownerEmail: "admin@nimbushealth.dev", createdAt: new Date(Date.now() - 40 * 86400000).toISOString() },
     { id: "t-3", companyName: "Fleetwise Logistics", logoEmoji: "🚚", plan: "enterprise", status: "suspended", seatsUsed: 12, seatsTotal: 50, unlockCreditsUsed: 140, unlockCreditsTotal: 200, ownerEmail: "ops@fleetwise.dev", createdAt: new Date(Date.now() - 200 * 86400000).toISOString() },
   ];
@@ -42,9 +42,9 @@ function writeTenants(tenants: TenantSummary[]) {
 
 function seedUsers(): PlatformUser[] {
   return [
-    { id: "u-1", name: "Techolution Talent Team", email: "demo.enterprise@vikisol.dev", role: "company_admin", tenantId: "t-1", tenantName: "Techolution", createdAt: new Date(Date.now() - 90 * 86400000).toISOString() },
-    { id: "u-2", name: "Demo Recruiter", email: "demo.recruiter@vikisol.dev", role: "recruiter", tenantId: "t-1", tenantName: "Techolution", createdAt: new Date(Date.now() - 60 * 86400000).toISOString() },
-    { id: "u-3", name: "Demo Hiring Manager", email: "demo.hiringmanager@vikisol.dev", role: "hiring_manager", tenantId: "t-1", tenantName: "Techolution", createdAt: new Date(Date.now() - 45 * 86400000).toISOString() },
+    { id: "u-1", name: "Lakeshore Tech Talent Team", email: "demo.enterprise@vikisol.dev", role: "company_admin", tenantId: "t-1", tenantName: "Lakeshore Tech", createdAt: new Date(Date.now() - 90 * 86400000).toISOString() },
+    { id: "u-2", name: "Demo Recruiter", email: "demo.recruiter@vikisol.dev", role: "recruiter", tenantId: "t-1", tenantName: "Lakeshore Tech", createdAt: new Date(Date.now() - 60 * 86400000).toISOString() },
+    { id: "u-3", name: "Demo Hiring Manager", email: "demo.hiringmanager@vikisol.dev", role: "hiring_manager", tenantId: "t-1", tenantName: "Lakeshore Tech", createdAt: new Date(Date.now() - 45 * 86400000).toISOString() },
     { id: "u-4", name: "Priya Nair", email: "priya@example.dev", role: "talent", createdAt: new Date(Date.now() - 20 * 86400000).toISOString() },
   ];
 }

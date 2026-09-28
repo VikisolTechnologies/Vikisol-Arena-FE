@@ -65,10 +65,10 @@ export const TITLES_BY_INDUSTRY: Record<Industry, string[]> = {
 };
 
 export const COMPANIES = [
-  { name: "Techolution", emoji: "🟢" },
+  { name: "Lakeshore Tech", emoji: "🟢" },
   { name: "Tiffin Trail", emoji: "🟠" },
   { name: "Bluepeak Software", emoji: "🔷" },
-  { name: "Innova Solutions", emoji: "🔵" },
+  { name: "Meridian Works", emoji: "🔵" },
   { name: "Rupeeline", emoji: "🟦" },
   { name: "Kestrel Apps", emoji: "🟥" },
   { name: "Greenleaf CX", emoji: "🟩" },

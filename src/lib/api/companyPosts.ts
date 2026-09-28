@@ -10,7 +10,7 @@ import type { PagedResponse } from "./paged";
 // talent). Mock mode reuses the same localStorage-backed post store as posts.ts's own mock
 // createPost so a company-authored post shows up in the same mock feed a talent account sees.
 const COMPANY_POSTS_KEY = "arena_posts";
-const MOCK_COMPANY_NAME = "Techolution";
+const MOCK_COMPANY_NAME = "Lakeshore Tech";
 const MOCK_COMPANY_EMOJI = "🟢";
 const MOCK_COMPANY_ID = "mock-company-1";
 

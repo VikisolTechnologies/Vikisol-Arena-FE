@@ -2,11 +2,11 @@ import type { Conversation, ThreadMessage } from "@/lib/types";
 
 export const MOCK_CONVERSATIONS: Conversation[] = [
   {
-    id: "conv-1", participantId: "ext-1", participantName: "Techolution HR", participantEmoji: "🟢",
+    id: "conv-1", participantId: "ext-1", participantName: "Lakeshore Tech HR", participantEmoji: "🟢",
     context: "Senior React Developer", lastMessageAt: new Date(Date.now() - 20 * 60000).toISOString(), unread: true,
   },
   {
-    id: "conv-2", participantId: "ext-2", participantName: "Innova Solutions", participantEmoji: "🔵",
+    id: "conv-2", participantId: "ext-2", participantName: "Meridian Works", participantEmoji: "🔵",
     context: "Interview follow-up", lastMessageAt: new Date(Date.now() - 3 * 3600000).toISOString(), unread: false,
   },
   {

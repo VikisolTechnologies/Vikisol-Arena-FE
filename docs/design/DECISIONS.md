@@ -30,9 +30,8 @@ One line per non-obvious call, newest first. Source order per the mission: (1) t
 - **28 Sep (P5)** — Resilient states use one `StateCard` (offline / empty / error / saved). No
   "Recent (cached)" list: nothing is cached for offline viewing, so it isn't claimed.
 - **28 Sep (P5)** — Mock data (mock API mode only) named real consumer brands (Swiggy, Microsoft,
-  Paytm, Zoho, Freshworks, Practo, Delhivery, Razorpay) — replaced with fictional names (§11). Left
-  **Techolution** and **Innova Solutions** (the demo enterprise tenant in the admin shells, possibly
-  deliberate) for the founder to confirm.
+  Paytm, Zoho, Freshworks, Practo, Delhivery, Razorpay) — replaced with fictional names (§11). All mock
+  company names are now fictional (Techolution → Lakeshore Tech, Innova → Meridian Works, 29 Sep).
 - **28 Sep (P4)** — A need is a post with `intentType: "ask"`; an **offer of help is a real join
   request** and "Accept & open chat" is `decideJoin(approve)`, which opens the room. Needs are posted
   with `visibility: "approval"` so the owner chooses who helps.
