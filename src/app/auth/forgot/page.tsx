@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { ForgotPasswordForm } from "@/components/vnext/entry/ForgotPasswordForm";
+import { ForgotPasswordView } from "@/components/entry/PasswordRecovery";
 
 export const metadata: Metadata = { title: "Reset password · Arena" };
 
 export default function ForgotPage() {
-  return <ForgotPasswordForm />;
+  return <ForgotPasswordView />;
 }

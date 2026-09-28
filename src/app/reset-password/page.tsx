@@ -1,13 +1,13 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { ResetPasswordForm } from "@/components/vnext/entry/ResetPasswordForm";
+import { ResetPasswordView } from "@/components/entry/PasswordRecovery";
 
 export const metadata: Metadata = { title: "New password · Arena" };
 
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={null}>
-      <ResetPasswordForm />
+      <ResetPasswordView />
     </Suspense>
   );
 }

@@ -1,37 +1,18 @@
 import { cn } from "@/lib/utils";
 
 /**
- * docs/design/TOKENS.md — "an SVG component of the orange 'A' chevron mark + lowercase
- * 'arena' wordmark". The mark is a simple roof/chevron shape (two angled strokes meeting at
- * a peak) rather than a literal glyph "A" — matches the small mark used top-left of every B+
- * board. `variant="mark"` for tight spaces (tab bar, favicon-adjacent use), `"full"` for
- * headers/splash where the wordmark fits.
+ * docs/design/TOKENS.md — the orange "A" chevron mark + lowercase "arena" wordmark, as drawn on
+ * every B+ board: a thick, round-capped chevron (an A without its crossbar) and a heavy,
+ * tightly-tracked sans wordmark. `variant="mark"` for tight spaces.
  */
-export function ArenaLogo({
-  variant = "full",
-  className,
-}: {
-  variant?: "mark" | "full";
-  className?: string;
-}) {
+export function ArenaLogo({ variant = "full", className }: { variant?: "mark" | "full"; className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5", className)}>
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-        className="size-[1em] shrink-0"
-        fill="none"
-      >
-        <path
-          d="M12 3 L21 20 L14.5 20 L12 14.5 L9.5 20 L3 20 Z"
-          fill="var(--color-primary)"
-        />
+    <span className={cn("inline-flex items-center gap-[0.3em] leading-none", className)}>
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[1.05em] shrink-0" fill="none">
+        <path d="M4.5 19.5 L12 5 L19.5 19.5" stroke="var(--color-primary)" strokeWidth={4.4} strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      {variant === "full" && (
-        <span className="font-[family-name:var(--font-display-serif)] text-[1em] font-semibold lowercase leading-none">
-          arena
-        </span>
-      )}
+      {variant === "full" && <span className="font-sans font-extrabold lowercase tracking-[-0.035em]">arena</span>}
+      {variant === "mark" && <span className="sr-only">Arena</span>}
     </span>
   );
 }

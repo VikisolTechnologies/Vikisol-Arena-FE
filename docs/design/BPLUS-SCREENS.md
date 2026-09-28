@@ -81,54 +81,86 @@ Conventions used below:
 
 ---
 
-## Board: Entry & progressive onboarding B+
+## Board: Entry & progressive onboarding B+ (P1 — rechecked against the board, 28 Sep)
 
-### 1. Welcome — `/onboarding` or `/` for signed-out (check existing `src/app/onboarding`, `src/app/auth`)
-- **Layout**: full-bleed warm/golden-hour photo (Ken Burns, 12s loop) → logo → headline "Local people. Real outcomes." → subhead "Meet neighbors, join activities, get help, share skills and make your neighborhood stronger." → primary "Join Arena" → secondary "Sign in" → tertiary "Continue as guest".
-- **Components**: KenBurnsHero, ArenaLogo, Button (primary/secondary/ghost).
-- **States**: n/a (static entry).
-- **Data**: none.
-- **Motion**: Ken Burns 12s slow zoom/pan loop, static under reduced motion.
+Corrections to the first draft of this section: Why-are-you-here has **8** tiles (not 6);
+availability lives on **Your identity**, not Local life; the Ready screen has **4** recommendation
+rows (the 4th is a dark "Looking for work later?" card); each auth screen has its own two-line
+footer caption. Routes: Welcome = `/` and `/auth`; Sign up/in = `/auth?mode=signup|signin`;
+Forgot = `/auth/forgot`; Reset = `/auth/reset/[token]` and `/reset-password`; onboarding =
+`/onboarding?step=1..4`. Board dots show 6; we show **4** because there are 4 real steps
+(honest progress — DECISIONS.md).
 
-### 2. Sign up — `/auth` (existing route, check sign-up mode)
-- **Layout**: back chevron → "Create your account" → "Join a neighborhood of real people doing real things together." → "Continue with Google" *(only if existing auth supports it — correction #10, else hidden behind `NEXT_PUBLIC_AUTH_GOOGLE` and logged in `docs/FE-API-GAPS.md`)* → divider "or" → Full name / Email / Password fields → ToS/Privacy checkbox → "Create account" → "Already have an account? Sign in".
-- **Components**: TextField, PasswordField (show/hide), Checkbox, Button, GoogleButton (conditional).
-- **States**: validation errors per field, submitting, existing-account error, offline (block submit, honest message).
-- **Data**: `auth` — restyle only, keep existing calls/session logic untouched (mission §6).
-- **Motion**: field focus 200ms; button press scale 0.97/120ms.
+### 1. Welcome — `/`, `/auth`
+- **Think:** arriving, curious, maybe sceptical. The feeling to create is "this is my real
+  neighbourhood" — so the hero is a real Durgam Cheruvu sunset, drifting slowly (Ken Burns),
+  with the copy rising in a 40ms stagger. One clear primary action; guest browsing is honoured.
+  States: signed-in visitors never see it (server redirect); reduced motion = still photo.
+- **Layout:** full-bleed photo, top/bottom scrims → logo + "Local people. Real outcomes." →
+  (bottom third) serif "Local people. / Real outcomes." → "Meet neighbors, join activities, get
+  help, share skills and make your neighborhood stronger." → Join Arena (orange) → Sign in
+  (outline) → Continue as guest (underlined) → leaf + "A KINDER NEIGHBORHOOD / BRIGHTER
+  TOMORROWS" → tiny photo credit (CC BY-SA requires it).
 
-### 3. Sign in — `/auth` (existing route, sign-in mode)
-- **Layout**: back chevron → "Welcome back" / "Good to see you again." → Email / Password fields → "Forgot password?" link → "Sign in" → divider "or" → "Continue with Google" *(conditional, as above)* → "Don't have an account? Create account".
-- **Components**: same field set as Sign up.
-- **States**: invalid credentials, submitting, offline.
-- **Data**: `auth`.
-- **Motion**: same as Sign up.
+### 2. Sign up — `/auth?mode=signup`
+- **Think:** committing — any friction or an unfair error loses them. Validate on blur, never
+  while typing; errors sit under the field and the field shakes once only on a failed submit;
+  focus moves to the first problem. The premium moment: the button holds its width while
+  working, then morphs into a check before onboarding slides in.
+- **Layout:** back → "Create your account" / "Join a neighborhood of real people doing real
+  things together." → Continue with Google (only if configured) + "or" → Full name, Email
+  address, Password (eye) + "Use at least 6 characters" (backend rule; board says 8) → Terms of
+  Service / Privacy Policy checkbox (required) → Create account → "Already have an account?
+  Sign in" → quiet "Hiring for a company? Create a company account" → skyline + "PEOPLE TODAY /
+  STRONGER NEIGHBORS TOMORROW".
 
-### 4. Why are you here? — `/onboarding/intent` (new, or a step within existing `src/app/onboarding`)
-- **Layout**: back → step dots (filled 1 of ~5) + "Skip" → "Why are you here?" / "Choose as many as you like. You can change this anytime." → 2-column grid of 6 cards: Find activities, Meet useful people, Ask for help, Offer a skill, Find work, Hire or recruit → "Continue".
-- **Components**: StepDots, IntentCard (icon tile + label + subtitle, multi-select toggle), Button.
-- **States**: none selected (Continue disabled or defaults to "just exploring"), selected (visual check state).
-- **Data**: `profile` (writes onboarding intent).
-- **Motion**: step content slides 24px direction-aware; dots fill on advance.
+### 3. Sign in — `/auth?mode=signin` (+ MFA code step, Forgot, Reset)
+- **Think:** returning, wants in fast. Autofill-friendly fields, one error line that tells the
+  truth ("offline" vs the server's message), and a Forgot link that's easy to hit.
+- **Layout:** back → "Welcome back" / "Good to see you again." → Email address, Password (eye)
+  → "Forgot password?" (orange, centred) → Sign in → "or" + Google → "Don't have an account?
+  Create account" → skyline + "SAME NEIGHBORS / BIGGER POSSIBILITIES". Forgot and Reset use the
+  same frame and the existing endpoints (no API gap).
 
-### 5. Set up your local life — `/onboarding/local-life` (new)
-- **Layout**: back → step dots + Skip → "Set up your local life" / "Help us show you what's nearby and relevant." → "Your area" dropdown (Gachibowli/Gopanapally) → "Your interests" chip picker (Running, Badminton, Learning, Volunteering, Food, Photography, Community events, Environment, + Add another) → "Location" toggle "Use my current location" with a privacy note ("Your location is private and only used to show relevant local suggestions.") → "Availability" chips (Weekdays/Weekends/Evenings) → "Continue".
-- **Components**: StepDots, Dropdown, ChipPicker (multi-select, add-custom), ToggleRow, Button.
-- **Data**: `profile`.
-- **Motion**: same as step 4; chip select/deselect 200ms.
+### 4. Why are you here? — `/onboarding?step=1`
+- **Think:** choosing, low stakes. Tiles should feel tactile: a snappy spring on select, an
+  orange ring plus a check (never colour alone). "Explore first" is exclusive and goes straight
+  to the Feed. Skip always works.
+- **Layout:** dots + Skip (no back: sign-up is done) → "Why are you here?" / "Choose as many as
+  you like. You can change this anytime." → 2×4 cream tiles, coloured icon discs: Find activities
+  (orange), Meet useful people (green), Ask for help (blue), Offer a skill (orange), Find work
+  (amber), Hire or recruit (blue), Start a project (green), Explore first (slate) → Continue.
 
-### 6. Your identity — `/onboarding/identity` (new)
-- **Layout**: back → step dots + Skip → "Your identity" / "Help neighbors get to know you. You control what's visible." → avatar upload (optional, initials fallback) → Display name* → Professional title (optional) → Short intro (optional, char counter "0/160") → a "What people can see" preview note (name, photo, intro, interests, approximate area — editable/hideable anytime) → "Continue".
-- **Components**: AvatarUpload, TextField, TextArea+CharCounter, InfoNote, Button.
-- **States**: name required (blocks Continue), avatar upload progress/error.
-- **Data**: `profile`.
-- **Motion**: same pattern as prior steps.
+### 5. Set up your local life — `/onboarding?step=2`
+- **Think:** privacy anxiety peaks here. Nothing is pre-selected (we don't guess where someone
+  lives); the location toggle asks permission only when turned on, and falls back honestly if
+  refused. The privacy note is always visible, not hidden behind an info icon.
+- **Layout:** back, dots, Skip → "Set up your local life" / "Help us show you what's nearby and
+  relevant." → Your area (select, pin icon) → Your interests / "Choose a few to get better
+  suggestions." chips + "Add another interest" → Location (optional): "Use my current location"
+  toggle + "Your location is private and only used to show relevant local suggestions." →
+  Continue.
 
-### 7. You're all set — `/onboarding/ready` (new)
-- **Layout**: step dots (all filled) → success framing: profile summary card (avatar, name, area, "Joined for activities" badge) → "You're all set!" / "Welcome to Arena. Let's make something good happen nearby." → "Recommended next steps" list (Join a nearby activity, Explore people, Post a need) → primary "Go to Arena".
-- **Components**: StepDots, ProfileSummaryCard, RecommendationRow, Button.
-- **Data**: `profile` (read back what was just set), `feed` (recommendation seeds).
-- **Motion**: check/success framing draws in once; confetti burst ≤24 particles (reduced motion: no confetti, static check).
+### 6. Your identity — `/onboarding?step=3`
+- **Think:** self-presentation; people hesitate. Everything but the name is optional and says
+  so. The photo appears instantly (downscaled on-device). Saving happens on Continue, with a
+  real loading state; if a field can't be stored by Arena yet, the card says it stays on this
+  device.
+- **Layout:** back, dots, Skip → "Your identity" / "Help neighbors get to know you. You control
+  what's visible." → photo + "Add a photo (optional)" → Display name * → Professional title
+  (optional) → Short intro (optional) 0/160 → Your interests (+ Add interests) → Availability
+  (optional): Weekdays / Weekends / Evenings → "What people can see" card → Continue.
+
+### 7. You're all set — `/onboarding?step=4`
+- **Think:** relief and momentum. The one delight moment of onboarding: the dots burst (≤24
+  particles, none under reduced motion) and the profile card rises. Then give three concrete
+  next steps and a calm "later" for work.
+- **Layout:** dots (all filled) + burst → "You're all set!" / "Welcome to Arena. Let's make
+  something good happen nearby." → cream profile card (photo/initials, name, area, "Joined for
+  …" chip, Edit, intro in quotes) → Recommended next steps: Join a nearby activity (Sports,
+  events and more), Explore people (Find neighbors with shared interests), Post a need (Get help
+  from your community), dark card "Looking for work later? Open it anytime from your Profile. You
+  can add your work goals when you're ready." → Go to Arena.
 
 ---
 

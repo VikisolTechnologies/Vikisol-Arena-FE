@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { RouteTransition } from "@/components/RouteTransition";
 import { DeferredCommandPalette } from "@/components/vnext/DeferredCommandPalette";
 import { SentryClient } from "@/components/SentryClient";
+import { MotionProvider } from "@/components/motion/MotionProvider";
 
 // Self-hosted (src/app/fonts, OFL - licences alongside) rather than next/font/google: the
 // Google variant downloads the fonts at build time, and Vercel builds kept failing when that
@@ -56,6 +57,14 @@ export const metadata: Metadata = {
     "A network for needs, people, activities and work nearby. Jenny helps when there is something real to say.",
 };
 
+// viewport-fit=cover so env(safe-area-inset-*) works on notched phones; zoom stays enabled.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#16110f",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -74,7 +83,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
         <ApiDownBanner />
         <RouteTransition />
-        <PageTransition>{children}</PageTransition>
+        <MotionProvider>
+          <PageTransition>{children}</PageTransition>
+        </MotionProvider>
         <DeferredCommandPalette />
         <SentryClient />
         <CookieConsentBanner />

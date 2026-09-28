@@ -7,25 +7,30 @@ Updated 28 Sep 2026. Resume from here.
 
 ## Current status
 
-On branch `feature/arena-vnext-mobile-jenny`. Setup done: mission recorded, screen spec + tokens
-written (`docs/design/BPLUS-SCREENS.md`, `docs/design/TOKENS.md`, `docs/design/DECISIONS.md`),
-repo docs cleaned to the kept-list in `CLAUDE.md`/`AGENTS.md` (commit "docs: remove superseded
-plans, designs and credentials" — see the deleted-files list below).
+On branch `feature/arena-vnext-mobile-jenny`. Order (founder, 28 Sep): P0-lite → P1 → preview →
+P2…P8 without stopping; the rest of the P0 kit is built as later screens need it.
 
-**P0 foundation, in progress:**
-- Done: `[data-theme="bplus"]` CSS scope with the real TOKENS.md hex values, additive alongside
-  the existing `[data-theme="product"]` (enterprise/admin/platform-admin shells untouched, per
-  mission §6); Fraunces self-hosted the same way as the existing fonts; `ArenaLogo` component
-  (mark + full variants). Commit `7cf9696`. Clean tsc + build.
-- Not done yet: AppShell rebuild (opt into `data-theme="bplus"`, real B+ bottom bar, header
-  variants, `(+)` Create sheet, safe areas), the rest of the component kit (chips, segmented
-  tabs, hero activity card, cream need/offer cards, tiles, list row, status pill, avatar stack,
-  stepper dots, form fields, toggle, bottom sheet, empty/error/offline/skeleton states), motion
-  primitives (`motion` + `LazyMotion`/`domAnimation`/`MotionConfig`), the `src/lib/data/` typed
-  interface layer, `/dev/kit`. This is the bulk of P0 — continues next.
-- P1–P8 not started. M1A (old onboarding/auth at `d746cf9`/`1e8bf98`, built to a now-superseded
-  design) is still live in the tree; P1 restyles/rebuilds it against the real B+ boards, deleting
-  the old version in the same commit per the mission's "no parallel old and new" rule.
+**P1 Entry & onboarding — built** (commit "FE B+ P1: entry and onboarding"):
+- Screens: Welcome (`/`, `/auth`), Sign up / Sign in / 2FA code (`/auth?mode=`), Forgot and Reset
+  password, onboarding `/onboarding?step=1..4` (Why are you here, Local life, Your identity,
+  You're all set). M1A's UI (`src/components/vnext/entry/*`) and the old "Talent OS" landing
+  components were deleted in the same commit; auth calls/session/redirect logic unchanged.
+- P0-lite kit: `src/lib/motion.ts` (all timings), `MotionProvider` (LazyMotion + domMax async,
+  MotionConfig reducedMotion="user"), `src/components/bplus/*` (Button, TextField/PasswordField/
+  TextArea, Checkbox, SelectField, Chip, Toggle, StepperDots, Screen/TopBar/Title/Lede,
+  PhotoPicker, Avatar, Burst), `src/lib/data/{mode,auth,profile,onboarding}.ts`, production build
+  guard in `next.config.ts` (`NEXT_PUBLIC_ARENA_DATA` must be `api` on production).
+- Checks: tsc + eslint clean; production build; Chromium + WebKit journeys pass; axe: 0 serious/
+  critical on all 9 screens; no horizontal overflow at 320/360/375/390/430/1280; e2e sign-in
+  selectors unchanged. Review: `docs/reviews/<P1 SHA>.md` (screens in `docs/reviews/p1/`).
+- API gaps for P1: `docs/FE-API-GAPS.md` rows 1–6.
+
+**Next step:** deploy the protected preview (`vercel deploy` + alias `preview-arena.vikisol.in`),
+then P2 Core: the B+ AppShell (bottom bar Feed · Discover · (+) · Work · You, header, Create
+sheet), Feed, Discover (+ map mode), Work, You, Jenny home — replacing `src/components/vnext/*`.
+
+**Before this branch ever reaches production:** set `NEXT_PUBLIC_ARENA_DATA=api` in the
+production environment (the build refuses otherwise, by design).
 
 ## Deleted (28 Sep 2026 cleanup)
 

@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 
+// FE-BPLUS-BUILD §6: fixture data must never reach production. A production build that isn't
+// in "api" data mode fails here, before anything is compiled.
+if (process.env.VERCEL_ENV === "production" && process.env.NEXT_PUBLIC_ARENA_DATA !== "api") {
+  throw new Error('Refusing to build production with preview fixtures: set NEXT_PUBLIC_ARENA_DATA="api".');
+}
+
 const nextConfig: NextConfig = {
   // The dev tools badge is not part of the product. Preview screenshots must not show it.
   devIndicators: false,

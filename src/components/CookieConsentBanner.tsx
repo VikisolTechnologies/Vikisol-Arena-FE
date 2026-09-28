@@ -70,14 +70,14 @@ export function CookieConsentBanner() {
           <button
             type="button"
             onClick={() => respond("rejected")}
-            className="rounded-full border border-border px-4 py-1.5 text-xs font-medium hover:border-white/20"
+            className="min-h-11 rounded-full border border-border px-4 text-xs font-medium hover:border-white/20"
           >
             Reject non-essential
           </button>
           <button
             type="button"
             onClick={() => respond("accepted")}
-            className="rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
+            className="min-h-11 rounded-full bg-primary px-4 text-xs font-semibold text-primary-foreground hover:opacity-90"
           >
             Accept
           </button>

@@ -13,7 +13,22 @@ const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 // Ambient window.google shape lives in lib/google-global.d.ts - shared with GoogleMapView so the
 // two components' `declare global` blocks don't conflict with each other.
 
-export function GoogleSignInButton({ onCredential, disabled }: { onCredential: (idToken: string) => void; disabled?: boolean }) {
+/** Whether Google sign-in is configured for this build. Screens hide the button and its "or"
+ *  divider together when it isn't. */
+export const GOOGLE_SIGN_IN_ENABLED = Boolean(CLIENT_ID);
+
+export function GoogleSignInButton({
+  onCredential,
+  disabled,
+  text = "signin_with",
+  shape = "pill",
+}: {
+  onCredential: (idToken: string) => void;
+  disabled?: boolean;
+  /** Appearance only (Google renders the button itself, in its own frame). */
+  text?: "signin_with" | "signup_with" | "continue_with";
+  shape?: "pill" | "rectangular";
+}) {
   const divRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,8 +44,10 @@ export function GoogleSignInButton({ onCredential, disabled }: { onCredential: (
         type: "standard",
         theme: "outline",
         size: "large",
-        width: 320,
-        shape: "pill",
+        text,
+        // Google caps the rendered width at 400px; fill the column up to that.
+        width: Math.min(400, Math.max(200, divRef.current.offsetWidth || 320)),
+        shape,
       });
     };
     if (window.google) init();
@@ -39,7 +56,7 @@ export function GoogleSignInButton({ onCredential, disabled }: { onCredential: (
       const id = setInterval(() => { if (window.google) { clearInterval(id); init(); } }, 100);
       return () => clearInterval(id);
     }
-  }, [disabled, onCredential]);
+  }, [disabled, onCredential, text, shape]);
 
   if (!CLIENT_ID) return null;
 

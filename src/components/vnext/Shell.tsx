@@ -6,8 +6,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { getMyRooms } from "@/lib/api/rooms";
 import { getSession } from "@/lib/session";
-import { readEntryDraft, subscribeEntryDraft } from "./entry/draft";
-import { ArenaBrand } from "./entry/chrome";
+import { readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
+import { ArenaLogo } from "@/components/brand/ArenaLogo";
 
 const CreateSheet = dynamic(() => import("./CreateSheet").then((m) => m.CreateSheet), { ssr: false });
 
@@ -58,6 +58,8 @@ export function VNextShell({ children }: { children: ReactNode }) {
   const offline = useOffline();
   useEffect(() => {
     const open = () => setCreateOpen(true);
+    // "Post a need" from onboarding's next steps arrives as /home?create=need.
+    if (new URLSearchParams(window.location.search).has("create")) open();
     window.addEventListener("arena-open-create", open);
     return () => window.removeEventListener("arena-open-create", open);
   }, []);
@@ -69,7 +71,7 @@ export function VNextShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-svh bg-background text-foreground">
       <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-background/90 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
-        <ArenaBrand href="/home" />
+        <Link href="/home" aria-label="Arena home" className="inline-flex min-h-11 items-center"><ArenaLogo className="text-[22px]" /></Link>
         <nav className="hidden gap-4 text-sm lg:flex">
           {LINKS.map((link) => (
             <Link key={link.href} href={link.href} className={pathname === link.href ? "text-foreground" : "text-muted-foreground"}>
@@ -122,7 +124,7 @@ function LocationChip() {
   const guest = useGuest();
   const area = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().area.trim(), () => "");
   return (
-    <Link href={guest === true ? "/auth" : "/onboarding"} className="inline-flex min-h-11 max-w-[34vw] items-center truncate rounded-full border border-border px-3 text-xs">
+    <Link href={guest === true ? "/auth" : "/onboarding?step=2"} className="inline-flex min-h-11 max-w-[34vw] items-center truncate rounded-full border border-border px-3 text-xs">
       {area || "Add your area"}
     </Link>
   );

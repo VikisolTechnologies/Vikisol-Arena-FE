@@ -217,11 +217,18 @@
   --warning: #f2a93b;
   --danger: #e5484d;
   --info: #3b82f6;
+  --slate: #5e7294;
+
+  /* Accessibility-driven additions (docs/design/DECISIONS.md, 28 Sep): input boundaries need
+     3:1 against both the page and the field fill (#74655c = 3.35 / 3.07); orange text on cream
+     paper needs 4.5:1 (#b83a0a = 5.09; brand orange is only 2.76 there). */
+  --field-line: #74655c;
+  --primary-on-paper: #b83a0a;
 
   /* TOKENS.md radius scale: cards 20px, tiles 16px, buttons 14px, chips full. */
   --radius-card: 20px;
-  --radius-tile: 16px;
-  --radius-button: 14px;
+  --tile-radius: 16px;
+  --button-radius: 14px;
   --shadow-card-rest: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
@@ -297,9 +304,12 @@
   --color-paper-ink: var(--paper-ink);
   --color-paper-ink-muted: var(--paper-ink-muted);
   --color-primary-pressed: var(--primary-pressed);
+  --color-primary-on-paper: var(--primary-on-paper);
+  --color-field-line: var(--field-line);
+  --color-slate: var(--slate);
   --font-display-serif: var(--font-fraunces);
-  --radius-tile: var(--radius-tile);
-  --radius-button: var(--radius-button);
+  --radius-tile: var(--tile-radius);
+  --radius-button: var(--button-radius);
 }
 
 ::selection {

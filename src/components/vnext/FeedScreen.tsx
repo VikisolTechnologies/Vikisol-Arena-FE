@@ -5,8 +5,8 @@ import { getFeedItems } from "@/lib/api/feed";
 import { getSession } from "@/lib/session";
 import { Card, hrefFor, labelFor, useLoad } from "./shared";
 import { Status, VNextShell } from "./Shell";
-import { readEntryDraft, subscribeEntryDraft, type EntryIntent } from "./entry/draft";
-import { HonestEmptyState } from "./entry/chrome";
+import Link from "next/link";
+import { readEntryDraft, subscribeEntryDraft, type EntryIntent } from "@/lib/data/onboarding";
 
 export function JennyBrief() {
   return null;
@@ -19,7 +19,7 @@ export function FeedScreen() {
   const intents = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().intents.join(","), () => "");
   const picked = intents.split(",").filter(Boolean) as EntryIntent[];
   const area = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().area.trim(), () => "");
-  const located = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().locationChoice ?? "", () => "");
+  const located = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().useCurrentLocation, () => false);
   return (
     <VNextShell>
       <JennyBrief />
@@ -34,7 +34,7 @@ export function FeedScreen() {
       {!error && !data && <div className="mt-4"><Status kind="loading" title="Loading" /></div>}
       {data && data.length === 0 && (
         <div className="mt-4 motion-safe:animate-[entry-in_220ms_ease]">
-          <HonestEmptyState title="Nothing here yet" detail={emptyDetail(picked)} showArea={!area && located !== "approximate"} />
+          <HonestEmptyState title="Nothing here yet" detail={emptyDetail(picked)} showArea={!area && !located} />
         </div>
       )}
       {data && data.length > 0 && (
@@ -64,4 +64,23 @@ function emptyDetail(intents: EntryIntent[]) {
   if (intents.some((id) => id === "ask" || id === "offer")) return "No needs or offers have been posted nearby.";
   if (intents.some((id) => id === "activities" || id === "meet")) return "No activities or people have been posted nearby.";
   return "When someone nearby posts a need, an activity, or a piece of work, it will show up here.";
+}
+
+// Interim until P2 rebuilds the Feed in B+ (moved here from the deleted M1A entry chrome).
+function HonestEmptyState({ title, detail, showArea }: { title: string; detail: string; showArea: boolean }) {
+  return (
+    <div className="rounded-3xl border border-border px-5 py-8 text-center">
+      <p className="font-editorial text-[1.45rem] leading-tight">{title}</p>
+      <p className="mx-auto mt-2 max-w-sm text-[15px] leading-relaxed text-muted-foreground">{detail}</p>
+      <div className="mt-5 grid gap-2">
+        <Link href="/discover" className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground">Discover nearby</Link>
+        <button type="button" className="inline-flex min-h-11 items-center justify-center rounded-full border border-border px-4 text-sm font-semibold" onClick={() => window.dispatchEvent(new Event("arena-open-create"))}>
+          Create the first activity or need
+        </button>
+        {showArea && (
+          <Link href="/onboarding?step=2" className="inline-flex min-h-11 items-center justify-center text-sm text-muted-foreground underline-offset-4 hover:underline">Add your area</Link>
+        )}
+      </div>
+    </div>
+  );
 }
