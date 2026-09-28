@@ -50,7 +50,7 @@ export function Hero() {
 
         <p {...revealProps("mt-5.5 max-w-[480px] text-[17px] leading-relaxed text-muted-foreground")}>
           Join a pickup game, ask your neighborhood for a hand, bid on a freelance project, or apply
-          to a real role — all in one place, all real people nearby.
+          to a real role — with people nearby.
         </p>
 
         <div {...revealProps("mt-6.5 mb-6.5 flex flex-wrap gap-3.5")}>

@@ -568,12 +568,6 @@ export interface FeedItem {
   // §4 safety-audit trust signals - undefined for job/project (not applicable).
   authorJoinCount?: number;
   authorAccountAgeDays?: number;
-  // ARENA-WEB-AND-SEED.md Part 4.2 - optional here (unlike Post.demoContent, which is required):
-  // arena-api's FeedItemResponse (FeedAggregationService's GET /feed) doesn't carry this field
-  // yet - only PostResponse (GET /posts/nearby) does. The Home rebuild's primary content path is
-  // getNearby(), which has it; the general-feed fallback used when location is off doesn't show
-  // the badge yet. Real scope trim, not an oversight - wiring FeedItemResponse too is real,
-  // separate follow-up work.
   demoContent?: boolean;
 
   // job only.

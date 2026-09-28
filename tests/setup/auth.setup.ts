@@ -16,10 +16,11 @@ import { revealPasswordSignIn } from "../utils/password-sign-in";
 
 async function signInAs(page: import("@playwright/test").Page, account: DemoAccount) {
   await page.goto("/auth");
-  // exact:false - the two card-style role buttons' accessible name includes their description
-  // text too (e.g. "Talent Find opportunities"), confirmed live; a substring match against just
-  // the label is safe since no two role buttons on this page share a prefix.
-  await page.getByRole("button", { name: account.roleButtonLabel, exact: false }).click();
+  // Talent and Enterprise are the only public role cards. Recruiter, hiring manager, and
+  // platform admin sign in with their email; the session's real role decides the landing page.
+  if (account.role === "talent" || account.role === "company_admin") {
+    await page.getByRole("button", { name: account.roleButtonLabel, exact: false }).click();
+  }
   await revealPasswordSignIn(page);
   await page.getByLabel("Email").fill(account.email);
   await page.getByLabel("Password").fill(account.password);

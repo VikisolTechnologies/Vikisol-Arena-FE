@@ -15,6 +15,8 @@ interface SessionResponse {
   token: string | null;
   mfaRequired: boolean;
   mfaPendingToken: string | null;
+  mfaEnrollmentRequired?: boolean;
+  totpEnabled?: boolean;
 }
 
 function toSession(res: SessionResponse): Session {
@@ -106,6 +108,19 @@ export async function signUp(name: string, email: string, password: string, role
   const session: Session = { role, name, email, candidateId: role === "talent" ? CURRENT_CANDIDATE_ID : undefined };
   setSession(session);
   return delay(session, 600);
+}
+
+export async function getAccount(): Promise<{ totpEnabled: boolean }> {
+  const res = await apiFetch<SessionResponse>("/auth/me");
+  return { totpEnabled: Boolean(res.totpEnabled) };
+}
+
+export async function setupTotp(): Promise<{ secret: string; otpAuthUri: string }> {
+  return apiFetch("/auth/2fa/setup", { method: "POST" });
+}
+
+export async function enableTotp(code: string): Promise<void> {
+  await apiFetch("/auth/2fa/enable", { method: "POST", body: { code } });
 }
 
 // --- Phone number sign-in (existing, already-verified accounts) ---

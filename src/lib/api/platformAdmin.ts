@@ -44,7 +44,7 @@ function seedUsers(): PlatformUser[] {
   return [
     { id: "u-1", name: "Techolution Talent Team", email: "demo.enterprise@vikisol.dev", role: "company_admin", tenantId: "t-1", tenantName: "Techolution", createdAt: new Date(Date.now() - 90 * 86400000).toISOString() },
     { id: "u-2", name: "Demo Recruiter", email: "demo.recruiter@vikisol.dev", role: "recruiter", tenantId: "t-1", tenantName: "Techolution", createdAt: new Date(Date.now() - 60 * 86400000).toISOString() },
-    { id: "u-3", name: "Demo Hiring Manager", email: "demo.hiringmanager@vikisol.dev", role: "hiring_manager", tenantId: "t-1", tenantName: "Techolution", createdAt: new Date(Date.now() - 45 * 86400000).toISOString() },
+    { id: "u-3", name: "Demo Hiring Manager", email: "demo.hiringmanager@vikisol.dev", role: "hiring_manager", tenantId: "t-1", tenantName: "Northwind Desk", createdAt: new Date(Date.now() - 45 * 86400000).toISOString() },
     { id: "u-4", name: "Priya Nair", email: "priya@example.dev", role: "talent", createdAt: new Date(Date.now() - 20 * 86400000).toISOString() },
   ];
 }
