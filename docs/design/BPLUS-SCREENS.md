@@ -173,6 +173,8 @@ Forgot = `/auth/forgot`; Reset = `/auth/reset/[token]` and `/reset-password`; on
 
 ## Board: Discover & join an activity B+
 
+- **Think (P3):** trust before commitment. The exact meeting point is never shown until the host approves — the details page says so in plain words. Request → a sheet with the paper plane flying in and a 3-step status (Request sent ✓ / Host will review / If approved); Cancel request is right there. Approval is the success moment: the check draws itself, a single burst, `vibrate(10)`, then the real meeting point, a real .ics calendar file and the room. The room is Chat / Details / People on one segmented track, the meeting card pinned on top. Built at `/feed/[id]` (activities) and `/rooms/[id]`; compare specimens at `/dev/screen/<id>`.
+
 ### 1. Personalized Feed — `/home`, same route as B+-core Feed #1 (this board is a deep-dive of the same screen + its downstream flow, not a second Feed)
 - Same spec as B+ core #1, with the specific card shown here: "Sunrise Run at Durgam Lake" hero card, "A friendly 5K to kickstart the weekend. All levels welcome.", distance "1.2 km away", avatar stack "+12 going", primary "Join activity".
 

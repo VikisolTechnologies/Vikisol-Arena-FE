@@ -3,9 +3,9 @@
 import type { ReactNode } from "react";
 import { LazyMotion, MotionConfig } from "motion/react";
 
-const loadFeatures = () => import("@/lib/motion-features").then((m) => m.default);
+import loadFeatures from "@/lib/motion-features";
 
-/** Every animation in the app runs inside this: features load lazily, and the OS
+/** Every animation in the app runs inside this: features load with the app (see motion-features), and the OS
  *  reduced-motion setting turns transforms off everywhere without per-component checks. */
 export function MotionProvider({ children }: { children: ReactNode }) {
   return (

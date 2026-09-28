@@ -3,6 +3,35 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **28 Sep (P3)** — Motion features (`domMax`) now load **synchronously**, reversing the P1 async
+  choice: an `AnimatePresence mode="wait"` exit that began before the async chunk arrived never
+  finished, so the Feed could stay blank instead of showing its error (caught by the local suite on
+  Pixel 7, 2 of 4 runs; 6/6 after). Correctness over a small first-load saving.
+- **28 Sep (P3)** — Restored Jenny's **real proposal cards** (`JennyActionCard`), which P2 dropped:
+  Approve/Not now call `POST /agent/actions/{id}` with only the proposal id; a click is always
+  required; an unconfirmed result never invites a blind retry. When a real proposal exists the
+  preview "For you" card is hidden, so the two can't be confused.
+- **28 Sep (P3)** — Activity details lives at the existing `/feed/[id]` (activities only); needs,
+  offers and updates keep the previous detail view (`components/legacy/PostDetailLegacy`) until P4.
+- **28 Sep (P3)** — Before approval only the area and distance show, with "exact point shared after
+  you join"; `exactMeetingPoint` appears only on the approved view (the backend already withholds it).
+- **28 Sep (P3)** — Add to calendar downloads a real **.ics** file (every calendar app, no
+  permission, no backend). **Set reminder** is left out — no reminder endpoint (gap #7).
+- **28 Sep (P3)** — "Free" chip left out of Discover — activities carry no price (gap #8). "All
+  filters" left out: the chips already cover every filter the API supports.
+- **28 Sep (P3)** — Board's host line "Verified neighbor · Runner · Designer" shows the real
+  "Joined N activities on Arena" instead; verification badge waits for real verification data.
+- **28 Sep (P3)** — No hero photo when the activity has no media: warm gradient (as P2), never a
+  stand-in. The board's shared-element card→hero transition needs a same-page layout; across routes
+  the hero rises in with the `rise` variant instead.
+- **28 Sep (P3)** — Request to join is pinned above the tab bar (board) with a paper fade behind it.
+- **28 Sep (P3)** — Room: tabs are one segmented track (`Pills segmented`); Host tools stays in the
+  activity page's host panel (approve/decline/cancel) rather than a third room button; image
+  attachment in the composer is left out (no room upload endpoint).
+- **28 Sep (P3)** — The join requirement dialog (verification needed) keeps its previous style; it
+  is rarely seen and is restyled with P5's trust screens.
+- **28 Sep (P3)** — `/dev/screen/<id>` renders the real P3 components with fixed fictional data so
+  compare pages show them without a real record; notFound in production and in api mode.
 - **28 Sep (P2)** — People tiles and Skills use **initials, not stock faces**, and are preview
   fixtures (Preview data pill) until a people-nearby/skills endpoint exists; hidden in api mode.
 - **28 Sep (P2)** — Cards without media show a warm gradient, never a stand-in photo.

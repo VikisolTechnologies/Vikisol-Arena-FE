@@ -11,11 +11,12 @@ import { Screen, TopBar } from "@/components/bplus/Screen";
 import { Button, ButtonLink } from "@/components/bplus/Button";
 import { Pills, PreviewPill, StateCard } from "@/components/bplus/Primitives";
 import { JennyOrb } from "@/components/jenny/JennyOrb";
+import { JennyActionCard } from "@/components/jenny/JennyActionCard";
 import { useGuest } from "@/hooks/use-arena-session";
 import { FIXTURES_ALLOWED } from "@/lib/data/mode";
 import { PREVIEW_JENNY_IDEAS, PREVIEW_JENNY_SUGGESTION } from "@/lib/data/fixtures";
 import { AGENT_UNAVAILABLE_MESSAGE, getAgentMessages, getOrCreateAgentConversation, sendAgentMessage } from "@/lib/api/agent";
-import type { ChatMessage } from "@/lib/types";
+import type { AgentAction, ChatMessage } from "@/lib/types";
 
 const TABS = [
   { id: "for-you", label: "For you" },
@@ -86,6 +87,11 @@ export function JennyScreen() {
   };
 
   const online = status === "online";
+  // Real proposals (newest first). They replace the preview card: a real one is never mixed up
+  // with preview data.
+  const actions = messages.flatMap((msg) => msg.actions ?? []).reverse();
+  const onActionChange = (next: AgentAction) =>
+    setMessages((cur) => cur.map((msg) => (msg.actions?.some((a) => a.id === next.id) ? { ...msg, actions: msg.actions.map((a) => (a.id === next.id ? next : a)) } : msg)));
 
   return (
     <Screen className="pb-0">
@@ -117,7 +123,12 @@ export function JennyScreen() {
                   </p>
                   {!online && status !== "unknown" && <p className="mt-2 text-[14px] text-faint">Jenny is offline right now. Arena works normally without her.</p>}
                 </div>
-                {FIXTURES_ALLOWED && dismissed !== PREVIEW_JENNY_SUGGESTION.headline && (
+                {actions.length > 0 && (
+                  <div className="mt-6 space-y-3">
+                    {actions.map((action) => <JennyActionCard key={action.id} action={action} onChange={onActionChange} />)}
+                  </div>
+                )}
+                {actions.length === 0 && FIXTURES_ALLOWED && dismissed !== PREVIEW_JENNY_SUGGESTION.headline && (
                   <m.article initial="hidden" animate="shown" variants={rise} className="mt-6 rounded-[var(--radius-card)] border border-line bg-surface p-5">
                     <div className="flex justify-end"><PreviewPill /></div>
                     <h2 className="mt-1 font-display-serif text-[21px] leading-snug">{PREVIEW_JENNY_SUGGESTION.headline}</h2>
@@ -182,8 +193,13 @@ export function JennyScreen() {
                 ) : (
                   <ol className="space-y-3" aria-live="polite">
                     {messages.map((msg) => (
-                      <li key={msg.id} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
+                      <li key={msg.id} className={cn("flex flex-col gap-2", msg.role === "user" ? "items-end" : "items-start")}>
                         <p className={cn("max-w-[85%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed", msg.role === "user" ? "bg-primary text-white" : "bg-surface text-foreground")}>{msg.content}</p>
+                        {msg.actions?.map((action) => (
+                          <div key={action.id} className="w-full">
+                            <JennyActionCard action={action} onChange={onActionChange} />
+                          </div>
+                        ))}
                       </li>
                     ))}
                     {sending && <li className="text-[14px] text-faint">Jenny is thinking…</li>}

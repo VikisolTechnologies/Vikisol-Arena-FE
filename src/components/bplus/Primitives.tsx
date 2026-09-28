@@ -17,6 +17,7 @@ export function Pills<T extends string>({
   label,
   tone = "orange",
   icons,
+  segmented = false,
 }: {
   options: readonly { id: T; label: string }[];
   value: T;
@@ -24,10 +25,12 @@ export function Pills<T extends string>({
   label: string;
   tone?: "orange" | "cream";
   icons?: Partial<Record<T, Icon>>;
+  /** One connected track with equal-width segments (board: room tabs) instead of loose pills. */
+  segmented?: boolean;
 }) {
   const group = useId();
   return (
-    <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
+    <div role="radiogroup" aria-label={label} className={segmented ? "grid auto-cols-fr grid-flow-col rounded-full border border-field-line p-1" : "flex flex-wrap gap-2"}>
       {options.map((o) => {
         const on = o.id === value;
         const IconCmp = icons?.[o.id] as Icon | undefined;
@@ -42,7 +45,8 @@ export function Pills<T extends string>({
             transition={spring.snappy}
             className={cn(
               "relative inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[14px] font-medium outline-none after:absolute after:-inset-y-1 after:inset-x-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
-              on ? "text-paper-ink" : "border border-field-line text-foreground/90",
+              segmented && "h-10 justify-center",
+              on ? "text-paper-ink" : cn("text-foreground/90", !segmented && "border border-field-line"),
             )}
           >
             {on && (

@@ -1,632 +1,632 @@
 [
- {
-  "id": "welcome",
-  "phase": "P1 Entry & onboarding",
-  "board": "onboarding",
-  "index": 1,
-  "title": "Welcome",
-  "route": "/auth",
-  "status": "done",
-  "commit": "f523fcf"
- },
- {
-  "id": "sign-up",
-  "phase": "P1 Entry & onboarding",
-  "board": "onboarding",
-  "index": 2,
-  "title": "Sign up",
-  "route": "/auth?mode=signup",
-  "status": "done",
-  "commit": "f523fcf"
- },
- {
-  "id": "sign-in",
-  "phase": "P1 Entry & onboarding",
-  "board": "onboarding",
-  "index": 3,
-  "title": "Sign in",
-  "route": "/auth?mode=signin",
-  "status": "done",
-  "commit": "f523fcf"
- },
- {
-  "id": "why-here",
-  "phase": "P1 Entry & onboarding",
-  "board": "onboarding",
-  "index": 4,
-  "title": "Why are you here?",
-  "route": "/onboarding?step=1",
-  "status": "done",
-  "commit": "f523fcf"
- },
- {
-  "id": "local-life",
-  "phase": "P1 Entry & onboarding",
-  "board": "onboarding",
-  "index": 5,
-  "title": "Set up your local life",
-  "route": "/onboarding?step=2",
-  "status": "done",
-  "commit": "f523fcf"
- },
- {
-  "id": "your-identity",
-  "phase": "P1 Entry & onboarding",
-  "board": "onboarding",
-  "index": 6,
-  "title": "Your identity",
-  "route": "/onboarding?step=3",
-  "status": "done",
-  "commit": "f523fcf"
- },
- {
-  "id": "all-set",
-  "phase": "P1 Entry & onboarding",
-  "board": "onboarding",
-  "index": 7,
-  "title": "You're all set",
-  "route": "/onboarding?step=4",
-  "status": "done",
-  "commit": "f523fcf"
- },
- {
-  "id": "feed",
-  "phase": "P2 Core",
-  "board": "core",
-  "index": 1,
-  "title": "Feed",
-  "route": "/home",
-  "status": "done",
-  "commit": "49552e0"
- },
- {
-  "id": "discover",
-  "phase": "P2 Core",
-  "board": "core",
-  "index": 2,
-  "title": "Discover",
-  "route": "/discover",
-  "status": "done",
-  "commit": "49552e0"
- },
- {
-  "id": "map",
-  "phase": "P2 Core",
-  "board": "core",
-  "index": 3,
-  "title": "Map (Discover map mode)",
-  "route": "/discover?view=map",
-  "status": "done",
-  "commit": "49552e0"
- },
- {
-  "id": "work",
-  "phase": "P2 Core",
-  "board": "core",
-  "index": 4,
-  "title": "Work",
-  "route": "/work",
-  "status": "done",
-  "commit": "49552e0"
- },
- {
-  "id": "create",
-  "phase": "P2 Core",
-  "board": "core",
-  "index": 5,
-  "title": "Create sheet",
-  "route": "/home?create=1",
-  "status": "done",
-  "commit": "49552e0"
- },
- {
-  "id": "profile",
-  "phase": "P2 Core",
-  "board": "core",
-  "index": 6,
-  "title": "You (profile)",
-  "route": "/identity",
-  "status": "done",
-  "commit": "49552e0"
- },
- {
-  "id": "jenny-home",
-  "phase": "P2 Core",
-  "board": "core",
-  "index": 7,
-  "title": "Jenny",
-  "route": "/agent",
-  "status": "done",
-  "commit": "49552e0"
- },
- {
-  "id": "personal-feed",
-  "phase": "P3 Discover & join",
-  "board": "discover-join",
-  "index": 1,
-  "title": "Personalised feed",
-  "route": "/home",
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "discover-filter",
-  "phase": "P3 Discover & join",
-  "board": "discover-join",
-  "index": 2,
-  "title": "Discover & filter",
-  "route": "/discover",
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "map-results",
-  "phase": "P3 Discover & join",
-  "board": "discover-join",
-  "index": 3,
-  "title": "Map results",
-  "route": "/discover?view=map",
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "activity-details",
-  "phase": "P3 Discover & join",
-  "board": "discover-join",
-  "index": 4,
-  "title": "Activity details",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "join-sent",
-  "phase": "P3 Discover & join",
-  "board": "discover-join",
-  "index": 5,
-  "title": "Join request sent",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "approved-ready",
-  "phase": "P3 Discover & join",
-  "board": "discover-join",
-  "index": 6,
-  "title": "Approved & ready",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "activity-room",
-  "phase": "P3 Discover & join",
-  "board": "discover-join",
-  "index": 7,
-  "title": "Activity room",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "need-create",
-  "phase": "P4 Need \u2192 outcome",
-  "board": "need-outcome",
-  "index": 1,
-  "title": "Create (need)",
-  "route": "/home?create=1",
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "post-need",
-  "phase": "P4 Need \u2192 outcome",
-  "board": "need-outcome",
-  "index": 2,
-  "title": "Post a Need",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "need-page",
-  "phase": "P4 Need \u2192 outcome",
-  "board": "need-outcome",
-  "index": 3,
-  "title": "Need with offers",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "offer-details",
-  "phase": "P4 Need \u2192 outcome",
-  "board": "need-outcome",
-  "index": 4,
-  "title": "Offer details",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "coordination-room",
-  "phase": "P4 Need \u2192 outcome",
-  "board": "need-outcome",
-  "index": 5,
-  "title": "Private coordination room",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "mark-completed",
-  "phase": "P4 Need \u2192 outcome",
-  "board": "need-outcome",
-  "index": 6,
-  "title": "Mark as completed",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "see-outcome",
-  "phase": "P4 Need \u2192 outcome",
-  "board": "need-outcome",
-  "index": 7,
-  "title": "See the outcome",
-  "route": "/work",
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "inbox",
-  "phase": "P5 Messages & trust",
-  "board": "messages",
-  "index": 1,
-  "title": "Inbox",
-  "route": "/rooms",
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "conversation",
-  "phase": "P5 Messages & trust",
-  "board": "messages",
-  "index": 2,
-  "title": "Conversation",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "notifications",
-  "phase": "P5 Messages & trust",
-  "board": "messages",
-  "index": 3,
-  "title": "Notifications",
-  "route": "/notifications",
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "search",
-  "phase": "P5 Messages & trust",
-  "board": "messages",
-  "index": 4,
-  "title": "Search",
-  "route": "/search",
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "settings-privacy",
-  "phase": "P5 Messages & trust",
-  "board": "messages",
-  "index": 5,
-  "title": "Settings & privacy",
-  "route": "/settings",
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "report-block",
-  "phase": "P5 Messages & trust",
-  "board": "messages",
-  "index": 6,
-  "title": "Report / block",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "resilient-states",
-  "phase": "P5 Messages & trust",
-  "board": "messages",
-  "index": 7,
-  "title": "Resilient states",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "career-profile",
-  "phase": "P6 Career",
-  "board": "career",
-  "index": 1,
-  "title": "My profile (career entry)",
-  "route": "/identity",
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "career-intent",
-  "phase": "P6 Career",
-  "board": "career",
-  "index": 2,
-  "title": "Career intent",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "career-setup",
-  "phase": "P6 Career",
-  "board": "career",
-  "index": 3,
-  "title": "Job preferences",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "privacy-preview",
-  "phase": "P6 Career",
-  "board": "career",
-  "index": 4,
-  "title": "Visibility preview",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "work-jobs",
-  "phase": "P6 Career",
-  "board": "career",
-  "index": 5,
-  "title": "Work \u2192 Jobs",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "job-details",
-  "phase": "P6 Career",
-  "board": "career",
-  "index": 6,
-  "title": "Job details",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "apply-track",
-  "phase": "P6 Career",
-  "board": "career",
-  "index": 7,
-  "title": "Apply & track",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "choose-role",
-  "phase": "P7 Recruiter",
-  "board": "recruiter",
-  "index": 1,
-  "title": "Choose your role",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "company-workspace",
-  "phase": "P7 Recruiter",
-  "board": "recruiter",
-  "index": 2,
-  "title": "Company workspace",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "post-job",
-  "phase": "P7 Recruiter",
-  "board": "recruiter",
-  "index": 3,
-  "title": "Post a job",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "manage-job",
-  "phase": "P7 Recruiter",
-  "board": "recruiter",
-  "index": 4,
-  "title": "Manage your job",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "candidates",
-  "phase": "P7 Recruiter",
-  "board": "recruiter",
-  "index": 5,
-  "title": "Review candidates",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "candidate-profile",
-  "phase": "P7 Recruiter",
-  "board": "recruiter",
-  "index": 6,
-  "title": "Candidate profile",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "interview-hire",
-  "phase": "P7 Recruiter",
-  "board": "recruiter",
-  "index": 7,
-  "title": "Interview & hire",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "jenny-feed",
-  "phase": "P8 Jenny \u2014 active layer",
-  "board": "jenny-layer",
-  "index": 1,
-  "title": "Feed: Jenny noticed",
-  "route": "/home",
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "jenny-discover",
-  "phase": "P8 Jenny \u2014 active layer",
-  "board": "jenny-layer",
-  "index": 2,
-  "title": "Discover: intent \u2192 filters",
-  "route": "/discover",
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "jenny-create",
-  "phase": "P8 Jenny \u2014 active layer",
-  "board": "jenny-layer",
-  "index": 3,
-  "title": "Create: Jenny draft",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "smart-match",
-  "phase": "P8 Jenny \u2014 active layer",
-  "board": "jenny-layer",
-  "index": 4,
-  "title": "Smart match (why this)",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "jenny-work",
-  "phase": "P8 Jenny \u2014 active layer",
-  "board": "jenny-layer",
-  "index": 5,
-  "title": "Work: approvals queue",
-  "route": "/work",
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "approve-action",
-  "phase": "P8 Jenny \u2014 active layer",
-  "board": "jenny-layer",
-  "index": 6,
-  "title": "Approve action",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "jenny-today",
-  "phase": "P8 Jenny \u2014 active layer",
-  "board": "jenny-layer",
-  "index": 7,
-  "title": "Jenny: today & automations",
-  "route": "/agent",
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "tell-jenny",
-  "phase": "P8 Jenny \u2014 automates the outcome",
-  "board": "jenny-automation",
-  "index": 1,
-  "title": "Tell Jenny",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "career-draft",
-  "phase": "P8 Jenny \u2014 automates the outcome",
-  "board": "jenny-automation",
-  "index": 2,
-  "title": "Career setup draft",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "set-privacy",
-  "phase": "P8 Jenny \u2014 automates the outcome",
-  "board": "jenny-automation",
-  "index": 3,
-  "title": "Privacy & permission",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "set-automation",
-  "phase": "P8 Jenny \u2014 automates the outcome",
-  "board": "jenny-automation",
-  "index": 4,
-  "title": "Set automation",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "shortlist",
-  "phase": "P8 Jenny \u2014 automates the outcome",
-  "board": "jenny-automation",
-  "index": 5,
-  "title": "Today's shortlist",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "review-application",
-  "phase": "P8 Jenny \u2014 automates the outcome",
-  "board": "jenny-automation",
-  "index": 6,
-  "title": "Review application",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- },
- {
-  "id": "application-tracker",
-  "phase": "P8 Jenny \u2014 automates the outcome",
-  "board": "jenny-automation",
-  "index": 7,
-  "title": "Application tracker",
-  "route": null,
-  "status": "not-started",
-  "commit": null
- }
+  {
+    "id": "welcome",
+    "phase": "P1 Entry & onboarding",
+    "board": "onboarding",
+    "index": 1,
+    "title": "Welcome",
+    "route": "/auth",
+    "status": "done",
+    "commit": "f523fcf"
+  },
+  {
+    "id": "sign-up",
+    "phase": "P1 Entry & onboarding",
+    "board": "onboarding",
+    "index": 2,
+    "title": "Sign up",
+    "route": "/auth?mode=signup",
+    "status": "done",
+    "commit": "f523fcf"
+  },
+  {
+    "id": "sign-in",
+    "phase": "P1 Entry & onboarding",
+    "board": "onboarding",
+    "index": 3,
+    "title": "Sign in",
+    "route": "/auth?mode=signin",
+    "status": "done",
+    "commit": "f523fcf"
+  },
+  {
+    "id": "why-here",
+    "phase": "P1 Entry & onboarding",
+    "board": "onboarding",
+    "index": 4,
+    "title": "Why are you here?",
+    "route": "/onboarding?step=1",
+    "status": "done",
+    "commit": "f523fcf"
+  },
+  {
+    "id": "local-life",
+    "phase": "P1 Entry & onboarding",
+    "board": "onboarding",
+    "index": 5,
+    "title": "Set up your local life",
+    "route": "/onboarding?step=2",
+    "status": "done",
+    "commit": "f523fcf"
+  },
+  {
+    "id": "your-identity",
+    "phase": "P1 Entry & onboarding",
+    "board": "onboarding",
+    "index": 6,
+    "title": "Your identity",
+    "route": "/onboarding?step=3",
+    "status": "done",
+    "commit": "f523fcf"
+  },
+  {
+    "id": "all-set",
+    "phase": "P1 Entry & onboarding",
+    "board": "onboarding",
+    "index": 7,
+    "title": "You're all set",
+    "route": "/onboarding?step=4",
+    "status": "done",
+    "commit": "f523fcf"
+  },
+  {
+    "id": "feed",
+    "phase": "P2 Core",
+    "board": "core",
+    "index": 1,
+    "title": "Feed",
+    "route": "/home",
+    "status": "done",
+    "commit": "49552e0"
+  },
+  {
+    "id": "discover",
+    "phase": "P2 Core",
+    "board": "core",
+    "index": 2,
+    "title": "Discover",
+    "route": "/discover",
+    "status": "done",
+    "commit": "49552e0"
+  },
+  {
+    "id": "map",
+    "phase": "P2 Core",
+    "board": "core",
+    "index": 3,
+    "title": "Map (Discover map mode)",
+    "route": "/discover?view=map",
+    "status": "done",
+    "commit": "49552e0"
+  },
+  {
+    "id": "work",
+    "phase": "P2 Core",
+    "board": "core",
+    "index": 4,
+    "title": "Work",
+    "route": "/work",
+    "status": "done",
+    "commit": "49552e0"
+  },
+  {
+    "id": "create",
+    "phase": "P2 Core",
+    "board": "core",
+    "index": 5,
+    "title": "Create sheet",
+    "route": "/home?create=1",
+    "status": "done",
+    "commit": "49552e0"
+  },
+  {
+    "id": "profile",
+    "phase": "P2 Core",
+    "board": "core",
+    "index": 6,
+    "title": "You (profile)",
+    "route": "/identity",
+    "status": "done",
+    "commit": "49552e0"
+  },
+  {
+    "id": "jenny-home",
+    "phase": "P2 Core",
+    "board": "core",
+    "index": 7,
+    "title": "Jenny",
+    "route": "/agent",
+    "status": "done",
+    "commit": "49552e0"
+  },
+  {
+    "id": "personal-feed",
+    "phase": "P3 Discover & join",
+    "board": "discover-join",
+    "index": 1,
+    "title": "Personalised feed",
+    "route": "/home",
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "discover-filter",
+    "phase": "P3 Discover & join",
+    "board": "discover-join",
+    "index": 2,
+    "title": "Discover & filter",
+    "route": "/discover?show=activities",
+    "status": "in-progress",
+    "commit": null
+  },
+  {
+    "id": "map-results",
+    "phase": "P3 Discover & join",
+    "board": "discover-join",
+    "index": 3,
+    "title": "Map results",
+    "route": "/discover?view=map",
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "activity-details",
+    "phase": "P3 Discover & join",
+    "board": "discover-join",
+    "index": 4,
+    "title": "Activity details",
+    "route": "/dev/screen/activity-details",
+    "status": "in-progress",
+    "commit": null
+  },
+  {
+    "id": "join-sent",
+    "phase": "P3 Discover & join",
+    "board": "discover-join",
+    "index": 5,
+    "title": "Join request sent",
+    "route": "/dev/screen/join-sent",
+    "status": "in-progress",
+    "commit": null
+  },
+  {
+    "id": "approved-ready",
+    "phase": "P3 Discover & join",
+    "board": "discover-join",
+    "index": 6,
+    "title": "Approved & ready",
+    "route": "/dev/screen/approved-ready",
+    "status": "in-progress",
+    "commit": null
+  },
+  {
+    "id": "activity-room",
+    "phase": "P3 Discover & join",
+    "board": "discover-join",
+    "index": 7,
+    "title": "Activity room",
+    "route": "/dev/screen/activity-room",
+    "status": "in-progress",
+    "commit": null
+  },
+  {
+    "id": "need-create",
+    "phase": "P4 Need \u2192 outcome",
+    "board": "need-outcome",
+    "index": 1,
+    "title": "Create (need)",
+    "route": "/home?create=1",
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "post-need",
+    "phase": "P4 Need \u2192 outcome",
+    "board": "need-outcome",
+    "index": 2,
+    "title": "Post a Need",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "need-page",
+    "phase": "P4 Need \u2192 outcome",
+    "board": "need-outcome",
+    "index": 3,
+    "title": "Need with offers",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "offer-details",
+    "phase": "P4 Need \u2192 outcome",
+    "board": "need-outcome",
+    "index": 4,
+    "title": "Offer details",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "coordination-room",
+    "phase": "P4 Need \u2192 outcome",
+    "board": "need-outcome",
+    "index": 5,
+    "title": "Private coordination room",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "mark-completed",
+    "phase": "P4 Need \u2192 outcome",
+    "board": "need-outcome",
+    "index": 6,
+    "title": "Mark as completed",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "see-outcome",
+    "phase": "P4 Need \u2192 outcome",
+    "board": "need-outcome",
+    "index": 7,
+    "title": "See the outcome",
+    "route": "/work",
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "inbox",
+    "phase": "P5 Messages & trust",
+    "board": "messages",
+    "index": 1,
+    "title": "Inbox",
+    "route": "/rooms",
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "conversation",
+    "phase": "P5 Messages & trust",
+    "board": "messages",
+    "index": 2,
+    "title": "Conversation",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "notifications",
+    "phase": "P5 Messages & trust",
+    "board": "messages",
+    "index": 3,
+    "title": "Notifications",
+    "route": "/notifications",
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "search",
+    "phase": "P5 Messages & trust",
+    "board": "messages",
+    "index": 4,
+    "title": "Search",
+    "route": "/search",
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "settings-privacy",
+    "phase": "P5 Messages & trust",
+    "board": "messages",
+    "index": 5,
+    "title": "Settings & privacy",
+    "route": "/settings",
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "report-block",
+    "phase": "P5 Messages & trust",
+    "board": "messages",
+    "index": 6,
+    "title": "Report / block",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "resilient-states",
+    "phase": "P5 Messages & trust",
+    "board": "messages",
+    "index": 7,
+    "title": "Resilient states",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "career-profile",
+    "phase": "P6 Career",
+    "board": "career",
+    "index": 1,
+    "title": "My profile (career entry)",
+    "route": "/identity",
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "career-intent",
+    "phase": "P6 Career",
+    "board": "career",
+    "index": 2,
+    "title": "Career intent",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "career-setup",
+    "phase": "P6 Career",
+    "board": "career",
+    "index": 3,
+    "title": "Job preferences",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "privacy-preview",
+    "phase": "P6 Career",
+    "board": "career",
+    "index": 4,
+    "title": "Visibility preview",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "work-jobs",
+    "phase": "P6 Career",
+    "board": "career",
+    "index": 5,
+    "title": "Work \u2192 Jobs",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "job-details",
+    "phase": "P6 Career",
+    "board": "career",
+    "index": 6,
+    "title": "Job details",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "apply-track",
+    "phase": "P6 Career",
+    "board": "career",
+    "index": 7,
+    "title": "Apply & track",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "choose-role",
+    "phase": "P7 Recruiter",
+    "board": "recruiter",
+    "index": 1,
+    "title": "Choose your role",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "company-workspace",
+    "phase": "P7 Recruiter",
+    "board": "recruiter",
+    "index": 2,
+    "title": "Company workspace",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "post-job",
+    "phase": "P7 Recruiter",
+    "board": "recruiter",
+    "index": 3,
+    "title": "Post a job",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "manage-job",
+    "phase": "P7 Recruiter",
+    "board": "recruiter",
+    "index": 4,
+    "title": "Manage your job",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "candidates",
+    "phase": "P7 Recruiter",
+    "board": "recruiter",
+    "index": 5,
+    "title": "Review candidates",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "candidate-profile",
+    "phase": "P7 Recruiter",
+    "board": "recruiter",
+    "index": 6,
+    "title": "Candidate profile",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "interview-hire",
+    "phase": "P7 Recruiter",
+    "board": "recruiter",
+    "index": 7,
+    "title": "Interview & hire",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "jenny-feed",
+    "phase": "P8 Jenny \u2014 active layer",
+    "board": "jenny-layer",
+    "index": 1,
+    "title": "Feed: Jenny noticed",
+    "route": "/home",
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "jenny-discover",
+    "phase": "P8 Jenny \u2014 active layer",
+    "board": "jenny-layer",
+    "index": 2,
+    "title": "Discover: intent \u2192 filters",
+    "route": "/discover",
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "jenny-create",
+    "phase": "P8 Jenny \u2014 active layer",
+    "board": "jenny-layer",
+    "index": 3,
+    "title": "Create: Jenny draft",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "smart-match",
+    "phase": "P8 Jenny \u2014 active layer",
+    "board": "jenny-layer",
+    "index": 4,
+    "title": "Smart match (why this)",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "jenny-work",
+    "phase": "P8 Jenny \u2014 active layer",
+    "board": "jenny-layer",
+    "index": 5,
+    "title": "Work: approvals queue",
+    "route": "/work",
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "approve-action",
+    "phase": "P8 Jenny \u2014 active layer",
+    "board": "jenny-layer",
+    "index": 6,
+    "title": "Approve action",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "jenny-today",
+    "phase": "P8 Jenny \u2014 active layer",
+    "board": "jenny-layer",
+    "index": 7,
+    "title": "Jenny: today & automations",
+    "route": "/agent",
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "tell-jenny",
+    "phase": "P8 Jenny \u2014 automates the outcome",
+    "board": "jenny-automation",
+    "index": 1,
+    "title": "Tell Jenny",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "career-draft",
+    "phase": "P8 Jenny \u2014 automates the outcome",
+    "board": "jenny-automation",
+    "index": 2,
+    "title": "Career setup draft",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "set-privacy",
+    "phase": "P8 Jenny \u2014 automates the outcome",
+    "board": "jenny-automation",
+    "index": 3,
+    "title": "Privacy & permission",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "set-automation",
+    "phase": "P8 Jenny \u2014 automates the outcome",
+    "board": "jenny-automation",
+    "index": 4,
+    "title": "Set automation",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "shortlist",
+    "phase": "P8 Jenny \u2014 automates the outcome",
+    "board": "jenny-automation",
+    "index": 5,
+    "title": "Today's shortlist",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "review-application",
+    "phase": "P8 Jenny \u2014 automates the outcome",
+    "board": "jenny-automation",
+    "index": 6,
+    "title": "Review application",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  },
+  {
+    "id": "application-tracker",
+    "phase": "P8 Jenny \u2014 automates the outcome",
+    "board": "jenny-automation",
+    "index": 7,
+    "title": "Application tracker",
+    "route": null,
+    "status": "not-started",
+    "commit": null
+  }
 ]

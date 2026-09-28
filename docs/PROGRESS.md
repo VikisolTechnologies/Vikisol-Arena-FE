@@ -7,17 +7,26 @@ Updated 28 Sep 2026. Resume from here.
 
 ## Current status
 
-**Next step: P3 Discover & join** — Activity details (`/feed/[id]` for activities: hero with
-shared layoutId from the card, host card, facts, Request to join), Join request sent (paper-plane
-sheet + status timeline), Approved & ready (check draw + ≤24 confetti, meeting card, calendar/
-reminder/share), Activity room (`/rooms/[id]`: Chat / Details / People), plus Discover's filter
-chips from the Discover & join board (Today / Weekend / Free / Fitness / Learning / All filters).
-Reuse the existing post/join/room calls; log gaps in `docs/FE-API-GAPS.md`. Then P4…P8.
+**Next step: P4 Need → outcome** (board `need-outcome`) — Create sheet copy, Post a Need
+(`/needs/new`: category, details, when, where with approximate-area privacy, photos), Need page with
+offers (replaces `PostDetailLegacy` for `intentType` ask/offer at `/feed/[id]`), Offer details sheet
+(accept/decline), Private coordination room (reuse `RoomScreen`, need config), Mark as completed
+(sheet → outcome + thanks), outcome on Work/You. Write "Think (P4)" notes in BPLUS-SCREENS first;
+reuse existing post/offer/room calls; log gaps. Then P5…P8.
 
 Live preview: `npm run dev` for this worktree is Cursor's (port 3010); the founder preview runs
 with `ARENA_NEXT_DIST_DIR=.next-founder npm run dev -- -H 0.0.0.0 -p 3001` →
 http://localhost:3001/dev/progress (phone: http://<LAN IP>:3001/dev/progress). Board frames:
 `node scripts/dev/cut-boards.mjs`; statuses in `src/lib/dev/screens.json`.
+
+**P3 Discover & join — done** (commit "FE B+ P3"): Activity details at `/feed/[id]` (activities;
+exact point only after approval; pinned Request to join), Join request sent sheet (paper plane +
+status timeline + Cancel request), Approved & ready (check draw + burst, real meeting point, .ics,
+share, room), Activity room `/rooms/[id]` (segmented Chat/Details/People, pinned meeting card),
+Discover WHEN chips + categories (`?show=activities`). Compare specimens `/dev/screen/<id>`. Also
+fixed two P2 regressions caught by the full local suite: Jenny's real proposal cards restored, and
+motion features load synchronously (a stuck AnimatePresence exit left Feed blank). 36/36 local
+Playwright (3 engines); axe clean on P3; review `docs/reviews/p3.md`.
 
 **P2 Core — done** (`49552e0`): B+ AppShell (Feed · Discover · (+) · Work · You), drag-to-dismiss
 BottomSheet, Create sheet, Feed (Nearby default + honest fallback, pull to refresh), Discover

@@ -65,6 +65,16 @@ export const kenBurns: { animate: TargetAndTransition; transition: Transition } 
   transition: { duration: 12, ease: "linear", repeat: Infinity, repeatType: "reverse" },
 };
 
+/** "Join request sent": the paper plane flies in on a curve (a delight moment, like confetti). */
+export const flyIn: { initial: TargetAndTransition; animate: TargetAndTransition; transition: Transition } = {
+  initial: { x: -70, y: 50, rotate: -28, opacity: 0, scale: 0.7 },
+  animate: { x: [-70, -20, 0], y: [50, -12, 0], rotate: [-28, -8, 0], opacity: [0, 1, 1], scale: [0.7, 1, 1] },
+  transition: { duration: 0.6, ease: ease.out },
+};
+
+/** A check that draws itself on success moments. */
+export const drawCheck = { duration: duration.slow, ease: ease.out, delay: 0.12 } satisfies Transition;
+
 /** Profile stats count up once on mount. */
 export const countUp = { duration: 0.6, ease: ease.out } satisfies Transition;
 

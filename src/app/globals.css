@@ -227,6 +227,7 @@
   /* Green/blue text on cream (both brand hues are ~3:1 there). #1f6e3e = 5.06, #1d57b8 = 5.47 on --paper-muted. */
   --success-on-paper: #1f6e3e;
   --info-on-paper: #1d57b8;
+  --danger-on-paper: #b42318;
 
   /* TOKENS.md radius scale: cards 20px, tiles 16px, buttons 14px, chips full. */
   --radius-card: 20px;
@@ -310,6 +311,7 @@
   --color-primary-on-paper: var(--primary-on-paper);
   --color-success-on-paper: var(--success-on-paper);
   --color-info-on-paper: var(--info-on-paper);
+  --color-danger-on-paper: var(--danger-on-paper);
   --color-field-line: var(--field-line);
   --color-slate: var(--slate);
   --font-display-serif: var(--font-fraunces);

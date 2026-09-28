@@ -44,7 +44,7 @@ test("a failed feed shows retry rather than claiming the network is empty", asyn
     await route.fulfill({ status: 503, json: { success: false, message: "Temporarily unavailable" } });
   });
   await page.goto("/home");
-  await expect(page.getByText("The feed did not load")).toBeVisible();
+  await expect(page.getByText("The feed didn't load")).toBeVisible();
   await expect(page.getByText("Nothing here yet", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Try again", exact: true })).toBeVisible();
 });

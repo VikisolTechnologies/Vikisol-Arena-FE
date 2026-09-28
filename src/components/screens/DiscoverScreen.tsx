@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { AnimatePresence, m } from "motion/react";
-import { List, Map as MapIcon, MapPin, Search, Wrench, Palette, GraduationCap } from "lucide-react";
+import { BookOpen, Footprints, GraduationCap, Leaf, List, Map as MapIcon, MapPin, Palette, Search, Sprout, Utensils, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { dissolve, press, rise, spring } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
@@ -28,6 +28,32 @@ const CHIPS = [
   { id: "offers", label: "Offers" },
 ] as const;
 type Chip = (typeof CHIPS)[number]["id"];
+
+/** Discover & join board: time chips + "Browse by category". Categories match the activity's own
+ *  tags or words — no hidden scoring. ("Free" is left out: activities carry no price yet.) */
+const WHEN = [
+  { id: "any", label: "Any time" },
+  { id: "today", label: "Today" },
+  { id: "weekend", label: "Weekend" },
+] as const;
+const CATEGORIES = [
+  { id: "fitness", label: "Fitness", words: ["run", "fitness", "badminton", "yoga", "cycle", "trek", "sport", "football", "cricket"], icon: Footprints, tone: "bg-success/15 text-success-on-paper" },
+  { id: "learning", label: "Learning", words: ["learn", "class", "workshop", "study", "tutor", "course"], icon: BookOpen, tone: "bg-info/15 text-info-on-paper" },
+  { id: "community", label: "Community", words: ["community", "volunteer", "clean", "meet", "neighbour", "neighbor"], icon: Sprout, tone: "bg-success/15 text-success-on-paper" },
+  { id: "food", label: "Food", words: ["food", "cook", "meal", "lunch", "dinner", "breakfast"], icon: Utensils, tone: "bg-primary/15 text-primary-on-paper" },
+  { id: "arts", label: "Arts & Culture", words: ["art", "music", "pottery", "paint", "photo", "dance", "culture"], icon: Palette, tone: "bg-info/15 text-info-on-paper" },
+  { id: "environment", label: "Environment", words: ["environment", "tree", "plant", "garden", "lake", "green"], icon: Leaf, tone: "bg-success/15 text-success-on-paper" },
+] as const;
+
+function inWhen(iso: string | undefined, when: string) {
+  if (when === "any") return true;
+  if (!iso) return false;
+  const d = new Date(iso);
+  const now = new Date();
+  if (when === "today") return d.toDateString() === now.toDateString();
+  const days = (d.getTime() - now.getTime()) / 86_400_000;
+  return (d.getDay() === 0 || d.getDay() === 6) && days > -1 && days < 7;
+}
 
 export function DiscoverScreen() {
   const params = useSearchParams();
@@ -64,7 +90,11 @@ export function DiscoverScreen() {
 }
 
 function DiscoverList() {
-  const [chip, setChip] = useState<Chip>("all");
+  const params = useSearchParams();
+  // `?show=activities` deep-links a filter (Feed's "See all", the compare pages).
+  const [chip, setChip] = useState<Chip>(() => CHIPS.find((c) => c.id === params.get("show"))?.id ?? "all");
+  const [when, setWhen] = useState<(typeof WHEN)[number]["id"]>("any");
+  const [category, setCategory] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [submitted, setSubmitted] = useState("");
   const [feed, setFeed] = useState<FeedItem[] | null>(null);
@@ -108,12 +138,17 @@ function DiscoverList() {
   const byType = useMemo(() => {
     const f = feed ?? [];
     return {
-      activities: f.filter((i) => i.itemType === "activity"),
+      activities: f.filter((i) => {
+        if (i.itemType !== "activity" || !inWhen(i.startsAt, when)) return false;
+        if (!category) return true;
+        const hay = `${i.title ?? ""} ${i.body} ${i.tags.join(" ")}`.toLowerCase();
+        return CATEGORIES.find((c) => c.id === category)!.words.some((w) => hay.includes(w));
+      }),
       needs: f.filter((i) => i.itemType === "ask"),
       offers: f.filter((i) => i.itemType === "offer"),
       projects: f.filter((i) => i.itemType === "project"),
     };
-  }, [feed]);
+  }, [feed, when, category]);
 
   return (
     <>
@@ -169,10 +204,41 @@ function DiscoverList() {
               </HScroll>
             </m.section>
           )}
+          {chip === "activities" && (
+            <m.div variants={rise} custom={0}>
+              <Pills label="When" options={WHEN} value={when} onChange={setWhen} tone="cream" />
+            </m.div>
+          )}
           {(chip === "all" || chip === "activities") && (
             <m.section variants={rise} custom={1} aria-label="Popular this week">
               <SectionHeader title={chip === "activities" ? "Activities near you" : "Popular this week"} />
               <ActivityGrid posts={chip === "activities" ? byType.activities : (trending ?? []).filter((p) => p.intentType === "activity")} fallback={byType.activities} />
+            </m.section>
+          )}
+          {chip === "activities" && (
+            <m.section variants={rise} custom={2} aria-label="Browse by category">
+              <SectionHeader title="Browse by category" />
+              <div className="grid grid-cols-3 gap-2.5">
+                {CATEGORIES.map((c) => {
+                  const on = category === c.id;
+                  return (
+                    <m.button
+                      key={c.id}
+                      type="button"
+                      aria-pressed={on}
+                      whileTap={press}
+                      transition={spring.snappy}
+                      onClick={() => setCategory(on ? null : c.id)}
+                      className={cn("flex min-h-[84px] flex-col items-center justify-center gap-1.5 rounded-tile bg-paper p-2 text-paper-ink outline-none ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-primary", on && "ring-2 ring-primary")}
+                    >
+                      <span className={cn("grid size-9 place-items-center rounded-xl", c.tone)}>
+                        <c.icon className="size-5" strokeWidth={1.9} aria-hidden />
+                      </span>
+                      <span className="text-center text-[13px] font-semibold leading-tight">{c.label}</span>
+                    </m.button>
+                  );
+                })}
+              </div>
             </m.section>
           )}
           {(chip === "all" || chip === "skills") && FIXTURES_ALLOWED && (
