@@ -7,20 +7,26 @@ Updated 28 Sep 2026. Resume from here.
 
 ## Current status
 
-**Next step: P6b** (ARENA-APP-FLOW §2, §3, §5) — activity intake schemas on the engine
-(`src/lib/intake/schemas/activity.ts`: common A2 + per-type questions for every subtype in §3),
-the host flow A1 What kind (category grid + search + "Or just tell Jenny") → A2 details → A3 when &
-where → A4 who can join (host questions, women-only label, visibility) → A5 Cover by Jenny →
-A6 preview & publish → A7 published; host manage A8–A14 (requests with answers, waitlist, edit,
-cancel with reason, check-in, attendance confirm, private feedback); joiner A15 waitlist, A16 leave,
-answer host questions. Procedural unique covers (`src/lib/covers/`) used wherever a cover is
-missing; AI path behind `NEXT_PUBLIC_JENNY_COVERS` (off). Register each screen in screens.json
-(board "none" = "No board — designed in B+"). Then P6c, P7→P9, P8, P10, P11 (flow §12).
+**Next step: P6c** (ARENA-APP-FLOW §4, §7) — need intake schemas per category on the engine
+(moving, tutoring, repairs, tech help, pet/plant care, errands, borrow an item, rides with a
+safety note, advice, event help, other; all needs: urgency, help type, radius, photos) replacing
+the single Post a Need form; the Offer flow O1–O3 (offer intake: category, what exactly,
+availability, radius, free/exchange, limits, proof link → offer page → requests on my offer →
+accept → room → outcome); Projects PR1–PR6 (start, roles needed, page, applicants, team room with
+milestones, complete) using the existing myProjects/market APIs. Register screens; log gaps
+(FE-API-GAPS is at #25). Then P7→P9, P8, P10, P11.
 
 Live preview: `npm run dev` for this worktree is Cursor's (port 3010); the founder preview runs
 with `ARENA_NEXT_DIST_DIR=.next-founder npm run dev -- -H 0.0.0.0 -p 3001` →
 http://localhost:3001/dev/progress (phone: http://<LAN IP>:3001/dev/progress). Board frames:
 `node scripts/dev/cut-boards.mjs`; statuses in `src/lib/dev/screens.json`.
+
+**P6b Activities & covers — done** (29 Sep): activity taxonomy (§3), procedural unique covers
+used everywhere (`Cover`), activity intake (common + per-type questions), host flow
+`/activities/new` A1–A7 with the cover stored via media upload (AI covers behind
+`NEXT_PUBLIC_JENNY_COVERS`, off), manage: starting soon, check-in, cancel with reason, leave.
+Blocked screens (edit, waitlist, answers, attendance confirm, feedback) listed on /dev/progress
+with gap numbers. 72 local Playwright on 3 engines.
 
 **P6 Career — done** (29 Sep): intake engine (`src/lib/intake/`, `components/intake/`), career
 flow `/identity/career` (intent → 6 intake steps → review → visibility → publish), `/jobs`, job

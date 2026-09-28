@@ -95,3 +95,47 @@ test("host a cricket match: type questions, cover card, publish with the cover s
   expect(String(post.body)).not.toContain("Box arena gate 2");
   await noSeriousA11y(page);
 });
+
+test("manage: starting soon, check people in, cancel needs a reason posted to the room", async ({ page }) => {
+  const calls: Call[] = [];
+  const startsAt = new Date(Date.now() + 30 * 60_000).toISOString();
+  await page.route("**/api/v1/**", async (route) => {
+    const req = route.request();
+    const path = new URL(req.url()).pathname.replace(/^.*\/api\/v1/, "");
+    const body = req.postData() ? req.postDataJSON() : null;
+    calls.push({ method: req.method(), path, body });
+    let data: unknown = [];
+    if (path === "/posts/act-9" && req.method() === "GET") data = { id: "act-9", authorUserId: "me", authorName: "Priya", authorEmoji: "p", intentType: "activity", title: "Evening badminton", body: "Doubles", locationText: "Gachibowli", audience: "global", visibility: "approval", capacity: 8, spotsFilled: 1, status: "open", startsAt, tags: ["Badminton"], mediaUrls: [], joinable: true, mine: true, roomId: "room-9", exactMeetingPoint: "Court 3", createdAt: new Date().toISOString(), commentCount: 0, reactionCount: 0, authorJoinCount: 2, authorAccountAgeDays: 40, demoContent: false };
+    else if (path === "/posts/act-9/joins") data = [{ id: "j1", postId: "act-9", userId: "u1", userName: "Rohit Kumar", userEmoji: "r", status: "approved", createdAt: new Date().toISOString() }];
+    else if (path === "/posts/act-9/joins/j1/outcome") data = { id: "j1", postId: "act-9", userId: "u1", userName: "Rohit Kumar", userEmoji: "r", status: "approved", outcome: "attended", createdAt: new Date().toISOString() };
+    else if (path.startsWith("/profile/me")) data = { id: "me", name: "Priya Sharma", avatarEmoji: "p", title: "", industry: "Design", location: "", remote: false, skills: [], experienceYears: 0, rateFloor: 0, openTo: [], careerHealth: 0, consent: { autoApply: false, searchableByEnterprises: false }, autonomy: "manual" };
+    else if (path === "/rooms/room-9/messages") data = { id: "m1", roomId: "room-9", senderUserId: "me", senderName: "Priya", senderEmoji: "p", fromMe: true, content: "x", createdAt: new Date().toISOString() };
+    await route.fulfill({ json: { success: true, data } });
+  });
+  await page.goto("/auth");
+  await page.evaluate(() => {
+    localStorage.setItem("arena_cookie_consent", "accepted");
+    localStorage.setItem("arena_session", JSON.stringify({ role: "talent", name: "Priya Sharma", email: "priya@example.com" }));
+    localStorage.setItem("arena_onboarded", "true");
+  });
+  await page.goto("/feed/act-9");
+  await expect(page.getByText(/Starting soon — in \d+ min/)).toBeVisible();
+  await noSeriousA11y(page);
+  await page.getByRole("button", { name: "Check people in" }).click();
+  const sheet = page.getByRole("dialog", { name: "Check in" });
+  await sheet.getByRole("button", { name: "Attended" }).click();
+  await expect(sheet.getByText("Attended")).toBeVisible();
+  expect(calls.find((c) => c.path === "/posts/act-9/joins/j1/outcome")?.body).toEqual({ outcome: "attended" });
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "Cancel activity" }).click();
+  const cancel = page.getByRole("dialog", { name: "Cancel activity" });
+  await cancel.getByRole("button", { name: "Cancel it" }).click();
+  await expect(cancel.getByText("Tell people why — a few words is enough.")).toBeVisible();
+  expect(calls.some((c) => c.path === "/posts/act-9/cancel")).toBe(false);
+  await cancel.getByLabel("Reason").fill("Court flooded");
+  await cancel.getByRole("button", { name: "Cancel it" }).click();
+  await expect(cancel).toHaveCount(0);
+  expect(calls.find((c) => c.method === "POST" && c.path === "/rooms/room-9/messages")?.body).toEqual({ content: "The host cancelled this activity: Court flooded" });
+  expect(calls.some((c) => c.method === "PUT" && c.path === "/posts/act-9/cancel")).toBe(true);
+});

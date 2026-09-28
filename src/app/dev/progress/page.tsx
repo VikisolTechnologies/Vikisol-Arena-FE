@@ -49,6 +49,7 @@ export default function ProgressPage() {
                     <p className="text-[13px] font-semibold leading-tight">{s.title}</p>
                     <span className={`w-fit rounded-full px-2 py-0.5 text-[11px] font-semibold ${TONE[s.status]}`}>{STATUS_LABEL[s.status]}</span>
                     {s.commit && <code className="text-[11px] text-faint">{s.commit}</code>}
+                    {s.note && s.note !== "No board — designed in B+" && <p className="text-[11px] leading-tight text-warning">{s.note}</p>}
                     <div className="mt-auto flex gap-3 pt-1 text-[12px]">
                       <Link href={`/dev/compare/${s.id}`} className="underline underline-offset-2">Compare</Link>
                       {s.route && s.status !== "not-started" && (

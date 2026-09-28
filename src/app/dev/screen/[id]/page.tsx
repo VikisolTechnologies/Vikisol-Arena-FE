@@ -6,6 +6,9 @@ import { RoomScreen } from "@/components/activity/RoomScreen";
 import { NeedScreen } from "@/components/needs/NeedScreen";
 import { JobDetailScreen } from "@/components/career/JobDetailScreen";
 import { ApplicationScreen } from "@/components/career/ApplicationScreen";
+import { CoverStep } from "@/components/activities/CoverStep";
+import { Published } from "@/components/activities/ActivityCreateFlow";
+import { KindPicker } from "@/components/activities/KindPicker";
 import { ConversationScreen } from "@/components/inbox/ConversationScreen";
 import { ReportSheet } from "@/components/trust/ReportSheet";
 import { AppShell } from "@/components/bplus/AppShell";
@@ -62,6 +65,12 @@ export default function SpecimenPage() {
       return <JobDetailScreen id="specimen-job" specimen={{ job: SPECIMEN_JOB, profile: SPECIMEN_CANDIDATE, applyOpen: true }} />;
     case "apply-track":
       return <ApplicationScreen id="specimen-app" specimen={{ application: SPECIMEN_APPLICATION, job: SPECIMEN_JOB }} />;
+    case "activity-kind":
+      return <AppShell><div className="-mx-5 -mt-2 flex-1 bg-paper px-5 pb-6 pt-3 text-paper-ink"><KindPicker onPick={() => {}} onClose={() => {}} /></div></AppShell>;
+    case "activity-cover":
+      return <AppShell><div className="-mx-5 -mt-2 flex-1 bg-paper px-5 pb-6 pt-3 text-paper-ink"><CoverStep seed="specimen-cricket" subtypeId="cricket" time="evening" answers={{}} onBack={() => {}} onUse={() => {}} /></div></AppShell>;
+    case "activity-published":
+      return <AppShell><div className="-mx-5 -mt-2 flex-1 bg-paper px-5 pb-6 pt-3 text-paper-ink"><Published id="specimen-activity" title="Sunday tennis-ball cricket" /></div></AppShell>;
     default:
       notFound();
   }

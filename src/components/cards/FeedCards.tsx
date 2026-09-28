@@ -15,7 +15,7 @@ import { Cover } from "@/components/covers/Cover";
 function Photo({ item, className, layoutId }: { item: FeedItem; className?: string; layoutId?: string }) {
   return (
     <m.div layoutId={layoutId} className={cn("relative overflow-hidden", className)}>
-      <Cover source={{ id: item.id, kind: item.itemType, media: item.mediaUrls[0], tags: item.tags, title: item.title, body: item.body, startsAt: item.startsAt }} className="absolute inset-0" />
+      <Cover source={{ id: item.id, kind: item.itemType, media: item.mediaUrls[0], tags: item.tags, title: item.title, body: item.body, startsAt: item.startsAt, company: item.authorCompanyName ?? item.authorName }} className="absolute inset-0" />
     </m.div>
   );
 }

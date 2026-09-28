@@ -3,6 +3,27 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **29 Sep (P6b)** — **Procedural covers** (`ProceduralCover`): seeded by the activity id → unique
+  and free; category palette, time-of-day glow (launch-area time, so server and client agree),
+  one of 5 patterns, bokeh, grain, a large category glyph (custom sport glyphs where lucide had
+  none). Used wherever an activity/project has no photo; needs keep a plain warm card (§5).
+- **29 Sep (P6b)** — The chosen cover is **rendered to WebP and stored through the existing media
+  upload** at publish, so what the host picked is exactly what everyone sees (no `coverUrl`/seed
+  field needed). If rendering fails, the card regenerates from the post id.
+- **29 Sep (P6b)** — With `NEXT_PUBLIC_JENNY_COVERS` off (default) the screen is titled "Your cover"
+  and labels the card "Cover card · made for this activity" — never "AI-generated". The AI path
+  (shimmer + orb, "Cover by Jenny · AI-generated", honest fallback line) calls the PROPOSED
+  contract only when the flag is on (gap #24).
+- **29 Sep (P6b)** — Activity answers that are **public** (level, cost, type questions, bring,
+  accessibility, indoor/outdoor) go into the post text so joiners see them today; the exact point
+  and online link go only into `exactMeetingPoint` (after approval). Host questions, waitlist,
+  repeat, min size and link-only visibility wait for the API (gap #23); "Who sees it" isn't asked
+  because the API can't honour link-only yet. Women-only is a label + forced approval; no gender field.
+- **29 Sep (P6b)** — "Or just tell Jenny" on A1 arrives with Jenny pre-fill in P8 (§10), not before.
+- **29 Sep (P6b)** — Manage uses what's real: starting-soon card, check-in (`recordJoinOutcome`,
+  from 1 h before to 72 h after), cancel with a required reason posted to the room, joiner leave
+  before start (`withdrawJoin`). Edit, waitlist, answers, attendance confirm and feedback are
+  listed on /dev/progress as blocked with their gap numbers.
 - **29 Sep (P6)** — Built the **intake engine** (`src/lib/intake/`, `IntakeForm`) first and expressed
   Career §6 as a schema, rather than hand-building Career and rebuilding it in P6b. ≤4 questions
   per step (dev warning), "why" lines, visibility locks, "Add more details", Jenny-filled glow,

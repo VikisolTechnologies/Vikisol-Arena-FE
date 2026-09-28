@@ -62,7 +62,8 @@ export function coverParams(seed: string, time: TimeOfDay = "day"): CoverParams 
     glow: { x: between(0.12, 0.88), y: between(0.08, 0.45), r: between(0.35, 0.6), color: GLOW[time] },
     pattern: PATTERNS[Math.floor(r() * PATTERNS.length)],
     density: between(0.8, 1.35),
-    icon: { x: leftIcon ? between(0.08, 0.2) : between(0.58, 0.72), y: between(0.22, 0.42), size: between(0.42, 0.56), rotate: between(-14, 14) },
+    // Kept inside the centre square so 4:3 and 1:1 crops (cards, thumbnails) never cut it off.
+    icon: { x: leftIcon ? between(0.24, 0.3) : between(0.44, 0.5), y: between(0.2, 0.36), size: between(0.38, 0.5), rotate: between(-14, 14) },
     bokeh: Array.from({ length: 4 + Math.floor(r() * 4) }, () => ({ x: between(0, 1), y: between(0, 1), r: between(0.03, 0.12), o: between(0.05, 0.16) })),
     shift: between(-0.08, 0.08),
   };

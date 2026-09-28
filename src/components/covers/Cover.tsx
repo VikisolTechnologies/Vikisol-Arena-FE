@@ -2,11 +2,12 @@
 
 import { cn } from "@/lib/utils";
 import { ProceduralCover } from "@/components/covers/ProceduralCover";
+import { CompanyMark } from "@/components/career/CompanyMark";
 import { guessType } from "@/lib/activities/taxonomy";
 import { timeOfDayFor } from "@/lib/covers/procedural";
 
 /** Kinds that get a generated cover when there's no photo (flow §5). Needs keep a neutral card
- *  (their own photos matter); jobs use company colour cards elsewhere. */
+ *  (their own photos matter); jobs get their company's colour card with a monogram. */
 const COVERED = new Set(["activity", "project", "community"]);
 
 export interface CoverSource {
@@ -17,6 +18,8 @@ export interface CoverSource {
   title?: string;
   body?: string;
   startsAt?: string;
+  /** Jobs: the company name, for its colour card. */
+  company?: string;
 }
 
 /** Everywhere an image goes: the person's photo, else a unique procedural cover, else a warm
@@ -36,6 +39,13 @@ export function Cover({ source, className }: { source: CoverSource; className?: 
     return (
       <span className={cn("relative block overflow-hidden", className)}>
         <ProceduralCover seed={id} subtypeId={subtype.id} time={timeOfDayFor(source.startsAt)} className="absolute inset-0" />
+      </span>
+    );
+  }
+  if (kind === "job" && source.company) {
+    return (
+      <span aria-hidden className={cn("relative grid place-items-center overflow-hidden", className)}>
+        <CompanyMark name={source.company} className="absolute inset-0 size-full rounded-none text-[28px]" />
       </span>
     );
   }

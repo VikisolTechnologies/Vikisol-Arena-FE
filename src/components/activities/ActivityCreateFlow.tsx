@@ -235,7 +235,7 @@ function Preview({
 
 const REASONS = ["You'd enjoy this", "We need one more", "Come meet the neighbours"];
 
-function Published({ id, title }: { id: string; title: string }) {
+export function Published({ id, title }: { id: string; title: string }) {
   const [reasonOpen, setReasonOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const url = typeof window === "undefined" ? "" : `${window.location.origin}/feed/${id}`;

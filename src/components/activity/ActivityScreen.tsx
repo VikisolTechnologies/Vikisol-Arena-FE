@@ -18,7 +18,7 @@ import { Burst } from "@/components/bplus/Burst";
 import { DemoBadge, StateCard } from "@/components/bplus/Primitives";
 import { RequirementDialog, requirementFromError, type Requirement } from "@/components/requirements/RequirementForm";
 import { PaperPlane, SaferCommunity, StatusTimeline, SuccessCheck, downloadIcs, activityWhen } from "@/components/activity/ActivityParts";
-import { cancelPost, decideJoin, getJoinRequests, getPost, requestJoin, savePost, unsavePost, withdrawJoin } from "@/lib/api/posts";
+import { decideJoin, getJoinRequests, getPost, requestJoin, savePost, unsavePost, withdrawJoin } from "@/lib/api/posts";
 import { startChat } from "@/lib/api/messages";
 import { getMyProfile } from "@/lib/data/profile";
 import { distanceKm, formatKm } from "@/lib/data/feed";
@@ -26,6 +26,8 @@ import { getSession } from "@/lib/session";
 import { useGuest } from "@/hooks/use-arena-session";
 import type { Post, PostJoinRequest } from "@/lib/types";
 import { Cover } from "@/components/covers/Cover";
+import { CancelActivitySheet, LeaveActivitySheet, StartingSoon, dayOf } from "@/components/activity/ActivityTools";
+import { CheckInSheet } from "@/components/activity/CheckInSheet";
 
 const JOIN_STEPS = [
   { title: "Request sent", detail: "Just now" },
@@ -124,7 +126,7 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false 
     }
   };
 
-  if (post.myJoinStatus === "approved" && !post.mine) return <ApprovedView post={post} title={title} host={host} onShare={share} />;
+  if (post.myJoinStatus === "approved" && !post.mine) return <ApprovedView post={post} title={title} host={host} onShare={share} onLeft={() => void reload()} />;
 
   const facts = [
     spots != null && { icon: Users, text: spots > 0 ? `${spots} ${spots === 1 ? "spot" : "spots"} available` : "This activity is full" },
@@ -284,8 +286,9 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false 
   );
 }
 
-function ApprovedView({ post, title, host, onShare }: { post: Post; title: string; host: string; onShare: () => void }) {
+function ApprovedView({ post, title, host, onShare, onLeft }: { post: Post; title: string; host: string; onShare: () => void; onLeft: () => void }) {
   const router = useRouter();
+  const [leaveOpen, setLeaveOpen] = useState(false);
   const point = post.exactMeetingPoint || post.locationText;
   return (
     <AppShell>
@@ -301,6 +304,7 @@ function ApprovedView({ post, title, host, onShare }: { post: Post; title: strin
           <h1 className="mt-5 font-display-serif text-[30px] font-medium">You&apos;re in!</h1>
           <p className="mt-1 text-[15px] text-paper-ink-muted">{host} has approved your request. Here are the meeting details.</p>
         </div>
+        {dayOf(post.startsAt).soon && <div className="mt-5"><StartingSoon startsAt={post.startsAt!} point={post.exactMeetingPoint} /></div>}
 
         <section className="mt-6 overflow-hidden rounded-tile border border-paper-ink/15" aria-label="Meeting details">
           <div className="flex items-start gap-3 p-4">
@@ -347,6 +351,12 @@ function ApprovedView({ post, title, host, onShare }: { post: Post; title: strin
         ) : (
           <p className="mt-5 text-center text-[14px] text-paper-ink-muted">The activity room opens once the host sets it up.</p>
         )}
+        {!dayOf(post.startsAt).started && (
+          <button type="button" onClick={() => setLeaveOpen(true)} className="mt-2 flex min-h-11 w-full items-center justify-center text-[15px] font-semibold text-paper-ink-muted underline underline-offset-4">
+            Can&apos;t make it? Leave
+          </button>
+        )}
+        <LeaveActivitySheet open={leaveOpen} onClose={() => setLeaveOpen(false)} postId={post.id} onLeft={onLeft} />
       </div>
     </AppShell>
   );
@@ -357,7 +367,9 @@ function HostPanel({ post, onChanged }: { post: Post; onChanged: () => void }) {
   const [requests, setRequests] = useState<PostJoinRequest[] | null>(null);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [cancelling, setCancelling] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [checkInOpen, setCheckInOpen] = useState(false);
+  const timing = dayOf(post.startsAt);
   useEffect(() => {
     getJoinRequests(post.id).then(setRequests).catch((err: unknown) => setError(err instanceof Error ? err.message : "Requests didn't load."));
   }, [post.id]);
@@ -392,28 +404,17 @@ function HostPanel({ post, onChanged }: { post: Post; onChanged: () => void }) {
         ))}
       </ul>
       <div className="mt-6 space-y-2">
-        {post.roomId && <ButtonLink href={`/rooms/${post.roomId}`}>Open activity room</ButtonLink>}
-        {post.status !== "cancelled" && (
-          <Button
-            variant="outline"
-            className="border-danger-on-paper/60 text-danger-on-paper"
-            loading={cancelling}
-            onClick={async () => {
-              setCancelling(true);
-              try {
-                await cancelPost(post.id);
-                onChanged();
-              } catch (err) {
-                setError(err instanceof Error ? err.message : "Couldn't cancel.");
-              } finally {
-                setCancelling(false);
-              }
-            }}
-          >
+        {timing.soon && post.status !== "cancelled" && <StartingSoon startsAt={post.startsAt!} point={post.exactMeetingPoint} />}
+        {timing.checkIn && approved.length > 0 && post.status !== "cancelled" && <Button onClick={() => setCheckInOpen(true)}>Check people in</Button>}
+        {post.roomId && <ButtonLink href={`/rooms/${post.roomId}`} variant={timing.checkIn ? "outline" : "primary"} className={timing.checkIn ? "border-paper-ink/55 text-paper-ink" : undefined}>Open activity room</ButtonLink>}
+        {post.status !== "cancelled" && !timing.started && (
+          <Button variant="outline" className="border-danger-on-paper/60 text-danger-on-paper" onClick={() => setCancelOpen(true)}>
             Cancel activity
           </Button>
         )}
       </div>
+      <CheckInSheet postId={checkInOpen ? post.id : null} onClose={() => setCheckInOpen(false)} />
+      <CancelActivitySheet open={cancelOpen} onClose={() => setCancelOpen(false)} postId={post.id} roomId={post.roomId} onCancelled={onChanged} />
     </section>
   );
 }

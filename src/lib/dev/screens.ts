@@ -10,6 +10,8 @@ export interface DevScreen {
   route: string | null;
   status: ScreenStatus;
   commit: string | null;
+  /** "No board — designed in B+", or what blocks it. */
+  note?: string;
 }
 
 /** Founder-facing build tracker (/dev/progress). Status and commit are updated as each screen lands. */
