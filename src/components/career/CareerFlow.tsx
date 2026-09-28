@@ -127,7 +127,7 @@ export function CareerFlow() {
         <h2 className="mt-3 pr-12 font-display-serif text-[26px] font-medium">Hiring uses Arena for Business</h2>
         <p className="mt-2 text-[15px] text-paper-ink-muted">Companies post jobs and review candidates from a verified business workspace. Your personal profile stays exactly as it is.</p>
         <div className="mt-6 space-y-2">
-          <Button onClick={() => void signOut().then(() => router.replace("/auth?mode=signup"))}>Sign out and set up a business</Button>
+          <Button onClick={() => void signOut().then(() => router.replace("/auth?mode=role"))}>Sign out and set up a business</Button>
           <Button variant="outline" className="border-paper-ink/55 text-paper-ink" onClick={() => setHireOpen(false)}>Not now</Button>
         </div>
       </BottomSheet>

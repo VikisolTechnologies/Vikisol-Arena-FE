@@ -54,6 +54,7 @@ export function IntakeForm({
   busy,
   intro,
   submitText,
+  tabBar = true,
 }: {
   schema: Schema;
   draftKey: string;
@@ -69,7 +70,10 @@ export function IntakeForm({
   intro?: ReactNode;
   /** The final button's label when it depends on the answers (default: schema.submitLabel). */
   submitText?: (values: Values) => string;
+  /** False where there's no bottom tab bar (business setup): sticky buttons sit at the bottom. */
+  tabBar?: boolean;
 }) {
+  const stick = tabBar ? "bottom-[calc(76px+env(safe-area-inset-bottom))]" : "bottom-0";
   const [values, setValues] = useState<Values>(() => ({ ...defaultsOf(schema), ...(initial ?? {}), ...(readIntakeDraft(draftKey) ?? {}) }));
   const [jenny, setJenny] = useState<Set<string>>(() => new Set(jennyFilled));
   const [stepIndex, setStepIndex] = useState(0);
@@ -174,7 +178,7 @@ export function IntakeForm({
               </div>
               {reviewExtra?.(values)}
               {submitError && <p role="alert" className="mt-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{submitError}</p>}
-              <div className="sticky bottom-[calc(76px+env(safe-area-inset-bottom))] z-10 -mx-5 mt-6 bg-linear-to-t from-paper from-80% to-transparent px-5 pb-2 pt-3">
+              <div className={cn("sticky z-10 -mx-5 mt-6 bg-linear-to-t", stick, " from-paper from-80% to-transparent px-5 pb-2 pt-3")}>
                 <Button loading={busy} onClick={() => onSubmit(values)}>{submitText?.(values) ?? schema.submitLabel}</Button>
               </div>
             </div>
@@ -211,7 +215,7 @@ export function IntakeForm({
                   </div>
                 )}
               </div>
-              <div className="sticky bottom-[calc(76px+env(safe-area-inset-bottom))] z-10 -mx-5 mt-8 bg-linear-to-t from-paper from-80% to-transparent px-5 pb-2 pt-3">
+              <div className={cn("sticky z-10 -mx-5 mt-8 bg-linear-to-t from-paper from-80% to-transparent px-5 pb-2 pt-3", stick)}>
                 <Button type="submit">{stepIndex === steps.length - 1 ? "Review" : "Continue"}</Button>
               </div>
             </form>

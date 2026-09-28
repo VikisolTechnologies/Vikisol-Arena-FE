@@ -53,8 +53,8 @@ function focusFirst(ids: string[]) {
 
 type Landing = (session: Pick<Session, "role">, fromSignup: boolean) => void;
 
-export function SignUpView({ onBack, onSignIn, land }: { onBack: () => void; onSignIn: () => void; land: Landing }) {
-  const [account, setAccount] = useState<Role>("talent");
+export function SignUpView({ onBack, onSignIn, land, initialAccount = "talent" }: { onBack: () => void; onSignIn: () => void; land: Landing; initialAccount?: Role }) {
+  const [account, setAccount] = useState<Role>(initialAccount);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

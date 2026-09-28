@@ -1,11 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CalendarClock, LogOut } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { CalendarClock } from "lucide-react";
+import { DashShell } from "@/components/dash/DashShell";
 import NotFound from "@/app/not-found";
 import { signOut } from "@/lib/api/auth";
 import { getSession } from "@/lib/session";
@@ -47,35 +45,8 @@ export function HiringManagerShell({
   if (state === "denied") return <NotFound />;
 
   return (
-    <div data-theme="product" className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
-      <nav className="sticky top-0 z-20 border-b border-border bg-background/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6">
-          <Link href="/enterprise/interviews/mine" className="flex items-center gap-2">
-            <span className="font-display text-sm font-bold tracking-wide">ARENA<span className="text-primary">.</span></span>
-            <Badge variant="secondary" className="text-[10px] text-muted-foreground">Hiring Manager</Badge>
-          </Link>
-          <div className="ml-4 hidden gap-1 sm:flex">
-            <span className="flex items-center gap-1.5 rounded-full bg-primary/12 px-3.5 py-2 text-sm font-medium text-primary-soft">
-              <CalendarClock className="size-3.5" /> My interviews
-            </span>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <Button variant="ghost" size="icon" aria-label="Log out" onClick={handleLogout}>
-              <LogOut className="size-[18px]" />
-            </Button>
-          </div>
-        </div>
-      </nav>
-
-      <main className="relative z-10 mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
-        {(title || actions) && (
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            {title && <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">{title}</h1>}
-            {actions && <div className="flex items-center gap-2">{actions}</div>}
-          </div>
-        )}
-        {children}
-      </main>
-    </div>
+    <DashShell product="Business" nav={[{ href: "/enterprise/interviews/mine", label: "My interviews", icon: CalendarClock, match: ["/enterprise/interviews/mine"] }]} title={title} actions={actions} onLogout={handleLogout}>
+      {children}
+    </DashShell>
   );
 }

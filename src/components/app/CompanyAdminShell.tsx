@@ -1,18 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Users, ScrollText, CreditCard, Building2, ShieldCheck, LogOut, ArrowLeftRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { LayoutDashboard, Users, ScrollText, CreditCard, Building2, ShieldCheck, ArrowLeftRight } from "lucide-react";
+import { DashShell, type DashNavItem } from "@/components/dash/DashShell";
 import NotFound from "@/app/not-found";
 import { signOut } from "@/lib/api/auth";
 import { getSession } from "@/lib/session";
-import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = [
-  { href: "/enterprise/admin", label: "Dashboard", icon: LayoutDashboard },
+const NAV_ITEMS: DashNavItem[] = [
+  { href: "/enterprise/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/enterprise/admin/team", label: "Team", icon: Users },
   { href: "/enterprise/admin/audit", label: "Audit log", icon: ScrollText },
   { href: "/enterprise/admin/billing", label: "Billing & plan", icon: CreditCard },
@@ -33,7 +31,6 @@ export function CompanyAdminShell({
   actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
   const router = useRouter();
   // Starts "checking" on both server and client so the first client render matches the SSR-ed
   // output (a lazy `typeof window` initializer was tried here first and caused a genuine
@@ -62,61 +59,19 @@ export function CompanyAdminShell({
   if (state === "denied") return <NotFound />;
 
   return (
-    <div data-theme="product" className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
-      <nav className="sticky top-0 z-20 border-b border-border bg-background/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6">
-          <Link href="/enterprise/admin" className="flex items-center gap-2">
-            <span className="font-display text-sm font-bold tracking-wide">ARENA<span className="text-primary">.</span></span>
-            <Badge variant="secondary" className="bg-amber-500/12 text-[10px] text-amber-400">Admin</Badge>
-          </Link>
-          <div className="ml-4 hidden gap-1 lg:flex">
-            {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition-colors",
-                  pathname === href ? "bg-primary/12 text-primary-soft" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Icon className="size-3.5" /> {label}
-              </Link>
-            ))}
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <Button variant="ghost-glass" size="sm" className="gap-1.5" onClick={() => router.push("/enterprise")}>
-              <ArrowLeftRight className="size-3.5" /> Workspace
-            </Button>
-            <Button variant="ghost" size="icon" aria-label="Log out" onClick={handleLogout}>
-              <LogOut className="size-[18px]" />
-            </Button>
-          </div>
-        </div>
-        <div className="flex gap-1 overflow-x-auto px-4 pb-2 lg:hidden">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium",
-                pathname === href ? "bg-primary/12 text-primary-soft" : "text-muted-foreground",
-              )}
-            >
-              <Icon className="size-3" /> {label}
-            </Link>
-          ))}
-        </div>
-      </nav>
-
-      <main className="relative z-10 mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
-        {(title || actions) && (
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            {title && <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">{title}</h1>}
-            {actions && <div className="flex items-center gap-2">{actions}</div>}
-          </div>
-        )}
-        {children}
-      </main>
-    </div>
+    <DashShell
+      product="Business"
+      nav={NAV_ITEMS}
+      switcher={
+        <Link href="/enterprise" className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-[14px] font-semibold text-foreground/80 hover:bg-foreground/5">
+          <ArrowLeftRight className="size-4" aria-hidden /> Recruiting workspace
+        </Link>
+      }
+      title={title}
+      actions={actions}
+      onLogout={handleLogout}
+    >
+      {children}
+    </DashShell>
   );
 }

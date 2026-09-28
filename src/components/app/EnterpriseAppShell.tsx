@@ -1,22 +1,26 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Search, Briefcase, LogOut, Bell, Mail, Newspaper } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { useSyncExternalStore } from "react";
+import { Briefcase, CalendarClock, LayoutDashboard, Mail, Newspaper, Search, Settings } from "lucide-react";
+import { DashShell, type DashNavItem } from "@/components/dash/DashShell";
 import { signOut } from "@/lib/api/auth";
-import { cn } from "@/lib/utils";
+import { getSession } from "@/lib/session";
 import type { EnterpriseProfile } from "@/lib/types";
 
-const NAV_ITEMS = [
-  { href: "/enterprise/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/enterprise/talent", label: "Talent Universe", icon: Search },
-  { href: "/enterprise/postings", label: "Postings", icon: Briefcase },
-  { href: "/enterprise/posts", label: "Company Posts", icon: Newspaper },
+const noop = () => () => {};
+
+const NAV: DashNavItem[] = [
+  { href: "/enterprise/dashboard", label: "Home", icon: LayoutDashboard },
+  { href: "/enterprise/postings", label: "Jobs", icon: Briefcase, match: ["/enterprise/postings"] },
+  { href: "/enterprise/interviews", label: "Interviews", icon: CalendarClock, match: ["/enterprise/interviews"] },
+  { href: "/enterprise/talent", label: "Talent", icon: Search, match: ["/enterprise/talent"] },
   { href: "/enterprise/messages", label: "Messages", icon: Mail },
+  { href: "/enterprise/posts", label: "Company posts", icon: Newspaper },
 ];
 
+/** Arena for Business (flow §8) — recruiter workspace frame. Page-level role checks stay in each
+ *  page (requireEnterpriseOnboarded); this shell only draws the B+ frame and signs out. */
 export function EnterpriseAppShell({
   title,
   actions,
@@ -28,75 +32,29 @@ export function EnterpriseAppShell({
   profile?: EnterpriseProfile | null;
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
   const router = useRouter();
-
   const handleLogout = async () => {
     await signOut();
     router.push("/auth");
   };
-
+  const isAdmin = useSyncExternalStore(noop, () => getSession()?.role === "company_admin", () => false);
   return (
-    <div data-theme="product" className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
-      <nav className="sticky top-0 z-20 border-b border-border bg-background/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6">
-          <Link href="/enterprise/dashboard" className="flex items-center gap-2">
-            <span className="font-display text-sm font-bold tracking-wide">ARENA<span className="text-primary">.</span></span>
-            <Badge variant="secondary" className="text-[10px] text-muted-foreground">Enterprise</Badge>
-          </Link>
-          <div className="ml-4 hidden gap-1 md:flex">
-            {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-colors",
-                  pathname === href ? "bg-primary/12 text-primary-soft" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Icon className="size-3.5" /> {label}
-              </Link>
-            ))}
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            {profile && (
-              <span className="hidden items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1.5 text-xs text-muted-foreground sm:flex">
-                {profile.logoEmoji} {profile.companyName}
-              </span>
-            )}
-            <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
-              <Bell className="size-[18px]" />
-            </Button>
-            <Button variant="ghost" size="icon" aria-label="Log out" onClick={handleLogout}>
-              <LogOut className="size-[18px]" />
-            </Button>
-          </div>
-        </div>
-        <div className="flex gap-1 overflow-x-auto px-4 pb-2 md:hidden">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium",
-                pathname === href ? "bg-primary/12 text-primary-soft" : "text-muted-foreground",
-              )}
-            >
-              <Icon className="size-3" /> {label}
-            </Link>
-          ))}
-        </div>
-      </nav>
-
-      <main className="relative z-10 mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
-        {(title || actions) && (
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            {title && <h1 className="font-display text-xl font-bold tracking-tight sm:text-2xl">{title}</h1>}
-            {actions && <div className="flex items-center gap-2">{actions}</div>}
-          </div>
-        )}
-        {children}
-      </main>
-    </div>
+    <DashShell
+      product="Business"
+      nav={isAdmin ? [...NAV, { href: "/enterprise/admin", label: "Company settings", icon: Settings, match: ["/enterprise/admin"] }] : NAV}
+      identity={
+        profile ? (
+          <p className="flex items-center gap-2 rounded-xl bg-foreground/5 px-3 py-2 text-[14px]">
+            <span aria-hidden>{profile.logoEmoji}</span>
+            <span className="truncate font-semibold">{profile.companyName}</span>
+          </p>
+        ) : null
+      }
+      title={title}
+      actions={actions}
+      onLogout={handleLogout}
+    >
+      {children}
+    </DashShell>
   );
 }

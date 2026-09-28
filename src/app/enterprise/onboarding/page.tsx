@@ -1,149 +1,84 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, X } from "lucide-react";
-import { AuraBackground } from "@/components/landing/AuraBackground";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { Info } from "lucide-react";
+import { ArenaLogo } from "@/components/brand/ArenaLogo";
+import { IntakeForm, clearIntakeDraft } from "@/components/intake/IntakeForm";
 import { saveMyEnterpriseProfile } from "@/lib/api/enterprise";
 import { setEnterpriseOnboarded } from "@/lib/session";
 import { requireSession } from "@/lib/auth-guard";
-import { INDUSTRIES } from "@/lib/mock/seed";
+import { BUSINESS_SCHEMA } from "@/lib/intake/schemas/business";
 import type { CompanySize, Industry } from "@/lib/types";
+import type { Values } from "@/lib/intake/types";
 
-const LOGO_OPTIONS = ["🏢", "🚀", "💡", "🩺", "🏭", "🛍️"];
-const SIZE_OPTIONS: CompanySize[] = ["1-10", "11-50", "51-200", "201-1000", "1000+"];
+const subscribeNothing = () => () => {};
 
+/** Recruiter board 2 — Company workspace (Arena for Business setup). Saves the same enterprise
+ *  profile as before; verification fields wait for the API (FE-API-GAPS #28). */
 export default function EnterpriseOnboardingPage() {
   const router = useRouter();
-  const [companyName, setCompanyName] = useState("");
-  const [logoEmoji, setLogoEmoji] = useState(LOGO_OPTIONS[0]);
-  const [industry, setIndustry] = useState<Industry>(INDUSTRIES[0]);
-  const [size, setSize] = useState<CompanySize>("11-50");
-  const [hiringFor, setHiringFor] = useState<string[]>([]);
-  const [draftRole, setDraftRole] = useState("");
-  const [saving, setSaving] = useState(false);
+  const ready = useSyncExternalStore(subscribeNothing, () => true, () => false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
-  const addRole = () => {
-    if (draftRole.trim() && !hiringFor.includes(draftRole.trim())) {
-      setHiringFor((prev) => [...prev, draftRole.trim()]);
-      setDraftRole("");
+  useEffect(() => {
+    requireSession(router);
+  }, [router]);
+
+  const finish = async (v: Values) => {
+    if (!requireSession(router)) return;
+    setBusy(true);
+    setError("");
+    try {
+      await saveMyEnterpriseProfile({
+        companyName: String(v.companyName ?? "").trim(),
+        logoEmoji: "🏢",
+        industry: v.industry as Industry,
+        size: (v.size as CompanySize) ?? "11-50",
+        hiringFor: (v.hiringFor as string[] | undefined) ?? [],
+        plan: "free",
+        seatsUsed: 1,
+        seatsTotal: 3,
+        unlockCreditsUsed: 0,
+        unlockCreditsTotal: 25,
+        status: "active",
+      });
+      setEnterpriseOnboarded();
+      clearIntakeDraft("business");
+      router.push("/enterprise/dashboard");
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : "Setup didn't save. Your answers are kept — try again.");
+      setBusy(false);
     }
   };
 
-  const canContinue = companyName.trim().length > 0 && hiringFor.length > 0;
-
-  const finish = async () => {
-    if (!requireSession(router)) return;
-    setSaving(true);
-    await saveMyEnterpriseProfile({
-      companyName,
-      logoEmoji,
-      industry,
-      size,
-      hiringFor,
-      plan: "free",
-      seatsUsed: 1,
-      seatsTotal: 3,
-      unlockCreditsUsed: 0,
-      unlockCreditsTotal: 25,
-      status: "active",
-    });
-    setEnterpriseOnboarded();
-    router.push("/enterprise/dashboard");
-  };
-
   return (
-    <div className="relative isolate flex min-h-svh w-full items-center justify-center overflow-hidden bg-background px-5 py-16 text-foreground">
-      <AuraBackground />
-      <div className="relative z-10 w-full max-w-lg rounded-[24px] border border-border bg-secondary p-7 backdrop-blur-xl">
-        <div className="mb-5 flex items-center gap-2">
-          <Building2 className="size-5 text-primary-soft" />
-          <h1 className="font-display text-xl font-bold tracking-tight">Set up your company</h1>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="companyName">Company name</Label>
-            <Input id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="mt-1.5 border-border bg-secondary" />
-          </div>
-
-          <div>
-            <Label>Logo</Label>
-            <div className="mt-1.5 flex gap-2">
-              {LOGO_OPTIONS.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => setLogoEmoji(emoji)}
-                  className={cn(
-                    "flex size-11 items-center justify-center rounded-xl border text-lg transition-colors",
-                    logoEmoji === emoji ? "border-primary/60 bg-primary/10" : "border-border bg-secondary",
-                  )}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Industry</Label>
-              <select
-                value={industry}
-                onChange={(e) => setIndustry(e.target.value as Industry)}
-                className="mt-1.5 flex h-9 w-full rounded-md border border-border bg-secondary px-3 text-sm outline-none"
-              >
-                {INDUSTRIES.map((ind) => <option key={ind} value={ind}>{ind}</option>)}
-              </select>
-            </div>
-            <div>
-              <Label>Company size</Label>
-              <select
-                value={size}
-                onChange={(e) => setSize(e.target.value as CompanySize)}
-                className="mt-1.5 flex h-9 w-full rounded-md border border-border bg-secondary px-3 text-sm outline-none"
-              >
-                {SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s} employees</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <Label>What are you hiring for?</Label>
-            {hiringFor.length > 0 && (
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {hiringFor.map((role) => (
-                  <Badge key={role} variant="glass" className="gap-1 border-primary/40 text-primary-soft">
-                    {role}
-                    <button type="button" onClick={() => setHiringFor((prev) => prev.filter((r) => r !== role))}>
-                      <X className="size-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
+    <div data-theme="bplus" className="min-h-svh bg-background">
+      <div className="mx-auto min-h-svh max-w-[560px] bg-paper px-5 pb-8 pt-[max(16px,env(safe-area-inset-top))] text-paper-ink sm:my-8 sm:min-h-0 sm:rounded-[28px]">
+        <p className="mb-4 flex items-center gap-2 text-[20px] text-paper-ink">
+          <ArenaLogo /> <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-primary-on-paper">Business</span>
+        </p>
+        {ready && (
+          <IntakeForm
+            schema={BUSINESS_SCHEMA}
+            draftKey="business"
+            tabBar={false}
+            onExit={() => router.push("/auth")}
+            onSubmit={finish}
+            busy={busy}
+            submitError={error}
+            reviewExtra={() => (
+              <section className="mt-4 flex gap-3 rounded-tile bg-paper-muted p-4" aria-label="Verification">
+                <Info className="mt-0.5 size-5 shrink-0" aria-hidden />
+                <div>
+                  <p className="text-[15px] font-semibold">Company verification</p>
+                  <p className="mt-0.5 text-[14px] text-paper-ink-muted">Arena will verify company domains before jobs are marked &ldquo;Verified&rdquo;. That check isn&apos;t open yet — you can set up and post today, and your company won&apos;t show a verified badge until it is.</p>
+                </div>
+              </section>
             )}
-            <div className="mt-1.5 flex gap-2">
-              <Input
-                value={draftRole}
-                onChange={(e) => setDraftRole(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addRole(); } }}
-                placeholder="e.g. Senior React Developer"
-                className="border-border bg-secondary"
-              />
-              <Button type="button" variant="ghost-glass" size="sm" onClick={addRole}>Add</Button>
-            </div>
-          </div>
-
-          <Button variant="primary-gradient" size="cta" className="w-full" disabled={!canContinue || saving} onClick={finish}>
-            {saving ? "Setting up…" : "Enter Talent Universe"}
-          </Button>
-        </div>
+          />
+        )}
       </div>
     </div>
   );

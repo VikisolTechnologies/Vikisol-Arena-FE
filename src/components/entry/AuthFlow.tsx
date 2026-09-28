@@ -9,8 +9,9 @@ import { entryIsPending, markEntryPending } from "@/lib/data/onboarding";
 import type { Session } from "@/lib/types";
 import { WelcomeView } from "./WelcomeView";
 import { SignInView, SignUpView } from "./AuthForms";
+import { RoleChooser } from "./RoleChooser";
 
-type View = "welcome" | "signin" | "signup";
+type View = "welcome" | "signin" | "signup" | "role";
 
 /** Role-based landing — unchanged from the previous entry flow. */
 function useLand() {
@@ -37,8 +38,8 @@ export function AuthFlow() {
   const params = useSearchParams();
   const land = useLand();
   const mode = params.get("mode");
-  const view: View = mode === "signup" ? "signup" : mode === "signin" ? "signin" : "welcome";
-  const direction = useDirection(view === "welcome" ? 0 : view === "signin" ? 1 : 2);
+  const view: View = mode === "signup" ? "signup" : mode === "signin" ? "signin" : mode === "role" ? "role" : "welcome";
+  const direction = useDirection(view === "welcome" ? 0 : view === "signin" ? 1 : view === "role" ? 2 : 3);
   const fromWelcome = useRef(false);
 
   const go = (next: View) => {
@@ -62,7 +63,8 @@ export function AuthFlow() {
       <AnimatePresence mode="wait" initial={false} custom={direction}>
         <m.div key={view} custom={direction} variants={pageSlide} initial="enter" animate="center" exit="exit">
           {view === "welcome" && <WelcomeView onJoin={() => go("signup")} onSignIn={() => go("signin")} />}
-          {view === "signup" && <SignUpView onBack={back} onSignIn={() => go("signin")} land={land} />}
+          {view === "role" && <RoleChooser onBack={back} onContinue={(c) => router.push(`${pathname}?mode=signup${c === "company" ? "&as=company" : ""}`, { scroll: false })} />}
+          {view === "signup" && <SignUpView onBack={back} onSignIn={() => go("signin")} land={land} initialAccount={params.get("as") === "company" ? "company_admin" : "talent"} />}
           {view === "signin" && <SignInView onBack={back} onSignUp={() => go("signup")} land={land} notice={notice} />}
         </m.div>
       </AnimatePresence>

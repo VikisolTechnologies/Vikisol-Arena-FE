@@ -3,10 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { animate, m, useReducedMotion } from "motion/react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { m } from "motion/react";
 import { Briefcase, ChevronRight, Lock, LogOut, MapPin, Plus, Settings } from "lucide-react";
-import { countUp, rise } from "@/lib/motion";
+import { rise } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
 import { Avatar } from "@/components/bplus/Avatar";
 import { Button, ButtonLink } from "@/components/bplus/Button";
@@ -20,6 +20,7 @@ import { getMyBids } from "@/lib/api/myBids";
 import { signOut } from "@/lib/api/auth";
 import type { Post } from "@/lib/types";
 import { Cover } from "@/components/covers/Cover";
+import { CountUp } from "@/components/bplus/CountUp";
 
 type Data = { profile: CandidateProfile; posts: Post[]; joined: Post[]; won: number; outcomes: Post[] };
 
@@ -201,20 +202,4 @@ export function ProfileScreen() {
       )}
     </AppShell>
   );
-}
-
-/** Counts up once on mount; instant under reduced motion. */
-function CountUp({ value }: { value: number }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const reduced = useReducedMotion();
-  useEffect(() => {
-    if (!ref.current) return;
-    if (reduced || value === 0) {
-      ref.current.textContent = String(value);
-      return;
-    }
-    const controls = animate(0, value, { ...countUp, onUpdate: (v) => ref.current && (ref.current.textContent = String(Math.round(v))) });
-    return () => controls.stop();
-  }, [value, reduced]);
-  return <span ref={ref}>{value}</span>;
 }
