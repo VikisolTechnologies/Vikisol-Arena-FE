@@ -146,8 +146,8 @@
     "index": 1,
     "title": "Personalised feed",
     "route": "/home",
-    "status": "not-started",
-    "commit": null
+    "status": "done",
+    "commit": "1c8e99e"
   },
   {
     "id": "discover-filter",
@@ -156,8 +156,8 @@
     "index": 2,
     "title": "Discover & filter",
     "route": "/discover?show=activities",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "1c8e99e"
   },
   {
     "id": "map-results",
@@ -166,8 +166,8 @@
     "index": 3,
     "title": "Map results",
     "route": "/discover?view=map",
-    "status": "not-started",
-    "commit": null
+    "status": "done",
+    "commit": "1c8e99e"
   },
   {
     "id": "activity-details",
@@ -176,8 +176,8 @@
     "index": 4,
     "title": "Activity details",
     "route": "/dev/screen/activity-details",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "1c8e99e"
   },
   {
     "id": "join-sent",
@@ -186,8 +186,8 @@
     "index": 5,
     "title": "Join request sent",
     "route": "/dev/screen/join-sent",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "1c8e99e"
   },
   {
     "id": "approved-ready",
@@ -196,8 +196,8 @@
     "index": 6,
     "title": "Approved & ready",
     "route": "/dev/screen/approved-ready",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "1c8e99e"
   },
   {
     "id": "activity-room",
@@ -206,8 +206,8 @@
     "index": 7,
     "title": "Activity room",
     "route": "/dev/screen/activity-room",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "1c8e99e"
   },
   {
     "id": "need-create",
