@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { m } from "motion/react";
 import { Briefcase, Check, ChevronRight, CircleCheck, MessageSquare, Sprout } from "lucide-react";
@@ -33,6 +34,7 @@ export function WorkScreen() {
   const role = useSessionRole();
   const [tab, setTab] = useState<Tab>("all");
   const [side, setSide] = useState<"all" | "need" | "offer">("all");
+  const projectDraft = useSearchParams().get("draft") === "project";
   const [rows, setRows] = useState<WorkRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
@@ -70,6 +72,12 @@ export function WorkScreen() {
           <Briefcase className="size-4" aria-hidden /> Jobs
         </Link>
       </header>
+      {projectDraft && (
+        <p role="status" className="mt-4 rounded-tile bg-paper p-4 text-[15px] text-paper-ink">
+          Your project is saved on this device. It publishes as soon as Arena supports collaborative projects.{" "}
+          <Link href="/projects/new" className="font-semibold text-primary-on-paper underline underline-offset-4">Keep editing</Link>
+        </p>
+      )}
       <div className="mt-5">
         <Pills label="Show" options={TABS} value={tab} onChange={setTab} />
       </div>

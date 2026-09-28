@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { PostFlow } from "@/components/needs/PostFlow";
 
-export const metadata: Metadata = { title: "Post a Need · Arena" };
+export const metadata: Metadata = { title: "Make an Offer · Arena" };
 
-export default function PostNeedPage() {
+export default function MakeOfferPage() {
   return (
     <Suspense>
-      <PostFlow mode="need" />
+      <PostFlow mode="offer" />
     </Suspense>
   );
 }

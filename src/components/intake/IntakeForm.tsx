@@ -53,6 +53,7 @@ export function IntakeForm({
   submitError,
   busy,
   intro,
+  submitText,
 }: {
   schema: Schema;
   draftKey: string;
@@ -66,6 +67,8 @@ export function IntakeForm({
   busy?: boolean;
   /** Shown above the first step's questions (e.g. "Or just tell Jenny"). */
   intro?: ReactNode;
+  /** The final button's label when it depends on the answers (default: schema.submitLabel). */
+  submitText?: (values: Values) => string;
 }) {
   const [values, setValues] = useState<Values>(() => ({ ...defaultsOf(schema), ...(initial ?? {}), ...(readIntakeDraft(draftKey) ?? {}) }));
   const [jenny, setJenny] = useState<Set<string>>(() => new Set(jennyFilled));
@@ -145,7 +148,7 @@ export function IntakeForm({
         <m.div key={reviewing ? "review" : step.id} custom={direction} variants={pageSlide} initial="enter" animate="center" exit="exit" className="pt-3">
           {reviewing ? (
             <div>
-              <h1 className="font-display-serif text-[28px] font-medium leading-tight">Check and {schema.submitLabel.toLowerCase()}</h1>
+              <h1 className="font-display-serif text-[28px] font-medium leading-tight">Check your answers</h1>
               <p className="mt-1 text-[15px] text-paper-ink-muted">Tap any section to change it.</p>
               <div className="mt-5 space-y-3">
                 {steps.map((s, i) => (
@@ -172,7 +175,7 @@ export function IntakeForm({
               {reviewExtra?.(values)}
               {submitError && <p role="alert" className="mt-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{submitError}</p>}
               <div className="sticky bottom-[calc(76px+env(safe-area-inset-bottom))] z-10 -mx-5 mt-6 bg-linear-to-t from-paper from-80% to-transparent px-5 pb-2 pt-3">
-                <Button loading={busy} onClick={() => onSubmit(values)}>{schema.submitLabel}</Button>
+                <Button loading={busy} onClick={() => onSubmit(values)}>{submitText?.(values) ?? schema.submitLabel}</Button>
               </div>
             </div>
           ) : (

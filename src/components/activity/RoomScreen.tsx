@@ -81,7 +81,9 @@ export function RoomScreen({ roomId, specimen }: { roomId: string; specimen?: Ro
     };
   }, [roomId, specimen]);
 
-  const isNeed = (post?.intentType ?? room?.postIntentType) === "ask";
+  // Needs and offers share the private two-person coordination room.
+  const kindOf = post?.intentType ?? room?.postIntentType;
+  const isNeed = kindOf === "ask" || kindOf === "offer";
   const tab: Tab = chosenTab ?? (isNeed ? "plan" : "chat");
 
   useEffect(() => {
@@ -365,6 +367,7 @@ export function RoomScreen({ roomId, specimen }: { roomId: string; specimen?: Ro
             other={otherName}
             onCompleted={() => setPost({ ...post, status: "closed" })}
             initialStage={specimen?.completeStage}
+            noun={kindOf === "offer" ? "offer" : "need"}
           />
           <BottomSheet open={safetyOpen} onClose={() => setSafetyOpen(false)} title="Safety">
             <h2 className="mt-3 font-display-serif text-[24px] font-medium">Meeting safely</h2>

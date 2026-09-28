@@ -1,21 +1,5 @@
 import type { Post } from "@/lib/types";
 
-/** Need categories (board "Post a Need"). Stored as the post's first tag — no hidden scoring. */
-export const NEED_CATEGORIES = [
-  "Moving & Heavy Lifting",
-  "Repairs & Fixes",
-  "Tech Help",
-  "Errands & Deliveries",
-  "Tutoring & Learning",
-  "Pets & Plants",
-  "Cooking & Meals",
-  "Rides & Travel",
-  "Something else",
-] as const;
-
-export const NEED_TITLE_MAX = 100;
-export const NEED_DETAILS_MAX = 600;
-
 export const PREFERRED_TIMES = ["Flexible", "Today", "This weekend", "Next week"] as const;
 export type PreferredTime = (typeof PREFERRED_TIMES)[number];
 
@@ -61,33 +45,6 @@ export function needWhen(post: Pick<Post, "startsAt" | "endsAt">): string {
 }
 
 export const isNeed = (p: Pick<Post, "intentType">) => p.intentType === "ask";
-
-/* ── Draft kept on this device (offline-safe; cleared after a real post). ── */
-export interface NeedDraft {
-  title: string;
-  details: string;
-  category: string;
-  area: string;
-  time: PreferredTime;
-  audience: "global" | "followers";
-}
-const DRAFT_KEY = "arena_need_draft";
-export function readNeedDraft(): NeedDraft | null {
-  try {
-    const raw = localStorage.getItem(DRAFT_KEY);
-    return raw ? (JSON.parse(raw) as NeedDraft) : null;
-  } catch {
-    return null;
-  }
-}
-export function writeNeedDraft(draft: NeedDraft | null) {
-  try {
-    if (draft) localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-    else localStorage.removeItem(DRAFT_KEY);
-  } catch {
-    /* storage blocked: the form still works, just without a saved draft */
-  }
-}
 
 /* ── Meeting link: posted into the room as a message (no separate endpoint). ── */
 export const MEETING_LINK_PREFIX = "Meeting link: ";

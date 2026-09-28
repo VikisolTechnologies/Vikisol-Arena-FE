@@ -662,6 +662,127 @@
     "note": "Blocked: FE-API-GAPS #25"
   },
   {
+    "id": "need-kind",
+    "phase": "P6c Needs, offers & projects",
+    "board": "none",
+    "index": 0,
+    "title": "Need \u2014 what kind of help? (12 categories)",
+    "route": "/needs/new",
+    "status": "in-progress",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "need-intake",
+    "phase": "P6c Needs, offers & projects",
+    "board": "none",
+    "index": 0,
+    "title": "Need intake \u2014 basics, category questions, where & photos, review",
+    "route": "/needs/new?kind=moving",
+    "status": "in-progress",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "offer-kind",
+    "phase": "P6c Needs, offers & projects",
+    "board": "none",
+    "index": 0,
+    "title": "O1 Offer \u2014 what can you offer?",
+    "route": "/offers/new",
+    "status": "in-progress",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "offer-intake",
+    "phase": "P6c Needs, offers & projects",
+    "board": "none",
+    "index": 0,
+    "title": "O1 Offer intake \u2014 what, when, limits, proof",
+    "route": "/offers/new?kind=tutoring",
+    "status": "in-progress",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "offer-page",
+    "phase": "P6c Needs, offers & projects",
+    "board": "none",
+    "index": 0,
+    "title": "O2 Offer page",
+    "route": "/dev/screen/need-page",
+    "status": "in-progress",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "offer-requests",
+    "phase": "P6c Needs, offers & projects",
+    "board": "none",
+    "index": 0,
+    "title": "O3 Requests on my offer \u2192 accept \u2192 room",
+    "route": "/dev/screen/offer-details",
+    "status": "in-progress",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "project-start",
+    "phase": "P6c Needs, offers & projects",
+    "board": "none",
+    "index": 0,
+    "title": "PR1\u2013PR2 Start a project + roles (paid publishes; collaborative saves)",
+    "route": "/projects/new",
+    "status": "in-progress",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "project-page",
+    "phase": "P6c Needs, offers & projects",
+    "board": "none",
+    "index": 0,
+    "title": "PR3 Collaborative project page",
+    "route": null,
+    "status": "not-started",
+    "commit": null,
+    "note": "Blocked: FE-API-GAPS #26"
+  },
+  {
+    "id": "project-applicants",
+    "phase": "P6c Needs, offers & projects",
+    "board": "none",
+    "index": 0,
+    "title": "PR4 Applicants",
+    "route": null,
+    "status": "not-started",
+    "commit": null,
+    "note": "Blocked: FE-API-GAPS #26"
+  },
+  {
+    "id": "project-room",
+    "phase": "P6c Needs, offers & projects",
+    "board": "none",
+    "index": 0,
+    "title": "PR5 Team room (plan, milestones, chat, links)",
+    "route": null,
+    "status": "not-started",
+    "commit": null,
+    "note": "Blocked: FE-API-GAPS #26"
+  },
+  {
+    "id": "project-complete",
+    "phase": "P6c Needs, offers & projects",
+    "board": "none",
+    "index": 0,
+    "title": "PR6 Complete + contributors",
+    "route": null,
+    "status": "not-started",
+    "commit": null,
+    "note": "Blocked: FE-API-GAPS #26"
+  },
+  {
     "id": "choose-role",
     "phase": "P7 Recruiter",
     "board": "recruiter",

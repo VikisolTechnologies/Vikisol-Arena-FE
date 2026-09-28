@@ -30,7 +30,14 @@ const STATUS: Record<Post["status"], { label: string; cls: string }> = {
   expired: { label: "Expired", cls: "bg-paper-ink/10 text-paper-ink-muted" },
 };
 
-/** Board "From a local need…" screens 3–4: the need page with offers of help, and offer details.
+
+/** Needs and offers mirror each other: on a need people offer help; on an offer people ask for it. */
+const COPY = {
+  ask: { noun: "Need", listTitle: "Offers of help", rowPending: "Offered to help", none: "No offers yet — neighbours nearby can see your need.", cta: "Offer to help", guestCta: "Sign in to offer help", sent: "Offer sent", withdraw: "Withdraw offer", declined: "found help elsewhere. Thank you for offering.", sheet: "Offer details", sheetWhen: "Offered to help", sendFail: "Your offer didn't send. Nothing changed." },
+  offer: { noun: "Offer", listTitle: "Requests", rowPending: "Asked for this", none: "No requests yet — neighbours nearby can see your offer.", cta: "Ask for this", guestCta: "Sign in to ask", sent: "Request sent", withdraw: "Withdraw request", declined: "can't help this time. Thanks for asking.", sheet: "Request details", sheetWhen: "Asked", sendFail: "Your request didn't send. Nothing changed." },
+} as const;
+
+/** Board "From a local need…" screens 3–4 (and flow §4 O2–O3 for offers): the need page with offers of help, and offer details.
  *  An offer of help is a real join request; accepting it opens the private room. */
 export interface NeedSpecimen {
   offers: PostJoinRequest[];
@@ -63,6 +70,7 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Offers didn't load."));
   }, [post.id, post.mine, specimen]);
 
+  const c = COPY[post.intentType === "offer" ? "offer" : "ask"];
   const title = post.title?.trim() || post.body.slice(0, 80);
   const km = distanceKm(me, { lat: post.approxLat, lng: post.approxLng });
   const active = post.status === "open" || post.status === "full";
@@ -79,7 +87,7 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
       vibrate();
       await reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Your offer didn't send. Nothing changed.");
+      setError(err instanceof Error ? err.message : c.sendFail);
     } finally {
       setBusy(false);
     }
@@ -120,7 +128,7 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
           <button type="button" onClick={() => router.back()} aria-label="Back" className="-ml-2.5 grid size-11 place-items-center rounded-full hover:bg-paper-muted">
             <ArrowLeft className="size-6" strokeWidth={1.75} aria-hidden />
           </button>
-          <p className="flex-1 font-display-serif text-[24px] font-medium">Need</p>
+          <p className="flex-1 font-display-serif text-[24px] font-medium">{c.noun}</p>
           <button type="button" onClick={() => setMenu(true)} aria-label="More options" className="-mr-2 grid size-11 place-items-center rounded-full hover:bg-paper-muted">
             <MoreVertical className="size-5" aria-hidden />
           </button>
@@ -162,10 +170,10 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
           </m.div>
 
           {post.mine ? (
-            <m.section variants={rise} custom={4} className="mt-6" aria-label="Offers of help">
-              <h2 className="text-[18px] font-semibold">Offers of help{offers ? ` (${visibleOffers.length})` : ""}</h2>
+            <m.section variants={rise} custom={4} className="mt-6" aria-label={c.listTitle}>
+              <h2 className="text-[18px] font-semibold">{c.listTitle}{offers ? ` (${visibleOffers.length})` : ""}</h2>
               {!offers && !error && <p className="mt-2 text-[14px] text-paper-ink-muted">Loading…</p>}
-              {offers && visibleOffers.length === 0 && <p className="mt-2 text-[14px] text-paper-ink-muted">No offers yet — neighbours nearby can see your need.</p>}
+              {offers && visibleOffers.length === 0 && <p className="mt-2 text-[14px] text-paper-ink-muted">{c.none}</p>}
               <ul className="mt-2 divide-y divide-paper-ink/10">
                 {visibleOffers.map((o) => (
                   <li key={o.id}>
@@ -173,7 +181,7 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
                       <Avatar name={o.userName} className="size-11 text-[15px]" />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[16px] font-semibold">{o.userName}</span>
-                        <span className="block text-[13px] text-paper-ink-muted">{o.status === "approved" ? "Helping · chat open" : `Offered to help · ${timeAgo(o.createdAt)}`}</span>
+                        <span className="block text-[13px] text-paper-ink-muted">{o.status === "approved" ? "Helping · chat open" : `${c.rowPending} · ${timeAgo(o.createdAt)}`}</span>
                       </span>
                       <ChevronRight className="size-5 text-paper-ink-muted" aria-hidden />
                     </button>
@@ -214,18 +222,18 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
                 )}
               </div>
             ) : !active ? (
-              <p className="rounded-tile bg-paper-muted p-4 text-center text-[15px]">This need is {status.label.toLowerCase()}.</p>
+              <p className="rounded-tile bg-paper-muted p-4 text-center text-[15px]">This {c.noun.toLowerCase()} is {status.label.toLowerCase()}.</p>
             ) : post.myJoinStatus === "approved" ? (
               post.roomId ? <ButtonLink href={`/rooms/${post.roomId}`}>Open chat</ButtonLink> : <p className="text-center text-[15px]">You&apos;re helping. The chat opens shortly.</p>
             ) : post.myJoinStatus === "pending" ? (
               <div className="space-y-2">
-                <p role="status" className="flex items-center justify-center gap-2 text-[15px] font-semibold"><HandHeart className="size-5 text-primary-on-paper" aria-hidden /> Offer sent — {post.authorName.split(" ")[0]} will review it</p>
-                <Button variant="outline" className="border-paper-ink/55 text-paper-ink" onClick={withdraw} loading={busy}>Withdraw offer</Button>
+                <p role="status" className="flex items-center justify-center gap-2 text-[15px] font-semibold"><HandHeart className="size-5 text-primary-on-paper" aria-hidden /> {c.sent} — {post.authorName.split(" ")[0]} will review it</p>
+                <Button variant="outline" className="border-paper-ink/55 text-paper-ink" onClick={withdraw} loading={busy}>{c.withdraw}</Button>
               </div>
             ) : post.myJoinStatus === "declined" ? (
-              <p className="rounded-tile bg-paper-muted p-4 text-center text-[15px]">{post.authorName.split(" ")[0]} found help elsewhere. Thank you for offering.</p>
+              <p className="rounded-tile bg-paper-muted p-4 text-center text-[15px]">{post.authorName.split(" ")[0]} {c.declined}</p>
             ) : (
-              <Button onClick={offerHelp} loading={busy}>{guest ? "Sign in to offer help" : "Offer to help"}</Button>
+              <Button onClick={offerHelp} loading={busy}>{guest ? c.guestCta : c.cta}</Button>
             )}
           </m.div>
         </m.article>
@@ -281,6 +289,7 @@ function OfferSheet({
   const [busy, setBusy] = useState<"accept" | "decline" | null>(null);
   const [error, setError] = useState("");
   const [shownFor, setShownFor] = useState<string | null>(null);
+  const sheetCopy = COPY[post.intentType === "offer" ? "offer" : "ask"];
 
   // Reset per offer while rendering (no effect needed for derived resets).
   if (offer && offer.id !== shownFor) {
@@ -320,10 +329,10 @@ function OfferSheet({
 
   const verified = profile && profile.verificationLevel && profile.verificationLevel !== "basic";
   return (
-    <BottomSheet open={!!offer} onClose={onClose} title="Offer details">
+    <BottomSheet open={!!offer} onClose={onClose} title={sheetCopy.sheet}>
       {offer && (
         <div className="pt-2">
-          <h2 className="font-display-serif text-[24px] font-medium">Offer details</h2>
+          <h2 className="font-display-serif text-[24px] font-medium">{sheetCopy.sheet}</h2>
           <div className="mt-4 flex items-center gap-4">
             <Avatar name={offer.userName} className="size-16 text-[22px]" />
             <div className="min-w-0">
@@ -347,7 +356,7 @@ function OfferSheet({
               </div>
             </div>
           )}
-          <p className="mt-4 text-[14px] text-paper-ink-muted">Offered to help {timeAgo(offer.createdAt)}.</p>
+          <p className="mt-4 text-[14px] text-paper-ink-muted">{sheetCopy.sheetWhen} {timeAgo(offer.createdAt)}.</p>
           <Link href={`/people/${offer.userId}`} className="mt-1 inline-flex min-h-11 items-center text-[15px] font-semibold text-primary-on-paper underline underline-offset-4">See full profile</Link>
           {error && <p role="alert" className="mt-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
           {offer.status === "pending" ? (

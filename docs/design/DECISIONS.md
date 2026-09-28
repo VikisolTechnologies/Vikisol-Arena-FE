@@ -3,6 +3,18 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **29 Sep (P6c)** — Post a Need is now **category → intake**: 12 categories (§4) each with its own
+  questions, plus urgency and help type for every need; rides show a safety note and keep the
+  pickup point private (after approval). The single-form PostNeedScreen was deleted.
+- **29 Sep (P6c)** — "How far to show it (radius)" isn't asked: the API has no radius (gap #27);
+  "Share with" (nearby / followers) stays, because it's real.
+- **29 Sep (P6c)** — Offers (O1–O3) use the same engine and the need page mirrored: on an offer,
+  neighbours "Ask for this" (a join request), the owner accepts → the same private room → mark done.
+- **29 Sep (P6c)** — Projects: §7 describes collaborative projects (roles, applicants, team room,
+  milestones) that the API doesn't model. **Paid** projects publish through the existing projects
+  marketplace; **collaborative** ones save as a device draft, the button says "Save draft", and
+  PR3–PR6 are shown as blocked (gap #26) — nothing pretends to publish.
+- **29 Sep (P6c)** — The Create sheet's short in-sheet composer is gone: every row opens its full flow.
 - **29 Sep (P6b)** — **Procedural covers** (`ProceduralCover`): seeded by the activity id → unique
   and free; category palette, time-of-day glow (launch-area time, so server and client agree),
   one of 5 patterns, bokeh, grain, a large category glyph (custom sport glyphs where lucide had

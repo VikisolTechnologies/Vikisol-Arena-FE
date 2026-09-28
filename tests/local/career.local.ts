@@ -76,7 +76,7 @@ test("career: intent → intake → visibility → publish sends only what the A
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: "Review" }).click();
 
-  await expect(page.getByRole("heading", { name: "Check and preview visibility" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Check your answers" })).toBeVisible();
   await noSeriousA11y(page);
   await page.getByRole("button", { name: "Preview visibility" }).click();
 

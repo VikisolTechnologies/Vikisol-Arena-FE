@@ -65,27 +65,57 @@ async function setup(page: Page, post: Record<string, unknown>, calls: Call[]) {
   });
 }
 
-test("post a need: validation after submit, then a real POST and the need page", async ({ page }) => {
+test("post a need: category → intake with validation → a real POST and the need page", async ({ page }) => {
   const calls: Call[] = [];
   await setup(page, need(), calls);
   await page.goto("/needs/new");
-  await expect(page.getByRole("heading", { name: "Post a Need" })).toBeVisible();
-  await expect(page.getByLabel("Where (approximate area)")).toHaveValue("Gachibowli");
+  await expect(page.getByRole("heading", { name: "What kind of help?" })).toBeVisible();
   await noSeriousA11y(page);
-  await page.getByRole("button", { name: "Post Need" }).click();
-  await expect(page.getByText("Say what you need help with, in a few words.")).toBeVisible();
-  await expect(page.getByText("Pick the closest category.")).toBeVisible();
-  expect(calls.some((c) => c.method === "POST" && c.path === "/posts")).toBe(false);
+  await page.getByRole("link", { name: "Moving & heavy lifting" }).click();
 
-  await page.getByLabel("What do you need help with?").fill("Help move a sofa");
-  await page.getByLabel("Category").selectOption("Moving & Heavy Lifting");
-  await page.getByLabel("Preferred time").selectOption("This weekend");
-  await page.getByRole("button", { name: "Post Need" }).click();
+  await expect(page.getByRole("heading", { name: "What do you need?" })).toBeVisible();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page.getByText("This one's needed to continue.")).toBeVisible();
+  expect(calls.some((c) => c.method === "POST" && c.path === "/posts")).toBe(false);
+  await page.getByLabel("In one line").fill("Help move a sofa");
+  await page.getByRole("radio", { name: "This week" }).click();
+  await noSeriousA11y(page);
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  await expect(page.getByRole("heading", { name: "Moving & heavy lifting" })).toBeVisible();
+  await page.getByLabel("What needs moving").fill("3-seater sofa");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page.getByLabel("Area")).toHaveValue("Gachibowli");
+  await page.getByRole("button", { name: "Review" }).click();
+  await expect(page.getByText("How neighbours see it")).toBeVisible();
+  await page.getByRole("button", { name: "Post need" }).click();
+
   await expect(page).toHaveURL(/\/feed\/need-1/);
   const post = calls.find((c) => c.method === "POST" && c.path === "/posts")!.body as Record<string, unknown>;
-  expect(post).toMatchObject({ intentType: "ask", title: "Help move a sofa", visibility: "approval", tags: ["Moving & Heavy Lifting"], locationText: "Gachibowli" });
+  expect(post).toMatchObject({ intentType: "ask", title: "Help move a sofa", visibility: "approval", locationText: "Gachibowli", audience: "global" });
+  expect(post.tags).toEqual(["Moving & heavy lifting", "This week"]);
+  expect(String(post.body)).toContain("What needs moving: 3-seater sofa");
   expect(post.startsAt).toBeTruthy();
   await expect(page.getByRole("heading", { name: "Help move a sofa" })).toBeVisible();
+});
+
+test("make an offer: category → what and when → a real offer post", async ({ page }) => {
+  const calls: Call[] = [];
+  await setup(page, need({ intentType: "offer", title: "Maths tutoring" }), calls);
+  await page.goto("/offers/new");
+  await expect(page.getByRole("heading", { name: "What can you offer?" })).toBeVisible();
+  await page.getByRole("link", { name: "Tutoring & mentoring" }).click();
+  await page.getByLabel("In one line").fill("Maths tutoring for Class 8–10");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("checkbox", { name: "Weekends" }).click();
+  await page.getByRole("button", { name: "Review" }).click();
+  await noSeriousA11y(page);
+  await page.getByRole("button", { name: "Post offer" }).click();
+  await expect(page).toHaveURL(/\/feed\/need-1/);
+  const post = calls.find((c) => c.method === "POST" && c.path === "/posts")!.body as Record<string, unknown>;
+  expect(post).toMatchObject({ intentType: "offer", title: "Maths tutoring for Class 8–10", visibility: "approval" });
+  expect(String(post.body)).toContain("Days: Weekends");
+  await expect(page.getByText("Requests (1)")).toBeVisible();
 });
 
 test("owner: offer → details → accept opens the private room; meeting link; mark as completed", async ({ page }) => {

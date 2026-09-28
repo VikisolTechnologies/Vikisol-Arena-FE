@@ -84,6 +84,7 @@ export function CompleteSheet({
   other,
   onCompleted,
   initialStage = "ask",
+  noun = "need",
 }: {
   open: boolean;
   onClose: () => void;
@@ -93,6 +94,7 @@ export function CompleteSheet({
   other: string;
   onCompleted: () => void;
   initialStage?: "ask" | "done";
+  noun?: "need" | "offer";
 }) {
   const [stage, setStage] = useState<"ask" | "done">(initialStage);
   const [busy, setBusy] = useState(false);
@@ -136,7 +138,7 @@ export function CompleteSheet({
         {stage === "ask" ? (
           <m.div key="ask" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={dissolve}>
             <h2 className="mt-3 pr-12 font-display-serif text-[28px] font-medium">Mark as completed</h2>
-            <p className="mt-1 text-[15px] text-paper-ink-muted">Did the need get resolved?</p>
+            <p className="mt-1 text-[15px] text-paper-ink-muted">{noun === "need" ? "Did the need get resolved?" : "Did it happen?"}</p>
             <p className="mt-5 rounded-tile bg-paper-muted p-4 text-[15px]"><strong className="font-semibold">{title}</strong> will show as completed for you and {other}, and move to Completed on Work.</p>
             {error && <p role="alert" className="mt-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
             <div className="mt-6 space-y-2">
@@ -157,7 +159,7 @@ export function CompleteSheet({
                 <CheckCircle2 className="size-6 shrink-0 text-success-on-paper" aria-hidden />
                 <div>
                   <p className="text-[15px] font-semibold">Confirmed on your side</p>
-                  <p className="text-[13px] text-paper-ink-muted">You marked this need as resolved.</p>
+                  <p className="text-[13px] text-paper-ink-muted">You marked this {noun} as done.</p>
                 </div>
               </li>
               <li className="flex items-center gap-3 rounded-tile bg-paper-muted p-3.5">

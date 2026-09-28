@@ -10,8 +10,8 @@ import { Skeleton } from "@/components/bplus/Primitives";
 import { getPost } from "@/lib/api/posts";
 import type { Post } from "@/lib/types";
 
-/** Activities (P3) and needs (P4) use their B+ screens. Offers, updates and company posts keep
- *  the previous detail view until their boards are built. */
+/** Activities (P3), needs (P4) and offers (P6c) use their B+ screens. Updates and company posts
+ *  keep the previous detail view until P11. */
 export default function PostPage() {
   const { id } = useParams<{ id: string }>();
   const [post, setPost] = useState<Post | null | undefined>(undefined);
@@ -34,6 +34,6 @@ export default function PostPage() {
   }
   if (post === null) return <ActivityMissing />;
   if (post.intentType === "activity") return <ActivityScreen post={post} />;
-  if (post.intentType === "ask") return <NeedScreen post={post} />;
+  if (post.intentType === "ask" || post.intentType === "offer") return <NeedScreen post={post} />;
   return <PostDetailLegacy />;
 }
