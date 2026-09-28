@@ -1,23 +1,28 @@
 # Progress
 
-Updated 26 Sep 2026. Resume from here. Do not redo STEP 1 or the VNext shell.
+Updated 28 Sep 2026. Resume from here.
 
-## Sentry
+## P0 release (production)
 
-26 Sep 2026. The old ingest 403 was a DSN for a project that no longer exists. The new DSNs are environment variables on Vercel (`arena-web`, Production and Preview) and Railway (`arena-staging` / `arena-api`). They are not in git.
+28 Sep 2026. Audit P0-1 and P0-2 are on `main` and live.
 
-- Frontend `73eafc130571393eae4a34f576e91032944f77df`. Backend `18f2dfcc8978170ff0cbd24b3ae2ef0c90eef296`. The preview branch has the same scrub at `b4f1d3374ec18edd9891f2d4c40ec254464b446b`. Pull request #1 was not merged.
-- Both SDKs set `sendDefaultPii` to false. Session Replay is not registered. `beforeSend` removes cookies, authorization headers, and the request body.
-- `https://arena.vikisol.in/version` returned `73eafc1`, built `2026-09-26T14:33:30Z`. `https://api-arena.vikisol.in/api/v1/version` returned `18f2dfc`, built `2026-09-26T14:34:11Z`.
-- One test event from each running app: arena-web `780faaa2ae824ddf8f9adf2183fa3164` (the web SDK reported the event sent) and arena-api `ee93af79ba5a4153a4f8abc6b6b5e90a`. Opening the Sentry issue list still requires a login, so the project pages were not viewed from here.
-- The Playwright monitor no longer ignores Sentry ingest responses. The one-shot wiring routes were removed after the check.
+- Backend merge `8ebccb6` (PR Vikisol-Arena-BE#1 from `a504ef0`). Railway `arena-api` deployment `35679797` SUCCESS.
+- Frontend merge `4225f9e` (PR Vikisol-Arena-FE#2 from `43fe4ea`). `https://arena.vikisol.in/version` returns `4225f9e`.
+- Railway production: `SEED_ENABLED=false`; platform-admin email/password set (non-demo address); `ARENA_DEMO_PASSWORD` set and not a retired public value; `ADMIN_2FA_REQUIRED` unset so the app default `true` applies.
+- Lockdown on boot: marked 105 seeded accounts, rotated 105 published passwords, disabled 1 demo platform admin.
+- Retired published passwords return HTTP 401 for `admin@vikisol.dev` and `demo.talent@vikisol.dev`.
+- `GET /api/v1/public/landing-stats` returns honest counts excluding demo (`openToWorkCount: 6`). Featured project is null when nothing real remains.
+- VNext PR #1 stays OPEN and unmerged.
+
+Claude Code owns Arena frontend from here. Cursor does not start M1.
 
 ## Current step
 
-STEP 4 through STEP 7 of `docs/ARENA-MISSION.md`, on `feature/arena-vnext`. The unmerged pull request is https://github.com/VikisolTechnologies/Vikisol-Arena-FE/pull/1. Do not merge it.
+Frontend continues under Claude Code. VNext preview work stays on `feature/arena-vnext` / `feature/arena-vnext-mobile-jenny`. Do not merge PR #1.
 
 ## Done
 
+- P0 production release (this section).
 - STEP 1 cleanup is on `main` at `5a1b52d`. `https://arena.vikisol.in/version` returned that commit. Isolated mobile first paint held the 2.5s budget. The budget was not loosened.
 - STEP 2: company-admin 2FA was never forced. Written in `docs/ARENA-CURRENT-STATE.md`, `docs/DECISIONS.md`, and `docs/SECURITY-FINDINGS.md`. Auth was not changed.
 - STEP 3: Jenny write-body and scope contract tests are on the backend branch `feature/arena-jenny-contract`. A token without `arena.createPost`, and a token for a different user, both get 403 on `POST /posts`.
@@ -27,12 +32,12 @@ STEP 4 through STEP 7 of `docs/ARENA-MISSION.md`, on `feature/arena-vnext`. The 
 
 ## Next
 
-Finish the STEP 6 gaps that are still open, then update `docs/ARENA-VNEXT-REPORT.md` to the STEP 7 checklist. Leave the pull request unmerged.
+Claude Code: Arena frontend mission from the blueprint. Leave PR #1 unmerged. Do not deploy VNext to production without founder approval.
 
-Still open on STEP 6:
+Still open from earlier VNext work (not P0):
 
 - Playwright for every route and every role on the preview, desktop plus Android plus iPhone.
-- The twelve-step mobile golden path with two test accounts, including signup, a Need, a response, a room, an outcome, notifications, logout, and a deep link.
+- The twelve-step mobile golden path with two test accounts.
 - The enterprise path through post, review, interview, and hire.
 - IDOR coverage on every write.
 - First JS on `/home` is still over 200KB gzipped. Do not hide the number or loosen the assertion.
@@ -40,8 +45,8 @@ Still open on STEP 6:
 
 ## Do not
 
-- Merge `feature/arena-vnext`.
+- Merge `feature/arena-vnext` or PR #1.
 - Change Jenny's write JSON.
-- Turn on company-admin 2FA in this run.
 - Touch Vikisol One.
 - Commit `mvnw` mode changes, `.env.test`, or Playwright auth JSON.
+- Print credentials in any report.
