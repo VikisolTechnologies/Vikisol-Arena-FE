@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { animate, m, useReducedMotion } from "motion/react";
-import { Lock, LogOut, MapPin, Plus, Settings } from "lucide-react";
+import { Briefcase, ChevronRight, Lock, LogOut, MapPin, Plus, Settings } from "lucide-react";
 import { countUp, rise } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
 import { Avatar } from "@/components/bplus/Avatar";
@@ -69,6 +69,8 @@ export function ProfileScreen() {
   const joined = data?.joined.filter((p) => p.intentType === "activity").length ?? 0;
   const helped = data?.joined.filter((p) => p.intentType === "ask").length ?? 0;
   const outcomes = data?.outcomes ?? [];
+  // The career layer counts as open once the person said they came for work or chose to be findable.
+  const careerOpen = !!(data?.profile.cameForJob || data?.profile.consent?.searchableByEnterprises);
 
   return (
     <AppShell>
@@ -166,14 +168,27 @@ export function ProfileScreen() {
             )}
           </m.section>
 
-          <m.section variants={rise} custom={6} className="mt-7" aria-label="Privacy and visibility">
+          <m.div variants={rise} custom={6} className="mt-7">
+            <Link href={careerOpen ? "/identity/career?step=setup" : "/identity/career"} className="flex items-center gap-3.5 rounded-tile bg-paper p-4 text-paper-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+              <span className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-white">
+                <Briefcase className="size-6" strokeWidth={1.9} aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[17px] font-semibold">{careerOpen ? "Career profile" : "Open career profile"}</span>
+                <span className="block text-[14px] text-paper-ink-muted">{careerOpen ? (data?.profile.consent?.searchableByEnterprises ? "Open to work · visible to employers" : "Set up · not visible to employers") : "Explore opportunities when you're ready."}</span>
+              </span>
+              <ChevronRight className="size-5 shrink-0 text-paper-ink-muted" aria-hidden />
+            </Link>
+          </m.div>
+
+          <m.section variants={rise} custom={7} className="mt-7" aria-label="Privacy and visibility">
             <SectionHeader title="Privacy & visibility" action={<Link href="/settings" className="inline-flex min-h-11 items-center text-[14px] underline underline-offset-4">Manage</Link>} />
             <p className="flex items-start gap-3 text-[14px] text-faint">
               <Lock className="mt-0.5 size-5 shrink-0" strokeWidth={1.75} aria-hidden />
               <span>
-                Visible to nearby people with your approximate area only.
+                People on Arena see your name, area and what you&apos;ve done here — never your exact location.
                 <br />
-                You control what you share.
+                You control what else you share.
               </span>
             </p>
           </m.section>
