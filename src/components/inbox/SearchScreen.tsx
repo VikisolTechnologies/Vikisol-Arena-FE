@@ -11,6 +11,7 @@ import { Pills, Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { search, type SearchResults, type SearchType } from "@/lib/api/search";
 import { allowGuestBrowsing } from "@/lib/auth-guard";
 import { timeAgo } from "@/lib/data/time";
+import { Cover } from "@/components/covers/Cover";
 
 const SCOPES = [
   { id: "all", label: "All" },
@@ -34,6 +35,8 @@ interface Row {
   media?: string;
   /** ms timestamp when known — "Most recent" sorts on this (correction #4: no relevance score). */
   at?: number;
+  /** Activities get a generated cover when they have no photo. */
+  cover?: { id: string; tags?: string[]; title?: string; startsAt?: string };
 }
 
 export function toRows(data: SearchResults, scope: Scope): Row[] {
@@ -41,7 +44,7 @@ export function toRows(data: SearchResults, scope: Scope): Row[] {
   const want = (s: Scope) => scope === "all" || scope === s;
   if (want("activities"))
     for (const p of data.activities)
-      rows.push({ key: `a-${p.id}`, href: `/feed/${p.id}`, title: p.title?.trim() || p.body.slice(0, 80), kind: "Activity", icon: Users, meta: [p.locationText, timeAgo(p.createdAt)].filter(Boolean).join(" · "), media: p.mediaUrls[0], at: Date.parse(p.createdAt) });
+      rows.push({ key: `a-${p.id}`, href: `/feed/${p.id}`, title: p.title?.trim() || p.body.slice(0, 80), kind: "Activity", icon: Users, meta: [p.locationText, timeAgo(p.createdAt)].filter(Boolean).join(" · "), media: p.mediaUrls[0], at: Date.parse(p.createdAt), cover: { id: p.id, tags: p.tags, title: p.title, startsAt: p.startsAt } });
   for (const p of data.discussions) {
     const isNeed = p.intentType === "ask";
     if (isNeed ? !want("needs") : scope !== "all") continue;
@@ -153,9 +156,8 @@ export function SearchScreen() {
                 <m.li key={r.key} variants={rise} custom={i}>
                   <Link href={r.href} className="flex min-h-[76px] items-center gap-3 rounded-tile bg-paper p-2.5 pr-3.5 text-paper-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                     <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-[radial-gradient(circle_at_30%_20%,var(--warning),var(--primary-pressed)_65%,var(--surface))] text-white">
-                      {r.media ? (
-                        // eslint-disable-next-line @next/next/no-img-element -- user media
-                        <img src={r.media} alt="" className="size-full object-cover" />
+                      {r.media || r.cover ? (
+                        <Cover source={{ id: r.cover?.id ?? r.key, kind: r.cover ? "activity" : undefined, media: r.media, tags: r.cover?.tags, title: r.cover?.title, startsAt: r.cover?.startsAt }} className="size-full" />
                       ) : (
                         <r.icon className="size-6" strokeWidth={1.75} aria-hidden />
                       )}

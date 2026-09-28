@@ -26,6 +26,8 @@ export interface WorkRow {
   replies?: number;
   /** Board "See the outcome": which switch it sits under — needs you posted, or help you offered. */
   side?: "need" | "offer";
+  /** Post kind, for the cover (activities get a generated one). */
+  kind?: string;
 }
 
 /** One failing or malformed source must never blank the whole Work screen. */
@@ -90,6 +92,7 @@ export async function loadWork(role: string): Promise<WorkRow[]> {
       postId: p.id,
       replies: p.commentCount,
       side: isNeed ? "need" : p.intentType === "offer" ? "offer" : undefined,
+      kind: p.intentType,
     });
   }
   for (const p of settled(joined, []).filter((p) => p.intentType === "activity" || p.intentType === "ask")) {
@@ -103,6 +106,7 @@ export async function loadWork(role: string): Promise<WorkRow[]> {
       media: p.mediaUrls[0],
       replies: p.commentCount,
       side: p.intentType === "ask" ? "offer" : undefined,
+      kind: p.intentType,
     });
   }
   return rows;

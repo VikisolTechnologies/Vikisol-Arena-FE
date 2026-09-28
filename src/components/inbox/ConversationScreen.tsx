@@ -19,6 +19,7 @@ import { closeChat, getConversations, getThreadMessages, sendThreadMessage } fro
 import { getPost } from "@/lib/api/posts";
 import { MEETING_LINK_PREFIX, latestMeetingLink } from "@/lib/data/needs";
 import type { Conversation, Post, ThreadMessage } from "@/lib/types";
+import { Cover } from "@/components/covers/Cover";
 
 function time(iso: string) {
   return new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }).toUpperCase();
@@ -140,12 +141,7 @@ export function ConversationScreen({ id, specimen }: { id: string; specimen?: Co
 
       {post && (
         <Link href={`/feed/${post.id}`} className="mt-3 flex items-start gap-3 rounded-tile bg-paper p-3 text-paper-ink">
-          <span className="size-20 shrink-0 overflow-hidden rounded-xl bg-[radial-gradient(circle_at_30%_20%,var(--warning),var(--primary-pressed)_65%,var(--surface))]">
-            {post.mediaUrls[0] && (
-              // eslint-disable-next-line @next/next/no-img-element -- user media
-              <img src={post.mediaUrls[0]} alt="" className="size-full object-cover" />
-            )}
-          </span>
+          <Cover source={{ id: post.id, kind: post.intentType, media: post.mediaUrls[0], tags: post.tags, title: post.title, body: post.body, startsAt: post.startsAt }} className="size-20 shrink-0 rounded-xl" />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[16px] font-semibold">{post.title?.trim() || post.body.slice(0, 60)}</span>
             {post.startsAt && <span className="flex items-center gap-1.5 text-[13px] text-paper-ink-muted"><CalendarDays className="size-3.5 shrink-0" aria-hidden /> {activityWhen(post, { end: false })}</span>}

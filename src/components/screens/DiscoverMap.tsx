@@ -13,6 +13,7 @@ import { googleMapsConfigured } from "@/components/map/GoogleMapView";
 import { getNearby, whenLabel, type Post } from "@/lib/data/feed";
 import { getMyProfile } from "@/lib/data/profile";
 import { readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
+import { Cover } from "@/components/covers/Cover";
 
 const GoogleMapView = dynamic(() => import("@/components/map/GoogleMapView").then((mod) => mod.GoogleMapView), { ssr: false });
 
@@ -101,12 +102,7 @@ export function DiscoverMap() {
             exit={{ y: 24, opacity: 0 }}
             className="mt-3 flex gap-3 rounded-tile bg-paper p-3 text-paper-ink"
           >
-            <div className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-[radial-gradient(circle_at_30%_20%,var(--warning),var(--primary-pressed)_60%,var(--surface))]">
-              {pick.mediaUrls[0] && (
-                // eslint-disable-next-line @next/next/no-img-element -- user media
-                <img src={pick.mediaUrls[0]} alt="" className="absolute inset-0 size-full object-cover" />
-              )}
-            </div>
+            <Cover source={{ id: pick.id, kind: pick.intentType, media: pick.mediaUrls[0], tags: pick.tags, title: pick.title, body: pick.body, startsAt: pick.startsAt }} className="size-24 shrink-0 rounded-xl" />
             <div className="min-w-0 flex-1">
               <h3 className="line-clamp-2 text-[16px] font-semibold">{pick.title || pick.body.slice(0, 60)}</h3>
               <p className="mt-0.5 text-[13px] text-paper-ink-muted">{[whenLabel(pick.startsAt), pick.locationText].filter(Boolean).join(" · ")}</p>

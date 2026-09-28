@@ -17,6 +17,7 @@ import { FIXTURES_ALLOWED } from "@/lib/data/mode";
 import { PREVIEW_PEOPLE, PREVIEW_SKILLS } from "@/lib/data/fixtures";
 import { getFeedItems, getTrending, hrefFor, search, whenLabel, type FeedItem, type Post } from "@/lib/data/feed";
 import type { SearchResults } from "@/lib/api/search";
+import { Cover } from "@/components/covers/Cover";
 
 const CHIPS = [
   { id: "all", label: "All" },
@@ -316,12 +317,7 @@ function ActivityGrid({ posts, fallback }: { posts: (Post | FeedItem)[]; fallbac
         return (
           <m.div key={p.id} whileTap={press} transition={spring.snappy}>
             <Link href={hrefFor({ id: p.id, itemType: "activity" })} className="block overflow-hidden rounded-tile bg-paper text-paper-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-              <div className="relative aspect-[16/10] bg-[radial-gradient(circle_at_30%_20%,var(--warning),var(--primary-pressed)_60%,var(--surface))]">
-                {p.mediaUrls[0] && (
-                  // eslint-disable-next-line @next/next/no-img-element -- user media, any host
-                  <img src={p.mediaUrls[0]} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" />
-                )}
-              </div>
+              <Cover source={{ id: p.id, kind: "activity", media: p.mediaUrls[0], tags: p.tags, title: p.title, body: p.body, startsAt: p.startsAt }} className="aspect-[16/10]" />
               <div className="p-3">
                 <p className="line-clamp-2 text-[15px] font-semibold leading-snug">{p.title || p.body.slice(0, 60)}</p>
                 <p className="mt-1 flex items-center gap-1 text-[12px] text-paper-ink-muted">

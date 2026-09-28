@@ -17,6 +17,7 @@ import { getCandidateById } from "@/lib/mock/candidates";
 import { requireOnboarded } from "@/lib/auth-guard";
 import { timeAgo } from "@/lib/data/time";
 import type { Conversation, Room } from "@/lib/types";
+import { Cover } from "@/components/covers/Cover";
 
 const FILTERS = [
   { id: "all", label: "All" },
@@ -159,11 +160,14 @@ function ThreadRow({ thread: t }: { thread: Thread }) {
   let preview: string;
   if (t.kind === "room") {
     const IconCmp = ROOM_ICON[t.room.postIntentType as keyof typeof ROOM_ICON] ?? Users;
-    thumb = (
-      <span className="grid size-14 shrink-0 place-items-center rounded-xl bg-[radial-gradient(circle_at_30%_20%,var(--warning),var(--primary-pressed)_65%,var(--surface))] text-white">
-        <IconCmp className="size-6" strokeWidth={1.75} aria-hidden />
-      </span>
-    );
+    thumb =
+      t.room.postIntentType === "activity" ? (
+        <Cover source={{ id: t.room.postId, kind: "activity", title: t.room.postBody }} className="size-14 shrink-0 rounded-xl" />
+      ) : (
+        <span className="grid size-14 shrink-0 place-items-center rounded-xl bg-[radial-gradient(circle_at_30%_20%,var(--warning),var(--primary-pressed)_65%,var(--surface))] text-white">
+          <IconCmp className="size-6" strokeWidth={1.75} aria-hidden />
+        </span>
+      );
     title = t.room.postBody;
     preview = t.room.lastMessagePreview ?? `${t.room.memberCount} in the room`;
   } else {

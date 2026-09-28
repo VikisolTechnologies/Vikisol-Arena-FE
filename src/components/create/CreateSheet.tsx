@@ -14,9 +14,9 @@ import { createPost } from "@/lib/api/posts";
 import { createMyProject } from "@/lib/api/myProjects";
 
 type Icon = ComponentType<{ className?: string; strokeWidth?: number; "aria-hidden"?: boolean }>;
-type Kind = "offer" | "activity" | "project";
+type Kind = "offer" | "project";
 
-const ROWS: { id: Kind | "ask" | "job" | "jenny"; title: string; detail: string; icon: Icon; disc: string }[] = [
+const ROWS: { id: Kind | "ask" | "activity" | "job" | "jenny"; title: string; detail: string; icon: Icon; disc: string }[] = [
   { id: "ask", title: "Post a Need", detail: "Get help from nearby people", icon: Heart, disc: "bg-primary" },
   { id: "offer", title: "Make an Offer", detail: "Share what you can give", icon: Gift, disc: "bg-success" },
   { id: "activity", title: "Create an Activity", detail: "Bring people together", icon: Users, disc: "bg-info" },
@@ -27,7 +27,6 @@ const ROWS: { id: Kind | "ask" | "job" | "jenny"; title: string; detail: string;
 
 const PROMPT: Record<Kind, { title: string; label: string; placeholder: string }> = {
   offer: { title: "Make an Offer", label: "What can you offer?", placeholder: "e.g. Home-cooked meals for two this Saturday" },
-  activity: { title: "Create an Activity", label: "What are you organising?", placeholder: "e.g. Sunrise run at Durgam Lake, all levels" },
   project: { title: "Start a Project", label: "What's the project?", placeholder: "e.g. A community garden on our street" },
 };
 
@@ -45,9 +44,9 @@ export function CreateSheet({ open, onClose }: { open: boolean; onClose: () => v
       router.push("/agent");
       return;
     }
-    if (id === "ask") {
+    if (id === "ask" || id === "activity") {
       onClose();
-      router.push("/needs/new");
+      router.push(id === "ask" ? "/needs/new" : "/activities/new");
       return;
     }
     if (id === "job") {

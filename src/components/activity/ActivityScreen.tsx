@@ -25,6 +25,7 @@ import { distanceKm, formatKm } from "@/lib/data/feed";
 import { getSession } from "@/lib/session";
 import { useGuest } from "@/hooks/use-arena-session";
 import type { Post, PostJoinRequest } from "@/lib/types";
+import { Cover } from "@/components/covers/Cover";
 
 const JOIN_STEPS = [
   { title: "Request sent", detail: "Just now" },
@@ -133,11 +134,8 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false 
 
   return (
     <AppShell>
-      <div className="relative -mx-5 -mt-[max(8px,env(safe-area-inset-top))] aspect-[4/3] overflow-hidden bg-[radial-gradient(circle_at_30%_20%,var(--warning),var(--primary-pressed)_55%,var(--surface))]">
-        {post.mediaUrls[0] && (
-          // eslint-disable-next-line @next/next/no-img-element -- user media, any host
-          <img src={post.mediaUrls[0]} alt="" className="absolute inset-0 size-full object-cover" />
-        )}
+      <div className="relative -mx-5 -mt-[max(8px,env(safe-area-inset-top))] aspect-[4/3] overflow-hidden">
+        <Cover source={{ id: post.id, kind: "activity", media: post.mediaUrls[0], tags: post.tags, title: post.title, body: post.body, startsAt: post.startsAt }} className="absolute inset-0" />
         <div className="absolute inset-x-3 top-[max(12px,env(safe-area-inset-top))] flex justify-between">
           <button type="button" onClick={() => router.back()} aria-label="Back" className="grid size-11 place-items-center rounded-full bg-background/60 text-foreground backdrop-blur">
             <ArrowLeft className="size-5" strokeWidth={2} aria-hidden />

@@ -14,6 +14,7 @@ import { useGuest, useSessionRole } from "@/hooks/use-arena-session";
 import { closeNeed, getJoinRequests, loadWork, recordJoinOutcome, type WorkGroup, type WorkRow } from "@/lib/data/work";
 import { whenLabel } from "@/lib/data/feed";
 import type { PostJoinRequest } from "@/lib/types";
+import { Cover } from "@/components/covers/Cover";
 
 const TABS = [
   { id: "all", label: "All" },
@@ -141,12 +142,7 @@ function WorkRowCard({ row, onAction }: { row: WorkRow; onAction: () => void }) 
   const done = row.group === "completed";
   const body = (
     <>
-      <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-[radial-gradient(circle_at_30%_20%,var(--warning),var(--primary-pressed)_60%,var(--surface))]">
-        {row.media && (
-          // eslint-disable-next-line @next/next/no-img-element -- user media
-          <img src={row.media} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" />
-        )}
-      </div>
+      <Cover source={{ id: row.postId ?? row.id, kind: row.kind, media: row.media, title: row.title }} className="size-16 shrink-0 rounded-xl" />
       <div className="min-w-0 flex-1 text-left">
         <p className="line-clamp-1 text-[16px] font-semibold">{row.title}</p>
         {row.when && <p className="text-[13px] text-paper-ink-muted">{whenLabel(row.when)}</p>}

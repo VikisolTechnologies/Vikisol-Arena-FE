@@ -8,16 +8,14 @@ import { press, spring } from "@/lib/motion";
 import { ButtonLink } from "@/components/bplus/Button";
 import { DemoBadge, KindChip } from "@/components/bplus/Primitives";
 import { formatKm, goingLabel, hrefFor, isDemo, spotsLeft, whenLabel, type FeedItem } from "@/lib/data/feed";
+import { Cover } from "@/components/covers/Cover";
 
-/** A photo that reserves its box before it loads (no layout shift), or a warm gradient when
- *  the item has none — never a stock image standing in for a real one. */
-function Photo({ src, className, layoutId }: { src?: string; className?: string; layoutId?: string }) {
+/** A photo that reserves its box before it loads (no layout shift); without one, a unique
+ *  procedural cover for activities/projects, or a warm gradient — never a stock image. */
+function Photo({ item, className, layoutId }: { item: FeedItem; className?: string; layoutId?: string }) {
   return (
-    <m.div layoutId={layoutId} className={cn("relative overflow-hidden bg-[radial-gradient(circle_at_30%_20%,var(--warning),var(--primary-pressed)_55%,var(--surface))]", className)}>
-      {src && (
-        // eslint-disable-next-line @next/next/no-img-element -- user-supplied media from any host; the box is sized by the parent
-        <img src={src} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
-      )}
+    <m.div layoutId={layoutId} className={cn("relative overflow-hidden", className)}>
+      <Cover source={{ id: item.id, kind: item.itemType, media: item.mediaUrls[0], tags: item.tags, title: item.title, body: item.body, startsAt: item.startsAt }} className="absolute inset-0" />
     </m.div>
   );
 }
@@ -35,7 +33,7 @@ export function HeroActivityCard({ item, km }: { item: FeedItem; km: number | nu
     <article className="overflow-hidden rounded-[var(--radius-card)] bg-surface">
       <Link href={href} className="block outline-none focus-visible:outline-2 focus-visible:outline-primary" aria-label={titleOf(item)}>
         <div className="relative aspect-[4/3]">
-          <Photo src={item.mediaUrls[0]} className="absolute inset-0" layoutId={`media-${item.id}`} />
+          <Photo item={item} className="absolute inset-0" layoutId={`media-${item.id}`} />
           <div aria-hidden className="absolute inset-0 bg-linear-to-t from-surface via-surface/30 to-transparent" />
           <div className="absolute left-3 top-3 flex gap-2">
             {when && (
@@ -114,7 +112,7 @@ export function RowCard({ item }: { item: FeedItem }) {
   return (
     <m.div whileTap={press} transition={spring.snappy}>
       <Link href={hrefFor(item)} className="flex items-stretch gap-3 overflow-hidden rounded-tile bg-paper p-2.5 text-paper-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-        <Photo src={item.mediaUrls[0]} className="w-28 shrink-0 rounded-xl" layoutId={`media-${item.id}`} />
+        <Photo item={item} className="w-28 shrink-0 rounded-xl" layoutId={`media-${item.id}`} />
         <div className="min-w-0 flex-1 py-1">
           <div className="flex items-center gap-2">
             <KindChip kind={item.itemType} />

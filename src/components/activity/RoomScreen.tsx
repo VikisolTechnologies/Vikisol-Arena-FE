@@ -20,6 +20,7 @@ import { activityWhen } from "@/components/activity/ActivityParts";
 import { MEETING_LINK_PREFIX, latestMeetingLink, needWhen } from "@/lib/data/needs";
 import { useSessionName } from "@/hooks/use-arena-session";
 import type { Post, Room, RoomMember, RoomMessage } from "@/lib/types";
+import { Cover } from "@/components/covers/Cover";
 
 type Tab = "plan" | "chat" | "details" | "people";
 
@@ -201,11 +202,7 @@ export function RoomScreen({ roomId, specimen }: { roomId: string; specimen?: Ro
         </header>
       ) : (
         <header className="relative -mx-5 -mt-[max(8px,env(safe-area-inset-top))] overflow-hidden px-5 pb-5 pt-[max(12px,env(safe-area-inset-top))]">
-          <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_30%_0%,var(--warning),var(--primary-pressed)_45%,var(--background)_85%)] opacity-70" />
-          {post?.mediaUrls[0] && (
-            // eslint-disable-next-line @next/next/no-img-element -- user media
-            <img src={post.mediaUrls[0]} alt="" className="absolute inset-0 size-full object-cover opacity-60" />
-          )}
+          <Cover source={{ id: post?.id ?? room.postId, kind: "activity", media: post?.mediaUrls[0], tags: post?.tags, title: post?.title ?? room.postBody, body: post?.body, startsAt: post?.startsAt }} className="absolute inset-0 opacity-70" />
           <div aria-hidden className="absolute inset-0 bg-linear-to-b from-transparent to-background" />
           <div className="relative">
             <div className="flex items-center justify-between">

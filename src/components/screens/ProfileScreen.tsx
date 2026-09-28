@@ -19,6 +19,7 @@ import { getJoinedPosts, getMyPosts } from "@/lib/api/posts";
 import { getMyBids } from "@/lib/api/myBids";
 import { signOut } from "@/lib/api/auth";
 import type { Post } from "@/lib/types";
+import { Cover } from "@/components/covers/Cover";
 
 type Data = { profile: CandidateProfile; posts: Post[]; joined: Post[]; won: number; outcomes: Post[] };
 
@@ -151,12 +152,7 @@ export function ProfileScreen() {
                 {outcomes.map((p) => (
                   <li key={p.id}>
                     <Link href={`/feed/${p.id}`} className="flex items-center gap-3 rounded-tile outline-none focus-visible:outline-2 focus-visible:outline-primary">
-                      <span className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-[radial-gradient(circle_at_30%_20%,var(--warning),var(--primary-pressed)_60%,var(--surface))]">
-                        {p.mediaUrls[0] && (
-                          // eslint-disable-next-line @next/next/no-img-element -- user media
-                          <img src={p.mediaUrls[0]} alt="" className="absolute inset-0 size-full object-cover" />
-                        )}
-                      </span>
+                      <Cover source={{ id: p.id, kind: p.intentType, media: p.mediaUrls[0], tags: p.tags, title: p.title, body: p.body, startsAt: p.startsAt }} className="size-14 shrink-0 rounded-xl" />
                       <span className="min-w-0">
                         <span className="block truncate text-[15px] font-medium">{p.title || p.body.slice(0, 60)}</span>
                         <span className="block text-[13px] text-faint">{[p.locationText, whenLabel(p.startsAt ?? p.createdAt)].filter(Boolean).join(" · ")}</span>
