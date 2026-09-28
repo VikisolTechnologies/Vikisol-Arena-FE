@@ -164,6 +164,68 @@
   --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
+/*
+ * docs/design/TOKENS.md — Arena B+ ("ARENA B+" / "CONCEPT B+ — Living Local Companion" boards),
+ * the founder's final mobile design (docs/missions/FE-BPLUS-BUILD.md). A NEW scope, not a
+ * redefinition of [data-theme="product"] above: that scope is shared by every currently-working
+ * shell including the enterprise/company-admin/hiring-manager/platform-admin ones, which this
+ * mission is explicitly not allowed to restyle (mission §6). B+ needs its own scope so the
+ * talent-facing AppShell can opt in (data-theme="bplus") without touching anything else. Unlike
+ * "product" (dark-only), B+ genuinely needs two surfaces at once on the same screen — dark
+ * graphite for the app chrome/background and cream "paper" for need/offer/form cards — hence
+ * the separate --paper family below rather than trying to force it through the existing
+ * --canvas/--surface pair.
+ */
+[data-theme="bplus"] {
+  color-scheme: dark;
+
+  --background: #16110f;
+  --foreground: #f5eee6;
+  --faint: #a89c92;
+
+  --surface: #211a17;
+  --line: #3a2f2a;
+
+  --paper: #f7f0e6;
+  --paper-muted: #efe6da;
+  --paper-ink: #1e1714;
+  --paper-ink-muted: #6e625a;
+
+  --primary: #ff5a1f;
+  --primary-pressed: #e24a12;
+  --primary-soft: #ff8a6b;
+  --primary-foreground: #1e1714;
+
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface);
+  --popover-foreground: var(--foreground);
+
+  --secondary: var(--surface);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface);
+  --muted-foreground: var(--faint);
+  --accent: rgba(255, 90, 31, 0.14);
+  --accent-foreground: var(--primary);
+  --destructive: #e5484d;
+
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--primary);
+
+  --success: #2f9e5b;
+  --warning: #f2a93b;
+  --danger: #e5484d;
+  --info: #3b82f6;
+
+  /* TOKENS.md radius scale: cards 20px, tiles 16px, buttons 14px, chips full. */
+  --radius-card: 20px;
+  --radius-tile: 16px;
+  --radius-button: 14px;
+  --shadow-card-rest: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -227,6 +289,17 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --color-info: var(--info);
+
+  /* B+ only — resolve to real values inside [data-theme="bplus"]; undefined (no-op) elsewhere,
+     same pattern as the canvas/surface/champagne group above. */
+  --color-paper: var(--paper);
+  --color-paper-muted: var(--paper-muted);
+  --color-paper-ink: var(--paper-ink);
+  --color-paper-ink-muted: var(--paper-ink-muted);
+  --color-primary-pressed: var(--primary-pressed);
+  --font-display-serif: var(--font-fraunces);
+  --radius-tile: var(--radius-tile);
+  --radius-button: var(--radius-button);
 }
 
 ::selection {

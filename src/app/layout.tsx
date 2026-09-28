@@ -29,6 +29,17 @@ const inter = localFont({
   display: "swap",
 });
 
+// docs/design/TOKENS.md — the B+ display serif (Arena VNext headings, hero copy). Same
+// self-hosting rationale as the two fonts above (avoid the next/font/google build-time
+// download failure), latin subset only, variable weight 300-700 covers the 400/500/600 the
+// design actually uses.
+const fraunces = localFont({
+  src: "./fonts/fraunces-latin-var.woff2",
+  variable: "--font-fraunces",
+  weight: "300 700",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   // ARENA-INVENTORY-FIXES.md FIX 1 - needed so the new per-page OG tags on the now-public
   // profile/company routes resolve to absolute https://arena.vikisol.in URLs instead of
@@ -57,6 +68,7 @@ export default function RootLayout({
         "h-full antialiased",
         spaceGrotesk.variable,
         inter.variable,
+        fraunces.variable,
       )}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
