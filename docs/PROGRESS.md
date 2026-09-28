@@ -22,7 +22,7 @@ P2…P8 without stopping; the rest of the P0 kit is built as later screens need 
   guard in `next.config.ts` (`NEXT_PUBLIC_ARENA_DATA` must be `api` on production).
 - Checks: tsc + eslint clean; production build; Chromium + WebKit journeys pass; axe: 0 serious/
   critical on all 9 screens; no horizontal overflow at 320/360/375/390/430/1280; e2e sign-in
-  selectors unchanged. Review: `docs/reviews/<P1 SHA>.md` (screens in `docs/reviews/p1/`).
+  selectors unchanged. Review: `docs/reviews/f523fcf.md` (screens in `docs/reviews/p1/`).
 - API gaps for P1: `docs/FE-API-GAPS.md` rows 1–6.
 
 **Next step:** deploy the protected preview (`vercel deploy` + alias `preview-arena.vikisol.in`),
