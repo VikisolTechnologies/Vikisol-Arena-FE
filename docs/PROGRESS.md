@@ -3,19 +3,48 @@
 **FE owner: Claude Code. Mission: `docs/missions/FE-BPLUS-BUILD.md`. Design is final
 (`docs/design/*`). Cursor no longer touches FE except the separate P0 security release.**
 
-Updated 28 Sep 2026. Resume from here.
+Updated 29 Sep 2026. Resume from here.
 
 ## Current status
 
-**Next step: P6 Career** (board `career`) — My Profile career entry on `/identity`, Career intent
-sheet, Career setup, Privacy preview, Work → Jobs, Job details (`/jobs/[id]`), Apply & track
-(`/applications/[id]`). Write "Think (P6)" first; reuse existing jobs/applications/profile calls;
-community and career stay separate unless the person opts in. Gaps at #18. Then P7, P8.
+**Next step: finish P7 → P9, then P8.** Done so far (commits "FE P7/P9 (1/n)" and "(2/n)"): B+
+business frame (`components/dash/`), role chooser `/auth?mode=role`, company workspace
+`/enterprise/onboarding`, Home `/enterprise/dashboard`, Jobs `/enterprise/postings`, Post a job
+`/enterprise/postings/new`, job page `/enterprise/postings/[id]` (funnel, share, Kanban with drag +
+Move menu, candidate list with evidence filters + bulk move, activity), candidate profile
+`/enterprise/postings/[id]/candidates/[applicationId]`, the Not selected kind-message sheet.
+**Remaining, in order:** (1) interview & outcome `/enterprise/interviews/[applicationId]` (board 7:
+keep `getApplicant`/`getInterviewForApplication`/`proposeInterview`/`assignHiringManager` and
+InterviewRoom's feedback; add Offer / Not selected, data-retention note) + a new
+`/enterprise/interviews` index; (2) `interviews/mine` (HM shell); (3) talent + `talent/[id]`
+(unlock credits unchanged; "connect request" = gap); (4) messages, company posts; (5) company
+admin: index/team/audit/billing/company/consent. Delete the old UI in each commit; add each to
+screens.json (phase "P9 Arena for Business", board "none") + `tests/local/business.local.ts`.
+Then P8 Jenny (§10), P10 Admin (§9), P11. Gaps at #32. Founder demo: `/dev/business?to=<path>`.
 
 Live preview: `npm run dev` for this worktree is Cursor's (port 3010); the founder preview runs
 with `ARENA_NEXT_DIST_DIR=.next-founder npm run dev -- -H 0.0.0.0 -p 3001` →
 http://localhost:3001/dev/progress (phone: http://<LAN IP>:3001/dev/progress). Board frames:
 `node scripts/dev/cut-boards.mjs`; statuses in `src/lib/dev/screens.json`.
+
+**P6c Needs, offers & projects — done** (29 Sep): need intake by category (12 kinds, safety
+notes, private ride pickup), offers O1–O3 on the same engine and the mirrored need page + room,
+projects PR1–PR2 (paid → marketplace; collaborative → device draft, PR3–PR6 blocked on gap #26).
+Create sheet: every row opens its full flow. 81 local Playwright on 3 engines.
+
+**P6b Activities & covers — done** (29 Sep): activity taxonomy (§3), procedural unique covers
+used everywhere (`Cover`), activity intake (common + per-type questions), host flow
+`/activities/new` A1–A7 with the cover stored via media upload (AI covers behind
+`NEXT_PUBLIC_JENNY_COVERS`, off), manage: starting soon, check-in, cancel with reason, leave.
+Blocked screens (edit, waitlist, answers, attendance confirm, feedback) listed on /dev/progress
+with gap numbers. 72 local Playwright on 3 engines.
+
+**P6 Career — done** (29 Sep): intake engine (`src/lib/intake/`, `components/intake/`), career
+flow `/identity/career` (intent → 6 intake steps → review → visibility → publish), `/jobs`, job
+details + Apply sheet, application tracker. Scope added 29 Sep: `docs/design/ARENA-APP-FLOW.md` is
+authority; `/enterprise/*` and `/admin/*` are in scope (keep APIs/auth/URLs). Mock company names
+all fictional. 66 local Playwright on 3 engines. Pushes: a background loop pushes whenever
+github.com is reachable (it has been unreachable from this Mac since 28 Sep).
 
 **P5 Messages & trust — done** (commit "FE B+ P5"): Inbox `/rooms` (filters, search, relative
 time), Conversation `/messages/[id]` (context card, meeting-link card, Block/Report/Close chat),

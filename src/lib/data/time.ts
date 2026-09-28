@@ -9,3 +9,8 @@ export function timeAgo(iso: string, now = Date.now()): string {
   if (days < 7) return `${days} ${days === 1 ? "day" : "days"} ago`;
   return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
+
+/** "14 Oct" / "14 Oct 2024" in India time, for dashboards. */
+export function shortDate(iso: string, withYear = false): string {
+  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", ...(withYear ? { year: "numeric" } : {}), timeZone: "Asia/Kolkata" });
+}

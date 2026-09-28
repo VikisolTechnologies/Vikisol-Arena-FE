@@ -51,7 +51,7 @@ export function DashShell({
 }) {
   const pathname = usePathname();
   const badge = (
-    <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide", tone === "admin" ? "bg-danger/15 text-danger" : "bg-primary/15 text-primary")}>
+    <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide", tone === "admin" ? "bg-danger/15 text-danger-on-dark" : "bg-primary/15 text-primary")}>
       {product}
     </span>
   );

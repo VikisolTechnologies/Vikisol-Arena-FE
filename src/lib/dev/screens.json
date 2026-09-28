@@ -788,8 +788,8 @@
     "board": "recruiter",
     "index": 1,
     "title": "Choose your role",
-    "route": null,
-    "status": "not-started",
+    "route": "/auth?mode=role",
+    "status": "done",
     "commit": null
   },
   {
@@ -798,8 +798,8 @@
     "board": "recruiter",
     "index": 2,
     "title": "Company workspace",
-    "route": null,
-    "status": "not-started",
+    "route": "/dev/business?to=/enterprise/onboarding",
+    "status": "done",
     "commit": null
   },
   {
@@ -808,8 +808,8 @@
     "board": "recruiter",
     "index": 3,
     "title": "Post a job",
-    "route": null,
-    "status": "not-started",
+    "route": "/dev/business?to=/enterprise/postings/new",
+    "status": "done",
     "commit": null
   },
   {
@@ -818,8 +818,8 @@
     "board": "recruiter",
     "index": 4,
     "title": "Manage your job",
-    "route": null,
-    "status": "not-started",
+    "route": "/dev/business?to=/enterprise/postings/demo-job",
+    "status": "done",
     "commit": null
   },
   {
@@ -828,8 +828,8 @@
     "board": "recruiter",
     "index": 5,
     "title": "Review candidates",
-    "route": null,
-    "status": "not-started",
+    "route": "/dev/business?to=/enterprise/postings/demo-job?tab=candidates",
+    "status": "done",
     "commit": null
   },
   {
@@ -838,8 +838,8 @@
     "board": "recruiter",
     "index": 6,
     "title": "Candidate profile",
-    "route": null,
-    "status": "not-started",
+    "route": "/dev/business?to=/enterprise/postings/demo-job/candidates/demo-app-0",
+    "status": "done",
     "commit": null
   },
   {
@@ -991,5 +991,38 @@
     "route": null,
     "status": "not-started",
     "commit": null
+  },
+  {
+    "id": "biz-home",
+    "phase": "P9 Arena for Business",
+    "board": "none",
+    "index": 1,
+    "title": "Business Home (desktop)",
+    "route": "/dev/business?to=/enterprise/dashboard",
+    "status": "done",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "biz-jobs",
+    "phase": "P9 Arena for Business",
+    "board": "none",
+    "index": 2,
+    "title": "Jobs list",
+    "route": "/dev/business?to=/enterprise/postings",
+    "status": "done",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "biz-pipeline",
+    "phase": "P9 Arena for Business",
+    "board": "none",
+    "index": 3,
+    "title": "Pipeline board (drag)",
+    "route": "/dev/business?to=/enterprise/postings/demo-job?tab=candidates",
+    "status": "done",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
   }
 ]

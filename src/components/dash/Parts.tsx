@@ -27,7 +27,7 @@ export function Panel({ title, action, children, className, tone = "surface" }: 
 
 /** A number that counts up once, with its label (flow §11). */
 export function Stat({ icon: IconCmp, value, label, href, tone = "primary" }: { icon: Icon; value: number; label: string; href?: string; tone?: "primary" | "success" | "info" | "warning" }) {
-  const toneCls = { primary: "bg-primary/15 text-primary", success: "bg-success/15 text-success", info: "bg-info/15 text-info", warning: "bg-warning/15 text-warning" }[tone];
+  const toneCls = { primary: "bg-primary/15 text-primary", success: "bg-success/15 text-success-on-dark", info: "bg-info/15 text-info-on-dark", warning: "bg-warning/15 text-warning" }[tone];
   const body = (
     <>
       <span className={cn("grid size-10 place-items-center rounded-xl", toneCls)}><IconCmp className="size-5" strokeWidth={1.9} aria-hidden /></span>
@@ -46,14 +46,14 @@ export function Stat({ icon: IconCmp, value, label, href, tone = "primary" }: { 
 }
 
 const PILL: Record<string, string> = {
-  open: "bg-success/15 text-success",
-  published: "bg-success/15 text-success",
-  active: "bg-success/15 text-success",
+  open: "bg-success/15 text-success-on-dark",
+  published: "bg-success/15 text-success-on-dark",
+  active: "bg-success/15 text-success-on-dark",
   paused: "bg-warning/15 text-warning",
   draft: "bg-foreground/10 text-faint",
   closed: "bg-foreground/10 text-faint",
-  suspended: "bg-danger/15 text-danger",
-  invited: "bg-info/15 text-info",
+  suspended: "bg-danger/15 text-danger-on-dark",
+  invited: "bg-info/15 text-info-on-dark",
 };
 const PILL_LABEL: Record<string, string> = { open: "Published" };
 
@@ -86,7 +86,7 @@ export function DashButton({ children, onClick, href, variant = "primary", disab
     "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-[15px] font-semibold outline-none transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50",
     variant === "primary" && "bg-primary text-paper-ink hover:bg-primary-pressed",
     variant === "outline" && "border border-field-line text-foreground hover:bg-foreground/5",
-    variant === "danger" && "border border-danger/60 text-danger hover:bg-danger/10",
+    variant === "danger" && "border border-danger/60 text-danger-on-dark hover:bg-danger/10",
   );
   if (href) return <Link href={href} className={cls}>{children}</Link>;
   return (

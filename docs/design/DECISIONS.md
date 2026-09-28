@@ -3,6 +3,24 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **29 Sep (P7/P9)** — Arena for Business uses one B+ frame (`DashShell`): dark desktop sidebar
+  with a cream active pill (shared-layout slide), phones get a compact top bar + scrolling pill
+  nav instead of the consumer tab bar. Each app keeps its own role gate and sign-out.
+- **29 Sep (P7/P9)** — Pipeline: drag between columns only on a fine pointer ≥1024px (lift 1.02 +
+  shadow, spring drop via shared layout); every card also has a "Move to" menu, so dragging is
+  never required (WCAG 2.5.7). Phones default to the List view (board 5).
+- **29 Sep (P7/P9)** — Moving anyone to **Not selected** (drag, menu, bulk or profile) always opens
+  the kind-message sheet first; it says plainly that Arena's standard notice is sent until
+  personal messages exist (gap #31). "Hired" isn't a column (gap #21) — Offer is the last step.
+- **29 Sep (P7/P9)** — **Must-have evidence** is computed only from what the applicant shared
+  (skills, title, bio): shown / partly shown / not shown, and the copy says "not shown ≠ can't".
+  Filters are evidence-only (skills, experience, location, remote); the filter sheet states Arena
+  never filters on age, gender, religion, caste or marital status.
+- **29 Sep (P7/P9)** — Small green/blue/red text on dark surfaces failed AA (3.7–4.2); added
+  `--success-on-dark #4cc27c`, `--info-on-dark #7aa7ff`, `--danger-on-dark #ff7a7e` (≥5.3 on tints).
+- **29 Sep (P7/P9)** — Candidate profile is its own route
+  (`/enterprise/postings/[id]/candidates/[applicationId]`) so it deep-links from Home and back.
+  Founder preview: `/dev/business?to=…` seeds a mock-mode demo recruiter (mock mode only).
 - **29 Sep (P6c)** — Post a Need is now **category → intake**: 12 categories (§4) each with its own
   questions, plus urgency and help type for every need; rides show a safety note and keep the
   pickup point private (after approval). The single-form PostNeedScreen was deleted.

@@ -104,7 +104,7 @@ function Postings() {
                   <p className="mt-1.5 flex items-center gap-1 text-[14px] text-faint"><MapPin className="size-3.5" aria-hidden /> {p.location}{p.remote && " · Remote"}</p>
                   <p className="mt-3 flex items-center gap-1.5 text-[14px]">
                     <Users className="size-4 text-faint" aria-hidden /> {mine.length} applicant{mine.length === 1 ? "" : "s"}
-                    {fresh > 0 && <span className="rounded-full bg-info/15 px-2 py-0.5 text-[12px] font-semibold text-info">{fresh} new</span>}
+                    {fresh > 0 && <span className="rounded-full bg-info/15 px-2 py-0.5 text-[12px] font-semibold text-info-on-dark">{fresh} new</span>}
                   </p>
                   <div className="mt-auto flex flex-wrap gap-2 pt-4">
                     <DashButton href={`/enterprise/postings/${p.id}`}>Open</DashButton>

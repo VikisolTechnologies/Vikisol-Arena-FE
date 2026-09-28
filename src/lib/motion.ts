@@ -101,3 +101,6 @@ export const jennyGlow: { initial: TargetAndTransition; animate: TargetAndTransi
 
 /** A selected chip springs a little (intake chips, §11). */
 export const chipPop: TargetAndTransition = { scale: [1, 1.06, 1], transition: { duration: duration.slow, ease: ease.out } };
+
+/** Kanban card being dragged (flow §11): lifts 1.02 with a shadow; the drop uses spring.gentle. */
+export const lift = { scale: 1.02, boxShadow: "0 18px 40px -14px rgba(0,0,0,0.55)" } satisfies TargetAndTransition;

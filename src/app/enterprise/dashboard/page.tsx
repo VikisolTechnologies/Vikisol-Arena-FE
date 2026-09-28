@@ -54,7 +54,7 @@ export default function EnterpriseDashboardPage() {
   return (
     <EnterpriseAppShell title={profile ? `Good to see you, ${profile.companyName}` : "Home"} profile={profile} actions={<DashButton href="/enterprise/postings?new=1"><Plus className="size-4" aria-hidden /> Post a job</DashButton>}>
       <p className="mb-5 flex items-start gap-2.5 rounded-tile border border-line bg-surface p-4 text-[14px] text-foreground/85">
-        <Info className="mt-0.5 size-4 shrink-0 text-info" aria-hidden />
+        <Info className="mt-0.5 size-4 shrink-0 text-info-on-dark" aria-hidden />
         Company verification isn&apos;t open yet. Your jobs publish as usual; the &ldquo;Verified company&rdquo; badge appears once Arena can check your domain.
       </p>
       {!postings ? (
@@ -85,7 +85,7 @@ export default function EnterpriseDashboardPage() {
                 )}
                 {fresh.slice(0, 4).map((a) => (
                   <li key={a.id}>
-                    <Row href={`/enterprise/postings/${a.posting.id}?candidate=${a.id}`} lead={<Avatar name={a.candidate?.name ?? "Candidate"} className="size-10 text-[14px]" />} title={a.candidate?.name ?? "New applicant"} meta={`${a.posting.title} · applied ${timeAgo(a.appliedAt)}`} trail={<span className="text-[12px] text-faint">{STAGE_LABEL[a.stage]}</span>} />
+                    <Row href={`/enterprise/postings/${a.posting.id}/candidates/${a.id}`} lead={<Avatar name={a.candidate?.name ?? "Candidate"} className="size-10 text-[14px]" />} title={a.candidate?.name ?? "New applicant"} meta={`${a.posting.title} · applied ${timeAgo(a.appliedAt)}`} trail={<span className="text-[12px] text-faint">{STAGE_LABEL[a.stage]}</span>} />
                   </li>
                 ))}
               </ul>

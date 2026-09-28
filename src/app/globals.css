@@ -228,6 +228,11 @@
   --success-on-paper: #1f6e3e;
   --info-on-paper: #1d57b8;
   --danger-on-paper: #b42318;
+  /* Small green/blue/red text on dark surfaces and their 15% tints (brand hues are 3.7–4.2 there).
+     #4cc27c = 5.87, #7aa7ff = 5.56, #ff7a7e = 5.33 on a 15% tint over --surface. */
+  --success-on-dark: #4cc27c;
+  --info-on-dark: #7aa7ff;
+  --danger-on-dark: #ff7a7e;
 
   /* TOKENS.md radius scale: cards 20px, tiles 16px, buttons 14px, chips full. */
   --radius-card: 20px;
@@ -311,6 +316,9 @@
   --color-primary-on-paper: var(--primary-on-paper);
   --color-success-on-paper: var(--success-on-paper);
   --color-info-on-paper: var(--info-on-paper);
+  --color-success-on-dark: var(--success-on-dark);
+  --color-info-on-dark: var(--info-on-dark);
+  --color-danger-on-dark: var(--danger-on-dark);
   --color-danger-on-paper: var(--danger-on-paper);
   --color-field-line: var(--field-line);
   --color-slate: var(--slate);
