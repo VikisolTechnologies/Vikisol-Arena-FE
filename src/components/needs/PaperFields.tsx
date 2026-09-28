@@ -47,6 +47,9 @@ export function PaperInput({
   error,
   hint,
   shakeSignal = 0,
+  type = "text",
+  autoComplete,
+  inputMode,
 }: {
   label: string;
   value: string;
@@ -58,6 +61,9 @@ export function PaperInput({
   error?: string;
   hint?: ReactNode;
   shakeSignal?: number;
+  type?: "text" | "email" | "password" | "tel" | "date" | "url";
+  autoComplete?: string;
+  inputMode?: "text" | "numeric" | "tel" | "email" | "url";
 }) {
   const id = useId();
   const scope = useShake(shakeSignal, error);
@@ -69,6 +75,9 @@ export function PaperInput({
         {IconCmp && <IconCmp className="ml-4 size-5 shrink-0 text-paper-ink-muted" strokeWidth={1.75} aria-hidden />}
         <input
           id={id}
+          type={type}
+          autoComplete={autoComplete}
+          inputMode={inputMode}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}

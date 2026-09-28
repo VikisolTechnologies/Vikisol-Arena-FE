@@ -10,6 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { rise, vibrate } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
+import { ReportSheet } from "@/components/trust/ReportSheet";
 import { Avatar } from "@/components/bplus/Avatar";
 import { BottomSheet } from "@/components/bplus/BottomSheet";
 import { Button, ButtonLink } from "@/components/bplus/Button";
@@ -17,7 +18,7 @@ import { Burst } from "@/components/bplus/Burst";
 import { DemoBadge, StateCard } from "@/components/bplus/Primitives";
 import { RequirementDialog, requirementFromError, type Requirement } from "@/components/requirements/RequirementForm";
 import { PaperPlane, SaferCommunity, StatusTimeline, SuccessCheck, downloadIcs, activityWhen } from "@/components/activity/ActivityParts";
-import { cancelPost, decideJoin, getJoinRequests, getPost, reportPost, requestJoin, savePost, unsavePost, withdrawJoin } from "@/lib/api/posts";
+import { cancelPost, decideJoin, getJoinRequests, getPost, requestJoin, savePost, unsavePost, withdrawJoin } from "@/lib/api/posts";
 import { startChat } from "@/lib/api/messages";
 import { getMyProfile } from "@/lib/data/profile";
 import { distanceKm, formatKm } from "@/lib/data/feed";
@@ -41,6 +42,7 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false 
   const [requirement, setRequirement] = useState<Requirement | null>(null);
   const [sentOpen, setSentOpen] = useState(sentInitially);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const [notice, setNotice] = useState("");
   const signedIn = useGuest() === false;
@@ -265,9 +267,9 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false 
               <button
                 type="button"
                 onClick={() => {
-                  if (!getSession()) return router.push("/auth?mode=signin");
-                  reportPost(post.id, "Reported from the activity page").then(() => setNotice("Reported. Our team will review it.")).catch(() => setNotice("That report didn't send. Try again."));
                   setMenuOpen(false);
+                  if (!getSession()) return router.push("/auth?mode=signin");
+                  setReportOpen(true);
                 }}
                 className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-[16px] text-danger-on-paper hover:bg-paper-muted"
               >
@@ -278,6 +280,7 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false 
         </ul>
       </BottomSheet>
 
+      <ReportSheet open={reportOpen} onClose={() => setReportOpen(false)} target={{ kind: "post", id: post.id }} person={{ userId: post.authorUserId || undefined, name: post.authorName ?? "The host", detail: title }} />
       <RequirementDialog requirement={requirement} onOpenChange={(open) => !open && setRequirement(null)} onDone={() => { setRequirement(null); void join(); }} />
     </AppShell>
   );

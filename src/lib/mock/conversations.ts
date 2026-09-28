@@ -14,7 +14,7 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     context: "Food delivery app bid", lastMessageAt: new Date(Date.now() - 8 * 3600000).toISOString(), unread: false,
   },
   {
-    id: "conv-4", participantId: "ext-3", participantName: "Swiggy Recruiting", participantEmoji: "🟠",
+    id: "conv-4", participantId: "ext-3", participantName: "Tiffin Trail Recruiting", participantEmoji: "🟠",
     context: "Backend Developer", lastMessageAt: new Date(Date.now() - 26 * 3600000).toISOString(), unread: false,
   },
 ];

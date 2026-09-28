@@ -13,7 +13,8 @@ import { BottomSheet } from "@/components/bplus/BottomSheet";
 import { Pills, Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { Button, ButtonLink } from "@/components/bplus/Button";
 import { CompleteSheet, MeetingLinkSheet, PrivateBanner } from "@/components/needs/NeedRoomParts";
-import { getMyRooms, getRoomMembers, getRoomMessages, markRoomRead, reportRoom, sendRoomMessage, setRoomMuted } from "@/lib/api/rooms";
+import { ReportSheet } from "@/components/trust/ReportSheet";
+import { getMyRooms, getRoomMembers, getRoomMessages, markRoomRead, sendRoomMessage, setRoomMuted } from "@/lib/api/rooms";
 import { getPost, withdrawJoin } from "@/lib/api/posts";
 import { activityWhen } from "@/components/activity/ActivityParts";
 import { MEETING_LINK_PREFIX, latestMeetingLink, needWhen } from "@/lib/data/needs";
@@ -56,6 +57,7 @@ export function RoomScreen({ roomId, specimen }: { roomId: string; specimen?: Ro
   const [linkOpen, setLinkOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(!!specimen?.completeStage);
   const [safetyOpen, setSafetyOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const listEnd = useRef<HTMLLIElement>(null);
 
   useEffect(() => {
@@ -325,7 +327,7 @@ export function RoomScreen({ roomId, specimen }: { roomId: string; specimen?: Ro
         )}
         <button
           type="button"
-          onClick={() => reportRoom(room.id, isNeed ? "Reported from the coordination room" : "Reported from the activity room").then(() => setNotice("Reported. Our team will review it.")).catch(() => setNotice("That report didn't send."))}
+          onClick={() => setReportOpen(true)}
           className="flex min-h-11 items-center justify-center gap-2 rounded-button border border-danger/60 text-[15px] font-semibold text-danger"
         >
           <Flag className="size-4" aria-hidden /> Report
@@ -343,6 +345,13 @@ export function RoomScreen({ roomId, specimen }: { roomId: string; specimen?: Ro
         )}
       </div>
       {notice && <p role="status" className="mt-3 text-center text-[14px] text-faint">{notice}</p>}
+
+      <ReportSheet
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        target={{ kind: "room", id: room.id }}
+        person={isNeed && other ? { userId: (post?.mine ? members?.find((p) => p.role !== "admin")?.userId : post?.authorUserId) || undefined, name: other, detail: title } : undefined}
+      />
 
       {isNeed && post && (
         <>

@@ -12,12 +12,14 @@ import { Avatar } from "@/components/bplus/Avatar";
 import { BottomSheet } from "@/components/bplus/BottomSheet";
 import { Button, ButtonLink } from "@/components/bplus/Button";
 import { DemoBadge } from "@/components/bplus/Primitives";
+import { ReportSheet } from "@/components/trust/ReportSheet";
 import { useGuest } from "@/hooks/use-arena-session";
 import { getSession } from "@/lib/session";
-import { cancelPost, decideJoin, getJoinRequests, getPost, reportPost, requestJoin, withdrawJoin } from "@/lib/api/posts";
+import { cancelPost, decideJoin, getJoinRequests, getPost, requestJoin, withdrawJoin } from "@/lib/api/posts";
 import { getMyProfile, getPublicProfile } from "@/lib/api/profile";
 import { distanceKm, formatKm } from "@/lib/data/feed";
-import { needWhen, timeAgo } from "@/lib/data/needs";
+import { needWhen } from "@/lib/data/needs";
+import { timeAgo } from "@/lib/data/time";
 import type { Post, PostJoinRequest, PublicCandidateProfile } from "@/lib/types";
 
 const STATUS: Record<Post["status"], { label: string; cls: string }> = {
@@ -45,6 +47,7 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
   const [offers, setOffers] = useState<PostJoinRequest[] | null>(specimen?.offers ?? null);
   const [open, setOpen] = useState<PostJoinRequest | null>(specimen?.offers.find((o) => o.id === specimen.openOfferId) ?? null);
   const [menu, setMenu] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -228,6 +231,7 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
         </m.article>
       </div>
 
+      <ReportSheet open={reportOpen} onClose={() => setReportOpen(false)} target={{ kind: "post", id: post.id }} person={{ userId: post.authorUserId || undefined, name: post.authorName, detail: title }} />
       <OfferSheet offer={open} post={post} onClose={() => setOpen(null)} onDecided={decided} specimenProfile={specimen?.profile} />
 
       <BottomSheet open={menu} onClose={() => setMenu(false)} title="More">
@@ -244,7 +248,7 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
                 onClick={() => {
                   setMenu(false);
                   if (!getSession()) return router.push("/auth?mode=signin");
-                  reportPost(post.id, "Reported from the need page").then(() => setNotice("Reported. Our team will review it.")).catch(() => setNotice("That report didn't send. Try again."));
+                  setReportOpen(true);
                 }}
                 className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-[16px] text-danger-on-paper hover:bg-paper-muted"
               >

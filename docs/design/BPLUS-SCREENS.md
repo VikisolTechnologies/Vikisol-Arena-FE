@@ -330,6 +330,8 @@ Forgot = `/auth/forgot`; Reset = `/auth/reset/[token]` and `/reset-password`; on
 
 ## Board: Messages, trust & everyday controls B+
 
+- **Think (P5):** trust is felt in the small controls. One Inbox for rooms and direct chats, filtered by kind, with relative times and a clear unread dot. Every conversation offers Report and Block in one calm sheet that says what happens next — reporting never feels like a dead end. Notifications group into Today / Earlier and each has one obvious action. Search defaults to "Most recent" only (correction #4) and says so. Settings reads like a list of choices the person owns, each opening a short sheet with the same real controls as before (auth and consent logic untouched). Resilient states come from one primitive: offline banner, empty, error + retry, draft saved — never a blank screen, never a fake cache.
+
 ### 1. Inbox — `/rooms` (existing route)
 - **Layout**: header "Inbox" + search → filter tabs (All/Activities/Needs/Jobs/Direct) → conversation list rows: avatar, name/title, last message preview, relative time *(correction #8)*, unread dot.
 - **Data**: `rooms`.

@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { OrbLoader } from "@/components/ui/orb-loader";
 
 // SCREEN 5 "INBOX" - "There is exactly one messaging surface in the app." The merged list now
 // lives at /rooms; this route stays only so the one external "message this person" link
@@ -22,7 +21,7 @@ function MessagesRedirect() {
 
 export default function MessagesPage() {
   return (
-    <Suspense fallback={<OrbLoader className="h-96" />}>
+    <Suspense>
       <MessagesRedirect />
     </Suspense>
   );

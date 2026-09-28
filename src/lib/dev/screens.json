@@ -286,7 +286,7 @@
     "index": 1,
     "title": "Inbox",
     "route": "/rooms",
-    "status": "not-started",
+    "status": "in-progress",
     "commit": null
   },
   {
@@ -295,8 +295,8 @@
     "board": "messages",
     "index": 2,
     "title": "Conversation",
-    "route": null,
-    "status": "not-started",
+    "route": "/dev/screen/conversation",
+    "status": "in-progress",
     "commit": null
   },
   {
@@ -306,7 +306,7 @@
     "index": 3,
     "title": "Notifications",
     "route": "/notifications",
-    "status": "not-started",
+    "status": "in-progress",
     "commit": null
   },
   {
@@ -316,7 +316,7 @@
     "index": 4,
     "title": "Search",
     "route": "/search",
-    "status": "not-started",
+    "status": "in-progress",
     "commit": null
   },
   {
@@ -326,7 +326,7 @@
     "index": 5,
     "title": "Settings & privacy",
     "route": "/settings",
-    "status": "not-started",
+    "status": "in-progress",
     "commit": null
   },
   {
@@ -335,8 +335,8 @@
     "board": "messages",
     "index": 6,
     "title": "Report / block",
-    "route": null,
-    "status": "not-started",
+    "route": "/dev/screen/report-block",
+    "status": "in-progress",
     "commit": null
   },
   {
@@ -345,8 +345,8 @@
     "board": "messages",
     "index": 7,
     "title": "Resilient states",
-    "route": null,
-    "status": "not-started",
+    "route": "/dev/screen/resilient-states",
+    "status": "in-progress",
     "commit": null
   },
   {

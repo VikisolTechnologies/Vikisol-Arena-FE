@@ -3,6 +3,36 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **28 Sep (P5)** — Inbox merges rooms and direct chats (unchanged behaviour, `?with=` kept);
+  filters All / Activities / Needs / Jobs / Direct come from the room's post type and the chat's
+  job context. Times are relative (correction #8). Old `inbox-v3` components deleted.
+- **28 Sep (P5)** — Conversation action bar is **Block / Close chat (anonymous) / Report**: no
+  Audio, Attach or Mute (no endpoints; correction #6 — a meeting link in the chat renders as a card
+  with "Open link"). Composer is text only (gap #9 covers attachments).
+- **28 Sep (P5)** — One **ReportSheet** for rooms, chats and posts (real report endpoints; reason
+  required, optional detail, optional "Also block"). Evidence upload left out (gap #15). The SLA
+  line "usually within 24 hours" is **not** shown — nothing guarantees it; it says "Our safety team
+  reviews every report". Room/need/activity reports now ask for a reason instead of one-tap reporting.
+- **28 Sep (P5)** — Notification filters are **All / Unread / Jobs / Messages / Jenny**, derived from
+  each notification's real type and link; Activities/Needs can't be told apart from the data (gap
+  #16). Snooze / Not interested left out (no endpoints).
+- **28 Sep (P5)** — Search scopes are **All / Activities / Needs / Jobs / Projects** (the API has no
+  people or skills search, and no radius — gap #17); results are "Most recent first" only
+  (correction #4), no relevance sort, no bookmark.
+- **28 Sep (P5)** — Settings is the board's list; each row opens a sheet with the **same calls as
+  before** (location consent, career visibility, Jenny autonomy/auto-apply with the Pro lock,
+  DOB/phone OTP, email/password change, export, delete, blocked accounts). "Profile visibility" and
+  "Notification preferences" rows are left out (no endpoints, gap #18). The "Demo mode: code is
+  123456" hint now shows only in mock mode.
+- **28 Sep (P5)** — Settings → "Reduce motion effects" now also switches B+ motion off
+  (MotionConfig `always`), not only the old effects.
+- **28 Sep (P5)** — Compact pills (32px, 44px hit area) so five filters fit one row at 360px.
+- **28 Sep (P5)** — Resilient states use one `StateCard` (offline / empty / error / saved). No
+  "Recent (cached)" list: nothing is cached for offline viewing, so it isn't claimed.
+- **28 Sep (P5)** — Mock data (mock API mode only) named real consumer brands (Swiggy, Microsoft,
+  Paytm, Zoho, Freshworks, Practo, Delhivery, Razorpay) — replaced with fictional names (§11). Left
+  **Techolution** and **Innova Solutions** (the demo enterprise tenant in the admin shells, possibly
+  deliberate) for the founder to confirm.
 - **28 Sep (P4)** — A need is a post with `intentType: "ask"`; an **offer of help is a real join
   request** and "Accept & open chat" is `decideJoin(approve)`, which opens the room. Needs are posted
   with `visibility: "approval"` so the owner chooses who helps.

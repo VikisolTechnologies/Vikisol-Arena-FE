@@ -7,18 +7,23 @@ Updated 28 Sep 2026. Resume from here.
 
 ## Current status
 
-**Next step: P5 Messages & trust** (board `messages`) — Inbox `/rooms` (All/Activities/Needs/
-Jobs/Direct, relative time, unread), Conversation (reconcile `/rooms/[id]` vs `/messages/[id]`;
-meeting-link card per correction #6; system messages distinct), Notifications `/notifications`
-(Today/Earlier, actions), Search `/search` (scope chips, "Most recent" only — correction #4),
-Settings & Privacy `/settings`, Report/Block sheet (reasons, evidence optional, what happens next),
-resilient states via one shared status primitive. Write "Think (P5)" first; reuse existing calls;
-log gaps (FE-API-GAPS is at #14). Then P6…P8.
+**Next step: P6 Career** (board `career`) — My Profile career entry on `/identity`, Career intent
+sheet, Career setup, Privacy preview, Work → Jobs, Job details (`/jobs/[id]`), Apply & track
+(`/applications/[id]`). Write "Think (P6)" first; reuse existing jobs/applications/profile calls;
+community and career stay separate unless the person opts in. Gaps at #18. Then P7, P8.
 
 Live preview: `npm run dev` for this worktree is Cursor's (port 3010); the founder preview runs
 with `ARENA_NEXT_DIST_DIR=.next-founder npm run dev -- -H 0.0.0.0 -p 3001` →
 http://localhost:3001/dev/progress (phone: http://<LAN IP>:3001/dev/progress). Board frames:
 `node scripts/dev/cut-boards.mjs`; statuses in `src/lib/dev/screens.json`.
+
+**P5 Messages & trust — done** (commit "FE B+ P5"): Inbox `/rooms` (filters, search, relative
+time), Conversation `/messages/[id]` (context card, meeting-link card, Block/Report/Close chat),
+Notifications (Today/Earlier, mark read), Search (scopes, most recent only), Settings & Privacy
+(board list → sheets with the unchanged controls), one ReportSheet everywhere (reason required,
+also-block), resilient states via StateCard. `inbox-v3` deleted. Reduce-motion setting now drives
+B+ motion. Real consumer brand names removed from mock data (Techolution/Innova left for founder).
+60 local Playwright (3 engines; one load flake in needs "post a need" on Pixel 7, 5/5 on repeat).
 
 **P4 Need → outcome — done** (commit "FE B+ P4"): Post a Need `/needs/new` (validation after
 submit, offline draft, photos via media signature, preview), Need page + Offer details at

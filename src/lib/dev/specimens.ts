@@ -1,4 +1,4 @@
-import type { Post, PostJoinRequest, PublicCandidateProfile, RoomMember, RoomMessage } from "@/lib/types";
+import type { Conversation, Post, PostJoinRequest, PublicCandidateProfile, RoomMember, RoomMessage, ThreadMessage } from "@/lib/types";
 import type { RoomSpecimen } from "@/components/activity/RoomScreen";
 import { timeWindow } from "@/lib/data/needs";
 
@@ -119,4 +119,31 @@ export const SPECIMEN_NEED_ROOM: RoomSpecimen = {
     { userId: "me", name: "Priya Sharma", emoji: "p", role: "admin" },
     { userId: "u-o1", name: "Rohit Kumar", emoji: "r", role: "member" },
   ],
+};
+
+/* ── P5: a direct conversation about a community post ── */
+export const SPECIMEN_GARDEN: Post = {
+  ...SPECIMEN_ACTIVITY,
+  id: "specimen-garden",
+  authorUserId: "u-ananya",
+  authorName: "Ananya Sharma",
+  title: "Community Garden Setup",
+  body: "Let's make our neighborhood greener together.",
+  locationText: "Gachibowli (public park)",
+  startsAt: inHours(3.5),
+  endsAt: inHours(5.5),
+};
+const tm = (id: string, fromMe: boolean, content: string, minsAgo: number): ThreadMessage => ({ id, conversationId: "specimen-conv", fromMe, content, timestamp: at(minsAgo) });
+export const SPECIMEN_CONVERSATION = {
+  conversation: {
+    id: "specimen-conv", participantId: "u-ananya", participantName: "Ananya Sharma", participantEmoji: "a",
+    lastMessageAt: at(3), unread: false, postId: "specimen-garden",
+  } satisfies Conversation,
+  messages: [
+    tm("t1", false, "Hey! Are you still joining this Saturday?", 45),
+    tm("t2", true, "Yes! I'll be there. See you at 9.", 40),
+    tm("t3", false, "Great! Here's the meeting link for a quick call tomorrow if needed.", 30),
+    tm("t4", false, "Meeting link: https://meet.example.com/garden-plan", 29),
+  ],
+  post: SPECIMEN_GARDEN,
 };

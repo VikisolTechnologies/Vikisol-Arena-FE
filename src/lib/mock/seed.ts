@@ -66,15 +66,15 @@ export const TITLES_BY_INDUSTRY: Record<Industry, string[]> = {
 
 export const COMPANIES = [
   { name: "Techolution", emoji: "🟢" },
-  { name: "Swiggy", emoji: "🟠" },
-  { name: "Microsoft", emoji: "🔷" },
+  { name: "Tiffin Trail", emoji: "🟠" },
+  { name: "Bluepeak Software", emoji: "🔷" },
   { name: "Innova Solutions", emoji: "🔵" },
-  { name: "Paytm", emoji: "🟦" },
-  { name: "Zoho", emoji: "🟥" },
-  { name: "Freshworks", emoji: "🟩" },
-  { name: "Practo", emoji: "🩺" },
-  { name: "Delhivery", emoji: "📦" },
-  { name: "Razorpay", emoji: "⚡" },
+  { name: "Rupeeline", emoji: "🟦" },
+  { name: "Kestrel Apps", emoji: "🟥" },
+  { name: "Greenleaf CX", emoji: "🟩" },
+  { name: "CareCompass", emoji: "🩺" },
+  { name: "Parcel Path", emoji: "📦" },
+  { name: "Voltpay", emoji: "⚡" },
 ];
 
 export const AVATAR_EMOJIS = ["🧑🏽", "👩🏽", "🧔🏽", "👨🏻", "👩🏻", "👨🏾", "👩🏾", "🧑🏻", "👨🏽", "👩🏼"];

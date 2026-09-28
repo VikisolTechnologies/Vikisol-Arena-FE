@@ -20,6 +20,10 @@ backend plan (FE-BPLUS-BUILD §6). One row per gap; newest phase last.
 | 12 | Need page (P4) | A short message with an offer of help | `POST /posts/{id}/joins` `{ message?: string (≤280) }`; `PostJoinRequest.message` | "Offered to help · time" |
 | 13 | Offer details (P4) | Offerer's shared interests and recent outcomes | `GET /profile/{id}` + `interests[]`, `recentOutcomes[{postId,title,closedAt}]` | Skills and bio only |
 | 14 | Need page / room (P4) | Edit or pause a need; edit pinned details | `PATCH /posts/{id}` `{ title?, body?, startsAt?, endsAt?, exactMeetingPoint? }`; `status: "paused"` | Share / Close only; pinned details read-only |
+| 15 | Report a problem (P5) | Evidence with a report | `POST …/report` multipart or `{ reason, evidenceUrls?: string[] }` | Reason + optional text only |
+| 16 | Notifications (P5) | Category and actions per notification | `AppNotification.category: "activity"\|"need"\|"job"\|"message"\|"safety"`; `POST /notifications/{id}/snooze`, `/dismiss` | Filters derived from type/link; View + Mark read only |
+| 17 | Search (P5) | People and skills search; distance filter | `GET /search?type=people\|skills&near=lat,lng&radiusKm=5` | Activities / needs / jobs / projects; no radius |
+| 18 | Settings (P5) | Profile visibility and notification preferences | `PUT /profile/me/visibility` `{ profile: "nearby"\|"everyone"\|"hidden" }`; `GET/PUT /notifications/preferences` | Rows not shown |
 
 Saved for real today (no gap): sign up, sign in, 2FA code, forgot/reset password, area
 (`PUT /profile/me/location` with `consent: "city"`) and current location (`consent: "precise"`,

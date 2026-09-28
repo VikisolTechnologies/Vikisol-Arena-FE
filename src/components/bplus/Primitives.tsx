@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useId, type ComponentType, type ReactNode } from "react";
 import { m } from "motion/react";
-import { CircleAlert, CloudOff, HeartHandshake, Gift, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { CircleAlert, CircleCheck, CloudOff, Gift, HeartHandshake, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { press, spring } from "@/lib/motion";
 
@@ -18,6 +18,7 @@ export function Pills<T extends string>({
   tone = "orange",
   icons,
   segmented = false,
+  compact = false,
 }: {
   options: readonly { id: T; label: string }[];
   value: T;
@@ -27,10 +28,12 @@ export function Pills<T extends string>({
   icons?: Partial<Record<T, Icon>>;
   /** One connected track with equal-width segments (board: room tabs) instead of loose pills. */
   segmented?: boolean;
+  /** Smaller pills so five filters fit one row at 360px (Inbox, Notifications, Search boards). */
+  compact?: boolean;
 }) {
   const group = useId();
   return (
-    <div role="radiogroup" aria-label={label} className={segmented ? "grid auto-cols-fr grid-flow-col rounded-full border border-field-line p-1" : "flex flex-wrap gap-2"}>
+    <div role="radiogroup" aria-label={label} className={segmented ? "grid auto-cols-fr grid-flow-col rounded-full border border-field-line p-1" : cn("flex flex-wrap", compact ? "gap-1.5" : "gap-2")}>
       {options.map((o) => {
         const on = o.id === value;
         const IconCmp = icons?.[o.id] as Icon | undefined;
@@ -46,6 +49,7 @@ export function Pills<T extends string>({
             className={cn(
               "relative inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[14px] font-medium outline-none after:absolute after:-inset-y-1 after:inset-x-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
               segmented && "h-10 justify-center",
+              compact && "h-8 px-3 text-[13px] after:-inset-y-1.5",
               on ? "text-paper-ink" : cn("text-foreground/90", !segmented && "border border-field-line"),
             )}
           >
@@ -125,12 +129,12 @@ export function StateCard({
   detail,
   action,
 }: {
-  kind: "empty" | "error" | "offline";
+  kind: "empty" | "error" | "offline" | "saved";
   title: string;
   detail?: string;
   action?: ReactNode;
 }) {
-  const IconCmp = kind === "offline" ? CloudOff : kind === "error" ? CircleAlert : Sparkles;
+  const IconCmp = kind === "offline" ? CloudOff : kind === "error" ? CircleAlert : kind === "saved" ? CircleCheck : Sparkles;
   return (
     <div role={kind === "error" ? "alert" : "status"} className="rounded-[var(--radius-card)] border border-line bg-surface px-5 py-8 text-center">
       <span className="mx-auto grid size-12 place-items-center rounded-full bg-primary/15 text-primary">
