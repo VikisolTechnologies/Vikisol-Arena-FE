@@ -571,7 +571,7 @@ No ads-first strategy and no chasing millions of free users.
 - **Arena:**
   - Live on the real backend, production commit `3093442`. Candidate and enterprise sides are both verified.
   - The company admin reaches the enterprise area with a password only, no 2FA. This is being checked as a security finding.
-  - The audit is in `docs/ARENA-CURRENT-STATE.md`.
+  - The audit is in `docs/reviews/AUDIT-2026-09-26.md` (superseded `ARENA-CURRENT-STATE.md` deleted 28 Sep 2026 cleanup).
   - The cleanup that fixes the 35 test failures is on `feature/arena-cleanup` (merge pending).
   - Blocked on Syam: Sentry "Allowed Domains" needs `arena.vikisol.in`.
   - Home's first-load JavaScript is over the 200KB budget; the fix is splitting the app shell in VNext.
@@ -587,7 +587,7 @@ No ads-first strategy and no chasing millions of free users.
   - Arena ARENA-FINISH-ALL run: fixes go to production; VNext UI goes to a private preview and waits for Syam's approval.
 - **Vikisol One:** paused.
 - **Next reviews for Claude (architect):**
-  - `ARENA-CURRENT-STATE.md`, `ARENA-VNEXT-BLUEPRINT.md` + mockups
+  - `docs/missions/FE-BPLUS-BUILD.md`, `docs/design/*` (superseded `ARENA-CURRENT-STATE.md`/`ARENA-VNEXT-BLUEPRINT.md` deleted 28 Sep 2026 cleanup)
   - `JENNYSOL-CURRENT-STATE.md`, `JENNYSOL-ARCHITECTURE.md`
 
 ---

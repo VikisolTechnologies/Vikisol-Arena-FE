@@ -19,7 +19,9 @@ Details are in `docs/ARENA-VNEXT-MOBILE-JENNY-BLUEPRINT.md`.
    - P0-2: honest public counts, fictional seed companies, DEMO badges using `demoContent`.
 
    Then tests, then architect review, then merge and release on their own path.
-2. **M1–M8** (`docs/ARENA-VNEXT-MOBILE-JENNY-BLUEPRINT.md` §8), on branch **`feature/arena-vnext-mobile-jenny`** from `f310ee6`. Each mission file lives in `docs/missions/`.
+2. **Frontend: `docs/missions/FE-BPLUS-BUILD.md` (P0–P8); backend after the frontend is complete.**
+   On branch **`feature/arena-vnext-mobile-jenny`**. Claude Code owns the frontend; the design in
+   `docs/design/*` is final.
 3. **Founder preview approval.** The approved branch then goes to production through the promotion gate (blueprint §7).
 4. **Launch readiness**, after approval:
    - an indexed geohash-prefix nearby query and a distance-aware Feed; default area = launch zone;

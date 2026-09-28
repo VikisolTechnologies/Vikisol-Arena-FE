@@ -4,16 +4,16 @@ import path from "path";
 
 // .env.test is gitignored (per .gitignore's blanket `.env*` rule) - real credentials never get
 // committed. .env.test.example documents every variable this suite reads; copy it to .env.test
-// and fill in real values (see TEST-LOGINS.md for the actual demo-account credentials) to run
-// anything beyond the fully-public specs.
+// and fill in real values (ask the team for demo-account credentials - the doc that used to list
+// them was deleted in the 28 Sep 2026 docs cleanup since it held real passwords) to run anything
+// beyond the fully-public specs.
 dotenv.config({ path: path.resolve(__dirname, ".env.test") });
 
 // No environment currently exists other than this one - verified live (2026-08-14) that
 // arena.vikisol.in and arena-web-production-f1f4.up.railway.app return an IDENTICAL /version
 // commit hash (same for the two API hostnames), i.e. the custom domain is just an alias for the
-// same Railway deployment TEST-LOGINS.md calls "staging." There is one real environment, seeded
-// with demo accounts meant for exactly this kind of testing - see TESTING.md's "Data safety"
-// section for what that does and doesn't license this suite to do against it.
+// same Railway deployment. There is one real environment, seeded with demo accounts meant for
+// exactly this kind of testing.
 const BASE_URL = process.env.ARENA_BASE_URL || "https://arena.vikisol.in";
 
 export default defineConfig({

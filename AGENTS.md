@@ -7,9 +7,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 # Vikisol Arena — read first
 The authority order is in `CLAUDE.md`:
 1. `docs/VIKISOL-MASTER-CONTEXT.md`
-2. `docs/ARENA-MISSION.md`
-3. `docs/ARENA-VNEXT-MOBILE-JENNY-BLUEPRINT.md`
-4. `docs/PROGRESS.md`
-5. `docs/missions/*`
+2. `docs/missions/FE-BPLUS-BUILD.md` + `docs/design/*` (the design is final)
+3. `docs/ARENA-MISSION.md`
+4. `docs/ARENA-VNEXT-MOBILE-JENNY-BLUEPRINT.md`
+5. `docs/PROGRESS.md`
 
-Also follow `docs/AGENT-COLLABORATION-PROTOCOL.md` and the newest file in `docs/reviews/`. Root-level `*.md` plans and reports are historical evidence, not instructions. Continue from `PROGRESS.md`; don't restart.
+Also follow `docs/AGENT-COLLABORATION-PROTOCOL.md` and the newest file in `docs/reviews/`.
+Anything not in that list doesn't exist as instruction — the repo was cleaned of superseded plans
+and design docs on 28 Sep 2026. Continue from `PROGRESS.md`; don't restart.
