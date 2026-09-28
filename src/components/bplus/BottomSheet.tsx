@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, m, useDragControls, type PanInfo } from "motion/react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { duration, ease, fade, spring } from "@/lib/motion";
 
+const noopSubscribe = () => () => {};
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select,textarea,[tabindex]:not([tabindex="-1"])';
 /** Past either threshold a drag closes the sheet; otherwise it springs back. */
 const DISMISS_DISTANCE = 120;
@@ -32,6 +33,7 @@ export function BottomSheet({
   tone?: "paper" | "dark";
   showClose?: boolean;
 }) {
+  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
   const panel = useRef<HTMLDivElement>(null);
   const opener = useRef<Element | null>(null);
   const drag = useDragControls();
@@ -69,7 +71,9 @@ export function BottomSheet({
     if (info.offset.y > DISMISS_DISTANCE || info.velocity.y > DISMISS_VELOCITY) onClose();
   };
 
-  if (typeof document === "undefined") return null;
+  // Portals need `document`: render nothing on the server and during hydration, so a sheet that
+  // starts open can't mismatch.
+  if (!hydrated) return null;
   return createPortal(
     <AnimatePresence>
       {open && (

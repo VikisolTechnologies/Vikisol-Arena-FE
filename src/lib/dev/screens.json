@@ -216,7 +216,7 @@
     "index": 1,
     "title": "Create (need)",
     "route": "/home?create=1",
-    "status": "not-started",
+    "status": "in-progress",
     "commit": null
   },
   {
@@ -225,8 +225,8 @@
     "board": "need-outcome",
     "index": 2,
     "title": "Post a Need",
-    "route": null,
-    "status": "not-started",
+    "route": "/needs/new",
+    "status": "in-progress",
     "commit": null
   },
   {
@@ -235,8 +235,8 @@
     "board": "need-outcome",
     "index": 3,
     "title": "Need with offers",
-    "route": null,
-    "status": "not-started",
+    "route": "/dev/screen/need-page",
+    "status": "in-progress",
     "commit": null
   },
   {
@@ -245,8 +245,8 @@
     "board": "need-outcome",
     "index": 4,
     "title": "Offer details",
-    "route": null,
-    "status": "not-started",
+    "route": "/dev/screen/offer-details",
+    "status": "in-progress",
     "commit": null
   },
   {
@@ -255,8 +255,8 @@
     "board": "need-outcome",
     "index": 5,
     "title": "Private coordination room",
-    "route": null,
-    "status": "not-started",
+    "route": "/dev/screen/coordination-room",
+    "status": "in-progress",
     "commit": null
   },
   {
@@ -265,8 +265,8 @@
     "board": "need-outcome",
     "index": 6,
     "title": "Mark as completed",
-    "route": null,
-    "status": "not-started",
+    "route": "/dev/screen/mark-completed",
+    "status": "in-progress",
     "commit": null
   },
   {
@@ -276,7 +276,7 @@
     "index": 7,
     "title": "See the outcome",
     "route": "/work",
-    "status": "not-started",
+    "status": "in-progress",
     "commit": null
   },
   {

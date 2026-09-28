@@ -40,7 +40,7 @@ const CATEGORIES = [
   { id: "fitness", label: "Fitness", words: ["run", "fitness", "badminton", "yoga", "cycle", "trek", "sport", "football", "cricket"], icon: Footprints, tone: "bg-success/15 text-success-on-paper" },
   { id: "learning", label: "Learning", words: ["learn", "class", "workshop", "study", "tutor", "course"], icon: BookOpen, tone: "bg-info/15 text-info-on-paper" },
   { id: "community", label: "Community", words: ["community", "volunteer", "clean", "meet", "neighbour", "neighbor"], icon: Sprout, tone: "bg-success/15 text-success-on-paper" },
-  { id: "food", label: "Food", words: ["food", "cook", "meal", "lunch", "dinner", "breakfast"], icon: Utensils, tone: "bg-primary/15 text-primary-on-paper" },
+  { id: "food", label: "Food", words: ["food", "cook", "meal", "lunch", "dinner", "breakfast"], icon: Utensils, tone: "bg-primary/10 text-primary-on-paper" },
   { id: "arts", label: "Arts & Culture", words: ["art", "music", "pottery", "paint", "photo", "dance", "culture"], icon: Palette, tone: "bg-info/15 text-info-on-paper" },
   { id: "environment", label: "Environment", words: ["environment", "tree", "plant", "garden", "lake", "green"], icon: Leaf, tone: "bg-success/15 text-success-on-paper" },
 ] as const;
@@ -249,7 +249,7 @@ function DiscoverList() {
                   const IconCmp = s.id === "s-ux" ? Palette : s.id === "s-cycle" ? Wrench : GraduationCap;
                   return (
                     <div key={s.id} className="flex items-center gap-3 rounded-tile bg-paper p-3 text-paper-ink">
-                      <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl", s.tone === "info" ? "bg-info/15 text-info-on-paper" : s.tone === "success" ? "bg-success/15 text-success-on-paper" : "bg-primary/15 text-primary-on-paper")}>
+                      <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl", s.tone === "info" ? "bg-info/15 text-info-on-paper" : s.tone === "success" ? "bg-success/15 text-success-on-paper" : "bg-primary/10 text-primary-on-paper")}>
                         <IconCmp className="size-5" strokeWidth={1.9} aria-hidden />
                       </span>
                       <span className="min-w-0">

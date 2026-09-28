@@ -32,6 +32,7 @@ export function WorkScreen() {
   const guest = useGuest();
   const role = useSessionRole();
   const [tab, setTab] = useState<Tab>("all");
+  const [side, setSide] = useState<"all" | "need" | "offer">("all");
   const [rows, setRows] = useState<WorkRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
@@ -49,7 +50,14 @@ export function WorkScreen() {
     };
   }, [guest, role, reload]);
 
-  const groups = useMemo(() => GROUPS.filter((g) => tab === "all" || tab === g.id).map((g) => ({ ...g, rows: (rows ?? []).filter((r) => r.group === g.id) })), [rows, tab]);
+  const groups = useMemo(
+    () =>
+      GROUPS.filter((g) => tab === "all" || tab === g.id).map((g) => ({
+        ...g,
+        rows: (rows ?? []).filter((r) => r.group === g.id && (side === "all" || r.side === side)),
+      })),
+    [rows, tab, side],
+  );
 
   return (
     <AppShell>
@@ -59,6 +67,20 @@ export function WorkScreen() {
       </header>
       <div className="mt-5">
         <Pills label="Show" options={TABS} value={tab} onChange={setTab} />
+      </div>
+      <div className="mt-3">
+        <Pills
+          label="Whose"
+          tone="cream"
+          segmented
+          options={[
+            { id: "all", label: "Everything" },
+            { id: "need", label: "My needs" },
+            { id: "offer", label: "My offers" },
+          ]}
+          value={side}
+          onChange={setSide}
+        />
       </div>
 
       <div className="mt-6">
@@ -73,7 +95,7 @@ export function WorkScreen() {
         ) : rows.length === 0 ? (
           <StateCard kind="empty" title="Nothing in progress yet" detail="When you help with a need, join an activity or apply, it's tracked here." action={<ButtonLink href="/discover">Find something nearby</ButtonLink>} />
         ) : (
-          <m.div key={tab} initial="hidden" animate="shown" className="space-y-7">
+          <m.div key={`${tab}-${side}`} initial="hidden" animate="shown" className="space-y-7">
             {groups.map((g, gi) => (
               <m.section key={g.id} variants={rise} custom={gi} aria-label={g.label}>
                 <SectionHeader title={g.label} />
@@ -127,6 +149,7 @@ function WorkRowCard({ row, onAction }: { row: WorkRow; onAction: () => void }) 
           <CircleCheck className="size-4" strokeWidth={2} aria-hidden />
           {row.action === "resolve" ? "Mark as resolved" : row.action === "attendance" ? "Record attendance" : row.role}
         </p>
+        {done && <span className="mt-1 inline-block rounded-full bg-success/15 px-2 py-0.5 text-[12px] font-semibold text-success-on-paper">Completed</span>}
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1 text-paper-ink-muted">
         {done ? <Check className="size-5 text-success-on-paper" strokeWidth={2.5} aria-label="Completed" /> : <ChevronRight className="size-5" strokeWidth={1.75} aria-hidden />}

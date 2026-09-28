@@ -16,6 +16,10 @@ backend plan (FE-BPLUS-BUILD §6). One row per gap; newest phase last.
 | 8 | Discover & filter (P3) | Price on activities, for the "Free" chip | `Post.priceInr?: number` (0 = free) on create + responses | "Free" chip not shown |
 | 9 | Activity room (P3) | Photos in room messages | `POST /rooms/{id}/attachments` multipart → `{ url }`; `RoomMessage.mediaUrls?` | Text only; no image button |
 | 10 | Activity details (P3) | Host verification badge ("Verified neighbour") | `Post.authorVerificationLevel` | Shows "Joined N activities on Arena" only |
+| 11 | Mark as completed (P4) | Both people confirm an outcome | `POST /posts/{id}/outcome/confirm` → `{ confirmedBy: userId[] }`; `Post.outcomeConfirmations` | Owner closes (`PUT /posts/{id}/status`); sheet states who confirmed |
+| 12 | Need page (P4) | A short message with an offer of help | `POST /posts/{id}/joins` `{ message?: string (≤280) }`; `PostJoinRequest.message` | "Offered to help · time" |
+| 13 | Offer details (P4) | Offerer's shared interests and recent outcomes | `GET /profile/{id}` + `interests[]`, `recentOutcomes[{postId,title,closedAt}]` | Skills and bio only |
+| 14 | Need page / room (P4) | Edit or pause a need; edit pinned details | `PATCH /posts/{id}` `{ title?, body?, startsAt?, endsAt?, exactMeetingPoint? }`; `status: "paused"` | Share / Close only; pinned details read-only |
 
 Saved for real today (no gap): sign up, sign in, 2FA code, forgot/reset password, area
 (`PUT /profile/me/location` with `consent: "city"`) and current location (`consent: "precise"`,

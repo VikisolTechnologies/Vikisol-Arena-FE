@@ -14,9 +14,9 @@ import { createPost } from "@/lib/api/posts";
 import { createMyProject } from "@/lib/api/myProjects";
 
 type Icon = ComponentType<{ className?: string; strokeWidth?: number; "aria-hidden"?: boolean }>;
-type Kind = "ask" | "offer" | "activity" | "project";
+type Kind = "offer" | "activity" | "project";
 
-const ROWS: { id: Kind | "job" | "jenny"; title: string; detail: string; icon: Icon; disc: string }[] = [
+const ROWS: { id: Kind | "ask" | "job" | "jenny"; title: string; detail: string; icon: Icon; disc: string }[] = [
   { id: "ask", title: "Post a Need", detail: "Get help from nearby people", icon: Heart, disc: "bg-primary" },
   { id: "offer", title: "Make an Offer", detail: "Share what you can give", icon: Gift, disc: "bg-success" },
   { id: "activity", title: "Create an Activity", detail: "Bring people together", icon: Users, disc: "bg-info" },
@@ -26,14 +26,13 @@ const ROWS: { id: Kind | "job" | "jenny"; title: string; detail: string; icon: I
 ];
 
 const PROMPT: Record<Kind, { title: string; label: string; placeholder: string }> = {
-  ask: { title: "Post a Need", label: "What do you need help with?", placeholder: "e.g. Help moving a sofa this weekend" },
   offer: { title: "Make an Offer", label: "What can you offer?", placeholder: "e.g. Home-cooked meals for two this Saturday" },
   activity: { title: "Create an Activity", label: "What are you organising?", placeholder: "e.g. Sunrise run at Durgam Lake, all levels" },
   project: { title: "Start a Project", label: "What's the project?", placeholder: "e.g. A community garden on our street" },
 };
 
-/** Board: "What do you want to make happen?" — six options. The full forms arrive in P4; until
- *  then a short, real composer publishes through the existing endpoints. */
+/** Board: "What do you want to make happen?" — six options. Post a Need opens its full form
+ *  (`/needs/new`); Offer/Activity/Project keep a short, real composer on the existing endpoints. */
 export function CreateSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
   const guest = useGuest();
@@ -44,6 +43,11 @@ export function CreateSheet({ open, onClose }: { open: boolean; onClose: () => v
     if (id === "jenny") {
       onClose();
       router.push("/agent");
+      return;
+    }
+    if (id === "ask") {
+      onClose();
+      router.push("/needs/new");
       return;
     }
     if (id === "job") {

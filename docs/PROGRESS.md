@@ -7,17 +7,26 @@ Updated 28 Sep 2026. Resume from here.
 
 ## Current status
 
-**Next step: P4 Need → outcome** (board `need-outcome`) — Create sheet copy, Post a Need
-(`/needs/new`: category, details, when, where with approximate-area privacy, photos), Need page with
-offers (replaces `PostDetailLegacy` for `intentType` ask/offer at `/feed/[id]`), Offer details sheet
-(accept/decline), Private coordination room (reuse `RoomScreen`, need config), Mark as completed
-(sheet → outcome + thanks), outcome on Work/You. Write "Think (P4)" notes in BPLUS-SCREENS first;
-reuse existing post/offer/room calls; log gaps. Then P5…P8.
+**Next step: P5 Messages & trust** (board `messages`) — Inbox `/rooms` (All/Activities/Needs/
+Jobs/Direct, relative time, unread), Conversation (reconcile `/rooms/[id]` vs `/messages/[id]`;
+meeting-link card per correction #6; system messages distinct), Notifications `/notifications`
+(Today/Earlier, actions), Search `/search` (scope chips, "Most recent" only — correction #4),
+Settings & Privacy `/settings`, Report/Block sheet (reasons, evidence optional, what happens next),
+resilient states via one shared status primitive. Write "Think (P5)" first; reuse existing calls;
+log gaps (FE-API-GAPS is at #14). Then P6…P8.
 
 Live preview: `npm run dev` for this worktree is Cursor's (port 3010); the founder preview runs
 with `ARENA_NEXT_DIST_DIR=.next-founder npm run dev -- -H 0.0.0.0 -p 3001` →
 http://localhost:3001/dev/progress (phone: http://<LAN IP>:3001/dev/progress). Board frames:
 `node scripts/dev/cut-boards.mjs`; statuses in `src/lib/dev/screens.json`.
+
+**P4 Need → outcome — done** (commit "FE B+ P4"): Post a Need `/needs/new` (validation after
+submit, offline draft, photos via media signature, preview), Need page + Offer details at
+`/feed/[id]` for asks (offers = join requests; Accept → `decideJoin` → room), private coordination
+room (Plan/Chat, meeting link as a room message, Mark as completed → `closeNeed` with honest
+confirmation rows), Work My needs / My offers. Specimens `/dev/screen/{need-page,offer-details,
+coordination-room,mark-completed}`. 45/45 local Playwright (3 engines); axe clean; review
+`docs/reviews/p4.md`. Gaps #11–14 logged.
 
 **P3 Discover & join — done** (commit "FE B+ P3"): Activity details at `/feed/[id]` (activities;
 exact point only after approval; pinned Request to join), Join request sent sheet (paper plane +

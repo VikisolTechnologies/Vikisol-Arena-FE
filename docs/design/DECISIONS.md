@@ -3,6 +3,31 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **28 Sep (P4)** — A need is a post with `intentType: "ask"`; an **offer of help is a real join
+  request** and "Accept & open chat" is `decideJoin(approve)`, which opens the room. Needs are posted
+  with `visibility: "approval"` so the owner chooses who helps.
+- **28 Sep (P4)** — Post a Need adds **More details (optional)** (board has none, but the need page
+  shows a description); only "what" and category are required. Preferred time is a real window on
+  the post (Today / This weekend / Next week / Flexible). The draft stays on this device (offline).
+- **28 Sep (P4)** — Share with: "Nearby people ({area})" = global audience, "People who follow me" =
+  followers; each says who can see it. A "local only" audience isn't selectable in the API yet.
+- **28 Sep (P4)** — Offer rows show "Offered to help · 2 h ago" (join requests carry no message,
+  gap #12); Offer details shows the offerer's real public profile (title, area, bio, skills) with
+  **Skills** instead of "Shared interests" and no "Recent outcomes" (gap #13).
+- **28 Sep (P4)** — Need page owner actions: **Share / Open chat** and **Close** (`cancelPost`); Edit
+  and Pause are left out (no endpoints, gap #14).
+- **28 Sep (P4)** — Coordination room: **Plan / Chat** (Files left out, gap #9); "Add meeting link"
+  (correction #6) posts `Meeting link: https://…` into the room and the pinned card shows the newest
+  one — https only, opened with `noopener`. Pinned details are read-only ("Update" needs gap #14).
+- **28 Sep (P4)** — Mark as completed is the owner's real `closeNeed`. Two-sided confirmation doesn't
+  exist (gap #11), so the sheet says "Confirmed on your side" and that the other person *sees it as
+  completed* — never a fake "Waiting for Rohit". The optional note is sent into the chat; the
+  outcome photo is left out (gap #9).
+- **28 Sep (P4)** — Work gets **Everything / My needs / My offers** (board shows the two; "Everything"
+  keeps activities and applications reachable) and a Completed pill on finished rows.
+- **28 Sep (P4)** — Orange-on-tint status pills use a 10% tint (15% was 4.3:1; 10% is 4.54:1).
+- **28 Sep (P4)** — `BottomSheet` renders nothing until hydrated: a sheet open on first render
+  used to cause a hydration mismatch.
 - **28 Sep (P3)** — Motion features (`domMax`) now load **synchronously**, reversing the P1 async
   choice: an `AnimatePresence mode="wait"` exit that began before the async chunk arrived never
   finished, so the Feed could stay blank instead of showing its error (caught by the local suite on

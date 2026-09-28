@@ -214,6 +214,8 @@ Forgot = `/auth/forgot`; Reset = `/auth/reset/[token]` and `/reset-password`; on
 
 ## Board: From a local need to a real outcome B+
 
+- **Think (P4):** asking for help is vulnerable — the form must feel short and safe. Only "what" and a category are required; the area is approximate and the screen says who can see it; the draft survives going offline. On the Need page the owner decides: each offer of help is a real join request (Decline / Accept & open chat → `decideJoin` → the private room). The room's Plan tab pins what was agreed; "Add meeting link" posts the link into the room (no separate endpoint) and the card shows the latest one. Completion is the success moment (check draws, small burst, `vibrate`), done by the owner with `closeNeed`; the backend has no two-sided confirmation yet, so the sheet says exactly who has confirmed and it's logged as a gap — never a fake "Waiting for Rohit". Work shows it under Completed with My needs / My offers.
+
 ### 1. Create ("What do you want to make happen?") — the Create bottom sheet, same as B+-core #5, fuller copy confirmed here
 - Six rows exactly: Post a Need / Make an Offer / Create an Activity / Start a Project / Post a Job / Ask Jenny, each icon-tile + label + one-line subtitle as on board.
 

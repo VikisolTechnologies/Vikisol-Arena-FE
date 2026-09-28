@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { ActivityMissing, ActivityScreen } from "@/components/activity/ActivityScreen";
+import { NeedScreen } from "@/components/needs/NeedScreen";
 import { PostDetailLegacy } from "@/components/legacy/PostDetailLegacy";
 import { AppShell } from "@/components/bplus/AppShell";
 import { Skeleton } from "@/components/bplus/Primitives";
 import { getPost } from "@/lib/api/posts";
 import type { Post } from "@/lib/types";
 
-/** Activities use the B+ activity screen (P3). Needs/offers/updates keep the previous detail
- *  view until P4 rebuilds them. */
+/** Activities (P3) and needs (P4) use their B+ screens. Offers, updates and company posts keep
+ *  the previous detail view until their boards are built. */
 export default function PostPage() {
   const { id } = useParams<{ id: string }>();
   const [post, setPost] = useState<Post | null | undefined>(undefined);
@@ -32,5 +33,7 @@ export default function PostPage() {
     );
   }
   if (post === null) return <ActivityMissing />;
-  return post.intentType === "activity" ? <ActivityScreen post={post} /> : <PostDetailLegacy />;
+  if (post.intentType === "activity") return <ActivityScreen post={post} />;
+  if (post.intentType === "ask") return <NeedScreen post={post} />;
+  return <PostDetailLegacy />;
 }
