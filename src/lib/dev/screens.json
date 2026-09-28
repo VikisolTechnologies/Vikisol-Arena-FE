@@ -503,8 +503,8 @@
     "index": 0,
     "title": "A1 What kind? (search + categories)",
     "route": "/activities/new",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "390af7e",
     "note": "No board \u2014 designed in B+"
   },
   {
@@ -514,8 +514,8 @@
     "index": 0,
     "title": "A2\u2013A4 Activity intake (basics, group & cost, type questions, bring, when, where, who)",
     "route": "/activities/new?step=details",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "390af7e",
     "note": "No board \u2014 designed in B+"
   },
   {
@@ -525,8 +525,8 @@
     "index": 0,
     "title": "A5 Cover by Jenny (procedural card; AI behind a flag)",
     "route": "/dev/screen/activity-cover",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "390af7e",
     "note": "No board \u2014 designed in B+"
   },
   {
@@ -536,8 +536,8 @@
     "index": 0,
     "title": "A6 Preview & publish",
     "route": "/activities/new?step=preview",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "390af7e",
     "note": "No board \u2014 designed in B+"
   },
   {
@@ -547,8 +547,8 @@
     "index": 0,
     "title": "A7 Published \u2014 share, WhatsApp, invite with a reason",
     "route": "/dev/screen/activity-published",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "390af7e",
     "note": "No board \u2014 designed in B+"
   },
   {
@@ -558,8 +558,8 @@
     "index": 0,
     "title": "A8 Manage \u2014 starting soon, requests, room",
     "route": "/dev/screen/activity-details",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "390af7e",
     "note": "No board \u2014 designed in B+"
   },
   {
@@ -569,8 +569,8 @@
     "index": 0,
     "title": "A12 Check-in (host marks who came)",
     "route": "/dev/screen/activity-details",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "390af7e",
     "note": "No board \u2014 designed in B+"
   },
   {
@@ -580,8 +580,8 @@
     "index": 0,
     "title": "A11 Cancel with a reason",
     "route": "/dev/screen/activity-details",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "390af7e",
     "note": "No board \u2014 designed in B+"
   },
   {
@@ -591,8 +591,8 @@
     "index": 0,
     "title": "A16 Leave before the start",
     "route": "/dev/screen/approved-ready",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "390af7e",
     "note": "No board \u2014 designed in B+"
   },
   {
@@ -602,8 +602,8 @@
     "index": 0,
     "title": "Procedural covers (every type)",
     "route": "/dev/covers",
-    "status": "in-progress",
-    "commit": null,
+    "status": "done",
+    "commit": "390af7e",
     "note": "No board \u2014 designed in B+"
   },
   {
