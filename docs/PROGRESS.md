@@ -8,13 +8,24 @@ Updated 28 Sep 2026. Resume from here.
 ## Current status
 
 On branch `feature/arena-vnext-mobile-jenny`. Setup done: mission recorded, screen spec + tokens
-written (`docs/design/BPLUS-SCREENS.md`, `docs/design/TOKENS.md`), repo docs cleaned to the
-kept-list in `CLAUDE.md`/`AGENTS.md` (commit "docs: remove superseded plans, designs and
-credentials" — see the deleted-files list below). **Not started yet: P0 (foundation) build** —
-tokens/fonts in Tailwind, AppShell rebuild, component kit, data layer, `/dev/kit`. M1A (old
-onboarding/auth work at `d746cf9`/`1e8bf98`, built to a now-superseded design) is still live in
-the tree; P1 will restyle or rebuild it against the real B+ boards, deleting the old version in
-the same commit per the mission's "no parallel old and new" rule.
+written (`docs/design/BPLUS-SCREENS.md`, `docs/design/TOKENS.md`, `docs/design/DECISIONS.md`),
+repo docs cleaned to the kept-list in `CLAUDE.md`/`AGENTS.md` (commit "docs: remove superseded
+plans, designs and credentials" — see the deleted-files list below).
+
+**P0 foundation, in progress:**
+- Done: `[data-theme="bplus"]` CSS scope with the real TOKENS.md hex values, additive alongside
+  the existing `[data-theme="product"]` (enterprise/admin/platform-admin shells untouched, per
+  mission §6); Fraunces self-hosted the same way as the existing fonts; `ArenaLogo` component
+  (mark + full variants). Commit `7cf9696`. Clean tsc + build.
+- Not done yet: AppShell rebuild (opt into `data-theme="bplus"`, real B+ bottom bar, header
+  variants, `(+)` Create sheet, safe areas), the rest of the component kit (chips, segmented
+  tabs, hero activity card, cream need/offer cards, tiles, list row, status pill, avatar stack,
+  stepper dots, form fields, toggle, bottom sheet, empty/error/offline/skeleton states), motion
+  primitives (`motion` + `LazyMotion`/`domAnimation`/`MotionConfig`), the `src/lib/data/` typed
+  interface layer, `/dev/kit`. This is the bulk of P0 — continues next.
+- P1–P8 not started. M1A (old onboarding/auth at `d746cf9`/`1e8bf98`, built to a now-superseded
+  design) is still live in the tree; P1 restyles/rebuilds it against the real B+ boards, deleting
+  the old version in the same commit per the mission's "no parallel old and new" rule.
 
 ## Deleted (28 Sep 2026 cleanup)
 
