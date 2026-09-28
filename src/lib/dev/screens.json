@@ -216,8 +216,8 @@
     "index": 1,
     "title": "Create (need)",
     "route": "/home?create=1",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "f81aebf"
   },
   {
     "id": "post-need",
@@ -226,8 +226,8 @@
     "index": 2,
     "title": "Post a Need",
     "route": "/needs/new",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "f81aebf"
   },
   {
     "id": "need-page",
@@ -236,8 +236,8 @@
     "index": 3,
     "title": "Need with offers",
     "route": "/dev/screen/need-page",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "f81aebf"
   },
   {
     "id": "offer-details",
@@ -246,8 +246,8 @@
     "index": 4,
     "title": "Offer details",
     "route": "/dev/screen/offer-details",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "f81aebf"
   },
   {
     "id": "coordination-room",
@@ -256,8 +256,8 @@
     "index": 5,
     "title": "Private coordination room",
     "route": "/dev/screen/coordination-room",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "f81aebf"
   },
   {
     "id": "mark-completed",
@@ -266,8 +266,8 @@
     "index": 6,
     "title": "Mark as completed",
     "route": "/dev/screen/mark-completed",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "f81aebf"
   },
   {
     "id": "see-outcome",
@@ -276,8 +276,8 @@
     "index": 7,
     "title": "See the outcome",
     "route": "/work",
-    "status": "in-progress",
-    "commit": null
+    "status": "done",
+    "commit": "f81aebf"
   },
   {
     "id": "inbox",
