@@ -7,7 +7,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 # Vikisol Arena — read first
 The authority order is in `CLAUDE.md`:
 1. `docs/VIKISOL-MASTER-CONTEXT.md`
-2. `docs/missions/FE-BPLUS-BUILD.md` + `docs/design/*` (the design is final)
+2. `docs/missions/FE-BPLUS-BUILD.md` + `docs/design/ARENA-APP-FLOW.md` (flow: what the app does
+   and asks) + `docs/design/*` (the design is final)
 3. `docs/ARENA-MISSION.md`
 4. `docs/ARENA-VNEXT-MOBILE-JENNY-BLUEPRINT.md`
 5. `docs/PROGRESS.md`

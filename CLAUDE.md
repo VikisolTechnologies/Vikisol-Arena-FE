@@ -5,6 +5,10 @@
 2. `docs/missions/FE-BPLUS-BUILD.md` + `docs/design/*` (`BPLUS-SCREENS.md`, `TOKENS.md`,
    `DECISIONS.md`, `boards/*`): the frontend mission and the design. **The design is final** —
    don't propose a different visual direction; extend or correct within it per the mission's §2.
+   **`docs/design/ARENA-APP-FLOW.md`** sits beside the mission: the boards decide how screens
+   look; the flow spec decides what the app does and asks (intake, missing screens, Arena for
+   Business `/enterprise/*`, Arena Admin `/admin/*`, Jenny covers). Screens without a board are
+   designed in B+ and marked "No board — designed in B+".
 3. `docs/ARENA-MISSION.md`: the active mission and sequence.
 4. `docs/ARENA-VNEXT-MOBILE-JENNY-BLUEPRINT.md`: security boundary, the Jenny live-vs-proposed
    contract, automation safety, Gemini, branches and deployment.
