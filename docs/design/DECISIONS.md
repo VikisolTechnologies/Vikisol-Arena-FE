@@ -3,6 +3,27 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **29 Sep (P6)** — Built the **intake engine** (`src/lib/intake/`, `IntakeForm`) first and expressed
+  Career §6 as a schema, rather than hand-building Career and rebuilding it in P6b. ≤4 questions
+  per step (dev warning), "why" lines, visibility locks, "Add more details", Jenny-filled glow,
+  autosaved drafts, review with edit-from-review.
+- **29 Sep (P6)** — Career publish sends only what Arena BE stores (title, experience years, skills,
+  preferred locations, openTo from intent, resume, consent). Answers marked **Only me / Only employers
+  I apply to** (current company, CTC, status, notice, proficiency, links, education) **stay on the
+  device** until per-field visibility exists (gap #19) — sending them to a profile field whose
+  audience we can't control would break "nothing is shared until the person chooses".
+- **29 Sep (P6)** — No match percentages anywhere (flow §6): job cards and details show evidence
+  ("skills 3/5", ✓/◌ per skill). The old job page's % badge and the application page's invented
+  "agent's rationale" + generated résumé (`TailoredResume`) were removed.
+- **29 Sep (P6)** — Apply sheet shows exactly what's shared and needs a consent tick; screening
+  answers, cover note and "include my CTC" aren't collected because the apply API takes `jobId`
+  only (gap #20) — nothing is asked that can't be sent.
+- **29 Sep (P6)** — Tracker stages come from the real `ApplicationStage` (applied → screening →
+  interview → offer, plus "Not selected"); no "Hired" step or offer accept/decline (gap #21).
+- **29 Sep (P6)** — Hire locally explains Arena for Business and offers sign-out → sign-up (a
+  personal account can't open `/enterprise/*`); P7/P9 add the proper role chooser.
+- **29 Sep (P6)** — Jobs lives at `/jobs` (reached from a "Jobs" pill on Work); company marks are
+  colour monograms (correction #3). No save/bookmark, People or Reviews tabs (gap #22).
 - **28 Sep (P5)** — Inbox merges rooms and direct chats (unchanged behaviour, `?with=` kept);
   filters All / Activities / Needs / Jobs / Direct come from the room's post type and the chat's
   job context. Times are relative (correction #8). Old `inbox-v3` components deleted.

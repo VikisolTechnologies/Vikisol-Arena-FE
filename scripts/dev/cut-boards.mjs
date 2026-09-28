@@ -10,7 +10,7 @@ const VNEXT = { xs: [14, 290, 565, 841, 1116, 1392, 1668], y: 148, w: 262, h: 61
 const LAYOUT = { "jenny-layer": VNEXT, "jenny-automation": VNEXT };
 
 mkdirSync("public/dev/boards", { recursive: true });
-for (const s of SCREENS) {
+for (const s of SCREENS.filter((x) => x.board !== "none")) {
   const g = LAYOUT[s.board] ?? B_PLUS;
   await sharp(`docs/design/boards/${s.board}.png`)
     .extract({ left: g.xs[s.index - 1], top: g.y, width: g.w, height: g.h })

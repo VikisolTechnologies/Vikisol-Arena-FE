@@ -38,8 +38,12 @@ export default function ProgressPage() {
               {screens.map((s) => (
                 <li key={s.id} className="flex flex-col overflow-hidden rounded-tile border border-line bg-surface">
                   <Link href={`/dev/compare/${s.id}`} className="block aspect-[2/5] overflow-hidden bg-black/30">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- static board crop */}
-                    <img src={`/dev/boards/${s.id}.webp`} alt={`Board: ${s.title}`} loading="lazy" className="size-full object-cover object-top" />
+                    {s.board === "none" ? (
+                      <span className="grid size-full place-items-center p-2 text-center text-[11px] leading-tight text-faint">No board — designed in B+</span>
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element -- static board crop
+                      <img src={`/dev/boards/${s.id}.webp`} alt={`Board: ${s.title}`} loading="lazy" className="size-full object-cover object-top" />
+                    )}
                   </Link>
                   <div className="flex flex-1 flex-col gap-1.5 p-2.5">
                     <p className="text-[13px] font-semibold leading-tight">{s.title}</p>

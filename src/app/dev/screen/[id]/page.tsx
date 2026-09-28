@@ -4,13 +4,15 @@ import { notFound, useParams } from "next/navigation";
 import { ActivityScreen } from "@/components/activity/ActivityScreen";
 import { RoomScreen } from "@/components/activity/RoomScreen";
 import { NeedScreen } from "@/components/needs/NeedScreen";
+import { JobDetailScreen } from "@/components/career/JobDetailScreen";
+import { ApplicationScreen } from "@/components/career/ApplicationScreen";
 import { ConversationScreen } from "@/components/inbox/ConversationScreen";
 import { ReportSheet } from "@/components/trust/ReportSheet";
 import { AppShell } from "@/components/bplus/AppShell";
 import { Button } from "@/components/bplus/Button";
 import { StateCard } from "@/components/bplus/Primitives";
 import { FIXTURES_ALLOWED } from "@/lib/data/mode";
-import { SPECIMEN_ACTIVITY, SPECIMEN_APPROVED, SPECIMEN_CONVERSATION, SPECIMEN_NEED, SPECIMEN_NEED_ROOM, SPECIMEN_OFFERER, SPECIMEN_OFFERS, SPECIMEN_PENDING, SPECIMEN_ROOM } from "@/lib/dev/specimens";
+import { SPECIMEN_ACTIVITY, SPECIMEN_APPLICATION, SPECIMEN_CANDIDATE, SPECIMEN_JOB, SPECIMEN_APPROVED, SPECIMEN_CONVERSATION, SPECIMEN_NEED, SPECIMEN_NEED_ROOM, SPECIMEN_OFFERER, SPECIMEN_OFFERS, SPECIMEN_PENDING, SPECIMEN_ROOM } from "@/lib/dev/specimens";
 
 /** Compare-page specimens: the real screen components with fixed fictional data, for screens
  *  whose live route needs a real record id. Buttons still call the real API (and will fail
@@ -54,6 +56,12 @@ export default function SpecimenPage() {
           </div>
         </AppShell>
       );
+    case "job-details":
+      return <JobDetailScreen id="specimen-job" specimen={{ job: SPECIMEN_JOB, profile: SPECIMEN_CANDIDATE }} />;
+    case "apply-sheet":
+      return <JobDetailScreen id="specimen-job" specimen={{ job: SPECIMEN_JOB, profile: SPECIMEN_CANDIDATE, applyOpen: true }} />;
+    case "apply-track":
+      return <ApplicationScreen id="specimen-app" specimen={{ application: SPECIMEN_APPLICATION, job: SPECIMEN_JOB }} />;
     default:
       notFound();
   }

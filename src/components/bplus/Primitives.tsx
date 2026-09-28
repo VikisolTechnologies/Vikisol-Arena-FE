@@ -19,6 +19,7 @@ export function Pills<T extends string>({
   icons,
   segmented = false,
   compact = false,
+  onPaper = false,
 }: {
   options: readonly { id: T; label: string }[];
   value: T;
@@ -30,10 +31,12 @@ export function Pills<T extends string>({
   segmented?: boolean;
   /** Smaller pills so five filters fit one row at 360px (Inbox, Notifications, Search boards). */
   compact?: boolean;
+  /** On a cream surface: ink text and ink hairlines for the unselected options. */
+  onPaper?: boolean;
 }) {
   const group = useId();
   return (
-    <div role="radiogroup" aria-label={label} className={segmented ? "grid auto-cols-fr grid-flow-col rounded-full border border-field-line p-1" : cn("flex flex-wrap", compact ? "gap-1.5" : "gap-2")}>
+    <div role="radiogroup" aria-label={label} className={segmented ? cn("grid auto-cols-fr grid-flow-col rounded-full border p-1", onPaper ? "border-paper-ink/25 bg-white" : "border-field-line") : cn("flex flex-wrap", compact ? "gap-1.5" : "gap-2")}>
       {options.map((o) => {
         const on = o.id === value;
         const IconCmp = icons?.[o.id] as Icon | undefined;
@@ -50,7 +53,7 @@ export function Pills<T extends string>({
               "relative inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[14px] font-medium outline-none after:absolute after:-inset-y-1 after:inset-x-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
               segmented && "h-10 justify-center",
               compact && "h-8 px-3 text-[13px] after:-inset-y-1.5",
-              on ? "text-paper-ink" : cn("text-foreground/90", !segmented && "border border-field-line"),
+              on ? "text-paper-ink" : cn(onPaper ? "text-paper-ink" : "text-foreground/90", !segmented && "border border-field-line"),
             )}
           >
             {on && (

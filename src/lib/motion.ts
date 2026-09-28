@@ -91,3 +91,13 @@ export const celebrate = { duration: 0.7, ease: ease.out, delay: 0.05 } satisfie
 export function vibrate() {
   if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate(10);
 }
+
+/** "Jenny filled — check": a ring that glows once around a field Jenny pre-filled (§11). */
+export const jennyGlow: { initial: TargetAndTransition; animate: TargetAndTransition; transition: Transition } = {
+  initial: { opacity: 0 },
+  animate: { opacity: [0, 1, 0] },
+  transition: { duration: 1.2, ease: ease.out, times: [0, 0.35, 1] },
+};
+
+/** A selected chip springs a little (intake chips, §11). */
+export const chipPop: TargetAndTransition = { scale: [1, 1.06, 1], transition: { duration: duration.slow, ease: ease.out } };

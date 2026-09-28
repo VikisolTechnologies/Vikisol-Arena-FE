@@ -1,4 +1,4 @@
-import type { Conversation, Post, PostJoinRequest, PublicCandidateProfile, RoomMember, RoomMessage, ThreadMessage } from "@/lib/types";
+import type { Application, CandidateProfile, Job, Conversation, Post, PostJoinRequest, PublicCandidateProfile, RoomMember, RoomMessage, ThreadMessage } from "@/lib/types";
 import type { RoomSpecimen } from "@/components/activity/RoomScreen";
 import { timeWindow } from "@/lib/data/needs";
 
@@ -146,4 +146,22 @@ export const SPECIMEN_CONVERSATION = {
     tm("t4", false, "Meeting link: https://meet.example.com/garden-plan", 29),
   ],
   post: SPECIMEN_GARDEN,
+};
+
+/* ── P6: a job, the candidate, an application ── */
+export const SPECIMEN_JOB: Job = {
+  id: "specimen-job", title: "Product Designer", company: "GreenLeaf Labs", companyEmoji: "g", industry: "Design",
+  location: "Gachibowli", remote: false, employmentType: "Full Time", salaryMin: 14, salaryMax: 22,
+  skills: ["Figma", "UX research", "Prototyping", "Design systems", "Illustration"],
+  description: "We're building products that make sustainable living easier for Indian cities. Join our design team to shape products that create real-world impact.\n\nYou'll own end-to-end flows, run lightweight research with residents and work closely with engineering.",
+  postedDaysAgo: 2, matchPercentage: 0,
+};
+export const SPECIMEN_CANDIDATE = {
+  id: "me", name: "Priya Sharma", avatarEmoji: "p", title: "Product Designer", industry: "Design", location: "Hyderabad", remote: false,
+  skills: [{ name: "Figma" }, { name: "UX research" }, { name: "Prototyping" }, { name: "Motion" }], experienceYears: 4, rateFloor: 12,
+  openTo: ["full-time"], careerHealth: 0, consent: { autoApply: false, searchableByEnterprises: true }, autonomy: "manual",
+  homeCity: "Gachibowli", resumeFileName: "Priya_Sharma_Resume.pdf", cameForJob: true,
+} as CandidateProfile;
+export const SPECIMEN_APPLICATION: Application = {
+  id: "specimen-app", candidateId: "me", jobId: "specimen-job", stage: "screening", appliedAt: inHours(-24 * 3), updatedAt: inHours(-24),
 };

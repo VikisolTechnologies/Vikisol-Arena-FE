@@ -256,6 +256,8 @@ Forgot = `/auth/forgot`; Reset = `/auth/reset/[token]` and `/reset-password`; on
 
 ## Board: Open the career layer B+
 
+- **Think (P6):** career is opt-in and must feel safe. One identity: the entry is a quiet card on You. Intent first (four choices), then the intake engine asks at most four things per step with a "why" and a lock on anything private; pay and current company stay "Only me". The visibility preview lists exactly what each audience sees, honestly (the public profile already shows title and skills). Jobs show evidence, never a match score; Apply lists exactly what's shared and asks for consent; the tracker shows only real stages.
+
 ### 1. My Profile (career entry point) — `/identity`, extends B+-core Profile #6
 - Adds: segmented tabs (For you / About / Impact), "Recent outcomes" list, and an **"Open career profile"** row (icon tile + "Explore opportunities when you're ready.") — this is how a community-only member opts into career without a second signup (Arena's "one progressive identity" rule).
 

@@ -12,8 +12,12 @@ export function Pair({ screen }: { screen: DevScreen }) {
         <figure>
           <figcaption className="mb-1.5 text-[12px] uppercase tracking-wide text-faint">Board</figcaption>
           <div className="h-[844px] w-[390px] overflow-hidden rounded-[28px] border border-line bg-black">
-            {/* eslint-disable-next-line @next/next/no-img-element -- static board crop */}
-            <img src={`/dev/boards/${screen.id}.webp`} alt={`Board: ${screen.title}`} className="size-full object-contain" />
+            {screen.board === "none" ? (
+              <div className="grid size-full place-items-center p-8 text-center text-[16px] text-white/80">No board — designed in B+ from docs/design/ARENA-APP-FLOW.md</div>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element -- static board crop
+              <img src={`/dev/boards/${screen.id}.webp`} alt={`Board: ${screen.title}`} className="size-full object-contain" />
+            )}
           </div>
         </figure>
         <figure>

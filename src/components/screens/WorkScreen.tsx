@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { m } from "motion/react";
-import { Check, ChevronRight, CircleCheck, MessageSquare, Sprout } from "lucide-react";
+import { Briefcase, Check, ChevronRight, CircleCheck, MessageSquare, Sprout } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { press, rise, spring } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
@@ -61,9 +61,14 @@ export function WorkScreen() {
 
   return (
     <AppShell>
-      <header className="pt-3">
-        <h1 className="font-display-serif text-[34px] font-medium leading-tight">Work</h1>
-        <p className="mt-1 text-[15px] text-faint">From chats to real progress.</p>
+      <header className="flex items-start justify-between gap-3 pt-3">
+        <div>
+          <h1 className="font-display-serif text-[34px] font-medium leading-tight">Work</h1>
+          <p className="mt-1 text-[15px] text-faint">From chats to real progress.</p>
+        </div>
+        <Link href="/jobs" className="mt-2 inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-field-line px-4 text-[15px] font-semibold">
+          <Briefcase className="size-4" aria-hidden /> Jobs
+        </Link>
       </header>
       <div className="mt-5">
         <Pills label="Show" options={TABS} value={tab} onChange={setTab} />
