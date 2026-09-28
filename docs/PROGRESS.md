@@ -7,8 +7,24 @@ Updated 28 Sep 2026. Resume from here.
 
 ## Current status
 
-On branch `feature/arena-vnext-mobile-jenny`. Order (founder, 28 Sep): P0-lite → P1 → preview →
-P2…P8 without stopping; the rest of the P0 kit is built as later screens need it.
+**Next step: P3 Discover & join** — Activity details (`/feed/[id]` for activities: hero with
+shared layoutId from the card, host card, facts, Request to join), Join request sent (paper-plane
+sheet + status timeline), Approved & ready (check draw + ≤24 confetti, meeting card, calendar/
+reminder/share), Activity room (`/rooms/[id]`: Chat / Details / People), plus Discover's filter
+chips from the Discover & join board (Today / Weekend / Free / Fitness / Learning / All filters).
+Reuse the existing post/join/room calls; log gaps in `docs/FE-API-GAPS.md`. Then P4…P8.
+
+Live preview: `npm run dev` for this worktree is Cursor's (port 3010); the founder preview runs
+with `ARENA_NEXT_DIST_DIR=.next-founder npm run dev -- -H 0.0.0.0 -p 3001` →
+http://localhost:3001/dev/progress (phone: http://<LAN IP>:3001/dev/progress). Board frames:
+`node scripts/dev/cut-boards.mjs`; statuses in `src/lib/dev/screens.json`.
+
+**P2 Core — done** (`49552e0`): B+ AppShell (Feed · Discover · (+) · Work · You), drag-to-dismiss
+BottomSheet, Create sheet, Feed (Nearby default + honest fallback, pull to refresh), Discover
+(+ map mode, drawn map when no Maps key), Work (Active/Upcoming/Completed + resolve/attendance
+sheets), You, Jenny home (real conversation; status only from real replies). Old
+`src/components/vnext/*` and the old /agent page components deleted. 24/24 local Playwright on a
+production build; axe clean; no overflow 320–430. Unpushed if GitHub was unreachable — push first.
 
 **P1 Entry & onboarding — built** (commit "FE B+ P1: entry and onboarding"):
 - Screens: Welcome (`/`, `/auth`), Sign up / Sign in / 2FA code (`/auth?mode=`), Forgot and Reset

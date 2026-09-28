@@ -77,7 +77,7 @@
   "title": "Feed",
   "route": "/home",
   "status": "done",
-  "commit": "P2"
+  "commit": "49552e0"
  },
  {
   "id": "discover",
@@ -87,7 +87,7 @@
   "title": "Discover",
   "route": "/discover",
   "status": "done",
-  "commit": "P2"
+  "commit": "49552e0"
  },
  {
   "id": "map",
@@ -97,7 +97,7 @@
   "title": "Map (Discover map mode)",
   "route": "/discover?view=map",
   "status": "done",
-  "commit": "P2"
+  "commit": "49552e0"
  },
  {
   "id": "work",
@@ -107,7 +107,7 @@
   "title": "Work",
   "route": "/work",
   "status": "done",
-  "commit": "P2"
+  "commit": "49552e0"
  },
  {
   "id": "create",
@@ -117,7 +117,7 @@
   "title": "Create sheet",
   "route": "/home?create=1",
   "status": "done",
-  "commit": "P2"
+  "commit": "49552e0"
  },
  {
   "id": "profile",
@@ -127,7 +127,7 @@
   "title": "You (profile)",
   "route": "/identity",
   "status": "done",
-  "commit": "P2"
+  "commit": "49552e0"
  },
  {
   "id": "jenny-home",
@@ -137,7 +137,7 @@
   "title": "Jenny",
   "route": "/agent",
   "status": "done",
-  "commit": "P2"
+  "commit": "49552e0"
  },
  {
   "id": "personal-feed",
