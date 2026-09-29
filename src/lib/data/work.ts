@@ -59,11 +59,11 @@ export async function loadWork(role: string): Promise<WorkRow[]> {
     const job = jobs[i];
     rows.push({
       id: `application-${a.id}`,
-      group: a.stage === "rejected" ? "completed" : "active",
+      group: a.stage === "rejected" || a.stage === "hired" ? "completed" : "active",
       title: job ? `${job.title} · ${job.company}` : "Job application",
       company: job?.company,
       when: a.updatedAt,
-      role: a.stage === "interview" ? "Interview stage" : a.stage === "offer" ? "Offer received" : a.stage === "rejected" ? "Not selected" : "You applied",
+      role: a.stage === "interview" ? "Interview stage" : a.stage === "offer" ? "Offer received" : a.stage === "hired" ? "You're hired" : a.stage === "rejected" ? "Not selected" : "You applied",
       href: a.stage === "interview" ? `/interviews/${a.id}` : `/applications/${a.id}`,
     });
   });
@@ -86,7 +86,7 @@ export async function loadWork(role: string): Promise<WorkRow[]> {
       href: `/enterprise/interviews/mine/${i.id}`,
     });
   }
-  for (const p of settled(mine, []).filter((p) => p.intentType === "activity" || p.intentType === "ask" || p.intentType === "offer")) {
+  for (const p of settled(mine, []).filter((p) => p.intentType === "activity" || p.intentType === "ask" || p.intentType === "offer" || p.intentType === "collab")) {
     const done = finished(p.status);
     const isNeed = p.intentType === "ask";
     const needsAttendance = p.intentType === "activity" && past(p.startsAt) && !done;
@@ -95,7 +95,7 @@ export async function loadWork(role: string): Promise<WorkRow[]> {
       group: done ? "completed" : p.intentType === "activity" && future(p.startsAt) ? "upcoming" : "active",
       title: titleOf(p),
       when: p.startsAt,
-      role: isNeed ? "Your need" : p.intentType === "offer" ? "Your offer" : "You're hosting",
+      role: isNeed ? "Your need" : p.intentType === "offer" ? "Your offer" : p.intentType === "collab" ? "Your project" : "You're hosting",
       href: isNeed && !done ? undefined : needsAttendance ? undefined : p.roomId ? `/rooms/${p.roomId}` : `/feed/${p.id}`,
       media: p.mediaUrls[0],
       action: isNeed && !done ? "resolve" : needsAttendance ? "attendance" : undefined,
@@ -106,13 +106,13 @@ export async function loadWork(role: string): Promise<WorkRow[]> {
       person: p.authorName,
     });
   }
-  for (const p of settled(joined, []).filter((p) => p.intentType === "activity" || p.intentType === "ask")) {
+  for (const p of settled(joined, []).filter((p) => p.intentType === "activity" || p.intentType === "ask" || p.intentType === "collab")) {
     rows.push({
       id: `joined-${p.id}`,
       group: finished(p.status) ? "completed" : future(p.startsAt) ? "upcoming" : "active",
       title: titleOf(p),
       when: p.startsAt,
-      role: p.intentType === "ask" ? "You're helping" : "You're going",
+      role: p.intentType === "ask" ? "You're helping" : p.intentType === "collab" ? "You're on the team" : "You're going",
       href: p.roomId ? `/rooms/${p.roomId}` : `/feed/${p.id}`,
       media: p.mediaUrls[0],
       replies: p.commentCount,

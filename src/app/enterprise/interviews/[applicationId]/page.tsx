@@ -153,13 +153,14 @@ export default function EnterpriseInterviewPage() {
             </select>
             <div className="mt-3"><DashButton onClick={update} disabled={busy || !target || target === app.stage}>Update</DashButton></div>
           </Panel>
-          {app.stage !== "rejected" && (
+          {app.stage !== "rejected" && app.stage !== "hired" && (
             <Panel tone="paper" title="Offer & close">
               <div className="flex flex-wrap gap-2">
                 {app.stage !== "offer" && <DashButton onClick={() => move("offer").catch(() => {})} disabled={busy}>Send offer</DashButton>}
+                {app.stage === "offer" && <DashButton onClick={() => move("hired").catch(() => {})} disabled={busy}>Mark as hired</DashButton>}
                 <DashButton variant="outline" onClick={() => setRejecting(true)} disabled={busy}>Not selected</DashButton>
               </div>
-              <p className="mt-3 text-[13px] text-faint">&ldquo;Send offer&rdquo; moves them to Offer and Arena tells them. Offer letters and Hired aren&apos;t in Arena yet.</p>
+              <p className="mt-3 text-[13px] text-faint">&ldquo;Send offer&rdquo; moves them to Offer and Arena tells them; &ldquo;Mark as hired&rdquo; closes it once they accept. Offer letters aren&apos;t in Arena yet.</p>
             </Panel>
           )}
           {managers.length > 0 && (

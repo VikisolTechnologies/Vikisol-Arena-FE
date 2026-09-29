@@ -1,12 +1,13 @@
 import type { ApplicationStage, JobPosting } from "@/lib/types";
 import { getApplicantsForPosting } from "@/lib/api/enterprise";
 
-/** Flow §8 pipeline columns over the API's real stages. "Hired" has no stage yet (gap #21). */
+/** Flow §8 pipeline columns over the API's real stages ("hired" arrived with BE PR #3). */
 export const STAGES: { id: ApplicationStage; label: string }[] = [
   { id: "applied", label: "New" },
   { id: "screening", label: "Reviewing" },
   { id: "interview", label: "Interview" },
   { id: "offer", label: "Offer" },
+  { id: "hired", label: "Hired" },
   { id: "rejected", label: "Not selected" },
 ];
 export const STAGE_LABEL = Object.fromEntries(STAGES.map((s) => [s.id, s.label])) as Record<ApplicationStage, string>;
@@ -32,6 +33,7 @@ export const STAGE_TONE: Record<ApplicationStage, string> = {
   screening: "bg-info/15 text-info-on-dark",
   interview: "bg-success/15 text-success-on-dark",
   offer: "bg-primary/15 text-[#8f2c05]",
+  hired: "bg-success/20 text-success-on-dark",
   rejected: "bg-foreground/8 text-foreground/80",
 };
 

@@ -21,13 +21,14 @@ import { JennyOrb } from "@/components/jenny/JennyOrb";
 import { useJobSearch } from "@/components/jenny/useJenny";
 import { JENNY_PREVIEW } from "@/lib/data/jenny";
 
-const STEPS: { stage: ApplicationStage | "hired"; title: string; detail: string }[] = [
+const STEPS: { stage: ApplicationStage; title: string; detail: string }[] = [
   { stage: "applied", title: "Application submitted", detail: "" },
   { stage: "screening", title: "Under review", detail: "We'll tell you about next steps." },
   { stage: "interview", title: "Interview", detail: "Pick a slot when they send times." },
   { stage: "offer", title: "Offer", detail: "Review it with the employer." },
+  { stage: "hired", title: "Hired", detail: "Congratulations — you're on the team." },
 ];
-const ORDER: ApplicationStage[] = ["applied", "screening", "interview", "offer"];
+const ORDER: ApplicationStage[] = ["applied", "screening", "interview", "offer", "hired"];
 
 export interface ApplicationSpecimen {
   application: Application;
@@ -164,7 +165,9 @@ export function ApplicationScreen({ id, specimen }: { id: string; specimen?: App
         </section>
 
         {error && <p role="alert" className="mt-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
-        {!rejected && (
+        {/* Only the candidate's own, still-open application can be withdrawn (this screen loads
+            only their own applications); a hire or a decision is final here. */}
+        {!rejected && app.stage !== "hired" && (
           <Button variant="outline" className="mt-6 border-paper-ink/55 text-paper-ink" onClick={() => setWithdrawOpen(true)}>Withdraw application</Button>
         )}
       </div>

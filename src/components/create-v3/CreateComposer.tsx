@@ -12,7 +12,7 @@ import { myCommunities } from "@/lib/api/communities";
 import type { Community } from "@/lib/types";
 import type { Post, PostAudience, PostVisibility } from "@/lib/types";
 
-type PostIntent = Exclude<Post["intentType"], "company">;
+type PostIntent = Exclude<Post["intentType"], "company" | "collab">;
 type Step = "pick" | "form";
 
 // One attached photo/video. Uploading starts the moment it's picked, so Publish only waits on

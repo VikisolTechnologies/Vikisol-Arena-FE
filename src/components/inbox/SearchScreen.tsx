@@ -72,7 +72,7 @@ export function toRows(data: SearchResults, scope: Scope, origin?: Origin): Row[
   for (const p of data.discussions) {
     const isNeed = p.intentType === "ask";
     if (isNeed ? !want("needs") : scope !== "all") continue;
-    rows.push({ key: `d-${p.id}`, href: `/feed/${p.id}`, title: p.title?.trim() || p.body.slice(0, 80), kind: isNeed ? "Need" : p.intentType === "offer" ? "Offer" : "Discussion", icon: isNeed ? HeartHandshake : MessagesSquare, meta: (p.startsAt && whenLabel(p.startsAt)) || "Flexible dates", place: p.locationText, km: km(p), postId: p.id, media: p.mediaUrls[0], at: Date.parse(p.createdAt) });
+    rows.push({ key: `d-${p.id}`, href: `/feed/${p.id}`, title: p.title?.trim() || p.body.slice(0, 80), kind: isNeed ? "Need" : p.intentType === "offer" ? "Offer" : p.intentType === "collab" ? "Project" : "Discussion", icon: isNeed ? HeartHandshake : MessagesSquare, meta: (p.startsAt && whenLabel(p.startsAt)) || "Flexible dates", place: p.locationText, km: km(p), postId: p.id, media: p.mediaUrls[0], at: Date.parse(p.createdAt) });
   }
   if (want("jobs"))
     for (const j of data.jobs)

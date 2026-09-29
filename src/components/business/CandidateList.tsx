@@ -28,6 +28,7 @@ const STAGE_TEXT: Record<ApplicationStage, string> = {
   screening: "text-info-on-paper",
   interview: "text-success-on-paper",
   offer: "text-primary-on-paper",
+  hired: "text-success-on-paper",
   rejected: "text-paper-ink-muted",
 };
 

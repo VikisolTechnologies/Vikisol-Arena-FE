@@ -29,6 +29,7 @@ const NEXT: Partial<Record<ApplicationStage, { stage: ApplicationStage; label: s
   applied: { stage: "screening", label: "Start reviewing" },
   screening: { stage: "interview", label: "Move to interview" },
   interview: { stage: "offer", label: "Move to offer" },
+  offer: { stage: "hired", label: "Mark as hired" },
 };
 
 function EvidenceList({ items }: { items: Evidence[] }) {
@@ -116,7 +117,7 @@ export default function CandidateProfilePage() {
 
   const actions = (
     <div className="flex flex-wrap gap-2">
-      {app.stage !== "rejected" && <DashButton variant="danger" disabled={busy} onClick={() => setRejecting(true)}>Not selected</DashButton>}
+      {app.stage !== "rejected" && app.stage !== "hired" && <DashButton variant="danger" disabled={busy} onClick={() => setRejecting(true)}>Not selected</DashButton>}
       {app.stage === "interview" && <DashButton href={`/enterprise/interviews/${app.id}`} variant="outline">Open interview</DashButton>}
       {next && <DashButton disabled={busy} onClick={() => move(next.stage).catch(() => {})}>{next.label}</DashButton>}
       {app.stage === "rejected" && <DashButton variant="outline" disabled={busy} onClick={() => move("screening").catch(() => {})}>Reconsider</DashButton>}

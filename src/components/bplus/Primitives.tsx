@@ -80,6 +80,7 @@ const KIND: Record<string, { label: string; icon: Icon; cls: string }> = {
   offer: { label: "Offer", icon: Gift, cls: "text-success-on-paper" },
   activity: { label: "Activity", icon: Users, cls: "text-info-on-paper" },
   project: { label: "Project", icon: ShieldCheck, cls: "text-success-on-paper" },
+  collab: { label: "Project", icon: ShieldCheck, cls: "text-success-on-paper" },
   job: { label: "Job", icon: ShieldCheck, cls: "text-primary-on-paper" },
 };
 

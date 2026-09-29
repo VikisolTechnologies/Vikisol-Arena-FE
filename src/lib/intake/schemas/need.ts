@@ -113,7 +113,7 @@ export function needSchema(kindId: string): Schema {
     title: "Where & who sees it",
     fields: [
       { id: "area", type: "area", label: "Area", required: true, placeholder: "e.g. Gachibowli", why: "Only the area is shown — never your address." },
-      { id: "audience", type: "chips", label: "Share with", options: [{ value: "global", label: "People nearby" }, { value: "followers", label: "People who follow me" }], default: "global" },
+      { id: "audience", type: "chips", label: "Share with", options: [{ value: "global", label: "Anyone on Arena" }, { value: "followers", label: "People who follow me" }], default: "global" },
       { id: "photos", type: "photos", label: "Photos", max: 4, why: "Helps people see what's involved." },
     ],
   });
@@ -146,7 +146,7 @@ export function offerSchema(kindId: string): Schema {
           { id: "days", type: "multichips", label: "Days", options: o("Weekdays", "Weekends", "Evenings"), required: true },
           { id: "limit", type: "chips", label: "Limit", options: o("Once a week", "Twice a week", "A few times a month", "No limit"), default: "twice-a-week", why: "So you never feel overcommitted." },
           { id: "area", type: "area", label: "Area", required: true, placeholder: "e.g. Gachibowli" },
-          { id: "audience", type: "chips", label: "Share with", options: [{ value: "global", label: "People nearby" }, { value: "followers", label: "People who follow me" }], default: "global" },
+          { id: "audience", type: "chips", label: "Share with", options: [{ value: "global", label: "Anyone on Arena" }, { value: "followers", label: "People who follow me" }], default: "global" },
         ],
       },
     ],

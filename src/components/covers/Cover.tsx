@@ -9,7 +9,7 @@ import { timeOfDayFor } from "@/lib/covers/procedural";
 
 /** Kinds that get a generated cover when there's no photo (flow §5). Needs keep a neutral card
  *  (their own photos matter); jobs get their company's colour card with a monogram. */
-const COVERED = new Set(["activity", "project", "community"]);
+const COVERED = new Set(["activity", "project", "collab", "community"]);
 
 export interface CoverSource {
   id: string;

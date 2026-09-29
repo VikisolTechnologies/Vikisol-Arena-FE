@@ -101,6 +101,7 @@ export type ApplicationStage =
   | "screening"
   | "interview"
   | "offer"
+  | "hired"
   | "rejected";
 
 // One record, two views: `jobId` when sourced from the open market (candidate discovered/
@@ -444,7 +445,8 @@ export interface ThreadMessage {
 // real Room, UPDATE/COMPANY map to a comment thread - comments/reactions apply generically to
 // every post type (Phase C). "company" was added in the post-spec reconciliation pass -
 // §3.5/§6's "Company posts appear in the feed," postable only via lib/api/companyPosts.ts.
-export type PostIntentType = "activity" | "ask" | "update" | "company" | "offer";
+// "collab" = a collaborative (unpaid) project posted as a post (BE PR #3). Shown like a project.
+export type PostIntentType = "activity" | "ask" | "update" | "company" | "offer" | "collab";
 
 export type PostAudience = "global" | "followers" | "local"; // "local" not selectable yet (needs Phase B geo)
 export type PostVisibility = "public" | "approval"; // drives the join/approve flow; ignored for "update"

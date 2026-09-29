@@ -3,6 +3,14 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **30 Sep (BE PR #3 readiness)** — Application stage **`hired`** is handled everywhere: pipeline
+  column "Hired", "Mark as hired" after Offer (candidate page, interview page), tracker step "Hired",
+  Work → Completed "You're hired"; a hired or not-selected application can't be withdrawn, and only
+  the candidate's own application shows Withdraw. Post type **`collab`** renders as a Project
+  (chip, cover, Discover → Projects, Work "Your project" / "You're on the team"). No screen calls the
+  new endpoints (`API-CHANGES.md`, BE `feature/be-fe-gaps`) until the architect says so. Needs and
+  offers no longer offer a "nearby only" audience: the default reads "Anyone on Arena" (radius is
+  unsupported, gap #27).
 - **30 Sep (P8)** — Jenny's P8 surfaces run on the **preview world only** (blueprint §2: the v2
   contract isn't BUILT). In api mode they don't render; Ask Jenny opens her home, and real v1
   proposals keep using `JennyActionCard`. Gaps #42–#47 are the v2 plan.

@@ -171,7 +171,7 @@ function DiscoverList() {
       }),
       needs: f.filter((i) => i.itemType === "ask"),
       offers: f.filter((i) => i.itemType === "offer"),
-      projects: f.filter((i) => i.itemType === "project"),
+      projects: f.filter((i) => i.itemType === "project" || i.itemType === "collab"),
     };
   }, [near, when, category]);
 
@@ -444,7 +444,7 @@ function SearchResultsList({ results, query }: { results: SearchResults | null; 
   if (!results) return <div className="mt-6 space-y-3" aria-busy="true" aria-label="Searching"><Skeleton className="h-24 w-full" /><Skeleton className="h-24 w-full" /></div>;
   const rows = [
     ...results.activities.map((p) => ({ id: p.id, href: `/feed/${p.id}`, title: p.title || p.body, meta: "Activity" })),
-    ...results.discussions.map((p) => ({ id: p.id, href: `/feed/${p.id}`, title: p.title || p.body, meta: p.intentType === "ask" ? "Need" : p.intentType === "offer" ? "Offer" : "Post" })),
+    ...results.discussions.map((p) => ({ id: p.id, href: `/feed/${p.id}`, title: p.title || p.body, meta: p.intentType === "ask" ? "Need" : p.intentType === "offer" ? "Offer" : p.intentType === "collab" ? "Project" : "Post" })),
     ...results.jobs.map((j) => ({ id: j.id, href: `/jobs/${j.id}`, title: j.title, meta: `Job · ${j.company}` })),
     ...results.projects.map((p) => ({ id: p.id, href: `/marketplace/${p.id}`, title: p.title, meta: "Project" })),
     ...results.companies.map((c) => ({ id: c.id, href: `/companies/${c.id}`, title: c.name, meta: c.industry })),
