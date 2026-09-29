@@ -20,6 +20,8 @@ const GoogleMapView = dynamic(() => import("@/components/map/GoogleMapView").the
 /** Launch zone centre (Gachibowli / Gopanapally) — used until we know the person's approximate area. */
 const LAUNCH = { lat: 17.4401, lng: 78.3489 };
 const RADIUS_KM = 6;
+/** The ring around "You": how approximate the shown position is (~1.5 km), not an exact point. */
+const APPROX_RING_KM = 1.5;
 
 const FILTERS = [
   { id: "all", label: "All" },
@@ -30,6 +32,17 @@ const FILTERS = [
 type Filter = (typeof FILTERS)[number]["id"];
 
 const PIN: Record<string, string> = { activity: "bg-info", ask: "bg-primary", offer: "bg-success" };
+
+/** A static dark basemap of the launch zone, rendered once from OpenStreetMap tiles (© OSM
+ *  contributors, ODbL) — real streets without a runtime tile provider (FE-API-GAPS none; see
+ *  DECISIONS). Web Mercator bounds of public/fixtures/map/launch-zone.webp (12 × 16 km). */
+const BASEMAP = { src: "/fixtures/map/launch-zone.webp", north: 17.512172, south: 17.368028, west: 78.292241, east: 78.405559 };
+const mercY = (lat: number) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
+function onBasemap(lat: number, lng: number) {
+  const x = (lng - BASEMAP.west) / (BASEMAP.east - BASEMAP.west);
+  const y = (mercY(BASEMAP.north) - mercY(lat)) / (mercY(BASEMAP.north) - mercY(BASEMAP.south));
+  return x >= 0 && x <= 1 && y >= 0 && y <= 1 ? { x, y } : null;
+}
 
 export function DiscoverMap() {
   const [center, setCenter] = useState<{ lat: number; lng: number; approximate: boolean } | null>(null);
@@ -56,7 +69,14 @@ export function DiscoverMap() {
   }, []);
 
   const shown = useMemo(() => (posts ?? []).filter((p) => filter === "all" || p.intentType === filter), [posts, filter]);
-  const pick = shown.find((p) => p.id === selected) ?? null;
+  // Board: the nearest upcoming thing is previewed until a pin is tapped.
+  const nearest = useMemo(() => {
+    if (!center) return null;
+    const d = (p: Post) => (p.approxLat == null || p.approxLng == null ? Infinity : (p.approxLat - center.lat) ** 2 + (p.approxLng - center.lng) ** 2);
+    const placed = [...shown].filter((p) => p.approxLat != null).sort((a, b) => d(a) - d(b));
+    return placed.find((p) => p.intentType === "activity") ?? placed[0] ?? null;
+  }, [shown, center]);
+  const pick = shown.find((p) => p.id === selected) ?? nearest;
 
   return (
     <div className="mt-5">
@@ -77,6 +97,8 @@ export function DiscoverMap() {
           <div className="aspect-[3/4] w-full">
             <GoogleMapView posts={shown} centerLat={center.lat} centerLng={center.lng} radiusKm={RADIUS_KM} selectedId={selected} onSelect={setSelected} />
           </div>
+        ) : onBasemap(center.lat, center.lng) ? (
+          <TileMap center={center} you={center.approximate} posts={shown} selected={pick?.id ?? null} onSelect={setSelected} />
         ) : (
           <DrawnMap center={center} you={center.approximate} posts={shown} selected={selected} onSelect={setSelected} />
         )}
@@ -114,7 +136,7 @@ export function DiscoverMap() {
       {posts && shown.length === 0 && !error && (
         <p className="mt-3 text-center text-[14px] text-faint">Nothing posted within {RADIUS_KM} km yet.</p>
       )}
-      {shown.length > 0 && !pick && <p className="mt-3 text-center text-[14px] text-faint">Tap a pin to see what&apos;s there.</p>}
+      {shown.length > 0 && <p className="mt-3 text-center text-[14px] text-faint">Tap a pin to see what&apos;s there.</p>}
       <p className="sr-only" aria-live="polite">{shown.length} places on the map.</p>
       <ul className="sr-only">
         {shown.map((p) => (
@@ -172,6 +194,52 @@ function DrawnMap({ center, you, posts, selected, onSelect }: { center: { lat: n
           </m.button>
         );
       })}
+    </div>
+  );
+}
+
+/** The launch-zone basemap with real approximate pins (Web Mercator), "You" and the 5 km ring. */
+function TileMap({ center, you, posts, selected, onSelect }: { center: { lat: number; lng: number }; you: boolean; posts: Post[]; selected: string | null; onSelect: (id: string) => void }) {
+  const me = onBasemap(center.lat, center.lng)!;
+  const ringW = (2 * APPROX_RING_KM) / 12; // fraction of the 12 km-wide basemap
+  return (
+    <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#161e1c]">
+      {/* Zoomed 1.6× around the launch-zone centre: the box shows about 7.5 × 10 km. */}
+      <div className="absolute inset-[-30%]">
+      {/* eslint-disable-next-line @next/next/no-img-element -- a local static basemap sized to its box */}
+      <img src={BASEMAP.src} alt="" className="absolute inset-0 size-full object-cover" decoding="async" />
+      <div aria-hidden className="absolute grid aspect-square -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-info/20 ring-1 ring-info/40" style={{ left: `${me.x * 100}%`, top: `${me.y * 100}%`, width: `${ringW * 100}%` }}>
+        <span className="size-4 rounded-full bg-info ring-4 ring-white/80" />
+      </div>
+      <p aria-hidden className="absolute mt-5 -translate-x-1/2 text-center text-[12px] font-medium leading-tight text-white" style={{ left: `${me.x * 100}%`, top: `${me.y * 100}%` }}>
+        {you ? "You" : "Gachibowli"}
+        <br />
+        <span className="text-white/70">{you ? "(approximate)" : "(launch area)"}</span>
+      </p>
+      {posts.map((p, i) => {
+        if (p.approxLat == null || p.approxLng == null) return null;
+        const at = onBasemap(p.approxLat, p.approxLng);
+        if (!at) return null;
+        return (
+          <m.button
+            key={p.id}
+            type="button"
+            onClick={() => onSelect(p.id)}
+            aria-label={p.title || "Open this place"}
+            initial={{ y: -12, opacity: 0 }}
+            animate={{ y: 0, opacity: 1, transition: { ...spring.snappy, delay: staggerDelay(i) } }}
+            whileTap={press}
+            className="absolute grid size-11 -translate-x-1/2 -translate-y-full place-items-center outline-none focus-visible:outline-2 focus-visible:outline-primary"
+            style={{ left: `${at.x * 100}%`, top: `${at.y * 100}%` }}
+          >
+            <span className={cn("grid size-8 rotate-45 place-items-center rounded-full rounded-br-none shadow-lg ring-2", PIN[p.intentType] ?? "bg-warning", selected === p.id ? "scale-110 ring-white" : "ring-black/30")}>
+              <span className="size-2.5 -rotate-45 rounded-full bg-white" />
+            </span>
+          </m.button>
+        );
+      })}
+      </div>
+      <p className="absolute right-1.5 top-1.5 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white/80">© OpenStreetMap contributors</p>
     </div>
   );
 }

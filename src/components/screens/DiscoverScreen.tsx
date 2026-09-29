@@ -2,20 +2,23 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
+import { EMPTY_DRAFT, readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
 import { AnimatePresence, m } from "motion/react";
-import { BookOpen, Footprints, GraduationCap, Leaf, List, Map as MapIcon, MapPin, Palette, Search, Sprout, Utensils, Wrench } from "lucide-react";
+import { BookOpen, CalendarDays, Camera, Footprints, GraduationCap, Leaf, List, Map as MapIcon, MapPin, Palette, Search, SlidersHorizontal, Sprout, Utensils } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { dissolve, press, rise, spring } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
 import { Button } from "@/components/bplus/Button";
+import { BottomSheet } from "@/components/bplus/BottomSheet";
+import { Chip } from "@/components/bplus/Controls";
 import { Avatar } from "@/components/bplus/Avatar";
 import { DemoBadge, HScroll, Pills, PreviewPill, SectionHeader, Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { NeedCard, RowCard } from "@/components/cards/FeedCards";
 import { DiscoverMap } from "@/components/screens/DiscoverMap";
 import { FIXTURES_ALLOWED } from "@/lib/data/mode";
 import { PREVIEW_PEOPLE, PREVIEW_SKILLS } from "@/lib/data/fixtures";
-import { getFeedItems, getTrending, hrefFor, search, whenLabel, type FeedItem, type Post } from "@/lib/data/feed";
+import { LAUNCH_ZONE, filterFeed, getFeedItems, getTrending, hrefFor, originFor, search, whenLabel, type FeedItem, type Post } from "@/lib/data/feed";
 import { isDemo } from "@/lib/data/feed";
 import type { SearchResults } from "@/lib/api/search";
 import { Cover } from "@/components/covers/Cover";
@@ -31,21 +34,27 @@ const CHIPS = [
 ] as const;
 type Chip = (typeof CHIPS)[number]["id"];
 
-/** Discover & join board: time chips + "Browse by category". Categories match the activity's own
- *  tags or words — no hidden scoring. ("Free" is left out: activities carry no price yet.) */
+/** Discover & join board: Today / Weekend / Free, then Fitness / Learning / All filters, and
+ *  "Browse by category". Categories match the activity's own tags or words — no hidden scoring.
+ *  "Free": Arena activities carry no price (paid work is a project), so every activity is free. */
 const WHEN = [
   { id: "any", label: "Any time" },
   { id: "today", label: "Today" },
   { id: "weekend", label: "Weekend" },
 ] as const;
+type When = (typeof WHEN)[number]["id"];
 const CATEGORIES = [
-  { id: "fitness", label: "Fitness", words: ["run", "fitness", "badminton", "yoga", "cycle", "trek", "sport", "football", "cricket"], icon: Footprints, tone: "bg-success/15 text-success-on-paper" },
-  { id: "learning", label: "Learning", words: ["learn", "class", "workshop", "study", "tutor", "course"], icon: BookOpen, tone: "bg-info/15 text-info-on-paper" },
-  { id: "community", label: "Community", words: ["community", "volunteer", "clean", "meet", "neighbour", "neighbor"], icon: Sprout, tone: "bg-success/15 text-success-on-paper" },
-  { id: "food", label: "Food", words: ["food", "cook", "meal", "lunch", "dinner", "breakfast"], icon: Utensils, tone: "bg-primary/10 text-primary-on-paper" },
-  { id: "arts", label: "Arts & Culture", words: ["art", "music", "pottery", "paint", "photo", "dance", "culture"], icon: Palette, tone: "bg-info/15 text-info-on-paper" },
-  { id: "environment", label: "Environment", words: ["environment", "tree", "plant", "garden", "lake", "green"], icon: Leaf, tone: "bg-success/15 text-success-on-paper" },
+  { id: "fitness", label: "Fitness", words: ["run", "fitness", "badminton", "yoga", "cycle", "trek", "sport", "football", "cricket"], icon: Footprints, tile: "bg-[#e3f1e6] text-[#1f6e3e]", tag: "bg-success/15 text-success-on-paper" },
+  { id: "learning", label: "Learning", words: ["learn", "class", "workshop", "study", "tutor", "course", "pottery"], icon: BookOpen, tile: "bg-[#e1ebfb] text-[#1d57b8]", tag: "bg-info/15 text-info-on-paper" },
+  { id: "community", label: "Community", words: ["community", "volunteer", "clean", "meet", "neighbour", "neighbor"], icon: Sprout, tile: "bg-[#f1ead8] text-[#5f6b1f]", tag: "bg-success/15 text-success-on-paper" },
+  { id: "food", label: "Food", words: ["food", "cook", "meal", "lunch", "dinner", "breakfast"], icon: Utensils, tile: "bg-[#fbe6da] text-[#b83a0a]", tag: "bg-primary/10 text-primary-on-paper" },
+  { id: "arts", label: "Arts & Culture", words: ["art", "music", "pottery", "paint", "photo", "dance", "culture"], icon: Palette, tile: "bg-[#ece3f6] text-[#6b3fa0]", tag: "bg-[#ece3f6] text-[#6b3fa0]" },
+  { id: "environment", label: "Environment", words: ["environment", "tree", "plant", "garden", "lake", "green"], icon: Leaf, tile: "bg-[#e3f1e6] text-[#1f6e3e]", tag: "bg-success/15 text-success-on-paper" },
 ] as const;
+const categoryOf = (p: { title?: string | null; body: string; tags: string[] }) => {
+  const hay = `${p.title ?? ""} ${p.body} ${p.tags.join(" ")}`.toLowerCase();
+  return CATEGORIES.find((c) => c.words.some((w) => hay.includes(w)));
+};
 
 function inWhen(iso: string | undefined, when: string) {
   if (when === "any") return true;
@@ -95,8 +104,9 @@ function DiscoverList() {
   const params = useSearchParams();
   // `?show=activities` deep-links a filter (Feed's "See all", the compare pages).
   const [chip, setChip] = useState<Chip>(() => CHIPS.find((c) => c.id === params.get("show"))?.id ?? "all");
-  const [when, setWhen] = useState<(typeof WHEN)[number]["id"]>("any");
+  const [when, setWhen] = useState<When>("any");
   const [category, setCategory] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [submitted, setSubmitted] = useState("");
   const [feed, setFeed] = useState<FeedItem[] | null>(null);
@@ -137,8 +147,13 @@ function DiscoverList() {
     setSubmitted(query.trim());
   };
 
+  // Discover is "near you": the same radius rule as the Feed's Nearby (fidelity pass).
+  const draft = useSyncExternalStore(subscribeEntryDraft, readEntryDraft, () => EMPTY_DRAFT);
+  const origin = useMemo(() => originFor(null, draft.area), [draft.area]);
+  const near = useMemo(() => filterFeed(feed ?? [], "nearby", origin, LAUNCH_ZONE.radiusKm), [feed, origin]);
+  const nearTrending = useMemo(() => (trending ?? []).filter((p) => near.some((n) => n.id === p.id)), [trending, near]);
   const byType = useMemo(() => {
-    const f = feed ?? [];
+    const f = near;
     return {
       activities: f.filter((i) => {
         if (i.itemType !== "activity" || !inWhen(i.startsAt, when)) return false;
@@ -150,7 +165,7 @@ function DiscoverList() {
       offers: f.filter((i) => i.itemType === "offer"),
       projects: f.filter((i) => i.itemType === "project"),
     };
-  }, [feed, when, category]);
+  }, [near, when, category]);
 
   return (
     <>
@@ -171,9 +186,14 @@ function DiscoverList() {
         </label>
       </form>
 
-      <div className="mt-4">
-        <Pills label="Show" options={CHIPS} value={chip} onChange={setChip} />
-      </div>
+      {chip === "activities" ? (
+        <ActivityFilters when={when} setWhen={setWhen} category={category} setCategory={setCategory} onAll={() => setFiltersOpen(true)} />
+      ) : (
+        <div className="mt-4">
+          <Pills label="Show" options={CHIPS} value={chip} onChange={setChip} />
+        </div>
+      )}
+      <AllFiltersSheet open={filtersOpen} onClose={() => setFiltersOpen(false)} chip={chip} setChip={setChip} when={when} setWhen={setWhen} category={category} setCategory={setCategory} />
 
       {error ? (
         <div className="mt-6">
@@ -209,15 +229,10 @@ function DiscoverList() {
               </HScroll>
             </m.section>
           )}
-          {chip === "activities" && (
-            <m.div variants={rise} custom={0}>
-              <Pills label="When" options={WHEN} value={when} onChange={setWhen} tone="cream" />
-            </m.div>
-          )}
           {(chip === "all" || chip === "activities") && (
             <m.section variants={rise} custom={1} aria-label="Popular this week">
               <SectionHeader title={chip === "activities" ? "Activities near you" : "Popular this week"} />
-              <ActivityGrid posts={chip === "activities" ? byType.activities : (trending ?? []).filter((p) => p.intentType === "activity")} fallback={byType.activities} />
+              <ActivityGrid posts={chip === "activities" ? byType.activities : nearTrending.filter((p) => p.intentType === "activity")} fallback={chip === "activities" ? [] : byType.activities} detailed={chip === "activities"} />
             </m.section>
           )}
           {chip === "activities" && (
@@ -234,12 +249,10 @@ function DiscoverList() {
                       whileTap={press}
                       transition={spring.snappy}
                       onClick={() => setCategory(on ? null : c.id)}
-                      className={cn("flex min-h-[84px] flex-col items-center justify-center gap-1.5 rounded-tile bg-paper p-2 text-paper-ink outline-none ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-primary", on && "ring-2 ring-primary")}
+                      className={cn("flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-tile p-2 outline-none ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-primary", c.tile, on && "ring-2 ring-primary")}
                     >
-                      <span className={cn("grid size-9 place-items-center rounded-xl", c.tone)}>
-                        <c.icon className="size-5" strokeWidth={1.9} aria-hidden />
-                      </span>
-                      <span className="text-center text-[13px] font-semibold leading-tight">{c.label}</span>
+                      <c.icon className="size-8" strokeWidth={2.2} aria-hidden />
+                      <span className="text-center text-[14px] font-semibold leading-tight text-paper-ink">{c.label}</span>
                     </m.button>
                   );
                 })}
@@ -251,7 +264,7 @@ function DiscoverList() {
               <SectionHeader title="Skills & support" action={<PreviewPill />} />
               <div className="grid grid-cols-2 gap-3">
                 {PREVIEW_SKILLS.map((s) => {
-                  const IconCmp = s.id === "s-ux" ? Palette : s.id === "s-cycle" ? Wrench : GraduationCap;
+                  const IconCmp = s.id === "s-ux" ? Palette : s.id === "s-photo" ? Camera : GraduationCap;
                   return (
                     <div key={s.id} className="flex items-center gap-3 rounded-tile bg-paper p-3 text-paper-ink">
                       <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl", s.tone === "info" ? "bg-info/15 text-info-on-paper" : s.tone === "success" ? "bg-success/15 text-success-on-paper" : "bg-primary/10 text-primary-on-paper")}>
@@ -311,9 +324,9 @@ function EmptyFor({ chip, byType }: { chip: Chip; byType: Record<"activities" | 
 }
 
 /** Board: "Popular this week" two-up photo cards. Falls back to recent activities. */
-function ActivityGrid({ posts, fallback }: { posts: (Post | FeedItem)[]; fallback: FeedItem[] }) {
+function ActivityGrid({ posts, fallback, detailed }: { posts: (Post | FeedItem)[]; fallback: FeedItem[]; detailed?: boolean }) {
   const list = (posts.length ? posts : fallback).filter((p) => !["closed", "cancelled", "expired"].includes(p.status)).slice(0, 6);
-  if (list.length === 0) return <p className="text-[15px] text-faint">No activities posted nearby yet.</p>;
+  if (list.length === 0) return <p className="text-[15px] text-faint">{detailed ? "Nothing matches these filters yet. Try another day or category." : "No activities posted nearby yet."}</p>;
   return (
     <div className="grid grid-cols-2 gap-3">
       {list.map((p) => {
@@ -323,8 +336,19 @@ function ActivityGrid({ posts, fallback }: { posts: (Post | FeedItem)[]; fallbac
             <Link href={hrefFor({ id: p.id, itemType: "activity" })} className="block overflow-hidden rounded-tile bg-paper text-paper-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
               <span className="relative block">
                 <Cover source={{ id: p.id, kind: "activity", media: p.mediaUrls[0], tags: p.tags, title: p.title, body: p.body, startsAt: p.startsAt }} className="aspect-[16/10]" />
-                {isDemo(p) && <DemoBadge className="absolute left-2 top-2" />}
+                {isDemo(p) && <DemoBadge onPhoto className="absolute left-2 top-2" />}
               </span>
+              {detailed ? (
+                <div className="p-3">
+                  <p className="line-clamp-2 text-[15px] font-semibold leading-snug">{p.title || p.body.slice(0, 60)}</p>
+                  {(() => {
+                    const c = categoryOf(p);
+                    return c ? <span className={cn("mt-1.5 inline-block rounded-full px-2 py-0.5 text-[12px] font-semibold", c.tag)}>{c.label}</span> : null;
+                  })()}
+                  {p.startsAt && <p className="mt-1.5 flex items-center gap-1 text-[13px] text-paper-ink-muted"><CalendarDays className="size-3.5 shrink-0" strokeWidth={1.9} aria-hidden /> <span className="truncate">{whenLabel(p.startsAt)}</span></p>}
+                  {p.locationText && <p className="mt-0.5 flex items-center gap-1 text-[13px] text-paper-ink-muted"><MapPin className="size-3.5 shrink-0" strokeWidth={1.9} aria-hidden /> <span className="truncate">{p.locationText}</span></p>}
+                </div>
+              ) : (
               <div className="p-3">
                 <p className="line-clamp-2 text-[15px] font-semibold leading-snug">{p.title || p.body.slice(0, 60)}</p>
                 {p.locationText && <p className="mt-0.5 truncate text-[13px] text-paper-ink-muted">{p.locationText}</p>}
@@ -333,11 +357,76 @@ function ActivityGrid({ posts, fallback }: { posts: (Post | FeedItem)[]; fallbac
                   <span className="truncate">{[whenLabel(p.startsAt), going].filter(Boolean).join(" · ") || p.locationText || "Nearby"}</span>
                 </p>
               </div>
+              )}
             </Link>
           </m.div>
         );
       })}
     </div>
+  );
+}
+
+/** Board rows: Today / Weekend / Free, then Fitness / Learning / All filters. */
+function ActivityFilters({ when, setWhen, category, setCategory, onAll }: { when: When; setWhen: (w: When) => void; category: string | null; setCategory: (c: string | null) => void; onAll: () => void }) {
+  const chip = (on: boolean) => cn("inline-flex h-11 items-center gap-1.5 rounded-full border px-5 text-[15px] font-semibold outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary", on ? "border-primary bg-primary text-primary-foreground" : "border-field-line text-foreground");
+  const extra = (category && !["fitness", "learning"].includes(category) ? 1 : 0);
+  // Every activity is free, so "Free" narrows nothing; it still toggles so it behaves like a chip.
+  const [free, setFree] = useState(false);
+  return (
+    <div className="mt-4 space-y-2.5" role="group" aria-label="Filter activities">
+      <div className="flex flex-wrap gap-2.5">
+        {(["today", "weekend"] as const).map((w) => (
+          <m.button key={w} type="button" aria-pressed={when === w} whileTap={press} transition={spring.snappy} onClick={() => setWhen(when === w ? "any" : w)} className={chip(when === w)}>
+            {w === "today" ? "Today" : "Weekend"}
+          </m.button>
+        ))}
+        <m.button type="button" aria-pressed={free} aria-describedby="free-note" whileTap={press} transition={spring.snappy} className={chip(free)} onClick={() => setFree((f) => !f)}>
+          Free
+        </m.button>
+        <span id="free-note" className="sr-only">Every activity on Arena is free.</span>
+      </div>
+      <div className="flex flex-wrap gap-2.5">
+        {(["fitness", "learning"] as const).map((c) => (
+          <m.button key={c} type="button" aria-pressed={category === c} whileTap={press} transition={spring.snappy} onClick={() => setCategory(category === c ? null : c)} className={chip(category === c)}>
+            {c === "fitness" ? "Fitness" : "Learning"}
+          </m.button>
+        ))}
+        <m.button type="button" whileTap={press} transition={spring.snappy} onClick={onAll} className={chip(extra > 0)}>
+          <SlidersHorizontal className="size-4" aria-hidden /> All filters{extra ? " · 1" : ""}
+        </m.button>
+      </div>
+    </div>
+  );
+}
+
+function AllFiltersSheet({ open, onClose, chip, setChip, when, setWhen, category, setCategory }: { open: boolean; onClose: () => void; chip: Chip; setChip: (c: Chip) => void; when: When; setWhen: (w: When) => void; category: string | null; setCategory: (c: string | null) => void }) {
+  return (
+    <BottomSheet open={open} onClose={onClose} title="All filters">
+      <h2 className="mt-2 font-display-serif text-[26px] font-medium">All filters</h2>
+      <section className="mt-5" aria-label="Show">
+        <h3 className="mb-2 text-[15px] font-semibold">Show</h3>
+        <div className="flex flex-wrap gap-2">
+          {CHIPS.map((c) => <Chip key={c.id} selected={chip === c.id} onToggle={() => setChip(c.id)}>{c.label}</Chip>)}
+        </div>
+      </section>
+      <section className="mt-5" aria-label="When">
+        <h3 className="mb-2 text-[15px] font-semibold">When</h3>
+        <div className="flex flex-wrap gap-2">
+          {WHEN.map((w) => <Chip key={w.id} selected={when === w.id} onToggle={() => setWhen(w.id)}>{w.label}</Chip>)}
+        </div>
+      </section>
+      <section className="mt-5" aria-label="Category">
+        <h3 className="mb-2 text-[15px] font-semibold">Category</h3>
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((c) => <Chip key={c.id} selected={category === c.id} onToggle={() => setCategory(category === c.id ? null : c.id)}>{c.label}</Chip>)}
+        </div>
+      </section>
+      <p className="mt-5 text-[13px] text-paper-ink-muted">Every activity on Arena is free — paid work is posted as a project.</p>
+      <div className="mt-6 grid grid-cols-2 gap-3">
+        <Button variant="outline" onClick={() => { setWhen("any"); setCategory(null); }}>Clear</Button>
+        <Button onClick={onClose}>Show results</Button>
+      </div>
+    </BottomSheet>
   );
 }
 

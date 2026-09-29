@@ -36,7 +36,11 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts",
     ".next-local-tests/types/**/*.ts",
-    ".next-local-tests/dev/types/**/*.ts"
+    ".next-local-tests/dev/types/**/*.ts",
+    ".next-founder/types/**/*.ts",
+    ".next-founder/dev/types/**/*.ts",
+    ".next-perf/types/**/*.ts",
+    ".next-perf/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
