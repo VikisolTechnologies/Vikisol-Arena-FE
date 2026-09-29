@@ -21,7 +21,7 @@ Live pairs: `localhost:3001/dev/compare/all` (every built screen, board vs live)
 - Screens that don't truly match their board are back to **In progress**, each with a note on
   `/dev/progress` saying exactly what differs.
 
-**Result: 33 board screens Done, 16 In progress.**
+**Result after the follow-up: 36 board screens Done, 13 In progress.**
 
 ## What changed in this pass
 
@@ -94,9 +94,10 @@ Live pairs: `localhost:3001/dev/compare/all` (every built screen, board vs live)
 - ✅ **Choose role**
 - ✅ **Company workspace** — Verification waits for gap #29.
 - ✅ **Post a job**
-- 🟡 **Manage job / Candidates / Candidate profile / Interview & hire** — Lists and cards are cream, but the detail panels are still dark and the phone layout keeps the dashboard frame. The boards are cream end-to-end.
+- ✅ **Manage job / Candidate profile / Interview & hire** — Follow-up commit: every panel is now a cream paper card (a `data-surface="paper"` token scope remaps faint text, lines and status colours for cream), on the dark background as the review asked. The phone layout keeps the business top bar.
+- 🟡 **Candidates** — The list matches (cream, photo avatars), but it sits under the job's Candidates tab rather than being a standalone screen.
 
 ## Next
 
-1. Close the 🟡 items above, starting with Map tiles, Discover filter and the four recruiter panels.
+1. Close the 🟡 items above, starting with Map tiles and the Discover filter.
 2. Then continue P8 → P10 → P11 as planned.

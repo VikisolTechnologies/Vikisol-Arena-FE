@@ -193,13 +193,13 @@ function JobPage() {
                   ))}
                 </ol>
                 {nudge && (
-                  <button type="button" onClick={nudge.go} className="flex w-full items-center gap-4 rounded-tile border border-line bg-surface p-4 text-left hover:border-foreground/25">
-                    <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/15 text-primary"><Rocket className="size-6" aria-hidden /></span>
+                  <button type="button" onClick={nudge.go} data-surface="paper" className="flex w-full items-center gap-4 rounded-tile bg-paper p-4 text-left text-paper-ink hover:bg-paper-muted">
+                    <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/15 text-primary-on-paper"><Rocket className="size-6" aria-hidden /></span>
                     <span className="flex-1"><span className="block text-[16px] font-semibold">Keep it moving</span><span className="block text-[14px] text-faint">{nudge.text}</span></span>
                     <ChevronRight className="size-5 text-faint" aria-hidden />
                   </button>
                 )}
-                <Panel title="Job details">
+                <Panel tone="paper" title="Job details">
                   <ul className="space-y-2.5">
                     {details.map(([Icon, text]) => (
                       <li key={text} className="flex items-start gap-3 text-[15px]"><Icon className="mt-0.5 size-4.5 shrink-0 text-faint" aria-hidden /> {text}</li>
@@ -220,7 +220,7 @@ function JobPage() {
                   <span role="status" className="sr-only">{copied ? "Link copied" : ""}</span>
                 </Panel>
                 {(parts.must.length > 0 || parts.nice.length > 0) && (
-                  <Panel title="What you'll check">
+                  <Panel tone="paper" title="What you'll check">
                     {parts.must.length > 0 && (
                       <>
                         <h3 className="text-[13px] font-semibold uppercase tracking-wide text-faint">Must-haves</h3>
@@ -236,7 +236,7 @@ function JobPage() {
                   </Panel>
                 )}
                 {extras?.questions?.length ? (
-                  <Panel title="Application questions">
+                  <Panel tone="paper" title="Application questions">
                     <ol className="list-decimal space-y-1.5 pl-5 text-[15px]">{extras.questions.map((q) => <li key={q}>{q}</li>)}</ol>
                     <p className="mt-3 text-[13px] text-faint">Saved on this device. Candidates aren&apos;t asked these until Arena supports questions.</p>
                   </Panel>
@@ -262,7 +262,7 @@ function JobPage() {
           )}
 
           {tab === "activity" && (
-            <Panel title="Activity">
+            <Panel tone="paper" title="Activity">
               {events.length <= 1 && list.length === 0 ? (
                 <p className="text-[14px] text-faint">Nothing yet beyond publishing. Applications and moves show up here.</p>
               ) : null}

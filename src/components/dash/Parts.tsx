@@ -13,7 +13,7 @@ type Icon = ComponentType<{ className?: string; strokeWidth?: number; "aria-hidd
 /** A dashboard panel: surface card with a heading and an optional action. */
 export function Panel({ title, action, children, className, tone = "surface" }: { title?: string; action?: ReactNode; children: ReactNode; className?: string; tone?: "surface" | "paper" }) {
   return (
-    <section className={cn("rounded-tile p-5", tone === "paper" ? "bg-paper text-paper-ink" : "border border-line bg-surface", className)} aria-label={title}>
+    <section data-surface={tone === "paper" ? "paper" : undefined} className={cn("rounded-tile p-5", tone === "paper" ? "bg-paper text-paper-ink" : "border border-line bg-surface", className)} aria-label={title}>
       {(title || action) && (
         <div className="mb-3 flex items-center justify-between gap-3">
           {title && <h2 className="text-[17px] font-semibold">{title}</h2>}

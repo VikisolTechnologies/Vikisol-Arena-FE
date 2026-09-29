@@ -242,6 +242,23 @@
   --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
+/* Cream "paper" surfaces inside the dark B+ app (recruiter board: cream cards on dark). Remaps the
+   dark-tuned tokens so any content — faint text, hairlines, tints, status text — reads correctly
+   on paper without per-component variants. Contrast: #6e625a 5.2:1, greens/blues/reds ≥5:1. */
+[data-surface="paper"] {
+  --foreground: #1e1714;
+  --faint: #6e625a;
+  --line: rgba(30, 23, 20, 0.12);
+  --field-line: rgba(30, 23, 20, 0.38);
+  --surface: #efe6da;
+  --success-on-dark: #1f6e3e;
+  --info-on-dark: #1d57b8;
+  --danger-on-dark: #b42318;
+  --primary-soft: #b83a0a;
+  color: var(--paper-ink);
+}
+[data-surface="paper"] .text-warning { color: #7a4d00; }
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

@@ -103,15 +103,15 @@ export function InterviewRoom({
     }
   };
 
-  const card = "rounded-tile border border-line bg-surface p-5";
+  const card = "rounded-tile bg-paper p-5 text-paper-ink";
 
   if (interview.status === "cancelled") {
-    return <p className={cn(card, "flex items-center gap-3 text-[15px] text-faint")}><CalendarX2 className="size-5" aria-hidden /> This interview was cancelled.</p>;
+    return <p data-surface="paper" className={cn(card, "flex items-center gap-3 text-[15px] text-faint")}><CalendarX2 className="size-5" aria-hidden /> This interview was cancelled.</p>;
   }
 
   if (interview.status === "proposed") {
     return (
-      <div className={card}>
+      <div data-surface="paper" className={card}>
         <p className="flex items-center gap-2 text-[16px] font-semibold"><Clock3 className="size-5 text-warning" aria-hidden /> {canGiveFeedback ? `Waiting for ${first} to pick a time` : "Times offered — pick one from your application"}</p>
         <ul className="mt-3 space-y-1.5">
           {interview.proposedSlots.map((s) => <li key={s.id} className="rounded-xl bg-foreground/6 px-3 py-2 text-[15px]">{when(s.start)} · {s.durationMinutes} min</li>)}
@@ -123,7 +123,7 @@ export function InterviewRoom({
   if (interview.status === "completed") {
     const fb = interview.feedback;
     return (
-      <div className={card}>
+      <div data-surface="paper" className={card}>
         <p className="flex items-center gap-2 text-[16px] font-semibold"><CalendarCheck2 className="size-5 text-success-on-dark" aria-hidden /> Interview completed</p>
         {slot && <p className="mt-1 text-[14px] text-faint">{when(slot.start)}</p>}
         {canGiveFeedback && fb ? (
@@ -141,7 +141,7 @@ export function InterviewRoom({
 
   return (
     <m.div initial="hidden" animate="shown" className="space-y-4">
-      <m.div variants={rise} className={card}>
+      <m.div variants={rise} data-surface="paper" className={card}>
         <p className="flex items-start gap-3">
           <CalendarCheck2 className="mt-0.5 size-6 shrink-0 text-primary" aria-hidden />
           <span>
@@ -164,7 +164,7 @@ export function InterviewRoom({
       </m.div>
 
       {canGiveFeedback && (
-        <m.div variants={rise} custom={1} className={card}>
+        <m.div variants={rise} custom={1} data-surface="paper" className={card}>
           <label htmlFor={`notes-${interview.id}`} className="flex items-center gap-2 text-[15px] font-semibold"><StickyNote className="size-4 text-faint" aria-hidden /> Interview notes</label>
           <textarea
             id={`notes-${interview.id}`}

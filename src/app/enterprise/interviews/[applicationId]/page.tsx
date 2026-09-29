@@ -116,7 +116,7 @@ export default function EnterpriseInterviewPage() {
         <m.h1 variants={rise} className="font-display-serif text-[30px] font-medium leading-tight lg:text-[36px]">Interview &amp; outcome</m.h1>
         <m.p variants={rise} custom={1} className="text-[15px] text-faint">Move candidates forward with clarity.</m.p>
         <m.div variants={rise} custom={2}>
-          <Link href={profileHref} className="mt-5 flex items-center gap-3 rounded-tile border border-line bg-surface p-4 hover:border-foreground/25">
+          <Link href={profileHref} data-surface="paper" className="mt-5 flex items-center gap-3 rounded-tile bg-paper p-4 text-paper-ink hover:bg-paper-muted">
             <Avatar name={name} className="size-12 text-[15px]" />
             <span className="min-w-0 flex-1">
               <span className="block text-[17px] font-semibold">{name}</span>
@@ -146,7 +146,7 @@ export default function EnterpriseInterviewPage() {
           />
         </div>
         <aside className="space-y-5">
-          <Panel title="Update status">
+          <Panel tone="paper" title="Update status">
             <label htmlFor="stage" className="sr-only">New status</label>
             <select id="stage" value={target || app.stage} onChange={(e) => setTarget(e.target.value as ApplicationStage)} className="min-h-12 w-full rounded-xl border border-field-line bg-transparent px-3 text-[15px] [&>option]:text-paper-ink">
               {STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
@@ -154,7 +154,7 @@ export default function EnterpriseInterviewPage() {
             <div className="mt-3"><DashButton onClick={update} disabled={busy || !target || target === app.stage}>Update</DashButton></div>
           </Panel>
           {app.stage !== "rejected" && (
-            <Panel title="Offer & close">
+            <Panel tone="paper" title="Offer & close">
               <div className="flex flex-wrap gap-2">
                 {app.stage !== "offer" && <DashButton onClick={() => move("offer").catch(() => {})} disabled={busy}>Send offer</DashButton>}
                 <DashButton variant="outline" onClick={() => setRejecting(true)} disabled={busy}>Not selected</DashButton>
@@ -163,7 +163,7 @@ export default function EnterpriseInterviewPage() {
             </Panel>
           )}
           {managers.length > 0 && (
-            <Panel title="Hiring manager">
+            <Panel tone="paper" title="Hiring manager">
               {assigned ? (
                 <p className="flex items-center gap-2 text-[15px]"><Check className="size-4 text-success-on-dark" aria-hidden /> Assigned to {assigned}</p>
               ) : (
@@ -178,7 +178,7 @@ export default function EnterpriseInterviewPage() {
               )}
             </Panel>
           )}
-          <Panel title="Activity">
+          <Panel tone="paper" title="Activity">
             <ol className="relative space-y-3 border-l border-line pl-5">
               {trail.map((t, i) => (
                 <li key={`${t.text}-${i}`} className="relative text-[14px]">

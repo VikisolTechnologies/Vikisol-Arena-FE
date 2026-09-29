@@ -149,20 +149,20 @@ export default function CandidateProfilePage() {
             <m.div key={tab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={dissolve}>
               {tab === "overview" && (
                 <div className="space-y-5">
-                  <Panel title="Key information">
+                  <Panel tone="paper" title="Key information">
                     <ul className="space-y-2.5">{info.map(([I, t]) => <li key={t} className="flex items-start gap-3 text-[15px]"><I className="mt-0.5 size-4.5 shrink-0 text-faint" aria-hidden /> {t}</li>)}</ul>
                     {c.bio && <p className="mt-4 border-t border-line pt-4 text-[15px] leading-relaxed text-foreground/85">{c.bio}</p>}
                     {(c.skills?.length ?? 0) > 0 && (
                       <div className="mt-4 flex flex-wrap gap-1.5">{c.skills!.map((s) => <span key={s.name} className="rounded-full bg-foreground/8 px-3 py-1 text-[13px]">{s.name}</span>)}</div>
                     )}
                   </Panel>
-                  <Panel title="Must-have evidence" action={must.length ? <span className="text-[15px] font-semibold">{shown}/{must.length}</span> : undefined}>
+                  <Panel tone="paper" title="Must-have evidence" action={must.length ? <span className="text-[15px] font-semibold">{shown}/{must.length}</span> : undefined}>
                     <EvidenceList items={evidence} />
                   </Panel>
                 </div>
               )}
               {tab === "resume" && (
-                <Panel title="Resume">
+                <Panel tone="paper" title="Resume">
                   {c.cvUrl ? (
                     <div className="space-y-3">
                       <p className="flex items-center gap-2 text-[15px]"><FileText className="size-5 text-faint" aria-hidden /> {c.resumeFileName ?? "Resume"}{c.resumeUploadedAt && <span className="text-faint"> · updated {timeAgo(c.resumeUploadedAt)}</span>}</p>
@@ -175,13 +175,13 @@ export default function CandidateProfilePage() {
                 </Panel>
               )}
               {tab === "evidence" && (
-                <Panel title="Must-have evidence" action={must.length ? <span className="text-[15px] font-semibold">{shown}/{must.length}</span> : undefined}>
+                <Panel tone="paper" title="Must-have evidence" action={must.length ? <span className="text-[15px] font-semibold">{shown}/{must.length}</span> : undefined}>
                   <EvidenceList items={evidence} />
                   <p className="mt-4 text-[13px] text-faint">Evidence comes only from what {name.split(" ")[0]} shared: skills, title and about. &ldquo;Not shown&rdquo; means not on their profile — not that they can&apos;t do it. Ask in the interview.</p>
                 </Panel>
               )}
               {tab === "notes" && (
-                <Panel title="Recruiter notes (private)">
+                <Panel tone="paper" title="Recruiter notes (private)">
                   <label htmlFor="note" className="sr-only">Add a note</label>
                   <textarea id="note" value={note} onChange={(e) => setNote(e.target.value)} rows={3} maxLength={600} placeholder="What stood out? Keep it about the work." className="w-full rounded-xl border border-field-line bg-transparent p-3 text-[15px] outline-none focus-visible:border-primary" />
                   <div className="mt-2 flex items-center justify-between gap-3">
@@ -206,18 +206,18 @@ export default function CandidateProfilePage() {
         </div>
 
         <m.aside variants={rise} custom={3} className="hidden space-y-5 lg:block">
-          <Panel title="Next step">
+          <Panel tone="paper" title="Next step">
             <p className="mb-3 text-[14px] text-faint">Currently <strong className="font-semibold text-foreground">{STAGE_LABEL[app.stage]}</strong>.</p>
             {actions}
           </Panel>
-          <Panel title="Timeline">
+          <Panel tone="paper" title="Timeline">
             <ol className="space-y-3 text-[14px]">
               {app.updatedAt && app.updatedAt !== app.appliedAt && <li className="flex gap-2"><Check className="mt-0.5 size-4 text-success-on-dark" aria-hidden /> Moved to {STAGE_LABEL[app.stage]} · {timeAgo(app.updatedAt)}</li>}
               <li className="flex gap-2"><Check className="mt-0.5 size-4 text-faint" aria-hidden /> Applied · {shortDate(app.appliedAt, true)}</li>
             </ol>
             <p className="mt-3 text-[12px] text-faint">Candidate data is kept for 12 months after the role closes, then deleted.</p>
           </Panel>
-          <Panel title="Stages">
+          <Panel tone="paper" title="Stages">
             <ol className="flex flex-wrap gap-1.5">{STAGES.map((s) => <li key={s.id} className={cn("rounded-full px-2.5 py-0.5 text-[12px] font-semibold", s.id === app.stage ? STAGE_TONE[s.id] : "text-faint")}>{s.label}</li>)}</ol>
           </Panel>
         </m.aside>

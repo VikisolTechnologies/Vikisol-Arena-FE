@@ -831,9 +831,8 @@
     "index": 4,
     "title": "Manage your job",
     "route": "/dev/business?to=/enterprise/postings/demo-job",
-    "status": "in-progress",
-    "commit": null,
-    "note": "Fidelity: board is a cream full-page phone layout; live keeps the dark dashboard frame with dark panels (details, share). Cards/lists are cream."
+    "status": "done",
+    "commit": null
   },
   {
     "id": "candidates",
@@ -844,7 +843,7 @@
     "route": "/dev/business?to=/enterprise/postings/demo-job?tab=candidates",
     "status": "in-progress",
     "commit": null,
-    "note": "Fidelity: board is a cream list with stage pills; live list is cream but sits under the Overview/Candidates tabs and Board/List switch."
+    "note": "Fidelity: list and cards match (cream, photo avatars); the board's standalone phone screen is reached here via the job's Candidates tab (Board/List switch above it)."
   },
   {
     "id": "candidate-profile",
@@ -853,9 +852,8 @@
     "index": 6,
     "title": "Candidate profile",
     "route": "/dev/business?to=/enterprise/postings/demo-job/candidates/demo-app-0",
-    "status": "in-progress",
-    "commit": null,
-    "note": "Fidelity: board is cream with a Decline / Move to interview bar; live panels are dark."
+    "status": "done",
+    "commit": null
   },
   {
     "id": "interview-hire",
@@ -864,9 +862,8 @@
     "index": 7,
     "title": "Interview & hire",
     "route": "/dev/business?to=/enterprise/interviews/demo-app-5",
-    "status": "in-progress",
-    "commit": null,
-    "note": "Fidelity: board is a cream card stack with candidate message; live panels are dark; candidate message needs messaging per application."
+    "status": "done",
+    "commit": null
   },
   {
     "id": "jenny-feed",
