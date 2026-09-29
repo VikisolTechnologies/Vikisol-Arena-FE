@@ -1,182 +1,191 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Copy, Check, UserX, UserCheck, Trash2 } from "lucide-react";
+import { m } from "motion/react";
+import { Check, Copy, Plus, Trash2, UserCheck, UserX } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { rise, shake } from "@/lib/motion";
 import { CompanyAdminShell } from "@/components/app/CompanyAdminShell";
-import { OrbLoader } from "@/components/ui/orb-loader";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Avatar } from "@/components/bplus/Avatar";
+import { BottomSheet } from "@/components/bplus/BottomSheet";
+import { Button } from "@/components/bplus/Button";
+import { Skeleton } from "@/components/bplus/Primitives";
+import { DashButton, Panel, StatusPill } from "@/components/dash/Parts";
 import {
-  getTeam, getPendingInvitations, inviteMember, revokeInvitation, changeMemberRole, setMemberSuspended, removeMember,
-  type TeamMember, type Invitation,
+  changeMemberRole, getPendingInvitations, getTeam, inviteMember, removeMember, revokeInvitation, setMemberSuspended,
+  type Invitation, type TeamMember,
 } from "@/lib/api/companyAdmin";
 import { getMyEnterpriseProfile } from "@/lib/api/enterprise";
-import type { Role, EnterpriseProfile } from "@/lib/types";
+import type { EnterpriseProfile, Role } from "@/lib/types";
 
-const INVITABLE_ROLES: { key: Role; label: string }[] = [
-  { key: "recruiter", label: "Recruiter" },
-  { key: "hiring_manager", label: "Hiring manager" },
-  { key: "company_admin", label: "Company admin" },
+const ROLES: { key: Role; label: string; detail: string }[] = [
+  { key: "recruiter", label: "Recruiter", detail: "Posts jobs, moves candidates, messages." },
+  { key: "hiring_manager", label: "Hiring manager", detail: "Runs the interviews they're assigned." },
+  { key: "company_admin", label: "Admin", detail: "Everything, plus team, billing and settings." },
 ];
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const STATUS_TONE: Record<string, string> = {
-  active: "bg-emerald-500/15 text-emerald-400",
-  invited: "bg-amber-500/15 text-amber-400",
-  suspended: "bg-red-500/15 text-red-400",
-  pending: "bg-amber-500/15 text-amber-400",
-};
-
+/** Company settings — Team (flow §8 B3; no board — designed in B+). Same companyAdmin calls. */
 export default function TeamPage() {
   const [team, setTeam] = useState<TeamMember[] | null>(null);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [profile, setProfile] = useState<EnterpriseProfile | null>(null);
   const [inviting, setInviting] = useState(false);
   const [email, setEmail] = useState("");
+  const [touched, setTouched] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [role, setRole] = useState<Role>("recruiter");
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [pageError, setPageError] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<TeamMember | null>(null);
 
   const load = () => {
-    getTeam().then(setTeam);
-    getPendingInvitations().then(setInvitations);
-    getMyEnterpriseProfile().then(setProfile);
+    getTeam().then(setTeam).catch(() => { setTeam([]); setPageError("The team didn't load. Refresh to try again."); });
+    getPendingInvitations().then(setInvitations).catch(() => {});
+    getMyEnterpriseProfile().then(setProfile).catch(() => {});
   };
-
   useEffect(load, []);
 
-  const seatsUsed = (team?.filter((m) => m.status !== "suspended").length ?? 0) + invitations.length;
+  const act = async (fn: () => Promise<unknown>, fail: string) => {
+    setPageError("");
+    try {
+      await fn();
+      load();
+    } catch {
+      setPageError(fail);
+    }
+  };
+
+  const seatsUsed = (team?.filter((x) => x.status !== "suspended").length ?? 0) + invitations.length;
   const seatsTotal = profile?.seatsTotal ?? 0;
   const atLimit = seatsTotal > 0 && seatsUsed >= seatsTotal;
+  const emailError = touched && !EMAIL.test(email.trim()) ? "Enter a work email, like name@company.com." : "";
 
   const submitInvite = async () => {
-    if (!email.trim()) return;
+    setTouched(true);
+    if (!EMAIL.test(email.trim())) {
+      setAttempt((a) => a + 1);
+      return;
+    }
+    setBusy(true);
     setError("");
     try {
       await inviteMember(email.trim(), role);
       setEmail("");
+      setTouched(false);
       setInviting(false);
       load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't send invite");
+      setError(err instanceof Error && err.message ? err.message : "The invite didn't send. Try again.");
+    } finally {
+      setBusy(false);
     }
   };
 
-  const copyLink = (invite: Invitation) => {
-    navigator.clipboard?.writeText(invite.inviteLink).catch(() => {});
-    setCopiedId(invite.id);
-    setTimeout(() => setCopiedId(null), 1500);
+  const copyLink = async (inv: Invitation) => {
+    try {
+      await navigator.clipboard.writeText(inv.inviteLink);
+      setCopiedId(inv.id);
+      setTimeout(() => setCopiedId(null), 1500);
+    } catch {
+      setPageError(`Couldn't copy. The link is ${inv.inviteLink}`);
+    }
   };
 
-  if (!team) {
-    return (
-      <CompanyAdminShell title="Team">
-        <OrbLoader className="h-96" />
-      </CompanyAdminShell>
-    );
-  }
-
   return (
-    <CompanyAdminShell
-      title="Team"
-      actions={
-        <Button variant="primary-gradient" size="sm" className="gap-1.5" onClick={() => setInviting(true)} disabled={atLimit}>
-          <Plus className="size-3.5" /> Invite
-        </Button>
-      }
-    >
-      <div className="mb-5 flex items-center justify-between rounded-2xl border border-border bg-secondary px-4 py-3 text-sm">
-        <span className="text-muted-foreground">Seats used</span>
-        <span className={atLimit ? "font-semibold text-amber-400" : "font-semibold"}>
-          {seatsUsed}/{seatsTotal || "—"}
-          {atLimit && " · upgrade your plan to invite more"}
-        </span>
+    <CompanyAdminShell title="Team" actions={<DashButton onClick={() => setInviting(true)} disabled={atLimit}><Plus className="size-4" aria-hidden /> Invite</DashButton>}>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-2 rounded-tile border border-line bg-surface px-4 py-3 text-[15px]">
+        <span className="text-faint">Seats used</span>
+        <span className={cn("font-semibold", atLimit && "text-warning")}>{seatsUsed} of {seatsTotal || "—"}{atLimit && " · change plan in Billing to invite more"}</span>
       </div>
+      {pageError && <p role="alert" className="mb-4 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{pageError}</p>}
 
-      {invitations.length > 0 && (
-        <div className="mb-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pending invitations</p>
-          <div className="space-y-2">
-            {invitations.map((inv) => (
-              <div key={inv.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-secondary px-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{inv.email}</p>
-                  <p className="text-xs capitalize text-muted-foreground">{inv.role.replace("_", " ")}</p>
-                </div>
-                <Badge variant="secondary" className={STATUS_TONE.pending}>Pending</Badge>
-                <Button variant="ghost-glass" size="sm" className="gap-1.5" onClick={() => copyLink(inv)}>
-                  {copiedId === inv.id ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-                  {copiedId === inv.id ? "Copied" : "Copy link"}
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => revokeInvitation(inv.id).then(load)}>Revoke</Button>
-              </div>
-            ))}
-          </div>
-        </div>
+      {!team ? (
+        <Skeleton className="h-64" />
+      ) : (
+        <m.div initial="hidden" animate="shown" className="space-y-5">
+          {invitations.length > 0 && (
+            <m.div variants={rise}>
+              <Panel title="Waiting to join">
+                <ul className="divide-y divide-line">
+                  {invitations.map((inv) => (
+                    <li key={inv.id} className="flex flex-wrap items-center gap-3 py-3">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[15px] font-medium">{inv.email}</span>
+                        <span className="text-[13px] text-faint">{ROLES.find((r) => r.key === inv.role)?.label ?? inv.role} · invited by {inv.invitedByName}</span>
+                      </span>
+                      <DashButton variant="outline" onClick={() => copyLink(inv)}>{copiedId === inv.id ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}{copiedId === inv.id ? "Copied" : "Copy link"}</DashButton>
+                      <DashButton variant="outline" onClick={() => act(() => revokeInvitation(inv.id), "The invite wasn't revoked. Try again.")}>Revoke</DashButton>
+                    </li>
+                  ))}
+                </ul>
+              </Panel>
+            </m.div>
+          )}
+          <m.div variants={rise} custom={1}>
+            <Panel title="Members">
+              <ul className="divide-y divide-line">
+                {team.map((x) => (
+                  <li key={x.membershipId} className="flex flex-wrap items-center gap-3 py-3">
+                    <Avatar name={x.name} className="size-10 text-[14px]" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] font-semibold">{x.name}</span>
+                      <span className="block truncate text-[13px] text-faint">{x.email}</span>
+                    </span>
+                    <label>
+                      <span className="sr-only">Role for {x.name}</span>
+                      <select value={x.role} onChange={(e) => act(() => changeMemberRole(x.membershipId, e.target.value as Role), "The role didn't change. Try again.")} className="min-h-11 rounded-full border border-field-line bg-transparent px-3 text-[14px] [&>option]:text-paper-ink">
+                        {ROLES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
+                      </select>
+                    </label>
+                    <StatusPill status={x.status} />
+                    {x.status === "suspended" ? (
+                      <DashButton variant="outline" onClick={() => act(() => setMemberSuspended(x.membershipId, false), "Didn't reactivate. Try again.")}><UserCheck className="size-4" aria-hidden /> Reactivate</DashButton>
+                    ) : (
+                      <DashButton variant="outline" onClick={() => act(() => setMemberSuspended(x.membershipId, true), "Didn't suspend. Try again.")}><UserX className="size-4" aria-hidden /> Suspend</DashButton>
+                    )}
+                    <button type="button" aria-label={`Remove ${x.name}`} onClick={() => setRemoving(x)} className="grid size-11 place-items-center rounded-full text-danger-on-dark hover:bg-danger/10"><Trash2 className="size-4" aria-hidden /></button>
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          </m.div>
+        </m.div>
       )}
 
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Members</p>
-      <div className="space-y-2">
-        {team.map((m) => (
-          <div key={m.membershipId} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-secondary px-4 py-3">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{m.name}</p>
-              <p className="truncate text-xs text-muted-foreground">{m.email}</p>
-            </div>
-            <select
-              value={m.role}
-              onChange={(e) => changeMemberRole(m.membershipId, e.target.value as Role).then(load)}
-              className="rounded-full border border-border bg-secondary px-3 py-1.5 text-xs capitalize"
-            >
-              {INVITABLE_ROLES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
-            </select>
-            <Badge variant="secondary" className={STATUS_TONE[m.status]}>{m.status}</Badge>
-            {m.status === "suspended" ? (
-              <Button variant="ghost-glass" size="sm" className="gap-1.5" onClick={() => setMemberSuspended(m.membershipId, false).then(load)}>
-                <UserCheck className="size-3.5" /> Reactivate
-              </Button>
-            ) : (
-              <Button variant="ghost-glass" size="sm" className="gap-1.5" onClick={() => setMemberSuspended(m.membershipId, true).then(load)}>
-                <UserX className="size-3.5" /> Suspend
-              </Button>
-            )}
-            <Button variant="ghost" size="icon" aria-label="Remove" onClick={() => removeMember(m.membershipId).then(load)}>
-              <Trash2 className="size-4 text-red-400" />
-            </Button>
+      <BottomSheet open={inviting} onClose={() => !busy && setInviting(false)} title="Invite a teammate">
+        <h2 className="font-display-serif text-[24px] leading-tight">Invite a teammate</h2>
+        <p className="mt-1 text-[14px] text-paper-ink-muted">Arena gives you a link to share with them — invite emails aren&apos;t sent yet.</p>
+        <m.div key={attempt} animate={attempt && emailError ? { x: [...shake.x] } : undefined} transition={shake.transition}>
+          <label htmlFor="invite-email" className="mt-4 block text-[15px] font-semibold">Work email</label>
+          <input id="invite-email" type="email" autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setTouched(true)} aria-invalid={!!emailError} aria-describedby="invite-email-error" placeholder="teammate@company.com" className="mt-1.5 min-h-12 w-full rounded-xl border border-paper-ink/25 bg-white px-3 text-[15px] aria-[invalid=true]:border-danger-on-paper" />
+          <p id="invite-email-error" className="mt-1 min-h-5 text-[13px] font-semibold text-danger-on-paper">{emailError}</p>
+        </m.div>
+        <fieldset className="mt-2">
+          <legend className="text-[15px] font-semibold">Role</legend>
+          <div role="radiogroup" aria-label="Role" className="mt-2 grid gap-2">
+            {ROLES.map((r) => (
+              <button key={r.key} type="button" role="radio" aria-checked={role === r.key} onClick={() => setRole(r.key)} className={cn("rounded-2xl border-2 p-3 text-left", role === r.key ? "border-primary-on-paper bg-white" : "border-transparent bg-paper-muted")}>
+                <span className="block text-[15px] font-semibold">{r.label}</span>
+                <span className="block text-[13px] text-paper-ink-muted">{r.detail}</span>
+              </button>
+            ))}
           </div>
-        ))}
-      </div>
+        </fieldset>
+        {error && <p role="alert" className="mt-3 text-[14px] font-semibold text-danger-on-paper">{error}</p>}
+        <Button className="mt-5" loading={busy} onClick={submitInvite}>Create invite link</Button>
+      </BottomSheet>
 
-      <Dialog open={inviting} onOpenChange={setInviting}>
-        <DialogContent className="border-border bg-popover">
-          <DialogHeader>
-            <DialogTitle>Invite a team member</DialogTitle>
-            <DialogDescription>No email provider is configured yet, so you&apos;ll get a link to share directly.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="teammate@company.com" className="border-border bg-secondary" />
-            <div className="flex gap-2">
-              {INVITABLE_ROLES.map((r) => (
-                <button
-                  key={r.key}
-                  type="button"
-                  onClick={() => setRole(r.key)}
-                  className={`flex-1 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
-                    role === r.key ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground"
-                  }`}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
-            {error && <p className="text-xs text-red-400">{error}</p>}
-            <Button variant="primary-gradient" size="sm" className="w-full" onClick={submitInvite} disabled={!email.trim()}>
-              Send invite
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <BottomSheet open={!!removing} onClose={() => setRemoving(null)} title="Remove teammate">
+        <h2 className="font-display-serif text-[24px] leading-tight">Remove {removing?.name}?</h2>
+        <p className="mt-2 text-[15px] text-paper-ink-muted">They lose access to this workspace straight away. Their past actions stay in the audit log.</p>
+        <div className="mt-5 grid gap-2">
+          <Button onClick={() => { const x = removing; setRemoving(null); if (x) void act(() => removeMember(x.membershipId), "They weren't removed. Try again."); }}>Remove</Button>
+          <button type="button" onClick={() => setRemoving(null)} className="min-h-11 text-[15px] font-semibold text-paper-ink-muted">Cancel</button>
+        </div>
+      </BottomSheet>
     </CompanyAdminShell>
   );
 }

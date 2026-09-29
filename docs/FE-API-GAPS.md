@@ -42,6 +42,7 @@ backend plan (FE-BPLUS-BUILD §6). One row per gap; newest phase last.
 
 | 33 | Interview feedback (P7) | Structured feedback per must-have, no overall score | `POST /interviews/{id}/feedback` `{ mustHaves: [{ item, seen: "strong"\|"some"\|"none", note? }], strengths?, concerns?, recommendation }` with `rating` optional/removed | Per-must-have answers written into strengths/concerns; `rating` derived (never shown) because the API requires it |
 | 34 | Talent (P9) | Connect requests (flow §8: reaching out asks the person first) | `POST /enterprise/talent/{id}/connect` `{ jobId?, note (≤300) }` → `{ status:"pending" }`; person side `GET /connect-requests`, `POST /connect-requests/{id}/accept\|decline`; messaging allowed only after accept or apply | Unlock (credit) + message, as before |
+| 35 | Billing (P9) | Self-serve plan change with payment; roles Owner/Interviewer | `POST /enterprise/admin/billing/checkout` `{ plan }` → payment session; `Role` + `"owner"`, `"interviewer"` | Display only; team roles Admin / Recruiter / Hiring manager |
 
 Saved for real today (no gap): sign up, sign in, 2FA code, forgot/reset password, area
 (`PUT /profile/me/location` with `consent: "city"`) and current location (`consent: "precise"`,

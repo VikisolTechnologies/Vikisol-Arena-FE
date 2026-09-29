@@ -1068,5 +1068,71 @@
     "status": "done",
     "commit": null,
     "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "biz-admin",
+    "phase": "P9 Arena for Business",
+    "board": "none",
+    "index": 8,
+    "title": "Company settings \u2014 overview",
+    "route": "/dev/business?to=/enterprise/admin",
+    "status": "done",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "biz-team",
+    "phase": "P9 Arena for Business",
+    "board": "none",
+    "index": 9,
+    "title": "Team & invites",
+    "route": "/dev/business?to=/enterprise/admin/team",
+    "status": "done",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "biz-audit",
+    "phase": "P9 Arena for Business",
+    "board": "none",
+    "index": 10,
+    "title": "Audit log",
+    "route": "/dev/business?to=/enterprise/admin/audit",
+    "status": "done",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "biz-billing",
+    "phase": "P9 Arena for Business",
+    "board": "none",
+    "index": 11,
+    "title": "Billing & plan",
+    "route": "/dev/business?to=/enterprise/admin/billing",
+    "status": "done",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "biz-company",
+    "phase": "P9 Arena for Business",
+    "board": "none",
+    "index": 12,
+    "title": "Company profile",
+    "route": "/dev/business?to=/enterprise/admin/company",
+    "status": "done",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "biz-consent",
+    "phase": "P9 Arena for Business",
+    "board": "none",
+    "index": 13,
+    "title": "Consent & data",
+    "route": "/dev/business?to=/enterprise/admin/consent",
+    "status": "done",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
   }
 ]

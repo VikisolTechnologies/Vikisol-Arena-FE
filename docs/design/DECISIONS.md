@@ -3,6 +3,11 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **29 Sep (P9)** — Company settings rebuilt on the B+ frame. **Billing is display-only** (flow
+  §8): the in-page "Switch to …" button was removed because it changed plans with no payment
+  step; `changePlan` stays in the API layer unused (gap #35). Audit actions show in plain words
+  (codes stay the filter values). Team: invite validates after blur and shakes once; removing
+  someone asks first. Emoji company logos are replaced by the generated `CompanyMark` monogram.
 - **29 Sep (P7/P9)** — Talent no longer shows a match % or the random "fit" blurbs (the mock
   picked them at random; there's no real basis), and a person's internal Career health score is
   hidden from companies. Cards show only what people shared. Messaging from a talent profile now

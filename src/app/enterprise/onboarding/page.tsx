@@ -15,7 +15,7 @@ import type { Values } from "@/lib/intake/types";
 const subscribeNothing = () => () => {};
 
 /** Recruiter board 2 — Company workspace (Arena for Business setup). Saves the same enterprise
- *  profile as before; verification fields wait for the API (FE-API-GAPS #28). */
+ *  profile as before; verification fields wait for the API (FE-API-GAPS #29). */
 export default function EnterpriseOnboardingPage() {
   const router = useRouter();
   const ready = useSyncExternalStore(subscribeNothing, () => true, () => false);

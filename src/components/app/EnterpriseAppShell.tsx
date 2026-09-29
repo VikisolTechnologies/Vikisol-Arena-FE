@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useSyncExternalStore } from "react";
 import { Briefcase, CalendarClock, LayoutDashboard, Mail, Newspaper, Search, Settings } from "lucide-react";
 import { DashShell, type DashNavItem } from "@/components/dash/DashShell";
+import { CompanyMark } from "@/components/career/CompanyMark";
 import { signOut } from "@/lib/api/auth";
 import { getSession } from "@/lib/session";
 import type { EnterpriseProfile } from "@/lib/types";
@@ -45,7 +46,7 @@ export function EnterpriseAppShell({
       identity={
         profile ? (
           <p className="flex items-center gap-2 rounded-xl bg-foreground/5 px-3 py-2 text-[14px]">
-            <span aria-hidden>{profile.logoEmoji}</span>
+            <CompanyMark name={profile.companyName} className="size-7 rounded-lg text-[12px]" />
             <span className="truncate font-semibold">{profile.companyName}</span>
           </p>
         ) : null

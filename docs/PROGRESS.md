@@ -7,18 +7,21 @@ Updated 29 Sep 2026. Resume from here.
 
 ## Current status
 
-**Next step: finish P7 → P9, then P8.** Done so far (commits "FE P7/P9 (1/n)" and "(2/n)"): B+
-business frame (`components/dash/`), role chooser `/auth?mode=role`, company workspace
-`/enterprise/onboarding`, Home `/enterprise/dashboard`, Jobs `/enterprise/postings`, Post a job
-`/enterprise/postings/new`, job page `/enterprise/postings/[id]` (funnel, share, Kanban with drag +
-Move menu, candidate list with evidence filters + bulk move, activity), candidate profile
-`/enterprise/postings/[id]/candidates/[applicationId]`, the Not selected kind-message sheet.
-Also done ("(3/n)"): interview & outcome `/enterprise/interviews/[applicationId]` (board 7),
-`/enterprise/interviews` index, HM `interviews/mine` + room, B+ InterviewRoom (per-must-have
-feedback). Also done ("(4/n)"): talent + talent profile, business messages, company posts. **Remaining:** company admin
-(`/enterprise/admin` index/team/audit/billing/company/consent, keep `companyAdmin.ts` calls). Delete the old UI in each commit; add each to
-screens.json (phase "P9 Arena for Business", board "none") + `tests/local/business.local.ts`.
-Then P8 Jenny (§10), P10 Admin (§9), P11. Gaps at #34. Founder demo: `/dev/business?to=<path>`.
+**Next step: P8 Jenny boards + Jenny pre-fill (flow §10)**, then P10 Arena Admin (§9), then P11.
+P8: read `docs/design/boards/jenny-layer.png` + `jenny-automation.png` (screens.json phases "P8
+Jenny — …"), write "Think (P8)" in BPLUS-SCREENS.md, then build: Jenny noticed (feed), Discover
+intent → filters, Tell Jenny → pre-filled intake ("Or just tell Jenny" on every IntakeForm, fields
+glow via `jennyFilled`), approve action, set automation, Jenny today/work. Jenny never publishes,
+applies or sends on her own. Reuse `src/lib/api/agent.ts` (real mode only) and the existing
+JennyActionCard; missing agent endpoints → FE-API-GAPS #36+.
+
+**P7 → P9 Arena for Business — done** (29 Sep, commits "FE P7/P9 (1/n)"…"(5/n)"): B+ business
+frame, role chooser, company workspace, Home, Jobs, Post a job, job page (funnel, share, Kanban
+with drag + Move menu, evidence-only list, activity), candidate profile (consented info, evidence,
+private notes), kind Not selected sheet, interview & outcome + index, HM interviews, per-must-have
+feedback, talent, messages, company posts, company settings (overview, team, audit, billing
+display-only, company, consent). Founder demo: `/dev/business?to=<path>` (mock mode). Gaps #28–#35.
+Local Playwright: `business.local.ts`, `company-admin.local.ts`.
 
 Live preview: `npm run dev` for this worktree is Cursor's (port 3010); the founder preview runs
 with `ARENA_NEXT_DIST_DIR=.next-founder npm run dev -- -H 0.0.0.0 -p 3001` →
