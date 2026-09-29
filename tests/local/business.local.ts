@@ -25,6 +25,8 @@ async function setup(page: Page, calls: Call[], stageForA1 = "applied") {
   const start = new Date(Date.now() + 2 * 86_400_000).toISOString();
   let interview: Record<string, unknown> = { id: "iv1", applicationId: "a1", proposedSlots: [{ id: "s1", start, durationMinutes: 45 }], confirmedSlotId: "s1", status: "confirmed", meetingLink: "https://meet.example.org/iv1" };
   apps[0].stage = stageForA1;
+  let shortlist: string[] = [];
+  let companyPosts: Record<string, unknown>[] = [];
   await page.route("**/api/v1/**", async (route) => {
     const req = route.request();
     const path = new URL(req.url()).pathname.replace(/^.*\/api\/v1/, "");
@@ -36,6 +38,11 @@ async function setup(page: Page, calls: Call[], stageForA1 = "applied") {
     else if (path === "/enterprise/postings") data = { content: [posting], totalElements: 1, totalPages: 1, number: 0, size: 100 };
     else if (path === "/enterprise/postings/job1") data = posting;
     else if (path === "/enterprise/postings/job1/applicants") data = { content: apps, totalElements: apps.length, totalPages: 1, number: 0, size: 100 };
+    else if (path === "/enterprise/talent/search") data = { content: apps.map((a) => ({ candidate: a.candidate, matchPercentage: 91, fitBlurb: "x", availability: "full-time" })), totalElements: 3, totalPages: 1, number: 0, size: 50 };
+    else if (path === "/enterprise/shortlist") data = shortlist;
+    else if (path.match(/^\/enterprise\/shortlist\/\w+\/toggle$/)) { const cid = path.split("/")[3]; shortlist = shortlist.includes(cid) ? shortlist.filter((x) => x !== cid) : [...shortlist, cid]; data = shortlist; }
+    else if (path === "/companies/me/posts" && req.method() === "GET") data = { content: companyPosts, totalElements: companyPosts.length, totalPages: 1, number: 0, size: 20 };
+    else if (path === "/companies/me/posts" && req.method() === "POST") { const b = body as { body: string; tags: string[] }; companyPosts = [{ id: "cp1", body: b.body, tags: b.tags, createdAt: new Date().toISOString(), reactionCount: 0, commentCount: 0, status: "open" }, ...companyPosts]; data = companyPosts[0]; }
     else if (path.startsWith("/enterprise/talent/")) data = apps.find((a) => path.endsWith(a.candidateId))?.candidate ?? null;
     else if (path === "/enterprise/applicants/a1") data = { id: "a1", jobPostingId: "job1", candidateId: "c1", stage: apps[0].stage, appliedAt: days(1) };
     else if (path === "/interviews/by-application/a1") data = interview;
@@ -169,4 +176,30 @@ test("interview & outcome: feedback per must-have (no score shown), then the sta
   await page.getByRole("button", { name: "Not selected" }).first().click();
   await expect(page.getByRole("dialog", { name: "Mark Priya Sharma not selected" })).toBeVisible();
   expect(calls.some((c) => c.method === "PUT" && c.body && JSON.stringify(c.body).includes("rejected"))).toBe(false);
+});
+
+test("talent shows no match %; save to shortlist; company post validates then publishes", async ({ page }) => {
+  const calls: Call[] = [];
+  await setup(page, calls);
+  await page.goto("/enterprise/talent");
+  await expect(page.getByRole("link", { name: "Arjun Nair" })).toBeVisible();
+  await expect(page.getByText(/\d+%/)).toHaveCount(0);
+  await noSeriousA11y(page);
+  await page.getByRole("button", { name: "Save Arjun Nair to shortlist" }).click();
+  await expect(page.getByRole("button", { name: "Remove Arjun Nair from shortlist" })).toHaveAttribute("aria-pressed", "true");
+  expect(calls.some((c) => c.path === "/enterprise/shortlist/c2/toggle")).toBe(true);
+
+  await page.goto("/enterprise/posts");
+  await expect(page.getByText("No company posts yet")).toBeVisible();
+  await page.getByRole("button", { name: "New post" }).click();
+  const sheet = page.getByRole("dialog", { name: "New company post" });
+  await sheet.getByRole("button", { name: "Publish" }).click();
+  await expect(sheet.getByText("Write something to post.")).toBeVisible();
+  expect(calls.some((c) => c.method === "POST" && c.path === "/companies/me/posts")).toBe(false);
+  await sheet.getByLabel("Post").fill("We're hiring two community associates.");
+  await sheet.getByLabel(/Tags/).fill("#hiring, events");
+  await noSeriousA11y(page);
+  await sheet.getByRole("button", { name: "Publish" }).click();
+  await expect(page.getByRole("listitem").getByText("We're hiring two community associates.")).toBeVisible();
+  expect(calls.find((c) => c.method === "POST" && c.path === "/companies/me/posts")?.body).toEqual({ body: "We're hiring two community associates.", tags: ["hiring", "events"] });
 });

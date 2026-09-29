@@ -41,6 +41,7 @@ backend plan (FE-BPLUS-BUILD §6). One row per gap; newest phase last.
 | 32 | Pipeline / candidates (P7) | Evidence the candidate chose to share, notice period | `ApplicantResponse.candidate.noticePeriod?`, `.evidence: [{mustHave, state:"shown"\|"partial"\|"missing", source}]` (server-side, consent-scoped) | Evidence computed in the browser from consented skills/title/bio; no notice filter |
 
 | 33 | Interview feedback (P7) | Structured feedback per must-have, no overall score | `POST /interviews/{id}/feedback` `{ mustHaves: [{ item, seen: "strong"\|"some"\|"none", note? }], strengths?, concerns?, recommendation }` with `rating` optional/removed | Per-must-have answers written into strengths/concerns; `rating` derived (never shown) because the API requires it |
+| 34 | Talent (P9) | Connect requests (flow §8: reaching out asks the person first) | `POST /enterprise/talent/{id}/connect` `{ jobId?, note (≤300) }` → `{ status:"pending" }`; person side `GET /connect-requests`, `POST /connect-requests/{id}/accept\|decline`; messaging allowed only after accept or apply | Unlock (credit) + message, as before |
 
 Saved for real today (no gap): sign up, sign in, 2FA code, forgot/reset password, area
 (`PUT /profile/me/location` with `consent: "city"`) and current location (`consent: "precise"`,

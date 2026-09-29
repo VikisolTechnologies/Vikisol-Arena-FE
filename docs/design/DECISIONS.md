@@ -3,6 +3,12 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **29 Sep (P7/P9)** — Talent no longer shows a match % or the random "fit" blurbs (the mock
+  picked them at random; there's no real basis), and a person's internal Career health score is
+  hidden from companies. Cards show only what people shared. Messaging from a talent profile now
+  opens the business inbox (`/enterprise/messages?with=`), not the personal one. The old
+  Starfield search backdrop was deleted. Company posts: sheet composer, validate after blur,
+  one shake on a failed publish, delete asks first.
 - **29 Sep (P7/P9)** — Interview feedback is **per must-have** (Clearly shown / Partly / Not seen)
   + next step; the old 1–5 slider is gone. The API's required `rating` is derived and never shown
   (gap #33). The simulated "join camera" step was removed: the room shows the real meeting link

@@ -15,11 +15,10 @@ Move menu, candidate list with evidence filters + bulk move, activity), candidat
 `/enterprise/postings/[id]/candidates/[applicationId]`, the Not selected kind-message sheet.
 Also done ("(3/n)"): interview & outcome `/enterprise/interviews/[applicationId]` (board 7),
 `/enterprise/interviews` index, HM `interviews/mine` + room, B+ InterviewRoom (per-must-have
-feedback). **Remaining, in order:** (3) talent + `talent/[id]`
-(unlock credits unchanged; "connect request" = gap); (4) messages, company posts; (5) company
-admin: index/team/audit/billing/company/consent. Delete the old UI in each commit; add each to
+feedback). Also done ("(4/n)"): talent + talent profile, business messages, company posts. **Remaining:** company admin
+(`/enterprise/admin` index/team/audit/billing/company/consent, keep `companyAdmin.ts` calls). Delete the old UI in each commit; add each to
 screens.json (phase "P9 Arena for Business", board "none") + `tests/local/business.local.ts`.
-Then P8 Jenny (§10), P10 Admin (§9), P11. Gaps at #33. Founder demo: `/dev/business?to=<path>`.
+Then P8 Jenny (§10), P10 Admin (§9), P11. Gaps at #34. Founder demo: `/dev/business?to=<path>`.
 
 Live preview: `npm run dev` for this worktree is Cursor's (port 3010); the founder preview runs
 with `ARENA_NEXT_DIST_DIR=.next-founder npm run dev -- -H 0.0.0.0 -p 3001` →
