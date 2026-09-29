@@ -8,6 +8,7 @@ Branch `cloud/a11y-contrast`, 29 Sep 2026.
   - Run: `PW_CHROMIUM_PATH=<chromium> npx playwright test -c playwright.mock.config.ts`. The variable is only needed when Playwright's pinned browser is not downloaded.
   - Covered: 23 routes on desktop (Desktop Chrome) and mobile (Pixel 7), 46 page scans plus the shared helper, 48 tests in total.
   - Routes: `/`, `/auth`, `/pricing`, `/privacy`, `/terms`, `/home`, `/identity`, `/discover`, `/settings`, `/feed`, `/map`, `/work`, `/agent`, `/messages`, `/notifications`, `/people`, `/jobs`, `/rooms`, `/marketplace`, `/search`, `/applications`, `/interviews`, `/identity/edit`, `/enterprise/dashboard`.
+  - CI runs it on every PR and push to `main` through `.github/workflows/a11y-mock.yml` (the "Accessibility (mock build)" job), with no secrets and no production traffic.
   - This suite is now **strict**: any axe violation fails it, at any severity. The production suite in `tests/e2e/accessibility` still fails only on critical and serious; both use the same `tests/utils/axe-scan.ts`.
 - **Computed-contrast sweep.** axe returns "needs review" instead of a verdict for text over stacked or translucent layers, such as the `/discover` swipe-card deck. For those, every visible text node on the same routes was checked in the browser: its colour was composited through each ancestor background and opacity, then compared against 4.5:1, or 3:1 for large text.
 
