@@ -2,20 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { Search, Pause, Play, Settings2 } from "lucide-react";
-import { PlatformAdminShell, usePlatformAdminGate } from "@/components/app/PlatformAdminShell";
-import { OrbLoader } from "@/components/ui/orb-loader";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { listTenants, setTenantSuspended, adjustSubscription, type AdjustSubscriptionInput } from "@/lib/api/platformAdmin";
-import { EmptyState } from "@/components/ui/empty-state";
+import { AdminShell, usePlatformAdminGate } from "@/components/admin/AdminShell";
+import { AdminList, AdminLoading, AdminRow } from "@/components/admin/parts";
+import { BottomSheet } from "@/components/bplus/BottomSheet";
+import { TextField } from "@/components/bplus/TextField";
+import { StateCard } from "@/components/bplus/Primitives";
+import { DashButton, StatusPill } from "@/components/dash/Parts";
+import { CompanyMark } from "@/components/career/CompanyMark";
+import {
+  listTenants,
+  setTenantSuspended,
+  adjustSubscription,
+  type AdjustSubscriptionInput,
+} from "@/lib/api/platformAdmin";
 import type { TenantSummary } from "@/lib/types";
-
-const STATUS_TONE: Record<string, string> = {
-  active: "bg-emerald-500/15 text-emerald-400",
-  suspended: "bg-red-500/15 text-red-400",
-};
 
 const PLANS: TenantSummary["plan"][] = ["free", "pro", "enterprise"];
 
@@ -24,15 +24,20 @@ export default function TenantsPage() {
   const [tenants, setTenants] = useState<TenantSummary[] | null>(null);
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<TenantSummary | null>(null);
-  const [form, setForm] = useState<{ plan: TenantSummary["plan"]; seatsTotal: string; creditDelta: string; reason: string }>({
-    plan: "free", seatsTotal: "", creditDelta: "", reason: "",
+  const [form, setForm] = useState({
+    plan: "free" as TenantSummary["plan"],
+    seatsTotal: "",
+    creditDelta: "",
+    reason: "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const load = (q?: string) => listTenants(q).then(setTenants);
 
-  useEffect(() => { if (gate === "ready") load(); }, [gate]);  
+  useEffect(() => {
+    if (gate === "ready") load();
+  }, [gate]);
 
   const openEdit = (t: TenantSummary) => {
     setEditing(t);
@@ -41,7 +46,10 @@ export default function TenantsPage() {
   };
 
   const submitAdjust = async () => {
-    if (!editing || !form.reason.trim()) { setError("A reason is required."); return; }
+    if (!editing || !form.reason.trim()) {
+      setError("A reason is required.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -61,95 +69,89 @@ export default function TenantsPage() {
     }
   };
 
-  if (!tenants) {
-    return (
-      <PlatformAdminShell title="Tenants">
-        <OrbLoader className="h-96" />
-      </PlatformAdminShell>
-    );
-  }
-
   return (
-    <PlatformAdminShell title="Tenants">
-      <div className="mb-5 flex items-center gap-2 rounded-full border border-border bg-secondary px-4 py-2.5">
-        <Search className="size-4 text-muted-foreground" />
+    <AdminShell title="Companies">
+      <div className="mb-4 flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-4">
+        <Search className="size-4 text-faint" aria-hidden />
         <input
           value={query}
-          onChange={(e) => { setQuery(e.target.value); load(e.target.value); }}
-          placeholder="Search tenants by company name…"
-          className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          onChange={(e) => {
+            setQuery(e.target.value);
+            load(e.target.value);
+          }}
+          placeholder="Search companies…"
+          aria-label="Search companies"
+          className="w-full bg-transparent py-2.5 text-[15px] outline-none placeholder:text-faint"
         />
       </div>
 
-      <div className="space-y-2">
-        {tenants.map((t) => (
-          <div key={t.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-secondary px-4 py-3.5">
-            <span className="text-xl">{t.logoEmoji}</span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{t.companyName}</p>
-              <p className="truncate text-xs text-muted-foreground">{t.ownerEmail}</p>
-            </div>
-            <Badge variant="secondary" className="bg-secondary text-[10px] capitalize text-muted-foreground">{t.plan}</Badge>
-            <span className="text-xs text-muted-foreground">{t.seatsUsed}/{t.seatsTotal} seats</span>
-            <span className="text-xs text-muted-foreground">{t.unlockCreditsUsed}/{t.unlockCreditsTotal} credits</span>
-            <Badge variant="secondary" className={STATUS_TONE[t.status]}>{t.status}</Badge>
-            <Button variant="ghost-glass" size="sm" className="gap-1.5" onClick={() => openEdit(t)}>
-              <Settings2 className="size-3.5" /> Subscription
-            </Button>
-            {t.status === "suspended" ? (
-              <Button variant="ghost-glass" size="sm" className="gap-1.5" onClick={() => setTenantSuspended(t.id, false).then(() => load(query))}>
-                <Play className="size-3.5" /> Reactivate
-              </Button>
-            ) : (
-              <Button variant="ghost-glass" size="sm" className="gap-1.5" onClick={() => setTenantSuspended(t.id, true).then(() => load(query))}>
-                <Pause className="size-3.5" /> Suspend
-              </Button>
-            )}
-          </div>
-        ))}
-        {tenants.length === 0 && <EmptyState title="No tenants match that search." className="py-16" />}
-      </div>
+      {!tenants ? (
+        <AdminLoading />
+      ) : tenants.length === 0 ? (
+        <StateCard kind="empty" title="No companies match that search." />
+      ) : (
+        <AdminList>
+          {tenants.map((t) => (
+            <AdminRow key={t.id}>
+              <div className="flex flex-wrap items-center gap-3">
+                <CompanyMark name={t.companyName} className="size-11 text-[16px]" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[15px] font-semibold">{t.companyName}</p>
+                  <p className="truncate text-[13px] text-faint">{t.ownerEmail}</p>
+                </div>
+                <StatusPill status={t.status} />
+                <span className="text-[12px] capitalize text-faint">{t.plan}</span>
+                <span className="text-[12px] text-faint">
+                  {t.seatsUsed}/{t.seatsTotal} seats
+                </span>
+                <span className="text-[12px] text-faint">
+                  {t.unlockCreditsUsed}/{t.unlockCreditsTotal} credits
+                </span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <DashButton variant="outline" onClick={() => openEdit(t)}>
+                  <Settings2 className="size-4" aria-hidden /> Plan & seats
+                </DashButton>
+                {t.status === "suspended" ? (
+                  <DashButton variant="primary" onClick={() => setTenantSuspended(t.id, false).then(() => load(query))}>
+                    <Play className="size-4" aria-hidden /> Reactivate
+                  </DashButton>
+                ) : (
+                  <DashButton variant="danger" onClick={() => setTenantSuspended(t.id, true).then(() => load(query))}>
+                    <Pause className="size-4" aria-hidden /> Suspend
+                  </DashButton>
+                )}
+              </div>
+            </AdminRow>
+          ))}
+        </AdminList>
+      )}
 
-      <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
-        <DialogContent className="border-border bg-popover">
-          <DialogHeader>
-            <DialogTitle>Adjust {editing?.companyName}&apos;s subscription</DialogTitle>
-            <DialogDescription>Every change here is written to the audit log, tenant-visible.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              {PLANS.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setForm((f) => ({ ...f, plan: p }))}
-                  className={`flex-1 rounded-xl border px-3 py-2 text-xs font-medium capitalize transition-colors ${
-                    form.plan === p ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Seat total</label>
-              <Input type="number" min={1} value={form.seatsTotal} onChange={(e) => setForm((f) => ({ ...f, seatsTotal: e.target.value }))} className="border-border bg-secondary" />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Credit adjustment (+/-)</label>
-              <Input type="number" value={form.creditDelta} onChange={(e) => setForm((f) => ({ ...f, creditDelta: e.target.value }))} placeholder="e.g. 50 or -10" className="border-border bg-secondary" />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Reason (required)</label>
-              <Input value={form.reason} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} placeholder="e.g. Support goodwill credit" className="border-border bg-secondary" />
-            </div>
-            {error && <p className="text-xs text-red-400">{error}</p>}
-            <Button variant="primary-gradient" size="sm" className="w-full" onClick={submitAdjust} disabled={saving}>
-              {saving ? "Saving…" : "Save changes"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </PlatformAdminShell>
+      <BottomSheet open={!!editing} onClose={() => setEditing(null)} title={editing ? `${editing.companyName} — subscription` : "Subscription"}>
+        <p className="mb-4 text-[14px] text-paper-ink-muted">Every change is written to the audit log.</p>
+        <div className="flex gap-2">
+          {PLANS.map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, plan: p }))}
+              className={`flex-1 rounded-xl border px-3 py-2 text-[13px] font-semibold capitalize ${
+                form.plan === p ? "border-primary bg-primary/15 text-primary-on-paper" : "border-paper-ink/20 text-paper-ink-muted"
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+        <div className="mt-4 space-y-3">
+          <TextField label="Seat total" labelStyle="stacked" type="number" value={form.seatsTotal} onChange={(v) => setForm((f) => ({ ...f, seatsTotal: v }))} />
+          <TextField label="Credit adjustment (+/−)" labelStyle="stacked" value={form.creditDelta} onChange={(v) => setForm((f) => ({ ...f, creditDelta: v }))} placeholder="e.g. 50 or -10" />
+          <TextField label="Reason (required)" labelStyle="stacked" value={form.reason} onChange={(v) => setForm((f) => ({ ...f, reason: v }))} error={error} />
+          <DashButton variant="primary" onClick={submitAdjust} disabled={saving} onPaper>
+            {saving ? "Saving…" : "Save changes"}
+          </DashButton>
+        </div>
+      </BottomSheet>
+    </AdminShell>
   );
 }
