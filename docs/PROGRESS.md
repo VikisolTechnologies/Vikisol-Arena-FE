@@ -8,7 +8,10 @@ Updated 29 Sep 2026. Resume from here.
 ## Current status
 
 **Fidelity pass — done 29 Sep** (commit "FE fidelity pass"): see `docs/reviews/fidelity-pass.md`.
-33 board screens Done, 16 back to In progress with notes on /dev/progress. Preview helpers:
+After the follow-up commit (recruiter panels on cream): 36 board screens Done, 13 In progress,
+each with a note on /dev/progress. Remaining ones (Map tiles, Discover filter, Activity room header,
+Offer details page, See outcome, Search results, Career profile tabs, Work→Jobs, Job details, Jenny
+orb, Welcome photo, Candidates standalone) can be closed alongside P8/P11. Preview helpers:
 `/dev/person?to=<path>` (signed-in neighbour) and `/dev/business?to=<path>` (recruiter).
 
 **Next step: P8 Jenny boards + Jenny pre-fill (flow §10)**, then P10 Arena Admin (§9), then P11.
@@ -17,7 +20,9 @@ Jenny — …"), write "Think (P8)" in BPLUS-SCREENS.md, then build: Jenny notic
 intent → filters, Tell Jenny → pre-filled intake ("Or just tell Jenny" on every IntakeForm, fields
 glow via `jennyFilled`), approve action, set automation, Jenny today/work. Jenny never publishes,
 applies or sends on her own. Reuse `src/lib/api/agent.ts` (real mode only) and the existing
-JennyActionCard; missing agent endpoints → FE-API-GAPS #36+.
+JennyActionCard; missing agent endpoints → FE-API-GAPS #36+. Jenny's autonomy is "prepares, you
+approve" only — no Autopilot/Auto-apply (fidelity pass). Screenshot every P8 screen via
+`/dev/person?to=` next to its board before marking it Done.
 
 **P7 → P9 Arena for Business — done** (29 Sep, commits "FE P7/P9 (1/n)"…"(5/n)"): B+ business
 frame, role chooser, company workspace, Home, Jobs, Post a job, job page (funnel, share, Kanban
