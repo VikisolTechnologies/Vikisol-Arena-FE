@@ -5,22 +5,45 @@
 
 Updated 29 Sep 2026. Resume from here.
 
-## Architect review 29 Sep — status (branch `local/wip-2026-09-29`)
+## Summary — 29 Sep, end of session (read this first)
 
-Work branch is now `local/wip-2026-09-29` (in worktree `arena-fe-vnext`; it contains everything
-from `feature/arena-vnext-mobile-jenny` plus the review work). GitHub was unreachable from this Mac
-all day; a background loop pushes the WIP branches (never main) when it comes back.
+**Branch:** `local/wip-2026-09-29` in worktree `arena-fe-vnext` (it holds everything from
+`feature/arena-vnext-mobile-jenny` plus the review work). Nothing on main. Build, typecheck and
+lint clean; **106/106 local Playwright on 3 engines**; no horizontal overflow at 320 or 430 px on
+24 key screens.
 
-- **Section A — done** (commit "FE review A"): one preview world, matched photos, avatars, quiet
-  preview bar, solid icon badges, light paper pages, business bottom bar + /enterprise/candidates,
-  Arena for Business titles, redrawn skyline, two-line meta + "N offers", speed (prod ≤1.1 s).
-- **Section B — done** (commit "FE review B").
-- **F2 — in progress**: done: Search, Discover activity filters, Map basemap, Candidates standalone,
-  See the outcome, Activity room (photo header + Host tools · Report · Leave), Welcome (photo
-  accepted), Offer details (full page), Job details (tabs + lists), Work → Jobs, Career profile tabs.
-  Remaining: Jenny orb (P8).
-- Tracker: statuses are Built / In progress / Not started; only the architect sets Approved.
+**Done**
+- Architect review **section A** (A1–A11) — commit "FE review A".
+- **Section B** — commit "FE review B".
+- **F2 list, all items:** Search, Discover activity filters, Map (real basemap), Candidates
+  standalone, See the outcome, Activity room header + tools, Offer details page, Job details
+  tabs, Work → Jobs, Career profile tabs, Jenny orb, Welcome (photo accepted).
+- Tracker: **86 screens Built**, 0 In progress, 23 Not started (P8 Jenny boards, P10 Admin and
+  blocked-by-API screens). Only the architect sets Approved.
 
+**Ready for architect review:** every Built screen — `/dev/compare/all` (board left, live right).
+New since the last review: Search, Map, Map results, Discover filter, Activity room, Offer
+details, Job details, Work → Jobs, Career profile, Candidates, See the outcome, Jenny home.
+
+**Blocked**
+- **GitHub is unreachable from this Mac** (TCP 443/22 fail; other sites work). All work is
+  committed locally. A background loop pushes only the `local/wip-2026-09-29*` branches when it
+  comes back. Status: **ready to push.**
+- API gaps logged in `docs/FE-API-GAPS.md` #36–#41 (8-char passwords in BE, inbox previews, need
+  offer counts, need edit/pause, room files, saved jobs / hybrid).
+
+**Needs your decision**
+1. Map basemap: a static image rendered once from OpenStreetMap (credited, ODbL). OK for launch,
+   or do you want a live tile provider (cost + key)?
+2. "You" page: the core and career boards differ; one page now serves both (core header + stats,
+   then For you / About / Impact). Confirm.
+3. Password minimum is 8 in the FE but 6 in the BE (gap #36) — the BE should match.
+4. Frontend backup: the main checkout's WIP went to `local/wip-2026-09-29-main-checkout` (a branch
+   name can only be checked out once per repo).
+
+**Next:** P8 Jenny boards (fresh session), then P10 Admin, then P11.
+
+## Earlier phases
 
 **Fidelity pass — done 29 Sep** (commit "FE fidelity pass"): see `docs/reviews/fidelity-pass.md`.
 After the follow-up commit (recruiter panels on cream): 36 board screens Done, 13 In progress,
