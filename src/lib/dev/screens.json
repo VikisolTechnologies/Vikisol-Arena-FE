@@ -414,9 +414,9 @@
     "index": 6,
     "title": "Job details",
     "route": "/dev/screen/job-details",
-    "status": "in-progress",
+    "status": "built",
     "commit": "b9d03ce",
-    "note": "Fidelity: board has About / People / Reviews tabs, must-have and nice-to-have lists, hiring team and verified-company row; live has About / Your fit (hiring team, reviews and verification need gaps #22, #29)."
+    "note": "About / People / Reviews with must-haves and nice-to-haves. Hiring team (gap #22), reviews and company verification (gap #29) show honest empty states."
   },
   {
     "id": "apply-track",

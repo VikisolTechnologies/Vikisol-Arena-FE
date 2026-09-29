@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { m } from "motion/react";
-import { ArrowLeft, Briefcase, Check, CircleCheck, CircleDashed, Clock, IndianRupee, MapPin, Sparkles } from "lucide-react";
+import { ArrowLeft, Check, Circle, CircleCheck, Clock, IndianRupee, MapPin, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { rise, vibrate } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
@@ -19,6 +19,7 @@ import { applyToJob, getMyApplications } from "@/lib/api/applications";
 import { getMyProfile } from "@/lib/api/profile";
 import { requireOnboarded } from "@/lib/auth-guard";
 import { formatINRRange } from "@/lib/format";
+import { jobParts } from "@/lib/data/business";
 import type { Application, CandidateProfile, Job } from "@/lib/types";
 
 /** Board "Open the career layer" #6 — Job details, and the Apply sheet from flow §6. */
@@ -27,7 +28,7 @@ export function JobDetailScreen({ id, specimen }: { id: string; specimen?: { job
   const [job, setJob] = useState<Job | null | undefined>(specimen?.job);
   const [profile, setProfile] = useState<CandidateProfile | null>(specimen?.profile ?? null);
   const [application, setApplication] = useState<Application | null>(null);
-  const [tab, setTab] = useState<"about" | "fit">("about");
+  const [tab, setTab] = useState<"about" | "people" | "reviews">("about");
   const [applyOpen, setApplyOpen] = useState(!!specimen?.applyOpen);
 
   useEffect(() => {
@@ -60,7 +61,10 @@ export function JobDetailScreen({ id, specimen }: { id: string; specimen?: { job
   }
 
   const mine = new Set((profile?.skills ?? []).map((s) => s.name.toLowerCase()));
-  const shown = job.skills.filter((s) => mine.has(s.toLowerCase()));
+  // Must-haves: from the posting's text when the employer wrote them (Post a job), else its skills.
+  const parts = jobParts(job.description);
+  const must = parts.must.length ? parts.must : job.skills;
+  const shown = must.filter((s) => mine.has(s.toLowerCase()));
 
   return (
     <AppShell tone="light">
@@ -69,60 +73,76 @@ export function JobDetailScreen({ id, specimen }: { id: string; specimen?: { job
           <ArrowLeft className="size-6" strokeWidth={1.75} aria-hidden />
         </button>
         <m.div initial="hidden" animate="shown">
-          <m.h1 variants={rise} custom={0} className="mt-1 font-display-serif text-[28px] font-medium leading-tight">{job.title}</m.h1>
-          <m.div variants={rise} custom={1} className="mt-4 flex items-center gap-3 rounded-tile bg-paper-muted p-3.5 ring-1 ring-paper-ink/10">
-            <CompanyMark name={job.company} className="size-14 text-[20px]" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[17px] font-semibold">{job.company}</p>
-              <p className="flex items-center gap-1 text-[14px] text-paper-ink-muted"><MapPin className="size-3.5" aria-hidden /> {job.remote ? "Remote" : job.location}</p>
-              <p className="text-[14px] text-paper-ink-muted">{job.employmentType}</p>
+          <m.h1 variants={rise} custom={0} className="mt-1 font-display-serif text-[30px] font-medium leading-tight">{job.title}</m.h1>
+          {/* Board: company card with Apply beside it. */}
+          <m.div variants={rise} custom={1} className="mt-4 rounded-tile bg-paper-muted p-3.5 ring-1 ring-paper-ink/10">
+            <div className="flex items-start gap-3">
+              <CompanyMark name={job.company} className="size-14 shrink-0 text-[20px]" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[17px] font-semibold">{job.company}</p>
+                <p className="flex items-center gap-1 text-[14px] text-paper-ink-muted"><MapPin className="size-3.5 shrink-0" aria-hidden /> <span className="truncate">{job.location}</span></p>
+                <p className="text-[14px] text-paper-ink-muted">{job.employmentType} · {job.remote ? "Remote" : "On-site"}</p>
+              </div>
+            </div>
+            <div className="mt-3">
+              {application ? (
+                <ButtonLink href={`/applications/${application.id}`} variant="outline" className="h-12 border-paper-ink/55 text-paper-ink">You applied — see status</ButtonLink>
+              ) : (
+                <Button onClick={() => setApplyOpen(true)} className="h-12">Apply</Button>
+              )}
             </div>
           </m.div>
-          <m.dl variants={rise} custom={2} className="mt-3 grid grid-cols-3 gap-2 text-center text-[13px]">
-            <div className="rounded-xl bg-paper-muted p-2.5"><dt className="sr-only">Mode</dt><dd className="flex flex-col items-center gap-1"><Briefcase className="size-4" aria-hidden />{job.remote ? "Remote" : "On-site"}</dd></div>
-            <div className="rounded-xl bg-paper-muted p-2.5"><dt className="sr-only">Pay</dt><dd className="flex flex-col items-center gap-1"><IndianRupee className="size-4" aria-hidden />{job.salaryMax ? formatINRRange(job.salaryMin, job.salaryMax, "LPA") : "Not stated"}</dd></div>
-            <div className="rounded-xl bg-paper-muted p-2.5"><dt className="sr-only">Posted</dt><dd className="flex flex-col items-center gap-1"><Clock className="size-4" aria-hidden />{job.postedDaysAgo === 0 ? "Today" : `${job.postedDaysAgo} d ago`}</dd></div>
-          </m.dl>
         </m.div>
 
         <div className="mt-5">
-          <Pills label="Job" tone="orange" segmented onPaper options={[{ id: "about", label: "About" }, { id: "fit", label: "Your fit" }]} value={tab} onChange={setTab} />
+          <Pills label="Job" tone="orange" segmented onPaper options={[{ id: "about", label: "About" }, { id: "people", label: "People" }, { id: "reviews", label: "Reviews" }]} value={tab} onChange={setTab} />
         </div>
         {tab === "about" ? (
           <section className="mt-5" aria-label="About the role">
             <h2 className="text-[18px] font-semibold">About the role</h2>
-            <p className="mt-2 whitespace-pre-line text-[15px] leading-relaxed">{job.description}</p>
-            {job.skills.length > 0 && (
+            <p className="mt-2 whitespace-pre-line text-[15px] leading-relaxed">{parts.about || job.description}</p>
+            {must.length > 0 && (
               <>
-                <h2 className="mt-5 text-[18px] font-semibold">Skills they ask for</h2>
+                <h2 className="mt-5 text-[18px] font-semibold">Must-haves</h2>
                 <ul className="mt-2 space-y-1.5 text-[15px]">
-                  {job.skills.map((s) => (
+                  {must.map((s) => (
                     <li key={s} className="flex items-center gap-2">
-                      {mine.has(s.toLowerCase()) ? <CircleCheck className="size-4 text-success-on-paper" aria-label="On your profile" /> : <CircleDashed className="size-4 text-paper-ink-muted" aria-label="Not on your profile yet" />}
+                      {mine.has(s.toLowerCase()) ? <CircleCheck className="size-4 shrink-0 text-success-on-paper" aria-label="On your profile" /> : <Circle className="size-4 shrink-0 text-paper-ink-muted" aria-label="Not on your profile yet" />}
                       {s}
                     </li>
                   ))}
                 </ul>
+                <p className="mt-2 text-[13px] text-paper-ink-muted"><strong className="font-semibold text-paper-ink">{shown.length} of {must.length}</strong> are on your profile. Evidence only — no match score.</p>
               </>
             )}
-          </section>
-        ) : (
-          <section className="mt-5" aria-label="Your fit">
-            <p className="text-[16px]"><strong className="font-semibold">{shown.length} of {job.skills.length}</strong> skills they ask for are on your profile.</p>
-            <p className="mt-1 text-[14px] text-paper-ink-muted">Evidence only — Arena doesn&apos;t score you with a match percentage.</p>
+            {parts.nice.length > 0 && (
+              <>
+                <h2 className="mt-5 text-[18px] font-semibold">Nice-to-haves</h2>
+                <ul className="mt-2 space-y-1.5 text-[15px]">
+                  {parts.nice.map((s) => <li key={s} className="flex items-center gap-2"><Circle className="size-4 shrink-0 text-paper-ink-muted" aria-hidden /> {s}</li>)}
+                </ul>
+              </>
+            )}
+            <dl className="mt-5 grid grid-cols-3 gap-2 border-t border-paper-ink/10 pt-4 text-[13px]">
+              <div><dt className="flex items-center gap-1.5 font-semibold"><MapPin className="size-4 shrink-0" aria-hidden />{job.remote ? "Remote" : "On-site"}</dt><dd className="pl-[22px] text-paper-ink-muted">{job.remote ? "Anywhere" : job.location.split(",")[0]}</dd></div>
+              <div><dt className="flex items-center gap-1.5 font-semibold"><IndianRupee className="size-4 shrink-0" aria-hidden />Pay</dt><dd className="pl-[22px] text-paper-ink-muted">{job.salaryMax ? formatINRRange(job.salaryMin, job.salaryMax, "LPA") : "Not stated"}</dd></div>
+              <div><dt className="flex items-center gap-1.5 font-semibold"><Clock className="size-4 shrink-0" aria-hidden />{job.employmentType}</dt><dd className="pl-[22px] text-paper-ink-muted">Posted {job.postedDaysAgo === 0 ? "today" : `${job.postedDaysAgo} d ago`}</dd></div>
+            </dl>
             <Link href={`/agent?about=${job.id}`} className="mt-4 inline-flex min-h-11 items-center gap-2 text-[15px] font-semibold text-primary-on-paper underline underline-offset-4">
               <Sparkles className="size-4" aria-hidden /> Ask Jenny about this role
             </Link>
           </section>
+        ) : tab === "people" ? (
+          <section className="mt-5" aria-label="Hiring team">
+            <h2 className="text-[18px] font-semibold">Hiring team</h2>
+            <p className="mt-2 rounded-tile bg-paper-muted p-4 text-[15px]">{job.company} hasn&apos;t listed its hiring team on Arena yet. Once you apply, their replies show up in your application.</p>
+          </section>
+        ) : (
+          <section className="mt-5" aria-label="Reviews">
+            <h2 className="text-[18px] font-semibold">Reviews</h2>
+            <p className="mt-2 rounded-tile bg-paper-muted p-4 text-[15px]">No reviews yet. Reviews come from people who applied or worked with {job.company} through Arena.</p>
+          </section>
         )}
-
-        <div className="sticky bottom-[calc(76px+env(safe-area-inset-bottom))] z-10 -mx-5 mt-6 bg-linear-to-t from-paper from-80% to-transparent px-5 pb-2 pt-4">
-          {application ? (
-            <ButtonLink href={`/applications/${application.id}`} variant="outline" className="border-paper-ink/55 text-paper-ink">You applied — see status</ButtonLink>
-          ) : (
-            <Button onClick={() => setApplyOpen(true)}>Apply</Button>
-          )}
-        </div>
       </div>
       <ApplySheet open={applyOpen} onClose={() => setApplyOpen(false)} job={job} profile={profile} onApplied={setApplication} />
     </AppShell>
