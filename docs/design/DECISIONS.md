@@ -3,6 +3,11 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **29 Sep (P7/P9)** — Interview feedback is **per must-have** (Clearly shown / Partly / Not seen)
+  + next step; the old 1–5 slider is gone. The API's required `rating` is derived and never shown
+  (gap #33). The simulated "join camera" step was removed: the room shows the real meeting link
+  (copy / Join call) and an .ics "Add to calendar". `/enterprise/interviews` (new index, nav
+  already pointed there) groups people by what they need: upcoming, waiting for a time, decide.
 - **29 Sep (P7/P9)** — Arena for Business uses one B+ frame (`DashShell`): dark desktop sidebar
   with a cream active pill (shared-layout slide), phones get a compact top bar + scrolling pill
   nav instead of the consumer tab bar. Each app keeps its own role gate and sign-out.

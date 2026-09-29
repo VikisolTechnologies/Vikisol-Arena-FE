@@ -40,6 +40,8 @@ backend plan (FE-BPLUS-BUILD §6). One row per gap; newest phase last.
 | 31 | Not selected / hired (P7) | Kind personal message with a rejection; Hired stage | `PUT /enterprise/applicants/{id}/stage` `{ stage, message?: string (≤600) }`; `ApplicationStage` + `"hired"` (see #21) | Message shown to the recruiter first, labelled as not sent; Arena's standard notice + email go out |
 | 32 | Pipeline / candidates (P7) | Evidence the candidate chose to share, notice period | `ApplicantResponse.candidate.noticePeriod?`, `.evidence: [{mustHave, state:"shown"\|"partial"\|"missing", source}]` (server-side, consent-scoped) | Evidence computed in the browser from consented skills/title/bio; no notice filter |
 
+| 33 | Interview feedback (P7) | Structured feedback per must-have, no overall score | `POST /interviews/{id}/feedback` `{ mustHaves: [{ item, seen: "strong"\|"some"\|"none", note? }], strengths?, concerns?, recommendation }` with `rating` optional/removed | Per-must-have answers written into strengths/concerns; `rating` derived (never shown) because the API requires it |
+
 Saved for real today (no gap): sign up, sign in, 2FA code, forgot/reset password, area
 (`PUT /profile/me/location` with `consent: "city"`) and current location (`consent: "precise"`,
 stored coarsened by the backend).

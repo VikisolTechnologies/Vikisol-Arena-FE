@@ -16,12 +16,15 @@ const days = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
 const person = (id: string, name: string, skills: string[], over: Record<string, unknown> = {}) => ({ id, name, avatarEmoji: "p", title: "Community associate", industry: "Sales", location: "Gachibowli", remote: false, skills: skills.map((s) => ({ name: s })), experienceYears: 2, rateFloor: 3, openTo: ["full-time"], careerHealth: 0, consent: { autoApply: false, searchableByEnterprises: true }, autonomy: "manual", ...over });
 const posting = { id: "job1", title: "Community Program Assistant", industry: "Sales", location: "Gachibowli, Hyderabad", remote: false, employmentType: "Full Time", salaryMin: 3, salaryMax: 4, skills: ["Communication", "Event planning", "MS Office"], description: "Help run neighbourhood programs.\n\nMust-haves:\n• Communication\n• Event planning\n• MS Office\n\nExperience: Entry level (0–2 years)", status: "open", createdAt: days(10) };
 
-async function setup(page: Page, calls: Call[]) {
+async function setup(page: Page, calls: Call[], stageForA1 = "applied") {
   const apps = [
     { id: "a1", candidateId: "c1", postingId: "job1", stage: "applied", appliedAt: days(1), updatedAt: days(1), candidate: person("c1", "Priya Sharma", ["Communication", "Event planning"]) },
     { id: "a2", candidateId: "c2", postingId: "job1", stage: "screening", appliedAt: days(2), updatedAt: days(1), candidate: person("c2", "Arjun Nair", ["Communication", "MS Office", "Event planning"], { experienceYears: 4 }) },
     { id: "a3", candidateId: "c3", postingId: "job1", stage: "applied", appliedAt: days(5), updatedAt: days(5), candidate: person("c3", "Meera Khan", ["Planning"]) },
   ];
+  const start = new Date(Date.now() + 2 * 86_400_000).toISOString();
+  let interview: Record<string, unknown> = { id: "iv1", applicationId: "a1", proposedSlots: [{ id: "s1", start, durationMinutes: 45 }], confirmedSlotId: "s1", status: "confirmed", meetingLink: "https://meet.example.org/iv1" };
+  apps[0].stage = stageForA1;
   await page.route("**/api/v1/**", async (route) => {
     const req = route.request();
     const path = new URL(req.url()).pathname.replace(/^.*\/api\/v1/, "");
@@ -34,7 +37,13 @@ async function setup(page: Page, calls: Call[]) {
     else if (path === "/enterprise/postings/job1") data = posting;
     else if (path === "/enterprise/postings/job1/applicants") data = { content: apps, totalElements: apps.length, totalPages: 1, number: 0, size: 100 };
     else if (path.startsWith("/enterprise/talent/")) data = apps.find((a) => path.endsWith(a.candidateId))?.candidate ?? null;
-    else if (m) {
+    else if (path === "/enterprise/applicants/a1") data = { id: "a1", jobPostingId: "job1", candidateId: "c1", stage: apps[0].stage, appliedAt: days(1) };
+    else if (path === "/interviews/by-application/a1") data = interview;
+    else if (path === "/interviews/iv1/feedback") {
+      interview = { ...interview, status: "completed", feedback: { ...(body as object), submittedAt: new Date().toISOString() } };
+      apps[0].stage = (body as { recommendation: string }).recommendation === "advance" ? "offer" : apps[0].stage;
+      data = interview;
+    } else if (m) {
       const a = apps.find((x) => x.id === m[1]);
       if (a) a.stage = (body as { stage: string }).stage;
       data = null;
@@ -127,4 +136,37 @@ test("desktop board: drag a card to Interview moves it (the menu does the same)"
   await expect.poll(() => calls.find((c) => c.method === "PUT" && c.path === "/enterprise/applicants/a1/stage")?.body).toEqual({ stage: "interview" });
   await expect(page.getByRole("region", { name: /^Interview: 1/ })).toBeVisible();
   await expect(page).toHaveURL(/tab=candidates$/);
+});
+
+test("interview & outcome: feedback per must-have (no score shown), then the stage follows", async ({ page }) => {
+  const calls: Call[] = [];
+  await setup(page, calls, "interview");
+  await page.goto("/enterprise/interviews/a1");
+  await expect(page.getByRole("heading", { name: "Interview & outcome" })).toBeVisible();
+  await expect(page.getByText("Interview with Priya")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add to calendar" })).toBeVisible();
+  await noSeriousA11y(page);
+
+  await page.getByRole("button", { name: "Give feedback" }).click();
+  const form = page.getByRole("region", { name: "Interview feedback" });
+  await expect(form.getByText(/No overall score/)).toBeVisible();
+  await expect(form.getByRole("slider")).toHaveCount(0);
+  await form.getByRole("button", { name: "Send feedback" }).click();
+  await expect(form.getByRole("alert")).toHaveText("Answer every must-have (3 left).");
+  await form.getByRole("radiogroup", { name: "Communication" }).getByRole("radio", { name: "Clearly shown" }).click();
+  await form.getByRole("radiogroup", { name: "Event planning" }).getByRole("radio", { name: "Partly" }).click();
+  await form.getByRole("radiogroup", { name: "MS Office" }).getByRole("radio", { name: "Not seen" }).click();
+  await form.getByRole("radio", { name: /Move to offer/ }).click();
+  await noSeriousA11y(page);
+  await form.getByRole("button", { name: "Send feedback" }).click();
+  await expect(page.getByText("Interview completed")).toBeVisible();
+  const fb = calls.find((c) => c.path === "/interviews/iv1/feedback")?.body as Record<string, string>;
+  expect(fb.recommendation).toBe("advance");
+  expect(fb.strengths).toContain("Clearly shown: Communication");
+  expect(fb.strengths).toContain("Partly shown: Event planning");
+  expect(fb.concerns).toContain("Not seen: MS Office");
+
+  await page.getByRole("button", { name: "Not selected" }).first().click();
+  await expect(page.getByRole("dialog", { name: "Mark Priya Sharma not selected" })).toBeVisible();
+  expect(calls.some((c) => c.method === "PUT" && c.body && JSON.stringify(c.body).includes("rejected"))).toBe(false);
 });

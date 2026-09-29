@@ -13,14 +13,13 @@ business frame (`components/dash/`), role chooser `/auth?mode=role`, company wor
 `/enterprise/postings/new`, job page `/enterprise/postings/[id]` (funnel, share, Kanban with drag +
 Move menu, candidate list with evidence filters + bulk move, activity), candidate profile
 `/enterprise/postings/[id]/candidates/[applicationId]`, the Not selected kind-message sheet.
-**Remaining, in order:** (1) interview & outcome `/enterprise/interviews/[applicationId]` (board 7:
-keep `getApplicant`/`getInterviewForApplication`/`proposeInterview`/`assignHiringManager` and
-InterviewRoom's feedback; add Offer / Not selected, data-retention note) + a new
-`/enterprise/interviews` index; (2) `interviews/mine` (HM shell); (3) talent + `talent/[id]`
+Also done ("(3/n)"): interview & outcome `/enterprise/interviews/[applicationId]` (board 7),
+`/enterprise/interviews` index, HM `interviews/mine` + room, B+ InterviewRoom (per-must-have
+feedback). **Remaining, in order:** (3) talent + `talent/[id]`
 (unlock credits unchanged; "connect request" = gap); (4) messages, company posts; (5) company
 admin: index/team/audit/billing/company/consent. Delete the old UI in each commit; add each to
 screens.json (phase "P9 Arena for Business", board "none") + `tests/local/business.local.ts`.
-Then P8 Jenny (§10), P10 Admin (§9), P11. Gaps at #32. Founder demo: `/dev/business?to=<path>`.
+Then P8 Jenny (§10), P10 Admin (§9), P11. Gaps at #33. Founder demo: `/dev/business?to=<path>`.
 
 Live preview: `npm run dev` for this worktree is Cursor's (port 3010); the founder preview runs
 with `ARENA_NEXT_DIST_DIR=.next-founder npm run dev -- -H 0.0.0.0 -p 3001` →

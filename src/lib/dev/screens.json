@@ -848,8 +848,8 @@
     "board": "recruiter",
     "index": 7,
     "title": "Interview & hire",
-    "route": null,
-    "status": "not-started",
+    "route": "/dev/business?to=/enterprise/interviews/demo-app-5",
+    "status": "done",
     "commit": null
   },
   {
@@ -1021,6 +1021,17 @@
     "index": 3,
     "title": "Pipeline board (drag)",
     "route": "/dev/business?to=/enterprise/postings/demo-job?tab=candidates",
+    "status": "done",
+    "commit": null,
+    "note": "No board \u2014 designed in B+"
+  },
+  {
+    "id": "biz-interviews",
+    "phase": "P9 Arena for Business",
+    "board": "none",
+    "index": 4,
+    "title": "Interviews index",
+    "route": "/dev/business?to=/enterprise/interviews",
     "status": "done",
     "commit": null,
     "note": "No board \u2014 designed in B+"
