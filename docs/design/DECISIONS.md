@@ -3,6 +3,7 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **30 Sep (architect)** — "You" page layout **approved** as built (next entry).
 - **29 Sep (F2)** — "You" has two boards (core Profile and career "My Profile"). One page serves
   both: the core header (cover, photo, Edit, name, title · area) and stats, then the career
   board's For you / About / Impact tabs. For you = intro card with interests, recent outcomes
@@ -12,11 +13,16 @@ One line per non-obvious call, newest first. Source order per the mission: (1) t
   Must-haves come from the posting text when the employer wrote them, else its skills.
 - **29 Sep (F2)** — Offer details is a full page with its own history entry (Back returns to the
   need), not a sheet.
-- **29 Sep (F2)** — Map: a static dark basemap of the launch zone (12 × 16 km), rendered once from
-  OpenStreetMap tiles and restyled to the board's graphite/teal (`public/fixtures/map/`, 133 KB,
-  "© OpenStreetMap contributors" on the map). Pins are placed by Web Mercator from each item's
-  approximate point; outside the basemap the drawn map is used. No runtime tile requests. The
-  nearest activity is previewed under the map until a pin is tapped (board).
+- **30 Sep (architect)** — Map: the live map is **MapLibre GL + OpenFreeMap** vector tiles (free,
+  no API key, no cost), the "dark" style restyled at load to our tokens (graphite land, teal water,
+  green parks, muted roads, warm-grey labels). Pins, the approximate "You" ring, the nearest-item
+  preview card and the privacy note are unchanged. Credit "OpenFreeMap © OpenMapTiles ©
+  OpenStreetMap contributors" is always visible on the map. One-finger scroll keeps scrolling the
+  page (cooperative gestures). MapLibre's module worker is served from
+  `public/vendor/maplibre/<version>/` (`scripts/dev/copy-maplibre-worker.mjs` — re-run after an
+  upgrade). If WebGL is missing, the style/tiles error, or nothing renders in 8 s, the static
+  launch-zone image (rendered once from OSM, 29 Sep) takes over; outside its bounds, the drawn map.
+  Google Maps is no longer used by Discover.
 - **29 Sep (F2)** — Discover → Activities uses the board's filters: Today / Weekend / Free, then
   Fitness / Learning / All filters (sheet with every category). "Free" narrows nothing — every
   Arena activity is free (paid work is a project) — and the sheet says so. Discover lists only

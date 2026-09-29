@@ -5,17 +5,17 @@
 
 Updated 29 Sep 2026. Resume from here.
 
-## Summary — 29 Sep, end of session (read this first)
+## Summary — 30 Sep, end of session (read this first)
 
 **Branch:** `local/wip-2026-09-29` in worktree `arena-fe-vnext` (it holds everything from
 `feature/arena-vnext-mobile-jenny` plus the review work). Nothing on main. Build, typecheck and
-lint clean; **106/106 local Playwright on 3 engines**; no horizontal overflow at 320 or 430 px on
+lint clean; **109/109 local Playwright on 3 engines** (incl. the map fallback test); no horizontal overflow at 320 or 430 px on
 24 key screens.
 
 **Done**
 - Architect review **section A** (A1–A11) — commit "FE review A".
 - **Section B** — commit "FE review B".
-- **F2 list, all items:** Search, Discover activity filters, Map (real basemap), Candidates
+- **F2 list, all items:** Search, Discover activity filters, Map (live MapLibre + OpenFreeMap), Candidates
   standalone, See the outcome, Activity room header + tools, Offer details page, Job details
   tabs, Work → Jobs, Career profile tabs, Jenny orb, Welcome (photo accepted).
 - Tracker: **86 screens Built**, 0 In progress, 23 Not started (P8 Jenny boards, P10 Admin and
@@ -25,23 +25,19 @@ lint clean; **106/106 local Playwright on 3 engines**; no horizontal overflow at
 New since the last review: Search, Map, Map results, Discover filter, Activity room, Offer
 details, Job details, Work → Jobs, Career profile, Candidates, See the outcome, Jenny home.
 
+**30 Sep — architect answers applied:** live map is MapLibre GL + OpenFreeMap (static image is
+now only the fallback); "You" layout approved and logged; password rule settled (BE change goes
+to Cursor). Pushing: the founder pushes from another network — commits stay local here.
+
 **Blocked**
-- **GitHub is unreachable from this Mac** (TCP 443/22 fail; other sites work). All work is
-  committed locally. A background loop pushes only the `local/wip-2026-09-29*` branches when it
-  comes back. Status: **ready to push.**
+- **GitHub is unreachable from this Mac.** All work is committed locally on
+  `local/wip-2026-09-29*` in each repo; the founder pushes from another network. **Ready to push.**
 - API gaps logged in `docs/FE-API-GAPS.md` #36–#41 (8-char passwords in BE, inbox previews, need
   offer counts, need edit/pause, room files, saved jobs / hybrid).
 
-**Needs your decision**
-1. Map basemap: a static image rendered once from OpenStreetMap (credited, ODbL). OK for launch,
-   or do you want a live tile provider (cost + key)?
-2. "You" page: the core and career boards differ; one page now serves both (core header + stats,
-   then For you / About / Impact). Confirm.
-3. Password minimum is 8 in the FE but 6 in the BE (gap #36) — the BE should match.
-4. Frontend backup: the main checkout's WIP went to `local/wip-2026-09-29-main-checkout` (a branch
-   name can only be checked out once per repo).
+**Needs your decision:** nothing open.
 
-**Next:** P8 Jenny boards (fresh session), then P10 Admin, then P11.
+**Next:** P8 Jenny boards — start in a fresh session with "continue from docs/PROGRESS.md" — then P10 Admin, then P11. Mark screens Built only.
 
 ## Earlier phases
 

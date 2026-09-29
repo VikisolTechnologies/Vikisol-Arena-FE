@@ -9,13 +9,14 @@ import { cn } from "@/lib/utils";
 import { press, spring, staggerDelay } from "@/lib/motion";
 import { ButtonLink } from "@/components/bplus/Button";
 import { Pills, Skeleton, StateCard } from "@/components/bplus/Primitives";
-import { googleMapsConfigured } from "@/components/map/GoogleMapView";
 import { getNearby, whenLabel, type Post } from "@/lib/data/feed";
 import { getMyProfile } from "@/lib/data/profile";
 import { readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
 import { Cover } from "@/components/covers/Cover";
 
-const GoogleMapView = dynamic(() => import("@/components/map/GoogleMapView").then((mod) => mod.GoogleMapView), { ssr: false });
+// Live map (MapLibre GL + OpenFreeMap, no key). If WebGL or the tiles fail, the static
+// launch-zone image below takes over, then the drawn map outside it.
+const ArenaMap = dynamic(() => import("@/components/map/ArenaMap").then((mod) => mod.ArenaMap), { ssr: false });
 
 /** Launch zone centre (Gachibowli / Gopanapally) — used until we know the person's approximate area. */
 const LAUNCH = { lat: 17.4401, lng: 78.3489 };
@@ -33,9 +34,8 @@ type Filter = (typeof FILTERS)[number]["id"];
 
 const PIN: Record<string, string> = { activity: "bg-info", ask: "bg-primary", offer: "bg-success" };
 
-/** A static dark basemap of the launch zone, rendered once from OpenStreetMap tiles (© OSM
- *  contributors, ODbL) — real streets without a runtime tile provider (FE-API-GAPS none; see
- *  DECISIONS). Web Mercator bounds of public/fixtures/map/launch-zone.webp (12 × 16 km). */
+/** Fallback only: a static dark basemap of the launch zone, rendered once from OpenStreetMap tiles
+ *  (© OSM contributors, ODbL), shown when the live map can't load. Web Mercator bounds of public/fixtures/map/launch-zone.webp (12 × 16 km). */
 const BASEMAP = { src: "/fixtures/map/launch-zone.webp", north: 17.512172, south: 17.368028, west: 78.292241, east: 78.405559 };
 const mercY = (lat: number) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
 function onBasemap(lat: number, lng: number) {
@@ -50,6 +50,7 @@ export function DiscoverMap() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [selected, setSelected] = useState<string | null>(null);
+  const [tilesFailed, setTilesFailed] = useState(false);
   const area = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().area, () => "");
 
   useEffect(() => {
@@ -93,10 +94,8 @@ export function DiscoverMap() {
           <Skeleton className="aspect-[3/4] w-full rounded-none" />
         ) : error ? (
           <div className="p-4"><StateCard kind="error" title="Nearby didn't load" detail={error} /></div>
-        ) : googleMapsConfigured() ? (
-          <div className="aspect-[3/4] w-full">
-            <GoogleMapView posts={shown} centerLat={center.lat} centerLng={center.lng} radiusKm={RADIUS_KM} selectedId={selected} onSelect={setSelected} />
-          </div>
+        ) : !tilesFailed ? (
+          <ArenaMap center={center} you={center.approximate} ringKm={APPROX_RING_KM} posts={shown} selected={pick?.id ?? null} onSelect={setSelected} onFail={() => setTilesFailed(true)} />
         ) : onBasemap(center.lat, center.lng) ? (
           <TileMap center={center} you={center.approximate} posts={shown} selected={pick?.id ?? null} onSelect={setSelected} />
         ) : (

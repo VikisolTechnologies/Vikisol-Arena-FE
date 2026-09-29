@@ -99,7 +99,7 @@
     "route": "/dev/person?to=/discover%3Fview%3Dmap",
     "status": "built",
     "commit": "49552e0",
-    "note": "Map tiles are a static basemap of the launch zone rendered once from OpenStreetMap (© OSM contributors); outside it, the drawn map. Live tiles need a tile provider (FE-API-GAPS none — product decision)."
+    "note": "Live map: MapLibre GL + OpenFreeMap tiles (free, no key), restyled dark; pins, preview card and privacy note. Falls back to the static launch-zone basemap if tiles fail."
   },
   {
     "id": "work",
@@ -171,7 +171,7 @@
     "route": "/dev/person?to=/discover%3Fview%3Dmap",
     "status": "built",
     "commit": "1c8e99e",
-    "note": "Chips are All / Activities / Needs / Offers (board shows category chips); category filters live in Discover → Activities."
+    "note": "Same live map. Chips are All / Activities / Needs / Offers (board shows category chips); category filters live in Discover → Activities."
   },
   {
     "id": "activity-details",
