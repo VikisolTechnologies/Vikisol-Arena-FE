@@ -250,9 +250,9 @@
     "index": 4,
     "title": "Offer details",
     "route": "/dev/screen/offer-details",
-    "status": "in-progress",
+    "status": "built",
     "commit": "f81aebf",
-    "note": "Fidelity: board is a full page (shared interests, recent outcomes, the offer message); live is a sheet — interests/outcomes/message need gaps #12–#13."
+    "note": "Full page. Shared interests compare your interests (device) with their skills; the offer message waits for gap #13."
   },
   {
     "id": "coordination-room",

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { m } from "motion/react";
-import { ArrowLeft, BadgeCheck, CalendarDays, ChevronRight, Flag, HandHeart, MapPin, MessageCircle, MoreVertical, Share2, Tag, Users } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Briefcase, CalendarDays, ChevronRight, Flag, HandHeart, Heart, MapPin, MessageCircle, MoreVertical, Quote, Share2, ShieldCheck, Tag, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { rise, vibrate } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
@@ -15,11 +15,13 @@ import { DemoBadge } from "@/components/bplus/Primitives";
 import { ReportSheet } from "@/components/trust/ReportSheet";
 import { useGuest } from "@/hooks/use-arena-session";
 import { getSession } from "@/lib/session";
-import { cancelPost, decideJoin, getJoinRequests, getPost, requestJoin, withdrawJoin } from "@/lib/api/posts";
+import { cancelPost, decideJoin, getJoinRequests, getPost, getUserPosts, requestJoin, withdrawJoin } from "@/lib/api/posts";
+import { EMPTY_DRAFT, readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
+import { Cover } from "@/components/covers/Cover";
 import { getMyProfile, getPublicProfile } from "@/lib/api/profile";
 import { distanceKm, formatKm } from "@/lib/data/feed";
 import { needWhen } from "@/lib/data/needs";
-import { timeAgo } from "@/lib/data/time";
+import { shortDate, timeAgo } from "@/lib/data/time";
 import type { Post, PostJoinRequest, PublicCandidateProfile } from "@/lib/types";
 
 const STATUS: Record<Post["status"], { label: string; cls: string }> = {
@@ -115,11 +117,35 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
     }
   };
 
+  // Offer details is a full page (board): opening it adds a history entry, so the phone's Back
+  // (or the page's own back arrow) returns to the need.
+  const openOffer = (o: PostJoinRequest) => {
+    window.history.pushState({ arenaOffer: o.id }, "");
+    setOpen(o);
+  };
+  const closeOffer = () => {
+    if (window.history.state?.arenaOffer) window.history.back();
+    else setOpen(null);
+  };
+  useEffect(() => {
+    const onPop = () => setOpen(null);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   const decided = (updated: PostJoinRequest) => {
     setOffers((cur) => (cur ?? []).map((o) => (o.id === updated.id ? updated : o)));
-    setOpen(null);
+    closeOffer();
     void reload();
   };
+
+  if (open) {
+    return (
+      <AppShell>
+        <OfferDetails offer={open} post={post} onBack={closeOffer} onDecided={decided} specimenProfile={specimen?.profile} />
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -177,7 +203,7 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
               <ul className="mt-2 divide-y divide-paper-ink/10">
                 {visibleOffers.map((o) => (
                   <li key={o.id}>
-                    <button type="button" onClick={() => setOpen(o)} className="flex min-h-16 w-full items-center gap-3 py-2 text-left">
+                    <button type="button" onClick={() => openOffer(o)} className="flex min-h-16 w-full items-center gap-3 py-2 text-left">
                       <Avatar name={o.userName} className="size-11 text-[15px]" />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[16px] font-semibold">{o.userName}</span>
@@ -243,7 +269,6 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
       </div>
 
       <ReportSheet open={reportOpen} onClose={() => setReportOpen(false)} target={{ kind: "post", id: post.id }} person={{ userId: post.authorUserId || undefined, name: post.authorName, detail: title }} />
-      <OfferSheet offer={open} post={post} onClose={() => setOpen(null)} onDecided={decided} specimenProfile={specimen?.profile} />
 
       <BottomSheet open={menu} onClose={() => setMenu(false)} title="More">
         <ul className="mt-6 space-y-1">
@@ -280,46 +305,47 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
   );
 }
 
-/** Board screen 4 — who offered, from their real public profile; Decline / Accept & open chat. */
-function OfferSheet({
+/** Board screen 4 — Offer details, a full page: who offered (their real public profile), what you
+ *  share, what they've done on Arena, and Decline / Accept & open chat. Shared interests use the
+ *  interests you picked (on this device) against their skills; outcomes are their own closed posts.
+ *  The offer message has no field yet (FE-API-GAPS #13). */
+function OfferDetails({
   offer,
   post,
-  onClose,
+  onBack,
   onDecided,
   specimenProfile,
 }: {
-  offer: PostJoinRequest | null;
+  offer: PostJoinRequest;
   post: Post;
-  onClose: () => void;
+  onBack: () => void;
   onDecided: (o: PostJoinRequest) => void;
   specimenProfile?: PublicCandidateProfile;
 }) {
   const router = useRouter();
   const [profile, setProfile] = useState<PublicCandidateProfile | null | undefined>(specimenProfile);
+  const [outcomes, setOutcomes] = useState<Post[] | null>(specimenProfile ? [] : null);
   const [busy, setBusy] = useState<"accept" | "decline" | null>(null);
   const [error, setError] = useState("");
-  const [shownFor, setShownFor] = useState<string | null>(null);
-  const sheetCopy = COPY[post.intentType === "offer" ? "offer" : "ask"];
+  const copy = COPY[post.intentType === "offer" ? "offer" : "ask"];
+  const draft = useSyncExternalStore(subscribeEntryDraft, readEntryDraft, () => EMPTY_DRAFT);
 
-  // Reset per offer while rendering (no effect needed for derived resets).
-  if (offer && offer.id !== shownFor) {
-    setShownFor(offer.id);
-    setProfile(specimenProfile);
-    setError("");
-  }
   useEffect(() => {
-    if (!offer || specimenProfile) return;
+    window.scrollTo({ top: 0 });
+    if (specimenProfile) return;
     let cancelled = false;
     getPublicProfile(offer.userId)
       .then((p) => !cancelled && setProfile(p ?? null))
       .catch(() => !cancelled && setProfile(null));
+    getUserPosts(offer.userId, 0, 20)
+      .then((page) => !cancelled && setOutcomes(page.content.filter((p) => p.status === "closed" || (p.startsAt && Date.parse(p.startsAt) < Date.now())).slice(0, 3)))
+      .catch(() => !cancelled && setOutcomes([]));
     return () => {
       cancelled = true;
     };
-  }, [offer, specimenProfile]);
+  }, [offer.userId, specimenProfile]);
 
   const decide = async (approve: boolean) => {
-    if (!offer) return;
     setBusy(approve ? "accept" : "decline");
     setError("");
     try {
@@ -338,50 +364,101 @@ function OfferSheet({
   };
 
   const verified = profile && profile.verificationLevel && profile.verificationLevel !== "basic";
+  const mine = draft.interests.map((i) => i.toLowerCase());
+  const shared = (profile?.skills ?? []).map((s) => s.name).filter((n) => mine.some((i) => n.toLowerCase().includes(i) || i.includes(n.toLowerCase())));
+  const first = offer.userName.split(" ")[0];
+
   return (
-    <BottomSheet open={!!offer} onClose={onClose} title={sheetCopy.sheet}>
-      {offer && (
-        <div className="pt-2">
-          <h2 className="font-display-serif text-[24px] font-medium">{sheetCopy.sheet}</h2>
-          <div className="mt-4 flex items-center gap-4">
-            <Avatar name={offer.userName} className="size-16 text-[22px]" />
-            <div className="min-w-0">
-              <p className="flex items-center gap-1.5 text-[19px] font-semibold">
-                {offer.userName}
-                {verified && <BadgeCheck className="size-5 text-success-on-paper" aria-label="Verified" />}
-              </p>
-              <p className="text-[14px] text-paper-ink-muted">Neighbor{profile?.homeCity ? ` · ${profile.homeCity}` : ""}</p>
-              {profile?.title && <p className="text-[14px] text-paper-ink-muted">{profile.title}</p>}
-            </div>
+    <div className="-mx-5 -mt-[max(8px,env(safe-area-inset-top))] flex-1 px-4 pb-6 pt-[max(12px,env(safe-area-inset-top))]">
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={onBack} aria-label="Back to the need" className="-ml-1 grid size-11 place-items-center rounded-full hover:bg-foreground/5">
+          <ArrowLeft className="size-6" strokeWidth={1.75} aria-hidden />
+        </button>
+        <h1 className="flex-1 font-display-serif text-[28px] font-medium">{copy.sheet}</h1>
+        <Link href={`/people/${offer.userId}`} aria-label={`${offer.userName}'s full profile`} className="-mr-1 grid size-11 place-items-center rounded-full hover:bg-foreground/5">
+          <MoreVertical className="size-5" aria-hidden />
+        </Link>
+      </div>
+
+      <m.article initial="hidden" animate="shown" className="mt-3 rounded-[var(--radius-card)] bg-paper p-4 text-paper-ink">
+        <m.div variants={rise} custom={0} className="flex items-center gap-4">
+          <Avatar name={offer.userName} className="size-24 text-[30px]" />
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-[21px] font-semibold leading-tight">
+              <span className="truncate">{offer.userName}</span>
+              {verified && <BadgeCheck className="size-5 shrink-0 text-success-on-paper" aria-label="Verified" />}
+            </p>
+            <p className="mt-0.5 text-[14px] text-paper-ink-muted">Neighbor</p>
+            {profile?.title && <p className="mt-1 flex items-center gap-1.5 text-[14px]"><Briefcase className="size-4 shrink-0 text-paper-ink-muted" aria-hidden /> <span className="truncate">{profile.title}</span></p>}
+            {profile?.homeCity && <p className="mt-0.5 flex items-center gap-1.5 text-[14px]"><MapPin className="size-4 shrink-0 text-paper-ink-muted" aria-hidden /> {profile.homeCity}</p>}
           </div>
-          {profile === undefined && <p className="mt-4 text-[14px] text-paper-ink-muted">Loading their profile…</p>}
-          {profile?.bio && <p className="mt-4 rounded-tile bg-paper-muted p-4 text-[15px] italic leading-relaxed">“{profile.bio}”</p>}
-          {profile && profile.skills.length > 0 && (
-            <div className="mt-4">
-              <p className="text-[15px] font-semibold">Skills</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {profile.skills.slice(0, 6).map((s) => (
-                  <span key={s.name} className="rounded-full border border-paper-ink/20 px-3 py-1 text-[13px]">{s.name}</span>
-                ))}
-              </div>
+        </m.div>
+
+        {profile === undefined && <p className="mt-4 text-[14px] text-paper-ink-muted" aria-busy="true">Loading their profile…</p>}
+        {profile?.bio && (
+          <m.p variants={rise} custom={1} className="mt-4 flex gap-3 rounded-tile bg-paper-muted p-4 text-[15px] leading-relaxed">
+            <Quote className="mt-0.5 size-5 shrink-0 text-primary-on-paper" aria-hidden /> {profile.bio}
+          </m.p>
+        )}
+
+        {profile && (shared.length > 0 || profile.skills.length > 0) && (
+          <m.section variants={rise} custom={2} className="mt-5" aria-label={shared.length ? "Shared interests" : "Skills"}>
+            <h2 className="text-[17px] font-semibold">{shared.length ? "Shared interests" : "Skills"}</h2>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(shared.length ? shared : profile.skills.slice(0, 6).map((s) => s.name)).map((n) => (
+                <span key={n} className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-paper-muted px-3.5 text-[14px]">
+                  {shared.length > 0 && <Heart className="size-4 text-success-on-paper" aria-hidden />} {n}
+                </span>
+              ))}
             </div>
+          </m.section>
+        )}
+
+        <m.section variants={rise} custom={3} className="mt-5" aria-label="Recent outcomes">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[17px] font-semibold">Recent outcomes</h2>
+            <Link href={`/people/${offer.userId}`} className="inline-flex min-h-11 items-center text-[14px] underline underline-offset-4">See all</Link>
+          </div>
+          {outcomes === null ? (
+            <p className="text-[14px] text-paper-ink-muted">Loading…</p>
+          ) : outcomes.length === 0 ? (
+            <p className="text-[14px] text-paper-ink-muted">Nothing finished on Arena yet — {first} is new here.</p>
+          ) : (
+            <ul className="mt-1 space-y-2.5">
+              {outcomes.map((o) => (
+                <li key={o.id}>
+                  <Link href={`/feed/${o.id}`} className="flex items-center gap-3">
+                    <Cover source={{ id: o.id, kind: o.intentType, media: o.mediaUrls[0], tags: o.tags, title: o.title, body: o.body, startsAt: o.startsAt }} className="size-16 shrink-0 rounded-xl" />
+                    <span className="min-w-0">
+                      <span className="block truncate text-[15px] font-semibold">{o.title || o.body.slice(0, 60)}</span>
+                      <span className="block text-[13px] text-paper-ink-muted">{shortDate(o.startsAt ?? o.createdAt, true)}</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           )}
-          <p className="mt-4 text-[14px] text-paper-ink-muted">{sheetCopy.sheetWhen} {timeAgo(offer.createdAt)}.</p>
-          <Link href={`/people/${offer.userId}`} className="mt-1 inline-flex min-h-11 items-center text-[15px] font-semibold text-primary-on-paper underline underline-offset-4">See full profile</Link>
-          {error && <p role="alert" className="mt-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
-          {offer.status === "pending" ? (
-            <>
-              <div className="mt-5 grid grid-cols-[auto_1fr] gap-3">
-                <Button variant="outline" className="w-auto border-paper-ink/55 px-5 text-paper-ink" loading={busy === "decline"} disabled={busy !== null} onClick={() => decide(false)}>Decline</Button>
-                <Button loading={busy === "accept"} disabled={busy !== null} onClick={() => decide(true)} className="px-3 leading-tight min-[375px]:whitespace-nowrap">Accept & open chat</Button>
-              </div>
-              <p className="mt-2 text-center text-[13px] text-paper-ink-muted">This opens a private chat between the two of you.</p>
-            </>
-          ) : post.roomId ? (
-            <ButtonLink href={`/rooms/${post.roomId}`} className="mt-5">Open chat</ButtonLink>
-          ) : null}
-        </div>
-      )}
-    </BottomSheet>
+        </m.section>
+
+        <p className="mt-5 flex items-center gap-2 rounded-tile bg-info/10 p-3.5 text-[14px]">
+          <MessageCircle className="size-4 shrink-0 text-info-on-paper" aria-hidden /> {copy.sheetWhen} {timeAgo(offer.createdAt)}. You can talk details once the chat opens.
+        </p>
+
+        {error && <p role="alert" className="mt-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
+        {offer.status === "pending" ? (
+          <>
+            <div className="mt-5 grid grid-cols-[auto_1fr] gap-3">
+              <Button variant="outline" className="w-auto border-paper-ink/55 px-5 text-paper-ink" loading={busy === "decline"} disabled={busy !== null} onClick={() => decide(false)}>Decline</Button>
+              <Button loading={busy === "accept"} disabled={busy !== null} onClick={() => decide(true)} className="min-w-0 gap-1.5 px-3 leading-tight">
+                <ShieldCheck className="hidden size-5 shrink-0 min-[400px]:block" aria-hidden /> Accept & open chat
+              </Button>
+            </div>
+            <p className="mt-2 text-center text-[13px] text-paper-ink-muted">This opens a private coordination room for the two of you.</p>
+          </>
+        ) : post.roomId ? (
+          <ButtonLink href={`/rooms/${post.roomId}`} className="mt-5">Open chat</ButtonLink>
+        ) : null}
+      </m.article>
+    </div>
   );
 }

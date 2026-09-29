@@ -125,10 +125,14 @@ test("owner: offer → details → accept opens the private room; meeting link; 
   await expect(page.getByRole("heading", { name: "Offers of help (1)" })).toBeVisible();
   await noSeriousA11y(page);
   await page.getByRole("button", { name: /Rohit Kumar/ }).click();
-  const sheet = page.getByRole("dialog", { name: "Offer details" });
-  await expect(sheet.getByText("Kind, reliable and always down to help.")).toBeVisible();
+  // Offer details is a full page (board); the phone's Back returns to the need.
+  await expect(page.getByRole("heading", { level: 1, name: "Offer details" })).toBeVisible();
+  await expect(page.getByText("Kind, reliable and always down to help.")).toBeVisible();
   await noSeriousA11y(page);
-  await sheet.getByRole("button", { name: "Accept & open chat" }).click();
+  await page.goBack();
+  await expect(page.getByRole("heading", { name: "Offers of help (1)" })).toBeVisible();
+  await page.getByRole("button", { name: /Rohit Kumar/ }).click();
+  await page.getByRole("button", { name: "Accept & open chat" }).click();
   await expect(page).toHaveURL(/\/rooms\/room-9/);
   expect(calls.some((c) => c.method === "PUT" && c.path === "/posts/need-1/joins/j1/approve")).toBe(true);
 

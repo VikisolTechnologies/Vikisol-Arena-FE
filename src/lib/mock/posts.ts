@@ -174,6 +174,8 @@ export const MOCK_POST_JOIN_REQUESTS: PostJoinRequest[] = [
   offerBy("join-8", "post-maths", person("meera").id, "pending", 6),
   offerBy("join-9", "post-maths", person("venkat").id, "pending", 5),
   offerBy("join-10", "post-ladder", person("ravi").id, "pending", 10),
+  offerBy("join-11", "post-me-ask", person("kabir").id, "pending", 20),
+  offerBy("join-12", "post-me-ask", person("rohit").id, "pending", 7),
 ];
 
 /** Preview mode: a room's post photo (rooms don't carry media in the API). */
