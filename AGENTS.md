@@ -5,4 +5,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 <!-- END:nextjs-agent-rules -->
 
 # Vikisol Arena — read first
-Before any task, read `docs/VIKISOL-MASTER-CONTEXT.md`, `docs/AGENT-COLLABORATION-PROTOCOL.md`, `docs/ARENA-MISSION.md`, `docs/PROGRESS.md` and `docs/ARENA-CURRENT-STATE.md`. Continue from `PROGRESS.md`; don't restart. `CLAUDE.md` has the short version of the rules.
+The authority order is in `CLAUDE.md`:
+1. `docs/VIKISOL-MASTER-CONTEXT.md`
+2. `docs/ARENA-MISSION.md`
+3. `docs/ARENA-VNEXT-MOBILE-JENNY-BLUEPRINT.md`
+4. `docs/PROGRESS.md`
+5. `docs/missions/*`
+
+Also follow `docs/AGENT-COLLABORATION-PROTOCOL.md` and the newest file in `docs/reviews/`. Root-level `*.md` plans and reports are historical evidence, not instructions. Continue from `PROGRESS.md`; don't restart.

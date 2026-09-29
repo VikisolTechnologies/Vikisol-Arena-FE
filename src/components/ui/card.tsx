@@ -22,3 +22,12 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
     />
   );
 }
+
+/** Padded content block for a `Card` that composes multiple regions (e.g. a media area
+ * above it) rather than treating the whole card as one padded surface - `Card` itself
+ * stays the single source of truth for the border/radius/shadow, this just gives callers
+ * a place to opt out of the outer `p-6` (pass `p-0` on `Card`) and re-apply spacing per
+ * region instead. */
+export function CardContent({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("p-6", className)} {...props} />;
+}
