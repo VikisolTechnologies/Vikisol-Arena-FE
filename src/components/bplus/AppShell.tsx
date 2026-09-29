@@ -19,7 +19,7 @@ type Icon = ComponentType<{ className?: string; strokeWidth?: number; fill?: str
 const TABS: { href: string; label: string; icon: Icon; match: string[] }[] = [
   { href: "/home", label: "Feed", icon: House, match: ["/home"] },
   { href: "/discover", label: "Discover", icon: Search, match: ["/discover", "/map"] },
-  { href: "/work", label: "Work", icon: Briefcase, match: ["/work"] },
+  { href: "/work", label: "Work", icon: Briefcase, match: ["/work", "/jobs", "/applications"] },
   { href: "/identity", label: "You", icon: UserRound, match: ["/identity"] },
 ];
 

@@ -48,6 +48,7 @@ backend plan (FE-BPLUS-BUILD §6). One row per gap; newest phase last.
 | 38 | Feed need cards (review 29 Sep) | How many people offered help on a need, and a few faces (board: "3 offers") | `FeedItem.offerCount?: number`, `FeedItem.offerAvatars?: { name, photoUrl? }[] (≤3)` for `itemType:"ask"` | Real mode shows the reply count ("3 replies") |
 | 39 | Need page, owner (review 29 Sep) | Edit and pause a posted need (board: Edit · Pause · Close) | `PATCH /posts/{id}` `{ title?, body?, startsAt?, locationText?, tags? }` (owner, open posts only); `PUT /posts/{id}/status` `{ status: "paused"\|"open" }` + `PostStatus` + `"paused"` (hidden from feeds, offers kept) | Both buttons explain they aren't available yet; Close works |
 | 40 | Coordination room (review 29 Sep) | Files shared in a room (board's third tab) | `GET /rooms/{id}/files` → `[{ id, name, url, sizeBytes, senderName, createdAt }]`; `POST /rooms/{id}/files` multipart (≤10 MB, images/PDF) | Files tab lists photos and links already sent in the chat |
+| 41 | Work → Jobs (review 29 Sep) | Save a job; hybrid work mode | `POST/DELETE /jobs/{id}/save`, `GET /jobs/saved`; `Job.workMode: "onsite"\|"remote"\|"hybrid"` | Bookmarks saved on this device; no Hybrid filter |
 
 Saved for real today (no gap): sign up, sign in, 2FA code, forgot/reset password, area
 (`PUT /profile/me/location` with `consent: "city"`) and current location (`consent: "precise"`,

@@ -403,9 +403,9 @@
     "index": 5,
     "title": "Work → Jobs",
     "route": "/dev/person?to=/jobs",
-    "status": "in-progress",
+    "status": "built",
     "commit": "b9d03ce",
-    "note": "Fidelity: board is Work with type chips (Jobs, People, Activities, Needs) + Local/Remote/Hybrid/On-site and a 'For you' photo list; live is a separate Jobs list."
+    "note": "Kind chips link to where each kind lives (All → Work, People/Activities/Needs → Discover). No Hybrid chip: jobs are remote or on-site only. Saved jobs are on this device (gap #41)."
   },
   {
     "id": "job-details",
