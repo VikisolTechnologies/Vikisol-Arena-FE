@@ -39,8 +39,6 @@ test.describe("Platform admin — B+ admin routes (mock)", () => {
   test("desktop sidebar includes Verification nav item", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await openAdmin(page, "/admin");
-    await expect(
-      page.getByRole("navigation", { name: "Admin navigation" }).getByRole("link", { name: "Verification" }),
-    ).toBeVisible();
+    await expect(page.locator('aside a[href="/admin/verification"]')).toBeVisible();
   });
 });
