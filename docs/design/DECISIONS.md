@@ -3,6 +3,15 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **29 Sep (fidelity pass)** — Preview (mock) mode shows credited free-licence photos for the
+  fictional neighbours and preview posts (`public/fixtures`, `CREDITS.md`); real mode never does.
+  All mock content is labelled "Preview data". "Nearby" = within the radius (default 5 km of the
+  launch zone) — never "has a location". Autopilot and Auto-apply are no longer offered: Jenny
+  prepares, you approve. Screens that don't truly match their board went back to In progress
+  with a note (docs/reviews/fidelity-pass.md).
+- **29 Sep (fidelity pass)** — Procedural covers redrawn photographic (sky gradient, light source,
+  blurred horizons, grain) with a small corner glyph; the Arena mark redrawn as the board's bold
+  rounded "A"; cookie banner is a compact one-row bar.
 - **29 Sep (P9)** — Company settings rebuilt on the B+ frame. **Billing is display-only** (flow
   §8): the in-page "Switch to …" button was removed because it changed plans with no payment
   step; `changePlan` stays in the API layer unused (gap #35). Audit actions show in plain words

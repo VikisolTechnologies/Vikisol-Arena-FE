@@ -11,6 +11,7 @@ import {
   TITLES_BY_INDUSTRY,
   AVATAR_EMOJIS,
 } from "./seed";
+import { PREVIEW_NEIGHBOURS } from "./people";
 
 function buildCandidate(id: string): CandidateProfile {
   const industry = pick(INDUSTRIES);
@@ -38,9 +39,13 @@ function buildCandidate(id: string): CandidateProfile {
   };
 }
 
-export const MOCK_CANDIDATES: CandidateProfile[] = Array.from({ length: 40 }, (_, i) =>
-  buildCandidate(`cand-${i + 1}`),
-);
+// The first 13 are the preview world's neighbours (Gachibowli and around, with photos); the rest
+// stay generated so search and talent lists still have depth.
+export const MOCK_CANDIDATES: CandidateProfile[] = Array.from({ length: 40 }, (_, i) => {
+  const c = buildCandidate(`cand-${i + 1}`);
+  const n = PREVIEW_NEIGHBOURS[i];
+  return n ? { ...c, name: n.name, title: n.title, location: "Hyderabad", homeCity: n.area, bio: `${n.title} in ${n.area}. Happy to meet neighbours and help where I can.` } : c;
+});
 
 export const CURRENT_CANDIDATE_ID = "cand-1";
 

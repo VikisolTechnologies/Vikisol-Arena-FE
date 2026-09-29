@@ -8,6 +8,8 @@ import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { rise } from "@/lib/motion";
 import { ArenaLogo } from "@/components/brand/ArenaLogo";
+import { PreviewPill } from "@/components/bplus/Primitives";
+import { isRealMode } from "@/lib/api/mode";
 
 type Icon = ComponentType<{ className?: string; strokeWidth?: number; "aria-hidden"?: boolean }>;
 export interface DashNavItem {
@@ -120,10 +122,11 @@ export function DashShell({
         <m.div initial="hidden" animate="shown" className="mx-auto max-w-[1180px]">
           {(title || actions) && (
             <m.div variants={rise} custom={0} className="mb-6 flex flex-wrap items-end justify-between gap-3">
-              {title && <h1 className="font-display-serif text-[30px] font-medium leading-tight lg:text-[36px]">{title}</h1>}
+              {title && <h1 className="flex flex-wrap items-center gap-3 font-display-serif text-[30px] font-medium leading-tight lg:text-[36px]">{title}{!isRealMode() && <PreviewPill className="font-sans" />}</h1>}
               {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
             </m.div>
           )}
+          {!title && !isRealMode() && <div className="mb-3"><PreviewPill /></div>}
           <m.div variants={rise} custom={1}>{children}</m.div>
         </m.div>
       </main>

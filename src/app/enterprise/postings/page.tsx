@@ -96,20 +96,20 @@ function Postings() {
               const mine = applicants.filter((a) => a.posting.id === p.id);
               const fresh = mine.filter((a) => a.stage === "applied").length;
               return (
-                <m.li key={p.id} variants={rise} custom={i} className="flex flex-col rounded-tile border border-line bg-surface p-5">
+                <m.li key={p.id} variants={rise} custom={i} className="flex flex-col rounded-tile bg-paper p-5 text-paper-ink">
                   <div className="flex items-start justify-between gap-2">
                     <h2 className="text-[17px] font-semibold leading-snug">{p.title}</h2>
-                    <StatusPill status={p.status} />
+                    <StatusPill status={p.status} onPaper />
                   </div>
-                  <p className="mt-1.5 flex items-center gap-1 text-[14px] text-faint"><MapPin className="size-3.5" aria-hidden /> {p.location}{p.remote && " · Remote"}</p>
+                  <p className="mt-1.5 flex items-center gap-1 text-[14px] text-paper-ink-muted"><MapPin className="size-3.5" aria-hidden /> {p.location}{p.remote && " · Remote"}</p>
                   <p className="mt-3 flex items-center gap-1.5 text-[14px]">
-                    <Users className="size-4 text-faint" aria-hidden /> {mine.length} applicant{mine.length === 1 ? "" : "s"}
-                    {fresh > 0 && <span className="rounded-full bg-info/15 px-2 py-0.5 text-[12px] font-semibold text-info-on-dark">{fresh} new</span>}
+                    <Users className="size-4 text-paper-ink-muted" aria-hidden /> {mine.length} applicant{mine.length === 1 ? "" : "s"}
+                    {fresh > 0 && <span className="rounded-full bg-info-on-paper px-2 py-0.5 text-[12px] font-semibold text-white">{fresh} new</span>}
                   </p>
                   <div className="mt-auto flex flex-wrap gap-2 pt-4">
                     <DashButton href={`/enterprise/postings/${p.id}`}>Open</DashButton>
-                    {p.status !== "closed" && <DashButton variant="outline" disabled={busyId === p.id} onClick={() => change(p, p.status === "open" ? "paused" : "open")}>{p.status === "open" ? "Pause" : "Reopen"}</DashButton>}
-                    {p.status !== "closed" && <DashButton variant="danger" disabled={busyId === p.id} onClick={() => change(p, "closed")}>Close</DashButton>}
+                    {p.status !== "closed" && <DashButton variant="outline" onPaper disabled={busyId === p.id} onClick={() => change(p, p.status === "open" ? "paused" : "open")}>{p.status === "open" ? "Pause" : "Reopen"}</DashButton>}
+                    {p.status !== "closed" && <DashButton variant="danger" onPaper disabled={busyId === p.id} onClick={() => change(p, "closed")}>Close</DashButton>}
                   </div>
                 </m.li>
               );

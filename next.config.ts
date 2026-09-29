@@ -9,6 +9,11 @@ if (process.env.VERCEL_ENV === "production" && process.env.NEXT_PUBLIC_ARENA_DAT
 const nextConfig: NextConfig = {
   // The dev tools badge is not part of the product. Preview screenshots must not show it.
   devIndicators: false,
+  // The founder watches the dev preview from a phone on the LAN. Next blocks dev-only assets
+  // (HMR, RSC dev chunks) from origins that aren't localhost unless listed here - without this
+  // the page rendered its server shell and never hydrated (the "blank feed", 29 Sep). Dev only;
+  // ignored by production builds.
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "*.local"],
   // Keep isolated browser-test compilation separate from a developer's running Next server.
   distDir: process.env.ARENA_NEXT_DIST_DIR || ".next",
   // ARENA-PHASE-1-BUILD.md §2 "Imagery" - real licensed Unsplash photography for the new v3

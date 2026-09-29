@@ -65,8 +65,8 @@ export function ProfileScreen() {
   }
 
   const name = data?.profile.name || draft.displayName || "";
-  const area = draft.area || data?.profile.homeCity || "";
-  const bio = data?.profile.bio || draft.intro;
+  const area = (draft.area || data?.profile.homeCity || "").split(" / ")[0];
+  const bio = draft.intro || data?.profile.bio;
   const hosted = data?.posts.filter((p) => p.intentType === "activity").length ?? 0;
   const joined = data?.joined.filter((p) => p.intentType === "activity").length ?? 0;
   const helped = data?.joined.filter((p) => p.intentType === "ask").length ?? 0;
@@ -77,7 +77,7 @@ export function ProfileScreen() {
   return (
     <AppShell>
       <div className="relative -mx-5 -mt-[max(8px,env(safe-area-inset-top))] h-40 overflow-hidden">
-        <Image src="/brand/welcome-hero.jpg" alt="" fill sizes="480px" className="object-cover object-[50%_30%]" />
+        <Image src="/brand/welcome-park.jpg" alt="" fill sizes="480px" className="object-cover object-[50%_25%]" />
         <div aria-hidden className="absolute inset-0 bg-linear-to-b from-transparent to-background" />
         <Link href="/settings" aria-label="Settings" className="absolute right-3 top-[max(12px,env(safe-area-inset-top))] grid size-11 place-items-center rounded-full bg-background/50 text-foreground backdrop-blur">
           <Settings className="size-5" strokeWidth={1.75} aria-hidden />

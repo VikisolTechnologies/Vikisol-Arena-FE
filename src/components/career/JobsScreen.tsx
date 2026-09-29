@@ -8,7 +8,8 @@ import { CircleCheck, Search, Users } from "lucide-react";
 import { rise } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
 import { Button, ButtonLink } from "@/components/bplus/Button";
-import { Pills, SectionHeader, Skeleton, StateCard } from "@/components/bplus/Primitives";
+import { Pills, PreviewPill, SectionHeader, Skeleton, StateCard } from "@/components/bplus/Primitives";
+import { isRealMode } from "@/lib/api/mode";
 import { CompanyMark } from "@/components/career/CompanyMark";
 import { getJobs } from "@/lib/api/jobs";
 import { getMyProfile } from "@/lib/api/profile";
@@ -77,7 +78,7 @@ export function JobsScreen() {
       </div>
 
       <section className="mt-5 flex-1" aria-label="Jobs near you">
-        <SectionHeader title={filter === "remote" ? "Remote jobs" : "Jobs near you"} />
+        <SectionHeader title={filter === "remote" ? "Remote jobs" : "Jobs near you"} action={isRealMode() ? undefined : <PreviewPill />} />
         {error ? (
           <StateCard kind="error" title="Jobs didn't load" detail="Check your connection and try again." action={<Button variant="outline" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>} />
         ) : !jobs ? (

@@ -6,8 +6,9 @@
     "index": 1,
     "title": "Welcome",
     "route": "/auth",
-    "status": "done",
-    "commit": "f523fcf"
+    "status": "in-progress",
+    "commit": "f523fcf",
+    "note": "Fidelity: board photo shows runners with the city skyline at golden hour; no free-licence photo like it was found \u2014 live uses a golden-light park (Cubbon Park, credited)."
   },
   {
     "id": "sign-up",
@@ -35,7 +36,7 @@
     "board": "onboarding",
     "index": 4,
     "title": "Why are you here?",
-    "route": "/onboarding?step=1",
+    "route": "/dev/person?stage=onboarding&to=/onboarding%3Fstep%3D1",
     "status": "done",
     "commit": "f523fcf"
   },
@@ -45,7 +46,7 @@
     "board": "onboarding",
     "index": 5,
     "title": "Set up your local life",
-    "route": "/onboarding?step=2",
+    "route": "/dev/person?stage=onboarding&to=/onboarding%3Fstep%3D2",
     "status": "done",
     "commit": "f523fcf"
   },
@@ -55,7 +56,7 @@
     "board": "onboarding",
     "index": 6,
     "title": "Your identity",
-    "route": "/onboarding?step=3",
+    "route": "/dev/person?stage=onboarding&to=/onboarding%3Fstep%3D3",
     "status": "done",
     "commit": "f523fcf"
   },
@@ -65,7 +66,7 @@
     "board": "onboarding",
     "index": 7,
     "title": "You're all set",
-    "route": "/onboarding?step=4",
+    "route": "/dev/person?stage=onboarding&to=/onboarding%3Fstep%3D4",
     "status": "done",
     "commit": "f523fcf"
   },
@@ -75,7 +76,7 @@
     "board": "core",
     "index": 1,
     "title": "Feed",
-    "route": "/home",
+    "route": "/dev/person?to=/home",
     "status": "done",
     "commit": "49552e0"
   },
@@ -85,7 +86,7 @@
     "board": "core",
     "index": 2,
     "title": "Discover",
-    "route": "/discover",
+    "route": "/dev/person?to=/discover",
     "status": "done",
     "commit": "49552e0"
   },
@@ -95,9 +96,10 @@
     "board": "core",
     "index": 3,
     "title": "Map (Discover map mode)",
-    "route": "/discover?view=map",
-    "status": "done",
-    "commit": "49552e0"
+    "route": "/dev/person?to=/discover%3Fview%3Dmap",
+    "status": "in-progress",
+    "commit": "49552e0",
+    "note": "Fidelity: board shows real map tiles and a preview card for the nearest activity; live draws an abstract area map (no tile provider yet) and shows a card only after a pin is tapped."
   },
   {
     "id": "work",
@@ -105,7 +107,7 @@
     "board": "core",
     "index": 4,
     "title": "Work",
-    "route": "/work",
+    "route": "/dev/person?to=/work",
     "status": "done",
     "commit": "49552e0"
   },
@@ -115,7 +117,7 @@
     "board": "core",
     "index": 5,
     "title": "Create sheet",
-    "route": "/home?create=1",
+    "route": "/dev/person?to=/home%3Fcreate%3D1",
     "status": "done",
     "commit": "49552e0"
   },
@@ -125,7 +127,7 @@
     "board": "core",
     "index": 6,
     "title": "You (profile)",
-    "route": "/identity",
+    "route": "/dev/person?to=/identity",
     "status": "done",
     "commit": "49552e0"
   },
@@ -135,9 +137,10 @@
     "board": "core",
     "index": 7,
     "title": "Jenny",
-    "route": "/agent",
-    "status": "done",
-    "commit": "49552e0"
+    "route": "/dev/person?to=/agent",
+    "status": "in-progress",
+    "commit": "49552e0",
+    "note": "Fidelity: board orb is a glowing orange sun; live orb is muted. Rebuilt in P8."
   },
   {
     "id": "personal-feed",
@@ -145,7 +148,7 @@
     "board": "discover-join",
     "index": 1,
     "title": "Personalised feed",
-    "route": "/home",
+    "route": "/dev/person?to=/home",
     "status": "done",
     "commit": "1c8e99e"
   },
@@ -155,9 +158,10 @@
     "board": "discover-join",
     "index": 2,
     "title": "Discover & filter",
-    "route": "/discover?show=activities",
-    "status": "done",
-    "commit": "1c8e99e"
+    "route": "/dev/person?to=/discover%3Fshow%3Dactivities",
+    "status": "in-progress",
+    "commit": "1c8e99e",
+    "note": "Fidelity: board chips are Today / Weekend / Free + Fitness / Learning / All filters with a category grid; live keeps the Discover type chips + Any time / Today / Weekend."
   },
   {
     "id": "map-results",
@@ -165,9 +169,10 @@
     "board": "discover-join",
     "index": 3,
     "title": "Map results",
-    "route": "/discover?view=map",
-    "status": "done",
-    "commit": "1c8e99e"
+    "route": "/dev/person?to=/discover%3Fview%3Dmap",
+    "status": "in-progress",
+    "commit": "1c8e99e",
+    "note": "Fidelity: same as Map \u2014 no map tiles; category chips differ."
   },
   {
     "id": "activity-details",
@@ -206,8 +211,9 @@
     "index": 7,
     "title": "Activity room",
     "route": "/dev/screen/activity-room",
-    "status": "done",
-    "commit": "1c8e99e"
+    "status": "in-progress",
+    "commit": "1c8e99e",
+    "note": "Fidelity: board has the activity photo as the room header and a Host tools / Report / Leave bar; live header is an icon."
   },
   {
     "id": "need-create",
@@ -215,7 +221,7 @@
     "board": "need-outcome",
     "index": 1,
     "title": "Create (need)",
-    "route": "/home?create=1",
+    "route": "/dev/person?to=/home%3Fcreate%3D1",
     "status": "done",
     "commit": "f81aebf"
   },
@@ -225,7 +231,7 @@
     "board": "need-outcome",
     "index": 2,
     "title": "Post a Need",
-    "route": "/needs/new",
+    "route": "/dev/person?to=/needs/new",
     "status": "done",
     "commit": "f81aebf"
   },
@@ -246,8 +252,9 @@
     "index": 4,
     "title": "Offer details",
     "route": "/dev/screen/offer-details",
-    "status": "done",
-    "commit": "f81aebf"
+    "status": "in-progress",
+    "commit": "f81aebf",
+    "note": "Fidelity: board is a full page (shared interests, recent outcomes, the offer message); live is a sheet \u2014 interests/outcomes/message need gaps #12\u2013#13."
   },
   {
     "id": "coordination-room",
@@ -275,9 +282,10 @@
     "board": "need-outcome",
     "index": 7,
     "title": "See the outcome",
-    "route": "/work",
-    "status": "done",
-    "commit": "f81aebf"
+    "route": "/dev/person?to=/work",
+    "status": "in-progress",
+    "commit": "f81aebf",
+    "note": "Fidelity: board opens Work on Completed with an outcome card and profile summary; live opens Work on All."
   },
   {
     "id": "inbox",
@@ -285,7 +293,7 @@
     "board": "messages",
     "index": 1,
     "title": "Inbox",
-    "route": "/rooms",
+    "route": "/dev/person?to=/rooms",
     "status": "done",
     "commit": "473d591"
   },
@@ -305,7 +313,7 @@
     "board": "messages",
     "index": 3,
     "title": "Notifications",
-    "route": "/notifications",
+    "route": "/dev/person?to=/notifications",
     "status": "done",
     "commit": "473d591"
   },
@@ -315,9 +323,10 @@
     "board": "messages",
     "index": 4,
     "title": "Search",
-    "route": "/search",
-    "status": "done",
-    "commit": "473d591"
+    "route": "/dev/person?to=/search",
+    "status": "in-progress",
+    "commit": "473d591",
+    "note": "Fidelity: board shows a results list with photos and Near / Within 5 km / Safe & private filters; live shows suggestions until a query (people/radius need gap #17)."
   },
   {
     "id": "settings-privacy",
@@ -325,7 +334,7 @@
     "board": "messages",
     "index": 5,
     "title": "Settings & privacy",
-    "route": "/settings",
+    "route": "/dev/person?to=/settings",
     "status": "done",
     "commit": "473d591"
   },
@@ -355,9 +364,10 @@
     "board": "career",
     "index": 1,
     "title": "My profile (career entry)",
-    "route": "/identity",
-    "status": "done",
-    "commit": "b9d03ce"
+    "route": "/dev/person?to=/identity",
+    "status": "in-progress",
+    "commit": "b9d03ce",
+    "note": "Fidelity: board is a For you / About / Impact tabbed career profile with an 'Open career profile' card; live shows the personal profile with a career card."
   },
   {
     "id": "career-intent",
@@ -365,7 +375,7 @@
     "board": "career",
     "index": 2,
     "title": "Career intent",
-    "route": "/identity/career",
+    "route": "/dev/person?to=/identity/career",
     "status": "done",
     "commit": "b9d03ce"
   },
@@ -375,7 +385,7 @@
     "board": "career",
     "index": 3,
     "title": "Job preferences",
-    "route": "/identity/career?step=setup",
+    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
     "status": "done",
     "commit": "b9d03ce"
   },
@@ -385,7 +395,7 @@
     "board": "career",
     "index": 4,
     "title": "Visibility preview",
-    "route": "/identity/career?step=privacy",
+    "route": "/dev/person?to=/identity/career%3Fstep%3Dprivacy",
     "status": "done",
     "commit": "b9d03ce"
   },
@@ -395,9 +405,10 @@
     "board": "career",
     "index": 5,
     "title": "Work \u2192 Jobs",
-    "route": "/jobs",
-    "status": "done",
-    "commit": "b9d03ce"
+    "route": "/dev/person?to=/jobs",
+    "status": "in-progress",
+    "commit": "b9d03ce",
+    "note": "Fidelity: board is Work with type chips (Jobs, People, Activities, Needs) + Local/Remote/Hybrid/On-site and a 'For you' photo list; live is a separate Jobs list."
   },
   {
     "id": "job-details",
@@ -406,8 +417,9 @@
     "index": 6,
     "title": "Job details",
     "route": "/dev/screen/job-details",
-    "status": "done",
-    "commit": "b9d03ce"
+    "status": "in-progress",
+    "commit": "b9d03ce",
+    "note": "Fidelity: board has About / People / Reviews tabs, must-have and nice-to-have lists, hiring team and verified-company row; live has About / Your fit (hiring team, reviews and verification need gaps #22, #29)."
   },
   {
     "id": "apply-track",
@@ -425,7 +437,7 @@
     "board": "none",
     "index": 0,
     "title": "Career \u00b7 Where you are now (status, notice)",
-    "route": "/identity/career?step=setup",
+    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
     "status": "done",
     "commit": "b9d03ce",
     "note": "No board \u2014 designed in B+"
@@ -436,7 +448,7 @@
     "board": "none",
     "index": 0,
     "title": "Career \u00b7 Skills & stack (proficiency, SAP)",
-    "route": "/identity/career?step=setup",
+    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
     "status": "done",
     "commit": "b9d03ce",
     "note": "No board \u2014 designed in B+"
@@ -447,7 +459,7 @@
     "board": "none",
     "index": 0,
     "title": "Career \u00b7 Compensation (only me)",
-    "route": "/identity/career?step=setup",
+    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
     "status": "done",
     "commit": "b9d03ce",
     "note": "No board \u2014 designed in B+"
@@ -458,7 +470,7 @@
     "board": "none",
     "index": 0,
     "title": "Career \u00b7 What you're looking for",
-    "route": "/identity/career?step=setup",
+    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
     "status": "done",
     "commit": "b9d03ce",
     "note": "No board \u2014 designed in B+"
@@ -469,7 +481,7 @@
     "board": "none",
     "index": 0,
     "title": "Career \u00b7 Resume & proof",
-    "route": "/identity/career?step=setup",
+    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
     "status": "done",
     "commit": "b9d03ce",
     "note": "No board \u2014 designed in B+"
@@ -480,7 +492,7 @@
     "board": "none",
     "index": 0,
     "title": "Career \u00b7 Review answers",
-    "route": "/identity/career?step=setup",
+    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
     "status": "done",
     "commit": "b9d03ce",
     "note": "No board \u2014 designed in B+"
@@ -502,7 +514,7 @@
     "board": "none",
     "index": 0,
     "title": "A1 What kind? (search + categories)",
-    "route": "/activities/new",
+    "route": "/dev/person?to=/activities/new",
     "status": "done",
     "commit": "390af7e",
     "note": "No board \u2014 designed in B+"
@@ -513,7 +525,7 @@
     "board": "none",
     "index": 0,
     "title": "A2\u2013A4 Activity intake (basics, group & cost, type questions, bring, when, where, who)",
-    "route": "/activities/new?step=details",
+    "route": "/dev/person?to=/activities/new%3Fstep%3Ddetails",
     "status": "done",
     "commit": "390af7e",
     "note": "No board \u2014 designed in B+"
@@ -535,7 +547,7 @@
     "board": "none",
     "index": 0,
     "title": "A6 Preview & publish",
-    "route": "/activities/new?step=preview",
+    "route": "/dev/person?to=/activities/new%3Fstep%3Dpreview",
     "status": "done",
     "commit": "390af7e",
     "note": "No board \u2014 designed in B+"
@@ -667,7 +679,7 @@
     "board": "none",
     "index": 0,
     "title": "Need \u2014 what kind of help? (12 categories)",
-    "route": "/needs/new",
+    "route": "/dev/person?to=/needs/new",
     "status": "done",
     "commit": "51f6a4d",
     "note": "No board \u2014 designed in B+"
@@ -678,7 +690,7 @@
     "board": "none",
     "index": 0,
     "title": "Need intake \u2014 basics, category questions, where & photos, review",
-    "route": "/needs/new?kind=moving",
+    "route": "/dev/person?to=/needs/new%3Fkind%3Dmoving",
     "status": "done",
     "commit": "51f6a4d",
     "note": "No board \u2014 designed in B+"
@@ -689,7 +701,7 @@
     "board": "none",
     "index": 0,
     "title": "O1 Offer \u2014 what can you offer?",
-    "route": "/offers/new",
+    "route": "/dev/person?to=/offers/new",
     "status": "done",
     "commit": "51f6a4d",
     "note": "No board \u2014 designed in B+"
@@ -700,7 +712,7 @@
     "board": "none",
     "index": 0,
     "title": "O1 Offer intake \u2014 what, when, limits, proof",
-    "route": "/offers/new?kind=tutoring",
+    "route": "/dev/person?to=/offers/new%3Fkind%3Dtutoring",
     "status": "done",
     "commit": "51f6a4d",
     "note": "No board \u2014 designed in B+"
@@ -733,7 +745,7 @@
     "board": "none",
     "index": 0,
     "title": "PR1\u2013PR2 Start a project + roles (paid publishes; collaborative saves)",
-    "route": "/projects/new",
+    "route": "/dev/person?to=/projects/new",
     "status": "done",
     "commit": "51f6a4d",
     "note": "No board \u2014 designed in B+"
@@ -819,8 +831,9 @@
     "index": 4,
     "title": "Manage your job",
     "route": "/dev/business?to=/enterprise/postings/demo-job",
-    "status": "done",
-    "commit": null
+    "status": "in-progress",
+    "commit": null,
+    "note": "Fidelity: board is a cream full-page phone layout; live keeps the dark dashboard frame with dark panels (details, share). Cards/lists are cream."
   },
   {
     "id": "candidates",
@@ -829,8 +842,9 @@
     "index": 5,
     "title": "Review candidates",
     "route": "/dev/business?to=/enterprise/postings/demo-job?tab=candidates",
-    "status": "done",
-    "commit": null
+    "status": "in-progress",
+    "commit": null,
+    "note": "Fidelity: board is a cream list with stage pills; live list is cream but sits under the Overview/Candidates tabs and Board/List switch."
   },
   {
     "id": "candidate-profile",
@@ -839,8 +853,9 @@
     "index": 6,
     "title": "Candidate profile",
     "route": "/dev/business?to=/enterprise/postings/demo-job/candidates/demo-app-0",
-    "status": "done",
-    "commit": null
+    "status": "in-progress",
+    "commit": null,
+    "note": "Fidelity: board is cream with a Decline / Move to interview bar; live panels are dark."
   },
   {
     "id": "interview-hire",
@@ -849,8 +864,9 @@
     "index": 7,
     "title": "Interview & hire",
     "route": "/dev/business?to=/enterprise/interviews/demo-app-5",
-    "status": "done",
-    "commit": null
+    "status": "in-progress",
+    "commit": null,
+    "note": "Fidelity: board is a cream card stack with candidate message; live panels are dark; candidate message needs messaging per application."
   },
   {
     "id": "jenny-feed",
@@ -858,7 +874,7 @@
     "board": "jenny-layer",
     "index": 1,
     "title": "Feed: Jenny noticed",
-    "route": "/home",
+    "route": "/dev/person?to=/home",
     "status": "not-started",
     "commit": null
   },
@@ -868,7 +884,7 @@
     "board": "jenny-layer",
     "index": 2,
     "title": "Discover: intent \u2192 filters",
-    "route": "/discover",
+    "route": "/dev/person?to=/discover",
     "status": "not-started",
     "commit": null
   },
@@ -898,7 +914,7 @@
     "board": "jenny-layer",
     "index": 5,
     "title": "Work: approvals queue",
-    "route": "/work",
+    "route": "/dev/person?to=/work",
     "status": "not-started",
     "commit": null
   },
@@ -918,7 +934,7 @@
     "board": "jenny-layer",
     "index": 7,
     "title": "Jenny: today & automations",
-    "route": "/agent",
+    "route": "/dev/person?to=/agent",
     "status": "not-started",
     "commit": null
   },

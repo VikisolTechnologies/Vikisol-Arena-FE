@@ -16,11 +16,11 @@ import { formatINR } from "@/lib/format";
 const TALENT_TIERS: { key: "free" | "pro"; name: string; price: string; period: string; features: string[]; highlight?: boolean }[] = [
   {
     key: "free", name: "Free", price: "₹0", period: "forever",
-    features: ["Agent finds + applies to matches", "Identity graph & career health", "Unlimited practice challenges", "Standard support"],
+    features: ["Jenny finds matches and prepares applications — you approve each one", "Identity graph & career health", "Unlimited practice challenges", "Standard support"],
   },
   {
     key: "pro", name: "Pro", price: "₹499", period: "/month",
-    features: ["Everything in Free", "Autopilot mode", "Priority in Talent Universe search", "Tailored resume history", "Priority support"],
+    features: ["Everything in Free", "Priority in Talent Universe search", "Tailored resume history", "Priority support"],
     highlight: true,
   },
 ];

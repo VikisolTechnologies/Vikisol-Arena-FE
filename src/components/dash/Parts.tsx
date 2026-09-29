@@ -55,10 +55,19 @@ const PILL: Record<string, string> = {
   suspended: "bg-danger/15 text-danger-on-dark",
   invited: "bg-info/15 text-info-on-dark",
 };
+const PILL_PAPER: Record<string, string> = {
+  open: "bg-success-on-paper text-white",
+  published: "bg-success-on-paper text-white",
+  active: "bg-success-on-paper text-white",
+  paused: "bg-warning/30 text-paper-ink",
+  suspended: "bg-danger-on-paper text-white",
+  invited: "bg-info-on-paper text-white",
+};
 const PILL_LABEL: Record<string, string> = { open: "Published" };
 
-export function StatusPill({ status }: { status: string }) {
-  return <span className={cn("inline-flex rounded-full px-2.5 py-0.5 text-[12px] font-semibold capitalize", PILL[status] ?? "bg-foreground/10 text-faint")}>{PILL_LABEL[status] ?? status}</span>;
+export function StatusPill({ status, onPaper = false }: { status: string; onPaper?: boolean }) {
+  const cls = onPaper ? PILL_PAPER[status] ?? "bg-paper-ink/10 text-paper-ink-muted" : PILL[status] ?? "bg-foreground/10 text-faint";
+  return <span className={cn("inline-flex rounded-full px-2.5 py-0.5 text-[12px] font-semibold capitalize", cls)}>{PILL_LABEL[status] ?? status}</span>;
 }
 
 /** A tappable list row for dashboards (people, jobs, interviews). */
@@ -81,12 +90,12 @@ export function Row({ href, onClick, lead, title, meta, trail }: { href?: string
 }
 
 /** Compact button for dashboards (the kit's Button is full-width mobile). */
-export function DashButton({ children, onClick, href, variant = "primary", disabled, type = "button" }: { children: ReactNode; onClick?: () => void; href?: string; variant?: "primary" | "outline" | "danger"; disabled?: boolean; type?: "button" | "submit" }) {
+export function DashButton({ children, onClick, href, variant = "primary", disabled, type = "button", onPaper = false }: { children: ReactNode; onClick?: () => void; href?: string; variant?: "primary" | "outline" | "danger"; disabled?: boolean; type?: "button" | "submit"; onPaper?: boolean }) {
   const cls = cn(
     "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-[15px] font-semibold outline-none transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50",
     variant === "primary" && "bg-primary text-paper-ink hover:bg-primary-pressed",
-    variant === "outline" && "border border-field-line text-foreground hover:bg-foreground/5",
-    variant === "danger" && "border border-danger/60 text-danger-on-dark hover:bg-danger/10",
+    variant === "outline" && (onPaper ? "border border-paper-ink/30 text-paper-ink hover:bg-paper-ink/5" : "border border-field-line text-foreground hover:bg-foreground/5"),
+    variant === "danger" && (onPaper ? "border border-danger-on-paper/60 text-danger-on-paper hover:bg-danger/10" : "border border-danger/60 text-danger-on-dark hover:bg-danger/10"),
   );
   if (href) return <Link href={href} className={cls}>{children}</Link>;
   return (

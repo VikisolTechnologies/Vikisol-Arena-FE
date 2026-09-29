@@ -28,6 +28,8 @@ export interface WorkRow {
   side?: "need" | "offer";
   /** Post kind, for the cover (activities get a generated one). */
   kind?: string;
+  /** Whose post it is — their face stands in when there's no photo. */
+  person?: string;
 }
 
 /** One failing or malformed source must never blank the whole Work screen. */
@@ -93,6 +95,7 @@ export async function loadWork(role: string): Promise<WorkRow[]> {
       replies: p.commentCount,
       side: isNeed ? "need" : p.intentType === "offer" ? "offer" : undefined,
       kind: p.intentType,
+      person: p.authorName,
     });
   }
   for (const p of settled(joined, []).filter((p) => p.intentType === "activity" || p.intentType === "ask")) {
@@ -107,6 +110,7 @@ export async function loadWork(role: string): Promise<WorkRow[]> {
       replies: p.commentCount,
       side: p.intentType === "ask" ? "offer" : undefined,
       kind: p.intentType,
+      person: p.authorName,
     });
   }
   return rows;

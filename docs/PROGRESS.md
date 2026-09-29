@@ -7,6 +7,10 @@ Updated 29 Sep 2026. Resume from here.
 
 ## Current status
 
+**Fidelity pass — done 29 Sep** (commit "FE fidelity pass"): see `docs/reviews/fidelity-pass.md`.
+33 board screens Done, 16 back to In progress with notes on /dev/progress. Preview helpers:
+`/dev/person?to=<path>` (signed-in neighbour) and `/dev/business?to=<path>` (recruiter).
+
 **Next step: P8 Jenny boards + Jenny pre-fill (flow §10)**, then P10 Arena Admin (§9), then P11.
 P8: read `docs/design/boards/jenny-layer.png` + `jenny-automation.png` (screens.json phases "P8
 Jenny — …"), write "Think (P8)" in BPLUS-SCREENS.md, then build: Jenny noticed (feed), Discover

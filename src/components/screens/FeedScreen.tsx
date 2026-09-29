@@ -9,7 +9,7 @@ import { Button, ButtonLink } from "@/components/bplus/Button";
 import { Pills, Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { HeroActivityCard, NeedCard, RowCard } from "@/components/cards/FeedCards";
 import { dissolve, rise } from "@/lib/motion";
-import { distanceKm, filterFeed, getFeedItems, type FeedFilter, type FeedItem } from "@/lib/data/feed";
+import { LAUNCH_ZONE, distanceKm, filterFeed, getFeedItems, originFor, type FeedFilter, type FeedItem } from "@/lib/data/feed";
 import { getMyProfile } from "@/lib/data/profile";
 import { readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
 import { getMyRooms } from "@/lib/api/rooms";
@@ -39,6 +39,7 @@ export function FeedScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [unread, setUnread] = useState(0);
   const [hour] = useState(() => new Date().getHours());
+  const [radiusKm, setRadiusKm] = useState<number>(LAUNCH_ZONE.radiusKm);
 
   useEffect(() => {
     if (guest === null) return;
@@ -65,16 +66,17 @@ export function FeedScreen() {
     setAttempt((n) => n + 1);
   };
 
-  const area = draftArea || data?.me?.city || "";
+  const area = draftArea || data?.me?.city || LAUNCH_ZONE.name;
+  const origin = useMemo(() => originFor(data?.me, draftArea), [data?.me, draftArea]);
   const { text: hello, icon: TimeIcon } = greeting(hour);
-  const filtered = useMemo(() => (data ? filterFeed(data.items, filter) : []), [data, filter]);
-  // Nearby is the board's default; when nothing is location-tagged yet, show everything and say so.
-  const fellBack = filter === "nearby" && filtered.length === 0 && (data?.items.length ?? 0) > 0;
-  const shown = fellBack ? (data?.items ?? []) : filtered;
-  const hero = shown.find((i) => i.itemType === "activity" && i.mediaUrls.length > 0) ?? shown.find((i) => i.itemType === "activity");
+  const shown = useMemo(() => (data ? filterFeed(data.items.filter((i) => !["closed", "cancelled", "expired"].includes(i.status)), filter, origin, radiusKm) : []), [data, filter, origin, radiusKm]);
+  // Board order: one hero activity (a photo if any), then two needs side by side, then the rest.
+  const upcoming = (i: FeedItem) => (i.startsAt ? Date.parse(i.startsAt) : Infinity);
+  const activities = shown.filter((i) => i.itemType === "activity").sort((a, b) => Number(!!a.mine) - Number(!!b.mine) || Number(!b.mediaUrls.length) - Number(!a.mediaUrls.length) || upcoming(a) - upcoming(b));
+  const hero = activities[0];
   const needs = shown.filter((i) => i.itemType === "ask");
-  const rest = shown.filter((i) => i !== hero && i.itemType !== "ask");
-  const km = (i: FeedItem) => distanceKm(data?.me, { lat: i.approxLat, lng: i.approxLng });
+  const rest = shown.filter((i) => i !== hero && i.itemType !== "ask").sort((a, b) => Number(b.itemType === "offer") - Number(a.itemType === "offer"));
+  const km = (i: FeedItem) => distanceKm(origin, { lat: i.approxLat, lng: i.approxLng });
 
   return (
     <AppShell>
@@ -124,19 +126,23 @@ export function FeedScreen() {
               <m.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={dissolve}>
                 <StateCard
                   kind="empty"
-                  title={filter === "all" ? "Nothing here yet" : "Nothing matches that filter"}
-                  detail={filter === "all" ? "When someone nearby posts a need, an activity or an offer, it shows up here." : "Try All, or be the first to post something."}
+                  title={filter === "nearby" ? `Nothing within ${radiusKm} km yet` : filter === "week" ? "Nothing on this week yet" : "Nothing here yet"}
+                  detail={filter === "nearby" ? "Arena is new here. Start something and neighbours will find it, or look a little further." : "When someone posts a need, an activity or an offer, it shows up here."}
                   action={
                     <div className="space-y-2">
-                      <Button onClick={() => window.dispatchEvent(new Event("arena-open-create"))}>Post something</Button>
-                      <ButtonLink href="/discover" variant="outline">Discover nearby</ButtonLink>
+                      <ButtonLink href="/activities/new">Create an activity</ButtonLink>
+                      {filter === "nearby" && radiusKm < 15 ? (
+                        <Button variant="outline" onClick={() => setRadiusKm(15)}>Widen to 15 km</Button>
+                      ) : (
+                        <ButtonLink href="/discover" variant="outline">Discover</ButtonLink>
+                      )}
                     </div>
                   }
                 />
               </m.div>
             ) : (
               <m.div key={`list-${filter}`} initial="hidden" animate="shown" className="space-y-3">
-                {fellBack && <p className="text-[14px] text-faint">Nothing is tagged near you yet — showing everything.</p>}
+                {filter === "nearby" && radiusKm > LAUNCH_ZONE.radiusKm && <p className="text-[14px] text-faint">Showing everything within {radiusKm} km.</p>}
                 {hero && (
                   <m.div variants={rise} custom={0}>
                     <HeroActivityCard item={hero} km={km(hero)} />
@@ -144,14 +150,14 @@ export function FeedScreen() {
                 )}
                 {needs.length > 0 && (
                   <div className="grid grid-cols-2 gap-3">
-                    {needs.slice(0, 4).map((item, i) => (
+                    {needs.slice(0, 2).map((item, i) => (
                       <m.div key={item.id} variants={rise} custom={1 + i}>
                         <NeedCard item={item} />
                       </m.div>
                     ))}
                   </div>
                 )}
-                {[...needs.slice(4), ...rest].map((item, i) => (
+                {[...rest, ...needs.slice(2)].map((item, i) => (
                   <m.div key={item.id} variants={rise} custom={5 + i}>
                     <RowCard item={item} />
                   </m.div>

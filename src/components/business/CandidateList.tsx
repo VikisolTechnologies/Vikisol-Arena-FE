@@ -24,11 +24,11 @@ type Filters = { skills: string[]; minYears: number; place: string; remoteOk: bo
 const NO_FILTERS: Filters = { skills: [], minYears: 0, place: "", remoteOk: false };
 
 const STAGE_TEXT: Record<ApplicationStage, string> = {
-  applied: "text-success-on-dark",
-  screening: "text-info-on-dark",
-  interview: "text-success-on-dark",
-  offer: "text-primary",
-  rejected: "text-faint",
+  applied: "text-success-on-paper",
+  screening: "text-info-on-paper",
+  interview: "text-success-on-paper",
+  offer: "text-primary-on-paper",
+  rejected: "text-paper-ink-muted",
 };
 
 /** Recruiter board 5 — Review candidates: stage pills with counts, evidence filters, sort, bulk move. */
@@ -113,7 +113,7 @@ export function CandidateList({ applicants, must, hrefFor, onMove, onBulk, initi
           <StateCard kind="empty" title={applicants.length === 0 ? "No applicants yet" : "No one matches"} detail={applicants.length === 0 ? "Share the job link to reach local people." : "Try fewer filters or another stage."} />
         </div>
       ) : (
-        <m.ul initial="hidden" animate="shown" className="mt-3 divide-y divide-line rounded-tile border border-line bg-surface">
+        <m.ul initial="hidden" animate="shown" className="mt-3 divide-y divide-paper-ink/10 overflow-hidden rounded-tile bg-paper text-paper-ink">
           {rows.map(({ a, ev }, i) => {
             const name = a.candidate?.name ?? "Candidate";
             const shown = ev.filter((e) => e.state === "shown").length;
@@ -132,19 +132,19 @@ export function CandidateList({ applicants, must, hrefFor, onMove, onBulk, initi
                   <Avatar name={name} className="size-12 text-[15px]" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[16px] font-semibold">{name}</span>
-                    <span className="block text-[13px] text-faint"><span className={cn("font-semibold", STAGE_TEXT[a.stage])}>{STAGE_LABEL[a.stage]}</span> · Applied {shortDate(a.appliedAt)}</span>
-                    {must.length > 0 && <span className="block text-[13px] text-faint">Shows {shown}/{must.length} must-haves</span>}
+                    <span className="block text-[13px] text-paper-ink-muted"><span className={cn("font-semibold", STAGE_TEXT[a.stage])}>{STAGE_LABEL[a.stage]}</span> · Applied {shortDate(a.appliedAt)}</span>
+                    {must.length > 0 && <span className="block text-[13px] text-paper-ink-muted">Shows {shown}/{must.length} must-haves</span>}
                     {(a.candidate?.skills?.length ?? 0) > 0 && (
                       <span className="mt-1.5 flex flex-wrap gap-1.5">
-                        {a.candidate!.skills.slice(0, 2).map((s) => <span key={s.name} className="rounded-full bg-foreground/8 px-2.5 py-0.5 text-[12px]">{s.name}</span>)}
-                        {a.candidate!.skills.length > 2 && <span className="rounded-full bg-foreground/8 px-2.5 py-0.5 text-[12px]">+{a.candidate!.skills.length - 2}</span>}
+                        {a.candidate!.skills.slice(0, 2).map((s) => <span key={s.name} className="rounded-full bg-paper-ink/8 px-2.5 py-0.5 text-[12px]">{s.name}</span>)}
+                        {a.candidate!.skills.length > 2 && <span className="rounded-full bg-paper-ink/8 px-2.5 py-0.5 text-[12px]">+{a.candidate!.skills.length - 2}</span>}
                       </span>
                     )}
-                    {missing && <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-warning/12 px-2.5 py-0.5 text-[12px] text-warning"><AlertTriangle className="size-3.5" aria-hidden /> Not shown: {missing.item}</span>}
+                    {missing && <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-warning/25 px-2.5 py-0.5 text-[12px] text-paper-ink"><AlertTriangle className="size-3.5" aria-hidden /> Not shown: {missing.item}</span>}
                   </span>
-                  <ChevronRight className="mt-3 size-5 shrink-0 text-faint" aria-hidden />
+                  <ChevronRight className="mt-3 size-5 shrink-0 text-paper-ink-muted" aria-hidden />
                 </Link>
-                <MoveTo applicant={a} onMove={onMove} className="mt-1.5 hidden sm:block" />
+                <MoveTo applicant={a} onMove={onMove} className="mt-1.5 hidden sm:block" onPaper />
               </m.li>
             );
           })}

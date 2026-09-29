@@ -1,17 +1,38 @@
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * docs/design/TOKENS.md — the orange "A" chevron mark + lowercase "arena" wordmark, as drawn on
- * every B+ board: a thick, round-capped chevron (an A without its crossbar) and a heavy,
- * tightly-tracked sans wordmark. `variant="mark"` for tight spaces.
+ * The board's mark (redrawn 29 Sep to match it): a bold, rounded orange "A" — one thick stroke up
+ * the left leg, over a soft apex and down the right, whose foot turns back inward so the counter
+ * reads as an open, rounded triangle. Warm two-stop orange, like the boards. `variant="mark"`
+ * for tight spaces; `size="hero"` for Welcome, where the mark sits larger than the wordmark.
  */
-export function ArenaLogo({ variant = "full", className }: { variant?: "mark" | "full"; className?: string }) {
+export function ArenaMark({ className }: { className?: string }) {
+  const id = useId().replace(/:/g, "");
   return (
-    <span className={cn("inline-flex items-center gap-[0.3em] leading-none", className)}>
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[1.05em] shrink-0" fill="none">
-        <path d="M4.5 19.5 L12 5 L19.5 19.5" stroke="var(--primary)" strokeWidth={4.4} strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      {variant === "full" && <span className="font-sans font-extrabold lowercase tracking-[-0.035em]">arena</span>}
+    <svg viewBox="0 0 100 100" aria-hidden="true" className={cn("shrink-0", className)} fill="none">
+      <defs>
+        <linearGradient id={`arena-g-${id}`} x1="18" y1="10" x2="86" y2="92" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#ff8a3d" />
+          <stop offset="1" stopColor="#f24e1a" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M18 82 L44 25 Q50 13 56 25 L80 75 Q84 84 75 84 L60 84"
+        stroke={`url(#arena-g-${id})`}
+        strokeWidth={21}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function ArenaLogo({ variant = "full", size = "default", className }: { variant?: "mark" | "full" | "word"; size?: "default" | "hero"; className?: string }) {
+  return (
+    <span className={cn("inline-flex items-center leading-none", size === "hero" ? "gap-[0.2em]" : "gap-[0.28em]", className)}>
+      {variant !== "word" && <ArenaMark className={size === "hero" ? "size-[1.55em]" : "size-[1.15em]"} />}
+      {variant !== "mark" && <span className="font-sans font-extrabold lowercase tracking-[-0.035em]">arena</span>}
       {variant === "mark" && <span className="sr-only">Arena</span>}
     </span>
   );

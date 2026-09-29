@@ -102,8 +102,9 @@ export function PreviewPill({ className }: { className?: string }) {
   );
 }
 
-export function DemoBadge() {
-  return <span className="rounded-full bg-paper-ink/10 px-2 py-0.5 text-[11px] font-bold tracking-wide text-paper-ink">DEMO</span>;
+/** Per-card version of the "Preview data" label: legible on cream, dark and photos alike. */
+export function DemoBadge({ className }: { className?: string }) {
+  return <span className={cn("inline-flex shrink-0 items-center rounded-full bg-warning px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-paper-ink", className)}>Preview data</span>;
 }
 
 export function SectionHeader({ title, href, action }: { title: string; href?: string; action?: ReactNode }) {

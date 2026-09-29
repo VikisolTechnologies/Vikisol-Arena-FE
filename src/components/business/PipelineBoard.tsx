@@ -31,13 +31,13 @@ export function PopCount({ value, className }: { value: number; className?: stri
 }
 
 /** Move-to control: the single-pointer, keyboard and screen-reader way to change stage. */
-export function MoveTo({ applicant, onMove, className }: { applicant: Applicant; onMove: (a: Applicant, s: ApplicationStage) => void; className?: string }) {
+export function MoveTo({ applicant, onMove, className, onPaper = false }: { applicant: Applicant; onMove: (a: Applicant, s: ApplicationStage) => void; className?: string; onPaper?: boolean }) {
   return (
     <select
       aria-label={`Move ${applicant.candidate?.name ?? "candidate"} to`}
       value={applicant.stage}
       onChange={(e) => onMove(applicant, e.target.value as ApplicationStage)}
-      className={cn("min-h-10 rounded-full border border-field-line bg-transparent px-3 text-[13px] font-semibold text-foreground outline-none focus-visible:outline-2 focus-visible:outline-primary [&>option]:text-paper-ink", className)}
+      className={cn("min-h-10 rounded-full border px-3 text-[13px] font-semibold outline-none focus-visible:outline-2 focus-visible:outline-primary [&>option]:text-paper-ink", onPaper ? "border-paper-ink/25 bg-white text-paper-ink" : "border-field-line bg-transparent text-foreground", className)}
     >
       {STAGES.map((s) => (
         <option key={s.id} value={s.id}>{s.id === applicant.stage ? `In ${s.label}` : `Move to ${s.label}`}</option>
@@ -77,7 +77,7 @@ function Card({ a, must, canDrag, hrefFor, onMove, onHover, onDrop }: {
         onDrop(a, stageAt(info.point.x, info.point.y));
         setTimeout(() => (dragged.current = false), 0);
       }}
-      className={cn("relative list-none rounded-2xl border border-line bg-surface p-3", canDrag && "cursor-grab")}
+      className={cn("relative list-none rounded-2xl bg-paper p-3 text-paper-ink shadow-[0_1px_2px_rgba(0,0,0,0.35)]", canDrag && "cursor-grab")}
     >
       <Link
         href={hrefFor(a)}
@@ -85,14 +85,14 @@ function Card({ a, must, canDrag, hrefFor, onMove, onHover, onDrop }: {
         onClick={(e) => dragged.current && e.preventDefault()}
         className="flex items-start gap-2.5 rounded-xl outline-none focus-visible:outline-2 focus-visible:outline-primary"
       >
-        <Avatar name={name} className="size-8 shrink-0 text-[12px]" />
+        <Avatar name={name} className="size-9 shrink-0 text-[12px]" />
         <span className="min-w-0 flex-1">
           <span className="block text-[15px] font-semibold leading-snug [overflow-wrap:anywhere]">{name}</span>
-          <span className="block text-[12px] leading-snug text-faint">{a.candidate?.title || "Applied"} · {shortDate(a.appliedAt)}</span>
+          <span className="block text-[12px] leading-snug text-paper-ink-muted">{a.candidate?.title || "Applied"} · {shortDate(a.appliedAt)}</span>
         </span>
       </Link>
-      {must.length > 0 && <p className="mt-2 text-[12px] text-faint">Shows {shown}/{must.length} must-haves</p>}
-      <MoveTo applicant={a} onMove={onMove} className="mt-2 w-full" />
+      {must.length > 0 && <p className="mt-2 text-[12px] text-paper-ink-muted">Shows {shown}/{must.length} must-haves</p>}
+      <MoveTo applicant={a} onMove={onMove} className="mt-2 w-full" onPaper />
     </m.li>
   );
 }

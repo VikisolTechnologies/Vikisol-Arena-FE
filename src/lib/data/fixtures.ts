@@ -1,7 +1,7 @@
 /**
  * Preview-only fixtures for the few B+ regions that have no backend yet (docs/FE-API-GAPS.md).
- * Fictional people and places-as-geography only; no photos of real people (initials avatars),
- * no real brands. Every region rendering these must show <PreviewPill /> and must not render
+ * Fictional people and places-as-geography only; in mock mode the Avatar shows the credited
+ * preview photo for these names (public/fixtures/CREDITS.md). No real brands. Every region rendering these must show <PreviewPill /> and must not render
  * at all when FIXTURES_ALLOWED is false (api mode).
  */
 
@@ -17,6 +17,7 @@ export const PREVIEW_PEOPLE: PreviewPerson[] = [
   { id: "p-rohit", name: "Rohit Varma", distanceKm: 1.8, interests: ["Running", "Sustainability"] },
   { id: "p-meera", name: "Meera Iyer", distanceKm: 3.4, interests: ["Photography", "Local events"] },
   { id: "p-kabir", name: "Kabir Das", distanceKm: 2.7, interests: ["Cycling"] },
+  { id: "p-lakshmi", name: "Lakshmi Devi", distanceKm: 0.9, interests: ["Cooking", "Gardening"] },
 ];
 
 export interface PreviewSkill {

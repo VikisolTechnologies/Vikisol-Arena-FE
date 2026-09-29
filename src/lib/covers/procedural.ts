@@ -27,20 +27,18 @@ export function rng(seed: number) {
   };
 }
 
-export const PATTERNS = ["contours", "dots", "stripes", "waves", "rings"] as const;
-export type Pattern = (typeof PATTERNS)[number];
-
 export interface CoverParams {
+  /** Gradient direction in degrees (mostly top→bottom, like a sky). */
   angle: number;
+  /** The soft light source ("sun"): position, radius, colour. */
   glow: { x: number; y: number; r: number; color: string };
-  pattern: Pattern;
-  density: number;
-  icon: { x: number; y: number; size: number; rotate: number };
-  bokeh: { x: number; y: number; r: number; o: number }[];
+  /** 2–3 blurred horizon layers, far → near: y (0–1), roughness, blur. */
+  horizons: { y: number; amp: number; phase: number; freq: number; blur: number }[];
+  /** Colour temperature shift of the mid tone. */
   shift: number;
 }
 
-const GLOW: Record<TimeOfDay, string> = { morning: "#ffd98a", day: "#fff1c9", evening: "#ff8a3d", night: "#7d8ce0" };
+const GLOW: Record<TimeOfDay, string> = { morning: "#ffd98a", day: "#fff1c9", evening: "#ff8a3d", night: "#9aa6ff" };
 
 export function timeOfDayFor(iso?: string): TimeOfDay {
   if (!iso) return "day";
@@ -56,15 +54,17 @@ export function timeOfDayFor(iso?: string): TimeOfDay {
 export function coverParams(seed: string, time: TimeOfDay = "day"): CoverParams {
   const r = rng(hashSeed(seed));
   const between = (a: number, b: number) => a + r() * (b - a);
-  const leftIcon = r() < 0.35;
+  const layers = 2 + Math.floor(r() * 2);
   return {
-    angle: Math.round(between(0, 360)),
-    glow: { x: between(0.12, 0.88), y: between(0.08, 0.45), r: between(0.35, 0.6), color: GLOW[time] },
-    pattern: PATTERNS[Math.floor(r() * PATTERNS.length)],
-    density: between(0.8, 1.35),
-    // Kept inside the centre square so 4:3 and 1:1 crops (cards, thumbnails) never cut it off.
-    icon: { x: leftIcon ? between(0.24, 0.3) : between(0.44, 0.5), y: between(0.2, 0.36), size: between(0.38, 0.5), rotate: between(-14, 14) },
-    bokeh: Array.from({ length: 4 + Math.floor(r() * 4) }, () => ({ x: between(0, 1), y: between(0, 1), r: between(0.03, 0.12), o: between(0.05, 0.16) })),
+    angle: Math.round(between(70, 110)),
+    glow: { x: between(0.18, 0.82), y: between(0.26, 0.46), r: between(0.3, 0.5), color: GLOW[time] },
+    horizons: Array.from({ length: layers }, (_, i) => ({
+      y: 0.52 + i * between(0.08, 0.13),
+      amp: between(0.02, 0.07) * (1 - i * 0.2),
+      phase: between(0, Math.PI * 2),
+      freq: between(1.2, 3.2),
+      blur: [14, 7, 3][i] ?? 3,
+    })),
     shift: between(-0.08, 0.08),
   };
 }

@@ -10,12 +10,13 @@ import { dissolve, press, rise, spring } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
 import { Button } from "@/components/bplus/Button";
 import { Avatar } from "@/components/bplus/Avatar";
-import { HScroll, Pills, PreviewPill, SectionHeader, Skeleton, StateCard } from "@/components/bplus/Primitives";
+import { DemoBadge, HScroll, Pills, PreviewPill, SectionHeader, Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { NeedCard, RowCard } from "@/components/cards/FeedCards";
 import { DiscoverMap } from "@/components/screens/DiscoverMap";
 import { FIXTURES_ALLOWED } from "@/lib/data/mode";
 import { PREVIEW_PEOPLE, PREVIEW_SKILLS } from "@/lib/data/fixtures";
 import { getFeedItems, getTrending, hrefFor, search, whenLabel, type FeedItem, type Post } from "@/lib/data/feed";
+import { isDemo } from "@/lib/data/feed";
 import type { SearchResults } from "@/lib/api/search";
 import { Cover } from "@/components/covers/Cover";
 
@@ -192,14 +193,17 @@ function DiscoverList() {
               <SectionHeader title="People near you" action={<PreviewPill />} />
               <HScroll label="People near you">
                 {PREVIEW_PEOPLE.map((p) => (
-                  <div key={p.id} role="listitem" className="w-[132px] shrink-0 snap-start rounded-tile bg-surface p-3">
-                    <Avatar name={p.name} className="size-14 text-[20px]" />
-                    <p className="mt-3 truncate text-[15px] font-semibold">{p.name.split(" ")[0]}</p>
-                    <p className="mt-0.5 flex items-center gap-1 text-[13px] text-faint">
-                      <MapPin className="size-3.5" strokeWidth={1.75} aria-hidden />
-                      {p.distanceKm} km
-                    </p>
-                    <p className="mt-1 line-clamp-2 text-[13px] text-foreground/85">{p.interests.join(" · ")}</p>
+                  <div key={p.id} role="listitem" className="relative aspect-[3/4] w-[118px] shrink-0 snap-start overflow-hidden rounded-tile bg-surface">
+                    <Avatar name={p.name} className="absolute inset-0 size-full rounded-none text-[28px]" />
+                    <div aria-hidden className="absolute inset-0 bg-linear-to-t from-black/85 via-black/25 to-transparent" />
+                    <div className="absolute inset-x-2.5 bottom-2.5 text-white">
+                      <p className="truncate text-[16px] font-semibold">{p.name.split(" ")[0]}</p>
+                      <p className="mt-0.5 flex items-center gap-1 text-[13px] text-white/90">
+                        <MapPin className="size-3.5" strokeWidth={2} aria-hidden />
+                        {p.distanceKm} km
+                      </p>
+                      <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-white/90">{p.interests.join(" · ")}</p>
+                    </div>
                   </div>
                 ))}
               </HScroll>
@@ -308,7 +312,7 @@ function EmptyFor({ chip, byType }: { chip: Chip; byType: Record<"activities" | 
 
 /** Board: "Popular this week" two-up photo cards. Falls back to recent activities. */
 function ActivityGrid({ posts, fallback }: { posts: (Post | FeedItem)[]; fallback: FeedItem[] }) {
-  const list = (posts.length ? posts : fallback).slice(0, 6);
+  const list = (posts.length ? posts : fallback).filter((p) => !["closed", "cancelled", "expired"].includes(p.status)).slice(0, 6);
   if (list.length === 0) return <p className="text-[15px] text-faint">No activities posted nearby yet.</p>;
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -317,9 +321,13 @@ function ActivityGrid({ posts, fallback }: { posts: (Post | FeedItem)[]; fallbac
         return (
           <m.div key={p.id} whileTap={press} transition={spring.snappy}>
             <Link href={hrefFor({ id: p.id, itemType: "activity" })} className="block overflow-hidden rounded-tile bg-paper text-paper-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-              <Cover source={{ id: p.id, kind: "activity", media: p.mediaUrls[0], tags: p.tags, title: p.title, body: p.body, startsAt: p.startsAt }} className="aspect-[16/10]" />
+              <span className="relative block">
+                <Cover source={{ id: p.id, kind: "activity", media: p.mediaUrls[0], tags: p.tags, title: p.title, body: p.body, startsAt: p.startsAt }} className="aspect-[16/10]" />
+                {isDemo(p) && <DemoBadge className="absolute left-2 top-2" />}
+              </span>
               <div className="p-3">
                 <p className="line-clamp-2 text-[15px] font-semibold leading-snug">{p.title || p.body.slice(0, 60)}</p>
+                {p.locationText && <p className="mt-0.5 truncate text-[13px] text-paper-ink-muted">{p.locationText}</p>}
                 <p className="mt-1 flex items-center gap-1 text-[12px] text-paper-ink-muted">
                   <MapPin className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
                   <span className="truncate">{[whenLabel(p.startsAt), going].filter(Boolean).join(" · ") || p.locationText || "Nearby"}</span>

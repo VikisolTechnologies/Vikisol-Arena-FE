@@ -95,21 +95,21 @@ export default function TalentPage() {
               {results.slice(0, limit).map(({ candidate: c }, i) => {
                 const saved = shortlist.includes(c.id);
                 return (
-                  <m.li key={c.id} variants={rise} custom={i} className="relative flex flex-col rounded-tile border border-line bg-surface p-5 transition-colors duration-200 hover:border-foreground/25">
+                  <m.li key={c.id} variants={rise} custom={i} className="relative flex flex-col rounded-tile bg-paper p-5 text-paper-ink shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
                     <div className="flex items-start gap-3">
                       <Avatar name={c.name} className="size-12 text-[15px]" />
                       <div className="min-w-0 flex-1">
-                        <Link href={`/enterprise/talent/${c.id}`} className="block text-[16px] font-semibold after:absolute after:inset-0 after:rounded-tile focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-primary">{c.name}</Link>
-                        <p className="text-[14px] text-faint">{c.title}</p>
+                        <Link href={`/enterprise/talent/${c.id}`} className="block text-[16px] font-semibold after:absolute after:inset-0 after:rounded-tile focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-primary-on-paper">{c.name}</Link>
+                        <p className="text-[14px] text-paper-ink-muted">{c.title}</p>
                       </div>
-                      <m.button type="button" whileTap={press} transition={spring.snappy} onClick={() => save(c.id)} aria-pressed={saved} aria-label={saved ? `Remove ${c.name} from shortlist` : `Save ${c.name} to shortlist`} className="relative z-10 grid size-11 place-items-center rounded-full hover:bg-foreground/8">
-                        <Bookmark className={cn("size-5", saved ? "fill-primary text-primary" : "text-faint")} aria-hidden />
+                      <m.button type="button" whileTap={press} transition={spring.snappy} onClick={() => save(c.id)} aria-pressed={saved} aria-label={saved ? `Remove ${c.name} from shortlist` : `Save ${c.name} to shortlist`} className="relative z-10 grid size-11 place-items-center rounded-full hover:bg-paper-ink/8">
+                        <Bookmark className={cn("size-5", saved ? "fill-primary text-primary-on-paper" : "text-paper-ink-muted")} aria-hidden />
                       </m.button>
                     </div>
-                    <p className="mt-3 flex items-center gap-1.5 text-[14px] text-faint"><MapPin className="size-4" aria-hidden /> {c.location || c.homeCity || "Area not shared"}{c.remote && " · Open to remote"}</p>
-                    {c.openTo.length > 0 && <p className="mt-1 text-[14px] text-faint">Open to {c.openTo.map((o) => OPEN_LABEL[o] ?? o).join(", ").toLowerCase()} · {c.experienceYears} yrs</p>}
+                    <p className="mt-3 flex items-center gap-1.5 text-[14px] text-paper-ink-muted"><MapPin className="size-4" aria-hidden /> {c.location || c.homeCity || "Area not shared"}{c.remote && " · Open to remote"}</p>
+                    {c.openTo.length > 0 && <p className="mt-1 text-[14px] text-paper-ink-muted">Open to {c.openTo.map((o) => OPEN_LABEL[o] ?? o).join(", ").toLowerCase()} · {c.experienceYears} yrs</p>}
                     <div className="mt-3 flex flex-wrap gap-1.5">
-                      {c.skills.slice(0, 4).map((s) => <span key={s.name} className="inline-flex items-center gap-1 rounded-full bg-foreground/8 px-2.5 py-0.5 text-[13px]">{s.name}{s.verified && <ShieldCheck className="size-3.5 text-success-on-dark" aria-label="verified" />}</span>)}
+                      {c.skills.slice(0, 4).map((s) => <span key={s.name} className="inline-flex items-center gap-1 rounded-full bg-paper-ink/8 px-2.5 py-0.5 text-[13px]">{s.name}{s.verified && <ShieldCheck className="size-3.5 text-success-on-paper" aria-label="verified" />}</span>)}
                     </div>
                   </m.li>
                 );

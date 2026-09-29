@@ -9,6 +9,14 @@ import { ButtonLink } from "@/components/bplus/Button";
 import { DemoBadge, KindChip } from "@/components/bplus/Primitives";
 import { formatKm, goingLabel, hrefFor, isDemo, spotsLeft, whenLabel, type FeedItem } from "@/lib/data/feed";
 import { Cover } from "@/components/covers/Cover";
+import { AvatarStack } from "@/components/bplus/Avatar";
+import { isRealMode } from "@/lib/api/mode";
+import { previewPeopleFor } from "@/lib/mock/people";
+
+/** Faces for a count, preview mode only (the API doesn't return who's going on feed items). */
+function facesFor(item: FeedItem, n: number) {
+  return isRealMode() ? [] : previewPeopleFor(item.id, Math.min(3, n), item.authorName).map((p) => p.name);
+}
 
 /** A photo that reserves its box before it loads (no layout shift); without one, a unique
  *  procedural cover for activities/projects, or a warm gradient — never a stock image. */
@@ -35,7 +43,7 @@ export function HeroActivityCard({ item, km }: { item: FeedItem; km: number | nu
         <div className="relative aspect-[4/3]">
           <Photo item={item} className="absolute inset-0" layoutId={`media-${item.id}`} />
           <div aria-hidden className="absolute inset-0 bg-linear-to-t from-surface via-surface/30 to-transparent" />
-          <div className="absolute left-3 top-3 flex gap-2">
+          <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2 pr-16">
             {when && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-paper px-2.5 py-1 text-[13px] font-semibold text-success-on-paper">
                 <CalendarClock className="size-4" strokeWidth={2} aria-hidden />
@@ -60,10 +68,14 @@ export function HeroActivityCard({ item, km }: { item: FeedItem; km: number | nu
         <div className="mt-3 flex items-center justify-between gap-3">
           <p className="flex min-w-0 items-center gap-1.5 text-[14px] text-faint">
             {going ? (
-              <>
-                <Users className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
-                {going}
-              </>
+              facesFor(item, item.spotsFilled ?? 0).length ? (
+                <AvatarStack names={facesFor(item, item.spotsFilled ?? 0)} total={item.spotsFilled ?? 0} label="going" className="text-foreground/85" />
+              ) : (
+                <>
+                  <Users className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+                  {going}
+                </>
+              )
             ) : item.locationText ? (
               <>
                 <MapPin className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
@@ -95,9 +107,15 @@ export function NeedCard({ item }: { item: FeedItem }) {
           {[item.locationText, whenLabel(item.startsAt ?? undefined)].filter(Boolean).join(" · ") || "Nearby"}
         </p>
         {replies > 0 && (
-          <p className="mt-auto inline-flex items-center gap-1 pt-3 text-[13px] font-semibold text-success-on-paper">
-            <MessageCircle className="size-4" strokeWidth={2} aria-hidden />
-            {replies} {replies === 1 ? "reply" : "replies"}
+          <p className="mt-auto flex items-center gap-1 pt-3 text-[13px] font-semibold text-success-on-paper">
+            {facesFor(item, replies).length ? (
+              <AvatarStack names={facesFor(item, replies)} total={replies} label={replies === 1 ? "reply" : "replies"} ring="ring-paper" />
+            ) : (
+              <>
+                <MessageCircle className="size-4" strokeWidth={2} aria-hidden />
+                {replies} {replies === 1 ? "reply" : "replies"}
+              </>
+            )}
           </p>
         )}
       </Link>

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { m } from "motion/react";
 import { Sprout } from "lucide-react";
-import { ArenaLogo } from "@/components/brand/ArenaLogo";
+import { ArenaLogo, ArenaMark } from "@/components/brand/ArenaLogo";
 import { Button, ButtonLink } from "@/components/bplus/Button";
 import { CookieBannerSpacer } from "@/components/bplus/Screen";
 import { kenBurns, rise } from "@/lib/motion";
@@ -14,39 +14,50 @@ export function WelcomeView({ onJoin, onSignIn }: { onJoin: () => void; onSignIn
     <div className="relative min-h-svh overflow-hidden bg-background">
       <m.div className="absolute inset-0 will-change-transform" animate={kenBurns.animate} transition={kenBurns.transition}>
         <Image
-          src="/brand/welcome-hero.jpg"
+          src="/brand/welcome-park.jpg"
           alt=""
           fill
           priority
           sizes="100vw"
-          className="object-cover object-[50%_35%]"
+          className="object-cover object-[50%_40%]"
         />
       </m.div>
       <div aria-hidden className="absolute inset-x-0 top-0 h-44 bg-linear-to-b from-background/70 to-transparent" />
-      <div aria-hidden className="absolute inset-x-0 bottom-0 h-[72%] bg-linear-to-t from-background from-35% via-background/80 to-transparent" />
+      <div aria-hidden className="absolute inset-x-0 bottom-0 h-[78%] bg-linear-to-t from-background from-40% via-background/85 to-transparent" />
 
       <m.div
         initial="hidden"
         animate="shown"
         className="relative mx-auto flex min-h-svh w-full max-w-[480px] flex-col px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-[max(20px,env(safe-area-inset-top))]"
       >
-        <m.header variants={rise} custom={0}>
-          <ArenaLogo className="text-[30px] text-foreground" />
-          <p className="mt-1 text-[13px] text-foreground/80">Local people. Real outcomes.</p>
+        <a
+          href="https://www.flickr.com/photos/47284001@N07/6223651550"
+          aria-label="Photo credit: At Cubbon Park by Kavya Bhat, CC BY 2.0"
+          title="Photo: At Cubbon Park by Kavya Bhat, CC BY 2.0"
+          className="absolute right-3 top-[max(12px,env(safe-area-inset-top))] grid size-11 place-items-center rounded-full text-[13px] font-semibold text-foreground/70 hover:bg-background/40"
+        >
+          ©
+        </a>
+        <m.header variants={rise} custom={0} className="flex items-center gap-3 pt-2">
+          <ArenaMark className="size-[58px]" />
+          <div>
+            <ArenaLogo variant="word" className="text-[36px] text-foreground" />
+            <p className="mt-1 text-[14px] text-foreground/90 [text-shadow:0_1px_8px_rgba(0,0,0,0.6)]">Local people. Real outcomes.</p>
+          </div>
         </m.header>
 
-        <div className="flex-1" />
+        <div className="min-h-6 flex-1" />
 
-        <m.h1 variants={rise} custom={1} className="font-display-serif text-[40px] font-medium leading-[1.08] tracking-[-0.015em] text-foreground">
+        <m.h1 variants={rise} custom={1} className="font-display-serif text-[40px] font-medium leading-[1.08] tracking-[-0.015em] text-foreground [text-shadow:0_2px_18px_rgba(0,0,0,0.6)]">
           Local people.
           <br />
           Real outcomes.
         </m.h1>
-        <m.p variants={rise} custom={2} className="mt-4 max-w-[34ch] text-[16px] leading-relaxed text-foreground/85">
+        <m.p variants={rise} custom={2} className="mt-4 max-w-[34ch] text-[16px] leading-relaxed text-foreground/90 [text-shadow:0_1px_10px_rgba(0,0,0,0.7)]">
           Meet neighbors, join activities, get help, share skills and make your neighborhood stronger.
         </m.p>
 
-        <m.div variants={rise} custom={3} className="mt-8 space-y-3">
+        <m.div variants={rise} custom={3} className="mt-6 space-y-3">
           <Button onClick={onJoin}>Join Arena</Button>
           <Button variant="outline" onClick={onSignIn}>
             Sign in
@@ -58,7 +69,7 @@ export function WelcomeView({ onJoin, onSignIn }: { onJoin: () => void; onSignIn
           </div>
         </m.div>
 
-        <m.footer variants={rise} custom={4} className="mt-6 flex items-center justify-center gap-3 text-foreground/70">
+        <m.footer variants={rise} custom={4} className="mt-5 flex items-center justify-center gap-3 text-foreground/70">
           <Sprout className="size-5 shrink-0" strokeWidth={1.5} aria-hidden />
           <p className="text-[11px] font-medium uppercase leading-relaxed tracking-[0.22em]">
             A kinder neighborhood
@@ -66,12 +77,7 @@ export function WelcomeView({ onJoin, onSignIn }: { onJoin: () => void; onSignIn
             brighter tomorrows
           </p>
         </m.footer>
-        <a
-          href="https://commons.wikimedia.org/wiki/File:Durgam_Cheruvu,_Hyderabad.jpg"
-          className="mt-1 inline-flex min-h-11 items-center self-center text-[11px] text-foreground/65 underline-offset-2 hover:underline"
-        >
-          Photo: Durgam Cheruvu by Amulya 09, CC BY-SA 4.0
-        </a>
+
         <CookieBannerSpacer />
       </m.div>
     </div>

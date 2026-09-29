@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { Lock } from "lucide-react";
 import { m } from "motion/react";
@@ -16,7 +15,6 @@ import { changeEmail, changePassword } from "@/lib/api/auth";
 import { getMyBlocks, unblockUser } from "@/lib/api/blocks";
 import { ApiError } from "@/lib/api/httpClient";
 import { isRealMode } from "@/lib/api/mode";
-import { getTalentPlan } from "@/lib/plan";
 import { timeAgo } from "@/lib/data/time";
 import type { AutonomyLevel, BlockedUser, CandidateProfile, LocationConsent, VerificationStatus } from "@/lib/types";
 
@@ -182,17 +180,16 @@ export function CareerSheet({ open, onClose, profile, onProfile }: SheetProps) {
   );
 }
 
-/* ── Jenny's permissions: autonomy + auto-apply (autopilot needs Pro) ── */
+/* ── Jenny's permissions. Product rule (architect review 29 Sep): Jenny prepares, you approve.
+ *  Nothing auto-applies, so "Autopilot" and "Auto-apply" are not offered; if an older account
+ *  still has them on, the sheet says so and offers to turn them off. ── */
 const AUTONOMY: { value: AutonomyLevel; label: string; detail: string }[] = [
-  { value: "manual", label: "Manual", detail: "Jenny only researches — you approve everything, every time." },
-  { value: "supervised", label: "Supervised", detail: "Jenny prepares strong matches and always asks first." },
-  { value: "autopilot", label: "Autopilot", detail: "Jenny applies and bids for you above your thresholds." },
+  { value: "manual", label: "Only when I ask", detail: "Jenny researches and drafts only when you ask her to." },
+  { value: "supervised", label: "Suggest for me", detail: "Jenny prepares strong matches and drafts. You approve each one before anything is sent." },
 ];
 export function JennySheet({ open, onClose, profile, onProfile }: SheetProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Sheet content only mounts after hydration (BottomSheet), so reading the plan here is safe.
-  const pro = getTalentPlan() === "pro";
   const save = async (fn: () => Promise<CandidateProfile>) => {
     setBusy(true);
     setError(null);
@@ -209,20 +206,35 @@ export function JennySheet({ open, onClose, profile, onProfile }: SheetProps) {
       <Heading detail="How much Jenny may do without asking.">Jenny&apos;s permissions</Heading>
       <div className="mt-5">
         <PaperRadios
-          legend="Autonomy"
-          options={AUTONOMY.map((o) => ({
-            ...o,
-            locked: o.value === "autopilot" && !pro ? <Link href="/pricing" className="mt-1 inline-flex min-h-11 items-center text-[14px] font-semibold text-primary-on-paper underline underline-offset-4">Requires Pro — see plans</Link> : undefined,
-          }))}
-          value={profile.autonomy}
+          legend="How Jenny helps"
+          options={AUTONOMY}
+          value={profile.autonomy === "autopilot" ? "supervised" : profile.autonomy}
           onChange={(v) => save(() => updateMyAutonomy(v))}
           disabled={busy}
         />
       </div>
-      <div className="mt-4 border-t border-paper-ink/10 pt-2">
-        <PaperSwitch label="Auto-apply" detail="Let Jenny apply to strong matches for you." checked={profile.consent.autoApply} onChange={() => save(() => updateMyConsent({ ...profile.consent, autoApply: !profile.consent.autoApply }))} disabled={busy} />
-      </div>
-      <p className="mt-3 text-[13px] text-paper-ink-muted">Whatever you choose here, anything Jenny proposes in chat still needs your tap to happen.</p>
+      {(profile.autonomy === "autopilot" || profile.consent.autoApply) && (
+        <div className="mt-4 rounded-tile bg-warning/25 p-3.5 text-[14px]">
+          <p className="font-semibold">An older setting lets Jenny act on her own.</p>
+          <p className="mt-1 text-paper-ink-muted">Arena now works one way: Jenny prepares, you approve.</p>
+          <Button
+            variant="outline"
+            className="mt-3 h-11 border-paper-ink/40 text-paper-ink"
+            loading={busy}
+            onClick={() =>
+              save(async () => {
+                let next = profile;
+                if (profile.consent.autoApply) next = await updateMyConsent({ ...profile.consent, autoApply: false });
+                if (profile.autonomy === "autopilot") next = await updateMyAutonomy("supervised");
+                return next;
+              })
+            }
+          >
+            Turn it off
+          </Button>
+        </div>
+      )}
+      <p className="mt-3 text-[13px] text-paper-ink-muted">Jenny prepares, you approve. Nothing is applied, posted or sent without your tap.</p>
       <Err>{error}</Err>
     </BottomSheet>
   );

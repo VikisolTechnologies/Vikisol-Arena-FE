@@ -18,46 +18,21 @@ function mix(a: string, b: string, t: number) {
   return `#${x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, "0")).join("")}`;
 }
 
-function PatternLayer({ kind, density, id }: { kind: string; density: number; id: string }) {
-  const s = r1(64 / density);
-  if (kind === "dots")
-    return (
-      <>
-        <pattern id={id} width={s} height={s} patternUnits="userSpaceOnUse"><circle cx={s / 2} cy={s / 2} r={3} fill="#fff" /></pattern>
-        <rect width={W} height={H} fill={`url(#${id})`} opacity={0.12} />
-      </>
-    );
-  if (kind === "stripes")
-    return (
-      <>
-        <pattern id={id} width={s} height={s} patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width={s / 5} height={s} fill="#fff" /></pattern>
-        <rect width={W} height={H} fill={`url(#${id})`} opacity={0.07} />
-      </>
-    );
-  if (kind === "rings")
-    return (
-      <g fill="none" stroke="#fff" strokeWidth={2} opacity={0.1}>
-        {Array.from({ length: 9 }, (_, i) => <circle key={i} cx={W * 0.2} cy={H * 1.05} r={r1((i + 1) * 90 * density)} />)}
-      </g>
-    );
-  if (kind === "waves")
-    return (
-      <g fill="none" stroke="#fff" strokeWidth={2.5} opacity={0.1}>
-        {Array.from({ length: 10 }, (_, i) => {
-          const y = r1(H * 0.45 + i * 32 * density);
-          return <path key={i} d={`M0 ${y} C ${W * 0.25} ${y - 50} ${W * 0.5} ${y + 50} ${W * 0.75} ${y} S ${W} ${y - 40} ${W + 40} ${y}`} />;
-        })}
-      </g>
-    );
-  // contours: nested organic loops, like a topographic map
-  return (
-    <g fill="none" stroke="#fff" strokeWidth={2} opacity={0.09}>
-      {Array.from({ length: 8 }, (_, i) => {
-        const k = r1((i + 1) * 70 * density);
-        return <ellipse key={i} cx={W * 0.72} cy={H * 0.62} rx={r1(k * 1.3)} ry={r1(k * 0.8)} transform={`rotate(${-12 + i * 3} ${W * 0.72} ${H * 0.62})`} />;
-      })}
-    </g>
-  );
+/** A soft, seeded horizon line across the frame (hills / tree line / skyline haze). */
+function horizonPath(h: { y: number; amp: number; phase: number; freq: number }) {
+  const pts = Array.from({ length: 17 }, (_, i) => {
+    const x = (i / 16) * W;
+    const t = (i / 16) * Math.PI * 2 * h.freq + h.phase;
+    const y = H * (h.y + h.amp * Math.sin(t) + h.amp * 0.45 * Math.sin(t * 2.3 + 1.1));
+    return [r1(x), r1(y)] as const;
+  });
+  let d = `M-40 ${H + 40} L-40 ${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x0, y0] = pts[i];
+    const [x1, y1] = pts[i + 1];
+    d += ` Q${x0} ${y0} ${r1((x0 + x1) / 2)} ${r1((y0 + y1) / 2)}`;
+  }
+  return `${d} L${W + 40} ${pts[pts.length - 1][1]} L${W + 40} ${H + 40} Z`;
 }
 
 export interface CoverProps {
@@ -70,7 +45,12 @@ export interface CoverProps {
   plain?: boolean;
 }
 
-/** A unique, free cover for any activity/project/community (flow §5). Decorative: aria-hidden. */
+/**
+ * A unique, free cover for any activity/project/community (flow §5), photographic in feel rather
+ * than clip-art: a deep sky-like gradient in the category colour, one soft light source, 2–3
+ * blurred horizon layers for depth, film grain and a vignette — with a small category glyph in
+ * the top-right corner and the lower third left calm for the title. Decorative: aria-hidden.
+ */
 export const ProceduralCover = forwardRef<SVGSVGElement, CoverProps>(function ProceduralCover({ seed, category, subtypeId, time = "day", className, plain }, ref) {
   const uid = useId().replace(/:/g, "");
   const sub = findSubtype(subtypeId);
@@ -78,43 +58,64 @@ export const ProceduralCover = forwardRef<SVGSVGElement, CoverProps>(function Pr
   const IconCmp: Icon = sub?.icon ?? cat.icon;
   const p = useMemo(() => coverParams(seed, time), [seed, time]);
   const [dark, light] = cat.palette;
-  const mid = mix(dark, light, 0.5 + p.shift);
+  const night = time === "night";
+  const sky = mix(light, p.glow.color, night ? 0.08 : 0.5);
+  const mid = mix(dark, light, 0.45 + p.shift);
+  const ground = mix(dark, "#0b0806", 0.55);
   const rad = (p.angle * Math.PI) / 180;
   const x1 = r4(0.5 - Math.cos(rad) / 2);
   const y1 = r4(0.5 - Math.sin(rad) / 2);
-  const size = r1(H * p.icon.size);
-  const ix = r1(p.icon.x * W);
-  const iy = r1(p.icon.y * H);
+  const glyph = r1(H * 0.085);
   return (
     <svg ref={ref} xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" aria-hidden className={cn("block size-full", className)}>
       <defs>
         <linearGradient id={`g${uid}`} x1={x1} y1={y1} x2={r4(1 - x1)} y2={r4(1 - y1)}>
-          <stop offset="0" stopColor={dark} />
-          <stop offset="0.6" stopColor={mid} />
-          <stop offset="1" stopColor={light} />
+          <stop offset="0" stopColor={mix(dark, night ? "#070a24" : "#0a0d1a", 0.45)} />
+          <stop offset="0.44" stopColor={sky} />
+          <stop offset="0.64" stopColor={mid} />
+          <stop offset="1" stopColor={ground} />
         </linearGradient>
         <radialGradient id={`s${uid}`} cx={r4(p.glow.x)} cy={r4(p.glow.y)} r={r4(p.glow.r)}>
-          <stop offset="0" stopColor={p.glow.color} stopOpacity={0.75} />
+          <stop offset="0" stopColor="#ffffff" stopOpacity={night ? 0.35 : 0.85} />
+          <stop offset="0.12" stopColor={p.glow.color} stopOpacity={night ? 0.35 : 0.7} />
           <stop offset="1" stopColor={p.glow.color} stopOpacity={0} />
         </radialGradient>
-        <linearGradient id={`v${uid}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0.55" stopColor="#000" stopOpacity={0} />
-          <stop offset="1" stopColor="#000" stopOpacity={0.35} />
-        </linearGradient>
+        <radialGradient id={`w${uid}`} cx={r4(p.glow.x)} cy={r4(p.glow.y + 0.1)} r="0.8">
+          <stop offset="0" stopColor={p.glow.color} stopOpacity={night ? 0.12 : 0.38} />
+          <stop offset="1" stopColor={p.glow.color} stopOpacity={0} />
+        </radialGradient>
+        <radialGradient id={`v${uid}`} cx="0.5" cy="0.45" r="0.75">
+          <stop offset="0.6" stopColor="#000" stopOpacity={0} />
+          <stop offset="1" stopColor="#000" stopOpacity={0.45} />
+        </radialGradient>
+        {p.horizons.map((h, i) => (
+          <filter key={i} id={`b${uid}${i}`} x="-10%" y="-20%" width="120%" height="140%">
+            <feGaussianBlur stdDeviation={h.blur} />
+          </filter>
+        ))}
         <filter id={`n${uid}`} x="0" y="0" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves={2} seed={Math.round(p.angle)} />
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves={3} seed={Math.round(p.angle)} stitchTiles="stitch" />
           <feColorMatrix type="saturate" values="0" />
-          <feComponentTransfer><feFuncA type="linear" slope="0.08" /></feComponentTransfer>
+          <feComponentTransfer><feFuncA type="linear" slope="0.13" /></feComponentTransfer>
         </filter>
       </defs>
       <rect width={W} height={H} fill={`url(#g${uid})`} />
       {!plain && (
         <>
+          <rect width={W} height={H} fill={`url(#w${uid})`} />
           <rect width={W} height={H} fill={`url(#s${uid})`} />
-          <PatternLayer kind={p.pattern} density={p.density} id={`p${uid}`} />
-          {p.bokeh.map((b, i) => <circle key={i} cx={r1(b.x * W)} cy={r1(b.y * H)} r={r1(b.r * H)} fill="#fff" opacity={r4(b.o)} />)}
-          <g transform={`rotate(${r1(p.icon.rotate)} ${r1(ix + size / 2)} ${r1(iy + size / 2)})`}>
-            <IconCmp x={ix} y={iy} width={size} height={size} strokeWidth={1.1} color="#ffffff" opacity={0.9} />
+          {p.horizons.map((h, i) => (
+            <path
+              key={i}
+              d={horizonPath(h)}
+              fill={mix(mid, ground, 0.35 + i * 0.3)}
+              opacity={r4(0.55 + i * 0.2)}
+              filter={`url(#b${uid}${i})`}
+            />
+          ))}
+          <g opacity={0.82}>
+            <circle cx={r1(W - glyph * 1.6)} cy={r1(glyph * 1.6)} r={r1(glyph * 0.95)} fill="#000" opacity={0.22} />
+            <IconCmp x={r1(W - glyph * 2.1)} y={r1(glyph * 1.1)} width={glyph} height={glyph} strokeWidth={1.6} color="#ffffff" />
           </g>
         </>
       )}

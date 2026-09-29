@@ -13,6 +13,7 @@ import { Pills, SectionHeader, Skeleton, StateCard } from "@/components/bplus/Pr
 import { useGuest, useSessionRole } from "@/hooks/use-arena-session";
 import { closeNeed, loadWork, type WorkGroup, type WorkRow } from "@/lib/data/work";
 import { whenLabel } from "@/lib/data/feed";
+import { Avatar } from "@/components/bplus/Avatar";
 import { Cover } from "@/components/covers/Cover";
 import { CheckInSheet } from "@/components/activity/CheckInSheet";
 
@@ -149,7 +150,11 @@ function WorkRowCard({ row, onAction }: { row: WorkRow; onAction: () => void }) 
   const done = row.group === "completed";
   const body = (
     <>
-      <Cover source={{ id: row.postId ?? row.id, kind: row.kind, media: row.media, title: row.title }} className="size-16 shrink-0 rounded-xl" />
+      {!row.media && row.person && row.kind !== "activity" ? (
+        <Avatar name={row.person} className="size-16 shrink-0 rounded-xl text-[20px]" />
+      ) : (
+        <Cover source={{ id: row.postId ?? row.id, kind: row.kind, media: row.media, title: row.title }} className="size-16 shrink-0 rounded-xl" />
+      )}
       <div className="min-w-0 flex-1 text-left">
         <p className="line-clamp-1 text-[16px] font-semibold">{row.title}</p>
         {row.when && <p className="text-[13px] text-paper-ink-muted">{whenLabel(row.when)}</p>}

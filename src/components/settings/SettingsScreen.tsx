@@ -125,7 +125,7 @@ export function SettingsScreen() {
           <Group title="Privacy & visibility" index={1}>
             <Row icon={MapPin} title="Location" detail={locationDetail} onClick={() => setSheet("location")} />
             <Row icon={Briefcase} title="Career visibility" detail={profile.consent.searchableByEnterprises ? "Visible to employers" : "Hidden from employers"} onClick={() => setSheet("career")} />
-            <Row icon={Bot} title="Jenny's permissions" detail={`${profile.autonomy[0].toUpperCase()}${profile.autonomy.slice(1)}${profile.consent.autoApply ? " · auto-apply on" : ""}`} onClick={() => setSheet("jenny")} />
+            <Row icon={Bot} title="Jenny's permissions" detail={profile.autonomy === "manual" ? "Only when I ask · you approve" : "Jenny prepares, you approve"} onClick={() => setSheet("jenny")} />
             <Row icon={ShieldCheck} title="Verification & safety" detail="Date of birth, phone" onClick={() => setSheet("verification")} />
           </Group>
 

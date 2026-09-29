@@ -23,6 +23,7 @@ function Seed() {
     setSession({ role: "company_admin", name: "Alex Rao", email: "alex@greenleaf.example" });
     saveEnterpriseProfile({ companyName: "GreenLeaf Labs", logoEmoji: "🌿", industry: "Sales", size: "11-50", hiringFor: ["Community"], plan: "pro", seatsUsed: 2, seatsTotal: 5, unlockCreditsUsed: 1, unlockCreditsTotal: 10, status: "active" });
     setEnterpriseOnboarded();
+    localStorage.setItem("arena_cookie_consent", "accepted");
     const people = MOCK_CANDIDATES.slice(1, 9);
     const must = [...new Set(people.slice(0, 3).flatMap((c) => c.skills.slice(0, 1).map((s) => s.name)))].concat("Weekend availability");
     const day = 86_400_000;
@@ -47,7 +48,8 @@ function Seed() {
       ...people.map((c, i) => ({ id: `demo-app-${i}`, candidateId: c.id, postingId: DEMO_JOB, stage: stages[i], appliedAt: new Date(Date.now() - (i + 1) * 0.8 * day).toISOString(), updatedAt: new Date(Date.now() - i * 0.5 * day).toISOString() })),
       ...readApplications().filter((a) => a.postingId !== DEMO_JOB),
     ]);
-    router.replace(to);
+    // A full load, so shell-level state (session, cookie bar) is read fresh.
+    window.location.replace(to);
   }, [blocked, router, to]);
 
   return <p className="p-6 text-[15px] text-faint">{blocked ? "The business demo only runs in mock mode." : "Opening the business demo…"}</p>;
