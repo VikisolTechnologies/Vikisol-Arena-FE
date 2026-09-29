@@ -5,7 +5,21 @@
 
 Updated 29 Sep 2026. Resume from here.
 
-## Current status
+## Architect review 29 Sep — status (branch `local/wip-2026-09-29`)
+
+Work branch is now `local/wip-2026-09-29` (in worktree `arena-fe-vnext`; it contains everything
+from `feature/arena-vnext-mobile-jenny` plus the review work). GitHub was unreachable from this Mac
+all day; a background loop pushes the WIP branches (never main) when it comes back.
+
+- **Section A — done** (commit "FE review A"): one preview world, matched photos, avatars, quiet
+  preview bar, solid icon badges, light paper pages, business bottom bar + /enterprise/candidates,
+  Arena for Business titles, redrawn skyline, two-line meta + "N offers", speed (prod ≤1.1 s).
+- **Section B — done** (commit "FE review B").
+- **F2 — in progress**: done: Search, Discover activity filters, Map basemap, Candidates standalone,
+  See the outcome. Remaining: Activity room header + tools, Offer details page, Career profile
+  tabs, Work → Jobs, Job details tabs, Jenny orb (P8).
+- Tracker: statuses are Built / In progress / Not started; only the architect sets Approved.
+
 
 **Fidelity pass — done 29 Sep** (commit "FE fidelity pass"): see `docs/reviews/fidelity-pass.md`.
 After the follow-up commit (recruiter panels on cream): 36 board screens Done, 13 In progress,
