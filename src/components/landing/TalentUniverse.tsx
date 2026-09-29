@@ -40,7 +40,7 @@ export function TalentUniverse() {
         <Starfield />
         <div className="relative z-[2] w-full px-5 py-[70px] sm:px-6">
           <Reveal as="div" className="mb-4 flex items-center justify-center gap-2.5 font-display text-xs font-bold tracking-[5px] text-primary-soft">
-            <span className="text-[#5a5a63]">02</span>
+            <span className="text-subtle">02</span>
             FOR ENTERPRISES
           </Reveal>
           <Reveal as="h2" delay={0.05} className="font-display text-[clamp(30px,4.4vw,52px)] font-bold">
@@ -64,7 +64,7 @@ export function TalentUniverse() {
               aria-label="Example search query"
               defaultValue='Try "senior React developer · contract · Hyderabad"'
               readOnly
-              className="h-auto flex-1 border-0 bg-transparent p-0 text-[#8b8b93] shadow-none focus-visible:ring-0"
+              className="h-auto flex-1 border-0 bg-transparent p-0 text-subtle shadow-none focus-visible:ring-0"
             />
             <Button
               variant="primary-gradient"

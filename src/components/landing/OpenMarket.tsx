@@ -49,7 +49,7 @@ export function OpenMarket() {
   return (
     <section id="market" className="relative z-10 mx-auto w-full max-w-[1240px] px-5 sm:px-6">
       <Reveal as="div" className="flex items-center gap-2.5 pb-0 pt-[110px] font-display text-xs font-bold tracking-[5px] text-primary-soft">
-        <span className="text-[#5a5a63]">03</span>
+        <span className="text-subtle">03</span>
         OPEN MARKET
       </Reveal>
 
@@ -84,7 +84,7 @@ export function OpenMarket() {
                 Open project
               </span>
               <h3 className="mt-4 font-display text-[22px] font-bold">{project.title}</h3>
-              <div className="mb-5 mt-1.5 text-[13.5px] text-[#8b8b93]">
+              <div className="mb-5 mt-1.5 text-[13.5px] text-subtle">
                 {formatINRRange(project.budgetMin, project.budgetMax)} · {project.durationWeeks} weeks
                 {formatCountdown(project.endsAt) ? (
                   <>
@@ -106,7 +106,7 @@ export function OpenMarket() {
                       <div className={`font-display text-[19px] font-bold ${i === 0 ? "text-primary-soft" : ""}`}>
                         {formatINR(bid.amount)}
                       </div>
-                      <div className="mt-0.5 text-[13.5px] text-[#8b8b93]">{bid.bidderName}</div>
+                      <div className="mt-0.5 text-[13.5px] text-subtle">{bid.bidderName}</div>
                     </div>
                     {/* ARENA-FINISH-IT.md §4 - bid.agentPick is never actually set true on the
                         real bid-creation path (ProjectService always writes false); the "agent
@@ -116,7 +116,7 @@ export function OpenMarket() {
                   </div>
                 ))}
                 {topBids.length === 0 && (
-                  <p className="rounded-2xl border border-border bg-white/[0.04] px-4.5 py-4 text-[13.5px] text-[#8b8b93]">
+                  <p className="rounded-2xl border border-border bg-white/[0.04] px-4.5 py-4 text-[13.5px] text-subtle">
                     No bids yet — be the first.
                   </p>
                 )}
@@ -135,7 +135,7 @@ export function OpenMarket() {
           ) : loaded ? (
             <div className="py-6 text-center">
               <h3 className="font-display text-[19px] font-bold">No live bids right now</h3>
-              <p className="mx-auto mt-2 max-w-[320px] text-[13.5px] leading-relaxed text-[#8b8b93]">
+              <p className="mx-auto mt-2 max-w-[320px] text-[13.5px] leading-relaxed text-subtle">
                 The market&apos;s quiet this moment — post a project and be the first one up for bids.
               </p>
               <Button

@@ -46,7 +46,7 @@ export function OvernightReport() {
           as="div"
           className="mb-4 flex items-center gap-2.5 font-display text-xs font-bold tracking-[5px] text-primary-soft"
         >
-          <span className="text-[#5a5a63]">01</span>
+          <span className="text-subtle">01</span>
           FOUR WAYS IN
         </Reveal>
         <Reveal as="h2" delay={0.05} className="font-display text-[clamp(32px,4.6vw,56px)] font-bold leading-[1.08] tracking-tight">
