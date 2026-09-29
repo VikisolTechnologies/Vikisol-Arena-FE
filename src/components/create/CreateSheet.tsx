@@ -1,23 +1,24 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { ComponentType } from "react";
 import { m } from "motion/react";
-import { Briefcase, ChevronRight, Gift, Heart, Leaf, Sparkles, Users } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ChevronRight } from "lucide-react";
 import { rise } from "@/lib/motion";
 import { BottomSheet } from "@/components/bplus/BottomSheet";
+import { SkylineFooter } from "@/components/bplus/Screen";
 import { useSessionRole } from "@/hooks/use-arena-session";
+import { IconBadge, type IconBadgeTone } from "@/components/bplus/IconBadge";
+import { BriefcaseSolid, GiftSolid, HeartSolid, LeafSolid, PeopleSolid, SparkleSolid } from "@/components/bplus/SolidIcons";
 
-type Icon = ComponentType<{ className?: string; strokeWidth?: number; "aria-hidden"?: boolean }>;
+type Icon = typeof HeartSolid;
 
-const ROWS: { id: "ask" | "offer" | "activity" | "project" | "job" | "jenny"; title: string; detail: string; icon: Icon; disc: string }[] = [
-  { id: "ask", title: "Post a Need", detail: "Get help from nearby people", icon: Heart, disc: "bg-primary" },
-  { id: "offer", title: "Make an Offer", detail: "Share what you can give", icon: Gift, disc: "bg-success" },
-  { id: "activity", title: "Create an Activity", detail: "Bring people together", icon: Users, disc: "bg-info" },
-  { id: "project", title: "Start a Project", detail: "Collaborate for a bigger impact", icon: Leaf, disc: "bg-success" },
-  { id: "job", title: "Post a Job", detail: "Find local talent", icon: Briefcase, disc: "bg-primary" },
-  { id: "jenny", title: "Ask Jenny", detail: "Get ideas, draft a post, or find the right people", icon: Sparkles, disc: "bg-[linear-gradient(135deg,var(--primary),var(--primary-soft))]" },
+const ROWS: { id: "ask" | "offer" | "activity" | "project" | "job" | "jenny"; title: string; detail: string; icon: Icon; tone: IconBadgeTone }[] = [
+  { id: "ask", title: "Post a Need", detail: "Get help from nearby people", icon: HeartSolid, tone: "orange" },
+  { id: "offer", title: "Make an Offer", detail: "Share what you can give", icon: GiftSolid, tone: "green" },
+  { id: "activity", title: "Create an Activity", detail: "Bring people together", icon: PeopleSolid, tone: "blue" },
+  { id: "project", title: "Start a Project", detail: "Collaborate for a bigger impact", icon: LeafSolid, tone: "green" },
+  { id: "job", title: "Post a Job", detail: "Find local talent", icon: BriefcaseSolid, tone: "brown" },
+  { id: "jenny", title: "Ask Jenny", detail: "Get ideas, draft a post, or find the right people", icon: SparkleSolid, tone: "jenny" },
 ];
 
 
@@ -51,7 +52,6 @@ export function CreateSheet({ open, onClose }: { open: boolean; onClose: () => v
             <p className="mt-2 text-[15px] text-paper-ink-muted">A small step can create a big ripple nearby.</p>
             <m.ul initial="hidden" animate="shown" className="mt-6 space-y-2.5">
               {ROWS.map((row, i) => {
-                const IconCmp = row.icon;
                 return (
                   <m.li key={row.id} variants={rise} custom={i}>
                     <button
@@ -59,9 +59,7 @@ export function CreateSheet({ open, onClose }: { open: boolean; onClose: () => v
                       onClick={() => choose(row.id)}
                       className="flex w-full items-center gap-3.5 rounded-tile bg-paper-muted p-3.5 text-left outline-none transition-transform duration-120 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-primary"
                     >
-                      <span className={cn("grid size-12 shrink-0 place-items-center rounded-full text-white", row.disc)}>
-                        <IconCmp className="size-6" strokeWidth={1.9} aria-hidden />
-                      </span>
+                      <IconBadge icon={row.icon} tone={row.tone} />
                       <span className="min-w-0 flex-1">
                         <span className="block text-[17px] font-semibold">{row.title}</span>
                         <span className="block text-[13px] text-paper-ink-muted">{row.detail}</span>
@@ -72,6 +70,7 @@ export function CreateSheet({ open, onClose }: { open: boolean; onClose: () => v
                 );
               })}
             </m.ul>
+            <SkylineFooter onPaper className="-mx-2 mt-2 pt-4" />
           </div>
     </BottomSheet>
   );

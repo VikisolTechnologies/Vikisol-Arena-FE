@@ -176,7 +176,8 @@
  * the separate --paper family below rather than trying to force it through the existing
  * --canvas/--surface pair.
  */
-[data-theme="bplus"] {
+[data-theme="bplus"],
+[data-theme="bplus"] [data-tone="dark"] {
   color-scheme: dark;
 
   --background: #16110f;
@@ -258,6 +259,31 @@
   color: var(--paper-ink);
 }
 [data-surface="paper"] .text-warning { color: #7a4d00; }
+
+/* Full light "paper" pages (architect review A6): the career and recruiter boards are cream pages
+   with dark text, not dark pages holding a cream card. Same palette as paper cards; cards on the
+   page (bg-paper / bg-surface) become near-white. A [data-tone="dark"] child (the bottom bar)
+   gets the dark tokens back. Contrast: #6e625a on #f7f0e6 = 5.2:1; field line #8f8076 = 3.4:1. */
+[data-theme="bplus"][data-tone="light"],
+[data-theme="bplus"] [data-tone="light"] {
+  color-scheme: light;
+  --background: #f7f0e6;
+  --foreground: #1e1714;
+  --faint: #6e625a;
+  --surface: #fffcf7;
+  --line: rgba(30, 23, 20, 0.12);
+  --field-line: #8f8076;
+  --paper: #fffcf7;
+  --paper-muted: #f1e8dc;
+  --primary-soft: #b83a0a;
+  --success-on-dark: #1f6e3e;
+  --info-on-dark: #1d57b8;
+  --danger-on-dark: #b42318;
+  --shadow-card-rest: 0 1px 2px rgba(30, 23, 20, 0.08);
+  --shadow-card-hover: 0 8px 24px rgba(30, 23, 20, 0.12);
+  color: var(--foreground);
+}
+[data-tone="light"] .text-warning { color: #7a4d00; }
 
 @theme inline {
   --color-background: var(--background);

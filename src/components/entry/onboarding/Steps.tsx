@@ -1,25 +1,9 @@
 "use client";
 
-import { useEffect, useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { AnimatePresence, m } from "motion/react";
-import {
-  Briefcase,
-  Check,
-  ChevronRight,
-  Compass,
-  Eye,
-  Footprints,
-  HandHeart,
-  Info,
-  Leaf,
-  MapPin,
-  MessageCircle,
-  Plus,
-  Star,
-  UserSearch,
-  Users,
-} from "lucide-react";
+import { Briefcase, Check, ChevronRight, Eye, Footprints, Info, MapPin, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { press, rise, spring } from "@/lib/motion";
 import { Button, ButtonLink } from "@/components/bplus/Button";
@@ -28,6 +12,8 @@ import { Lede, Title } from "@/components/bplus/Screen";
 import { TextArea, TextField } from "@/components/bplus/TextField";
 import { PhotoPicker } from "@/components/bplus/PhotoPicker";
 import { Avatar } from "@/components/bplus/Avatar";
+import { IconBadge, type IconBadgeTone } from "@/components/bplus/IconBadge";
+import { BriefcaseSolid, ChatSolid, CompassSolid, LeafSolid, PeopleSolid, PlusSolid, RunnerSolid, StarSolid } from "@/components/bplus/SolidIcons";
 import { Burst } from "@/components/bplus/Burst";
 import {
   AREAS,
@@ -41,18 +27,19 @@ import {
   type EntryIntent,
 } from "@/lib/data/onboarding";
 
-type Icon = ComponentType<{ className?: string; strokeWidth?: number; "aria-hidden"?: boolean }>;
+type Glyph = typeof RunnerSolid;
 type StepProps = { draft: EntryDraft; update: (patch: Partial<EntryDraft>) => void };
 
-const INTENT_LOOK: Record<EntryIntent, { icon: Icon; disc: string }> = {
-  activities: { icon: Footprints, disc: "bg-primary text-white" },
-  meet: { icon: Users, disc: "bg-success text-white" },
-  ask: { icon: MessageCircle, disc: "bg-info text-white" },
-  offer: { icon: Star, disc: "bg-danger text-white" },
-  job: { icon: Briefcase, disc: "bg-warning text-paper-ink" },
-  hire: { icon: UserSearch, disc: "bg-info text-white" },
-  projects: { icon: Leaf, disc: "bg-success text-white" },
-  explore: { icon: Compass, disc: "bg-slate text-white" },
+/** Board: a solid white glyph in a saturated circle per intent (review A5). */
+const INTENT_LOOK: Record<EntryIntent, { icon: Glyph; tone: IconBadgeTone }> = {
+  activities: { icon: RunnerSolid, tone: "orange" },
+  meet: { icon: PeopleSolid, tone: "green" },
+  ask: { icon: ChatSolid, tone: "blue" },
+  offer: { icon: StarSolid, tone: "red" },
+  job: { icon: BriefcaseSolid, tone: "brown" },
+  hire: { icon: PeopleSolid, tone: "blue" },
+  projects: { icon: LeafSolid, tone: "green" },
+  explore: { icon: CompassSolid, tone: "slate" },
 };
 
 function Footer({ children }: { children: ReactNode }) {
@@ -72,7 +59,7 @@ function SectionLabel({ children, hint }: { children: ReactNode; hint?: string }
 
 function IntentTile({ id, on, onToggle }: { id: EntryIntent; on: boolean; onToggle: () => void }) {
   const meta = INTENTS.find((i) => i.id === id)!;
-  const { icon: IconCmp, disc } = INTENT_LOOK[id];
+  const { icon, tone } = INTENT_LOOK[id];
   return (
     <m.button
       type="button"
@@ -85,10 +72,8 @@ function IntentTile({ id, on, onToggle }: { id: EntryIntent; on: boolean; onTogg
         on && "ring-2 ring-primary",
       )}
     >
-      <span className={cn("grid size-10 place-items-center rounded-full", disc)}>
-        <IconCmp className="size-5" strokeWidth={1.9} aria-hidden />
-      </span>
-      <span className="mt-3 text-[15px] font-semibold leading-tight">{meta.label}</span>
+      <IconBadge icon={icon} tone={tone} />
+      <span className="mt-3 text-[16px] font-semibold leading-tight">{meta.label}</span>
       <span className="mt-1 text-[13px] leading-snug text-paper-ink-muted">{meta.detail}</span>
       <AnimatePresence>
         {on && (
@@ -204,6 +189,10 @@ function InterestPicker({ draft, update, addLabel, onlySelected }: StepProps & {
 export function LocalLifeStep({ draft, update, onContinue }: StepProps & { onContinue: () => void }) {
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState("");
+  // Board: the area starts on the launch area; the person can change it.
+  useEffect(() => {
+    if (!draft.area) update({ area: AREAS[0] });
+  }, [draft.area, update]);
 
   const toggleLocation = async (on: boolean) => {
     setLocationError("");
@@ -240,6 +229,7 @@ export function LocalLifeStep({ draft, update, onContinue }: StepProps & { onCon
           checked={draft.useCurrentLocation}
           onChange={(on) => void toggleLocation(on)}
           label="Use my current location"
+          icon={<MapPin className="size-5 shrink-0 text-faint" strokeWidth={1.75} aria-hidden />}
           description={
             locating ? (
               <p className="text-[13px] text-faint" role="status">
@@ -391,10 +381,10 @@ function listFormat(items: string[]) {
 
 /* ───────────────────────── 4. You're all set ───────────────────────── */
 
-const NEXT_STEPS: { href: string; title: string; detail: string; icon: Icon; disc: string }[] = [
-  { href: "/discover", title: "Join a nearby activity", detail: "Sports, events and more", icon: Footprints, disc: "bg-primary text-white" },
-  { href: "/discover", title: "Explore people", detail: "Find neighbors with shared interests", icon: Users, disc: "bg-info text-white" },
-  { href: "/home?create=need", title: "Post a need", detail: "Get help from your community", icon: HandHeart, disc: "bg-success text-white" },
+const NEXT_STEPS: { href: string; title: string; detail: string; icon: Glyph; tone: IconBadgeTone }[] = [
+  { href: "/discover", title: "Join a nearby activity", detail: "Sports, events and more", icon: RunnerSolid, tone: "orange" },
+  { href: "/discover", title: "Explore people", detail: "Find neighbors with shared interests", icon: PeopleSolid, tone: "blue" },
+  { href: "/home?create=need", title: "Post a need", detail: "Get help from your community", icon: PlusSolid, tone: "green" },
 ];
 
 export function ReadyStep({ draft, accountName, onEdit }: { draft: EntryDraft; accountName: string; onEdit: () => void }) {
@@ -455,9 +445,7 @@ export function ReadyStep({ draft, accountName, onEdit }: { draft: EntryDraft; a
               href="/identity"
               className="flex items-center gap-3 rounded-tile border border-line bg-surface p-3.5 outline-none focus-visible:outline-2 focus-visible:outline-primary"
             >
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-slate text-white">
-                <Briefcase className="size-5" strokeWidth={1.9} aria-hidden />
-              </span>
+              <IconBadge icon={BriefcaseSolid} tone="slate" />
               <span className="min-w-0 flex-1">
                 <span className="block text-[15px] font-semibold text-foreground">Looking for work later?</span>
                 <span className="block text-[13px] leading-snug text-faint">Open it anytime from your Profile. You can add your work goals when you&apos;re ready.</span>
@@ -475,12 +463,10 @@ export function ReadyStep({ draft, accountName, onEdit }: { draft: EntryDraft; a
   );
 }
 
-function NextStepRow({ href, title, detail, icon: IconCmp, disc }: (typeof NEXT_STEPS)[number]) {
+function NextStepRow({ href, title, detail, icon, tone }: (typeof NEXT_STEPS)[number]) {
   return (
     <Link href={href} className="flex items-center gap-3 rounded-tile bg-paper p-3.5 text-paper-ink outline-none transition-transform duration-120 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-      <span className={cn("grid size-10 shrink-0 place-items-center rounded-full", disc)}>
-        <IconCmp className="size-5" strokeWidth={1.9} aria-hidden />
-      </span>
+      <IconBadge icon={icon} tone={tone} />
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-semibold">{title}</span>
         <span className="block text-[13px] text-paper-ink-muted">{detail}</span>

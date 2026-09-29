@@ -3,6 +3,7 @@ import { delay } from "./shared";
 import { isRealMode } from "./mode";
 import { apiFetch } from "./httpClient";
 import type { PagedResponse } from "./paged";
+import { BUSINESS } from "@/lib/fixtures/world";
 
 // ARENA-V2-PRODUCT-ARCHITECTURE.md §3.5/§6 "Company posts appear in the feed" - post-spec
 // reconciliation addition (see DECISIONS.md). RECRUITER/COMPANY_ADMIN only, separate module
@@ -10,8 +11,9 @@ import type { PagedResponse } from "./paged";
 // talent). Mock mode reuses the same localStorage-backed post store as posts.ts's own mock
 // createPost so a company-authored post shows up in the same mock feed a talent account sees.
 const COMPANY_POSTS_KEY = "arena_posts";
-const MOCK_COMPANY_NAME = "Lakeshore Tech";
-const MOCK_COMPANY_EMOJI = "🟢";
+// The preview recruiter's company (src/lib/fixtures/world.ts).
+const MOCK_COMPANY_NAME = BUSINESS.company.companyName;
+const MOCK_COMPANY_EMOJI = BUSINESS.company.logoEmoji;
 const MOCK_COMPANY_ID = "mock-company-1";
 
 function readPosts(): Post[] {

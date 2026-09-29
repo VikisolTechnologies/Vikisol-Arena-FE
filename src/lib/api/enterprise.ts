@@ -1,7 +1,7 @@
 import type { Application, ApplicationStage, CandidateProfile, EnterpriseProfile, JobPosting } from "@/lib/types";
 import { getEnterpriseProfile, saveEnterpriseProfile } from "@/lib/session";
 import { MOCK_CANDIDATES, getCandidateById } from "@/lib/mock/candidates";
-import { pick, pickN } from "@/lib/mock/seed";
+import { pick } from "@/lib/mock/seed";
 import { POSTING_LIMITS } from "@/lib/plan";
 import { readApplications, writeApplications } from "./applicationsStore";
 import { delay } from "./shared";
@@ -86,18 +86,27 @@ export async function getPosting(id: string): Promise<JobPosting | undefined> {
   return delay(readPostings().find((p) => p.id === id), 150);
 }
 
-/** Seeds 3-6 realistic applicants from the candidate pool so a fresh posting isn't empty —
- * written into the same unified applications store the candidate side reads, just with
- * postingId set instead of jobId. Mock-only: arena-api seeds its own demo data server-side. */
-function seedApplicants(postingId: string, industry: JobPosting["industry"]) {
-  const pool = MOCK_CANDIDATES.filter((c) => c.industry === industry);
-  const chosen = pickN(pool.length >= 3 ? pool : MOCK_CANDIDATES, Math.min(6, Math.max(3, pool.length)));
-  const stages: ApplicationStage[] = ["applied", "applied", "screening", "screening", "interview", "offer"];
+/** Seeds a few applicants from the preview world so a fresh posting isn't empty — only
+ * neighbours whose skills or field plausibly fit the job (architect review A1), written into the
+ * same unified applications store the candidate side reads, with postingId set instead of jobId.
+ * Mock-only: arena-api seeds its own demo data server-side. */
+function seedApplicants(postingId: string, posting: Pick<JobPosting, "industry" | "skills" | "title">) {
+  const want = [...posting.skills, posting.title].map((s) => s.toLowerCase());
+  const fit = (c: CandidateProfile) =>
+    c.skills.filter((s) => want.some((w) => w.includes(s.name.toLowerCase()) || s.name.toLowerCase().includes(w))).length * 2 +
+    (c.industry === posting.industry ? 1 : 0);
+  const chosen = MOCK_CANDIDATES.slice(1)
+    .map((c) => ({ c, score: fit(c) }))
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+    .map((x) => x.c);
+  const stages: ApplicationStage[] = ["applied", "applied", "screening", "screening", "interview"];
   const applications: Application[] = chosen.map((c, i) => ({
     id: `applicant-${postingId}-${i}`,
     candidateId: c.id,
     postingId,
-    stage: pick(stages),
+    stage: stages[i],
     appliedAt: new Date(Date.now() - (i + 1) * 6 * 3600 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - (i + 1) * 6 * 3600 * 1000).toISOString(),
   }));
@@ -128,7 +137,7 @@ export async function createPosting(input: Omit<JobPosting, "id" | "status" | "c
   }
   const posting: JobPosting = { ...input, id: `posting-${Date.now()}`, status: "open", createdAt: new Date().toISOString() };
   writePostings([posting, ...readPostings()]);
-  seedApplicants(posting.id, posting.industry);
+  seedApplicants(posting.id, posting);
   return delay(posting, 400);
 }
 

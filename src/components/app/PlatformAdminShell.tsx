@@ -64,7 +64,7 @@ export function PlatformAdminShell({
   if (state === "denied") return <NotFound />;
 
   return (
-    <DashShell product="Admin" tone="admin" nav={NAV_ITEMS} title={title} actions={actions} onLogout={handleLogout}>
+    <DashShell product="Admin" tone="admin" previewLabel="sample companies and people" nav={NAV_ITEMS} title={title} actions={actions} onLogout={handleLogout}>
       {children}
     </DashShell>
   );

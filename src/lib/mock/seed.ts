@@ -33,17 +33,6 @@ export function intBetween(min: number, max: number, r: () => number = rand) {
   return Math.floor(min + r() * (max - min + 1));
 }
 
-const FIRST_NAMES = [
-  "Aarav", "Vivaan", "Aditi", "Ananya", "Rohan", "Priya", "Karthik", "Sneha",
-  "Arjun", "Meera", "Ishaan", "Kavya", "Rahul", "Divya", "Aman", "Neha",
-  "Siddharth", "Pooja", "Vikram", "Riya", "Sanjay", "Anjali", "Rajesh", "Shreya",
-  "Nikhil", "Tanvi", "Varun", "Isha", "Karan", "Aisha", "Manoj", "Nisha",
-];
-const LAST_NAMES = [
-  "Sharma", "Verma", "Reddy", "Iyer", "Nair", "Gupta", "Rao", "Khan",
-  "Mehta", "Joshi", "Kumar", "Pillai", "Chatterjee", "Desai", "Kapoor", "Menon",
-];
-
 export const LOCATIONS = ["Hyderabad", "Bengaluru", "Mumbai", "Pune", "Chennai", "Remote"];
 
 export const SKILLS_BY_INDUSTRY: Record<Industry, string[]> = {
@@ -64,21 +53,4 @@ export const TITLES_BY_INDUSTRY: Record<Industry, string[]> = {
   Logistics: ["Logistics Coordinator", "Supply Chain Analyst", "Warehouse Manager", "Fleet Supervisor"],
 };
 
-export const COMPANIES = [
-  { name: "Lakeshore Tech", emoji: "🟢" },
-  { name: "Tiffin Trail", emoji: "🟠" },
-  { name: "Bluepeak Software", emoji: "🔷" },
-  { name: "Meridian Works", emoji: "🔵" },
-  { name: "Rupeeline", emoji: "🟦" },
-  { name: "Kestrel Apps", emoji: "🟥" },
-  { name: "Greenleaf CX", emoji: "🟩" },
-  { name: "CareCompass", emoji: "🩺" },
-  { name: "Parcel Path", emoji: "📦" },
-  { name: "Voltpay", emoji: "⚡" },
-];
-
-export const AVATAR_EMOJIS = ["🧑🏽", "👩🏽", "🧔🏽", "👨🏻", "👩🏻", "👨🏾", "👩🏾", "🧑🏻", "👨🏽", "👩🏼"];
-
-export function fullName(r: () => number = rand) {
-  return `${pick(FIRST_NAMES, r)} ${pick(LAST_NAMES, r)}`;
-}
+export { COMPANIES } from "@/lib/fixtures/world";

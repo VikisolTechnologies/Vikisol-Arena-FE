@@ -43,7 +43,7 @@ export function JobDetailScreen({ id, specimen }: { id: string; specimen?: { job
 
   if (job === undefined) {
     return (
-      <AppShell>
+      <AppShell tone="light">
         <div className="space-y-3 pt-3" aria-busy="true" aria-label="Loading the job">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-64 w-full" />
@@ -53,7 +53,7 @@ export function JobDetailScreen({ id, specimen }: { id: string; specimen?: { job
   }
   if (job === null) {
     return (
-      <AppShell>
+      <AppShell tone="light">
         <div className="pt-10"><StateCard kind="empty" title="This job isn't available any more" detail="It may have been filled or closed." action={<ButtonLink href="/jobs">See other jobs</ButtonLink>} /></div>
       </AppShell>
     );
@@ -63,14 +63,14 @@ export function JobDetailScreen({ id, specimen }: { id: string; specimen?: { job
   const shown = job.skills.filter((s) => mine.has(s.toLowerCase()));
 
   return (
-    <AppShell>
-      <div className="-mx-5 -mt-[max(8px,env(safe-area-inset-top))] flex-1 bg-paper px-5 pb-6 pt-[max(12px,env(safe-area-inset-top))] text-paper-ink">
+    <AppShell tone="light">
+      <div className="-mx-5 -mt-[max(8px,env(safe-area-inset-top))] flex-1 px-5 pb-6 pt-[max(12px,env(safe-area-inset-top))]">
         <button type="button" onClick={() => router.back()} aria-label="Back" className="-ml-2.5 grid size-11 place-items-center rounded-full hover:bg-paper-muted">
           <ArrowLeft className="size-6" strokeWidth={1.75} aria-hidden />
         </button>
         <m.div initial="hidden" animate="shown">
           <m.h1 variants={rise} custom={0} className="mt-1 font-display-serif text-[28px] font-medium leading-tight">{job.title}</m.h1>
-          <m.div variants={rise} custom={1} className="mt-4 flex items-center gap-3 rounded-tile bg-white p-3.5 ring-1 ring-paper-ink/10">
+          <m.div variants={rise} custom={1} className="mt-4 flex items-center gap-3 rounded-tile bg-paper-muted p-3.5 ring-1 ring-paper-ink/10">
             <CompanyMark name={job.company} className="size-14 text-[20px]" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-[17px] font-semibold">{job.company}</p>

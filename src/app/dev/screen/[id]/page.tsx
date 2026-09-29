@@ -45,7 +45,7 @@ export default function SpecimenPage() {
     case "report-block":
       return (
         <AppShell>
-          <ReportSheet open onClose={() => {}} target={{ kind: "chat", id: "specimen-conv" }} person={{ userId: "u-rohit", name: "Rohit Kumar", detail: "1.8 km away · Joined Aug 2024" }} />
+          <ReportSheet open onClose={() => {}} target={{ kind: "chat", id: "specimen-conv" }} person={{ userId: "u-rohit", name: "Rohit Varma", detail: "1.8 km away · Joined Aug 2024" }} />
         </AppShell>
       );
     case "resilient-states":

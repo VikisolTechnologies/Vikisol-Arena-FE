@@ -5,6 +5,8 @@
  * at all when FIXTURES_ALLOWED is false (api mode).
  */
 
+import { person } from "@/lib/fixtures/world";
+
 export interface PreviewPerson {
   id: string;
   name: string;
@@ -12,13 +14,12 @@ export interface PreviewPerson {
   interests: string[];
 }
 
-export const PREVIEW_PEOPLE: PreviewPerson[] = [
-  { id: "p-ananya", name: "Ananya Rao", distanceKm: 2.1, interests: ["Urban gardening"] },
-  { id: "p-rohit", name: "Rohit Varma", distanceKm: 1.8, interests: ["Running", "Sustainability"] },
-  { id: "p-meera", name: "Meera Iyer", distanceKm: 3.4, interests: ["Photography", "Local events"] },
-  { id: "p-kabir", name: "Kabir Das", distanceKm: 2.7, interests: ["Cycling"] },
-  { id: "p-lakshmi", name: "Lakshmi Devi", distanceKm: 0.9, interests: ["Cooking", "Gardening"] },
-];
+/** People near Priya, from the one preview world (src/lib/fixtures/world.ts). */
+const NEAR: [key: string, km: number][] = [["ananya", 2.1], ["rohit", 0.6], ["meera", 0.9], ["kabir", 2.7], ["lakshmi", 0.4]];
+export const PREVIEW_PEOPLE: PreviewPerson[] = NEAR.map(([key, distanceKm]) => {
+  const p = person(key);
+  return { id: p.id, name: p.name, distanceKm, interests: p.interests.slice(0, 2) };
+});
 
 export interface PreviewSkill {
   id: string;
@@ -29,8 +30,8 @@ export interface PreviewSkill {
 
 export const PREVIEW_SKILLS: PreviewSkill[] = [
   { id: "s-ux", label: "UI/UX Design", nearby: 3, tone: "info" },
-  { id: "s-cycle", label: "Cycles & Repairs", nearby: 5, tone: "success" },
-  { id: "s-tutor", label: "Maths tutoring", nearby: 2, tone: "primary" },
+  { id: "s-photo", label: "Photography", nearby: 1, tone: "success" },
+  { id: "s-tutor", label: "Maths tutoring", nearby: 1, tone: "primary" },
 ];
 
 export interface PreviewSuggestion {
@@ -46,7 +47,7 @@ export const PREVIEW_JENNY_SUGGESTION: PreviewSuggestion = {
   detail: "It matches your interest in running, happens nearby, and people you know are going.",
   why: [
     { icon: "interest", text: "Matches your interests" },
-    { icon: "distance", text: "1.2 km from you" },
+    { icon: "distance", text: "4.3 km from you" },
     { icon: "people", text: "People you know are going" },
     { icon: "trend", text: "Popular in your area this month" },
   ],

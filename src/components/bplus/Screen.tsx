@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import { m } from "motion/react";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -9,9 +9,9 @@ import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
 
 /** The B+ page frame: opts into the B+ tokens, respects safe areas, and on wide screens keeps
  *  the mobile layout in a centred 480px column (FE-BPLUS-BUILD §9). */
-export function Screen({ children, className }: { children: ReactNode; className?: string }) {
+export function Screen({ children, className, tone }: { children: ReactNode; className?: string; /** Full cream page (review A6). */ tone?: "light" }) {
   return (
-    <div data-theme="bplus" className="min-h-svh w-full bg-background text-foreground">
+    <div data-theme="bplus" data-tone={tone} className="min-h-svh w-full bg-background text-foreground">
       <div
         className={cn(
           "mx-auto flex min-h-svh w-full max-w-[480px] flex-col px-5 pb-[max(20px,env(safe-area-inset-bottom))] pt-[max(8px,env(safe-area-inset-top))]",
@@ -68,7 +68,7 @@ export function TopBar({ onBack, center, onSkip, backLabel = "Back" }: { onBack?
 }
 
 export function Title({ children, className }: { children: ReactNode; className?: string }) {
-  return <h1 className={cn("font-display-serif text-[32px] font-medium leading-[1.12] tracking-[-0.01em] text-foreground", className)}>{children}</h1>;
+  return <h1 className={cn("font-display-serif text-[34px] font-medium leading-[1.1] tracking-[-0.01em] text-foreground", className)}>{children}</h1>;
 }
 
 export function Lede({ children, className }: { children: ReactNode; className?: string }) {
@@ -87,30 +87,69 @@ export function OrDivider() {
 }
 
 /** Line-art neighbourhood skyline with a two-line caption (auth screens' footer). */
-export function SkylineFooter({ lines }: { lines: [string, string] }) {
+/** The boards' footer drawing (review A9): a warm line-drawn neighbourhood — poplars, pitched-roof
+ *  houses, a few taller blocks and rolling ground — over soft hills and a low glow. Decorative. */
+export function SkylineFooter({ lines, onPaper, className }: { lines?: [string, string]; onPaper?: boolean; className?: string }) {
+  const id = useId().replace(/:/g, "");
+  const hill = onPaper ? "#e3d2bd" : "#3a2c24";
   return (
-    <div className="mt-auto pt-8" aria-hidden>
-      <svg viewBox="0 0 360 64" className="w-full text-field-line" fill="none" stroke="currentColor" strokeWidth={1} strokeLinejoin="round">
-        <path d="M0 63h360" />
-        <path d="M14 63V44l12-9 12 9v19M20 63v-9h8v9" />
-        <path d="M52 63V30h16v33M56 36h3M61 36h3M56 42h3M61 42h3M56 48h3M61 48h3" />
-        <path d="M78 63V40c0-6 5-10 10-10s10 4 10 10v23M88 30v-6" />
-        <path d="M112 63V47l9-7 9 7v16M118 63v-7h6v7" />
-        <circle cx="146" cy="44" r="8" />
-        <path d="M146 52v11" />
-        <path d="M162 63V22h20v41M166 28h4M174 28h4M166 35h4M174 35h4M166 42h4M174 42h4M166 49h4M174 49h4" />
-        <path d="M194 63V41l14-11 14 11v22M203 63v-10h10v10" />
-        <path d="M232 63V34h14v29M246 63V26h18v37M250 32h3M257 32h3M250 39h3M257 39h3M250 46h3M257 46h3" />
-        <circle cx="280" cy="47" r="7" />
-        <path d="M280 54v9" />
-        <path d="M294 63V45l11-8 11 8v18M300 63v-7h9v7" />
-        <path d="M326 63V33h22v30M331 39h4M339 39h4M331 46h4M339 46h4" />
+    <div className={cn("mt-auto pt-6", className)} aria-hidden>
+      <svg viewBox="0 0 360 118" className="w-full" fill="none" strokeLinecap="round" strokeLinejoin="round">
+        <defs>
+          <radialGradient id={`${id}g`} cx="0.62" cy="0.62" r="0.55">
+            <stop offset="0" stopColor="#ff8a3d" stopOpacity="0.28" />
+            <stop offset="1" stopColor="#ff8a3d" stopOpacity="0" />
+          </radialGradient>
+          <linearGradient id={`${id}h`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={hill} stopOpacity="0.9" />
+            <stop offset="1" stopColor={hill} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="360" height="118" fill={`url(#${id}g)`} />
+        {/* far hills */}
+        <path d="M0 70c22-16 40-22 62-14 18 7 30-12 52-14 20-2 30 12 48 8 22-5 32-22 58-20 24 2 32 18 52 16 18-2 30-12 46-10 18 2 30 12 42 18v64H0z" fill={`url(#${id}h)`} />
+        <g stroke={onPaper ? "#b8753f" : "#c98a55"} strokeOpacity="0.85" strokeWidth="1.3">
+          {/* ground */}
+          <path d="M0 96c40-10 86-14 132-10 44 4 70 12 112 8 42-4 80-14 116-12" />
+          <path d="M0 108c52-8 104-8 150-4 48 4 96 6 142 0 26-3 48-6 68-6" strokeOpacity="0.55" />
+          {/* left poplar with branches */}
+          <path d="M22 100V34M22 34c-9 10-10 30 0 40 10-10 9-30 0-40zM22 58l-7-6M22 66l7-7M22 78l-8-6" />
+          <path d="M10 98c-3-8-2-16 4-22 5 6 6 14 3 22" />
+          {/* house */}
+          <path d="M34 96V70l12-11 12 11v26M40 96v-9h7v9M50 78h4v4h-4zM34 70h24" />
+          {/* slim tree */}
+          <path d="M72 98V58M72 58c-6 7-7 20 0 27 7-7 6-20 0-27z" />
+          {/* low houses */}
+          <path d="M86 92V78l10-8 10 8v14M106 92V80h16v12M92 92v-6h6v6M110 84h3M116 84h3" />
+          <path d="M96 64c2 3 1 5-1 6" strokeOpacity="0.5" />
+          {/* tall block, centre */}
+          <path d="M140 92V46h26v46M140 46l13-6 13 6M146 54h4M156 54h4M146 62h4M156 62h4M146 70h4M156 70h4M146 78h4M156 78h4M150 92v-7h6v7" />
+          {/* arched house */}
+          <path d="M176 92V74c0-6 4-10 9-10s9 4 9 10v18M181 92v-8a4 4 0 018 0v8" />
+          <path d="M198 92V84h22v8M203 88h3M211 88h3" strokeOpacity="0.7" />
+          {/* tower with antenna, right */}
+          <path d="M232 90V40h24v50M244 40v-10M240 30h8M238 48h4M246 48h4M238 56h4M246 56h4M238 64h4M246 64h4M238 72h4M246 72h4" />
+          <path d="M226 90V58h6M256 70h10v20" />
+          {/* round tree */}
+          <path d="M290 98V84M290 84l-5-5M290 88l6-5M290 70c-10 0-15 6-15 12 0 5 4 8 8 8h14c4 0 8-3 8-8 0-6-5-12-15-12z" />
+          {/* leaf sprig */}
+          <path d="M318 94c-2-12 4-22 14-26 1 11-4 21-14 26zM318 94l10-18" />
+          <path d="M344 96V62M344 62c-5 6-6 17 0 23 6-6 5-17 0-23z" strokeOpacity="0.7" />
+        </g>
+        {/* a few warm windows */}
+        <g fill="#ffb36b" fillOpacity="0.55">
+          <rect x="156" y="62" width="4" height="4" rx="0.5" />
+          <rect x="238" y="56" width="4" height="4" rx="0.5" />
+          <rect x="50" y="78" width="4" height="4" rx="0.5" />
+        </g>
       </svg>
-      <p className="mt-3 text-center text-[11px] font-medium uppercase leading-relaxed tracking-[0.22em] text-faint">
-        {lines[0]}
-        <br />
-        {lines[1]}
-      </p>
+      {lines && (
+        <p className="mt-2 text-center text-[11px] font-medium uppercase leading-relaxed tracking-[0.22em] text-faint">
+          {lines[0]}
+          <br />
+          {lines[1]}
+        </p>
+      )}
     </div>
   );
 }

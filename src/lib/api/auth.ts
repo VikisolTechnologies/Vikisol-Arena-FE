@@ -88,7 +88,7 @@ export async function verifyMfa(pendingToken: string, code: string): Promise<Ses
 function mockNameFor(role: Role): string {
   switch (role) {
     case "talent": return getCandidateById(CURRENT_CANDIDATE_ID)?.name ?? "You";
-    case "company_admin": return "Enterprise Admin";
+    case "company_admin": return "Alex Rao";
     case "recruiter": return "Priyanka Rao";
     case "hiring_manager": return "Karthik Iyer";
     case "platform_admin": return "Vikisol Platform Admin";

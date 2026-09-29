@@ -91,9 +91,9 @@ const AUDIT_KEY = "arena_admin_audit";
 
 function seedTeam(): TeamMember[] {
   return [
-    { membershipId: "m-you", userId: "me", name: "Enterprise Admin", email: "you@company.dev", role: "company_admin", status: "active", joinedAt: new Date(Date.now() - 60 * 86400000).toISOString() },
-    { membershipId: "m-1", userId: "u-1", name: "Priyanka Rao", email: "priyanka@company.dev", role: "recruiter", status: "active", invitedByName: "Enterprise Admin", joinedAt: new Date(Date.now() - 30 * 86400000).toISOString() },
-    { membershipId: "m-2", userId: "u-2", name: "Karthik Iyer", email: "karthik@company.dev", role: "hiring_manager", status: "active", invitedByName: "Enterprise Admin", joinedAt: new Date(Date.now() - 14 * 86400000).toISOString() },
+    { membershipId: "m-you", userId: "me", name: "Alex Rao", email: "alex@greenleaf.example", role: "company_admin", status: "active", joinedAt: new Date(Date.now() - 60 * 86400000).toISOString() },
+    { membershipId: "m-1", userId: "u-1", name: "Priyanka Rao", email: "priyanka@greenleaf.example", role: "recruiter", status: "active", invitedByName: "Alex Rao", joinedAt: new Date(Date.now() - 30 * 86400000).toISOString() },
+    { membershipId: "m-2", userId: "u-2", name: "Karthik Iyer", email: "karthik@greenleaf.example", role: "hiring_manager", status: "active", invitedByName: "Alex Rao", joinedAt: new Date(Date.now() - 14 * 86400000).toISOString() },
   ];
 }
 
@@ -188,10 +188,10 @@ export async function inviteMember(email: string, role: Role): Promise<Invitatio
   const invite: Invitation = {
     id: `invite-${Date.now()}`, email, role, inviteLink: `${window.location.origin}/invite/mock-${Date.now()}`,
     status: "pending", expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
-    invitedByName: "Enterprise Admin", createdAt: new Date().toISOString(),
+    invitedByName: "Alex Rao", createdAt: new Date().toISOString(),
   };
   writeInvites([invite, ...readInvites()]);
-  pushAudit({ actorName: "Enterprise Admin", action: "member.invited", target: `${email} as ${role}` });
+  pushAudit({ actorName: "Alex Rao", action: "member.invited", target: `${email} as ${role}` });
   return delay(invite, 300);
 }
 
@@ -220,7 +220,7 @@ export async function removeMember(membershipId: string): Promise<void> {
   if (isRealMode()) { await apiFetch(`/enterprise/admin/team/${membershipId}`, { method: "DELETE" }); return; }
   const member = readTeam().find((m) => m.membershipId === membershipId);
   writeTeam(readTeam().filter((m) => m.membershipId !== membershipId));
-  if (member) pushAudit({ actorName: "Enterprise Admin", action: "member.removed", target: member.name });
+  if (member) pushAudit({ actorName: "Alex Rao", action: "member.removed", target: member.name });
   return delay(undefined, 200);
 }
 
@@ -287,7 +287,7 @@ export async function changePlan(plan: "free" | "pro" | "enterprise"): Promise<B
   const unlockCreditsTotal = plan === "enterprise" ? Math.max(current.unlockCreditsTotal, 200) : plan === "pro" ? Math.max(current.unlockCreditsTotal, 50) : current.unlockCreditsTotal;
   const updated: EnterpriseProfile = { ...current, plan, seatsTotal, unlockCreditsTotal };
   saveEnterpriseProfile(updated);
-  pushAudit({ actorName: "Enterprise Admin", action: "plan.changed", target: `${current.plan} -> ${plan}` });
+  pushAudit({ actorName: "Alex Rao", action: "plan.changed", target: `${current.plan} -> ${plan}` });
   return delay(mockBillingFromProfile(updated), 300);
 }
 

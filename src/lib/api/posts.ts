@@ -48,6 +48,11 @@ function readJoins(): PostJoinRequest[] {
     return MOCK_POST_JOIN_REQUESTS;
   }
 }
+/** Mock only: offers of help on a need (its pending + accepted join requests) and who made them. */
+export function mockOffersFor(postId: string) {
+  return readJoins().filter((j) => j.postId === postId && (j.status === "pending" || j.status === "approved"));
+}
+
 function writeJoins(joins: PostJoinRequest[]) {
   localStorage.setItem(JOINS_KEY, JSON.stringify(joins));
 }

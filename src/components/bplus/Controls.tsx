@@ -154,19 +154,23 @@ export function Toggle({
   onChange,
   label,
   description,
+  icon,
   id: idProp,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label: string;
   description?: ReactNode;
+  /** A leading glyph (e.g. the pin on "Use my current location"). */
+  icon?: ReactNode;
   id?: string;
 }) {
   const auto = useId();
   const id = idProp ?? auto;
   return (
     <div className="flex min-h-11 items-center justify-between gap-4">
-      <div className="min-w-0">
+      {icon}
+      <div className="min-w-0 flex-1">
         <p id={`${id}-label`} className="text-[15px] text-foreground">
           {label}
         </p>

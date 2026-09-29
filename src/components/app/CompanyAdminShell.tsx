@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LayoutDashboard, Users, ScrollText, CreditCard, Building2, ShieldCheck, ArrowLeftRight } from "lucide-react";
 import { DashShell, type DashNavItem } from "@/components/dash/DashShell";
+import { businessTabs } from "@/components/app/EnterpriseAppShell";
 import NotFound from "@/app/not-found";
 import { signOut } from "@/lib/api/auth";
 import { getSession } from "@/lib/session";
@@ -70,6 +71,7 @@ export function CompanyAdminShell({
       title={title}
       actions={actions}
       onLogout={handleLogout}
+      tabs={businessTabs(true)}
     >
       {children}
     </DashShell>

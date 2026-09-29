@@ -31,8 +31,8 @@ export const STAGE_TONE: Record<ApplicationStage, string> = {
   applied: "bg-foreground/10 text-foreground",
   screening: "bg-info/15 text-info-on-dark",
   interview: "bg-success/15 text-success-on-dark",
-  offer: "bg-primary/15 text-primary",
-  rejected: "bg-foreground/8 text-faint",
+  offer: "bg-primary/15 text-[#8f2c05]",
+  rejected: "bg-foreground/8 text-foreground/80",
 };
 
 /** Post a job stores must-haves / nice-to-haves / level inside the description (the API has one

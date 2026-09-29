@@ -29,7 +29,7 @@ const CANDIDATE_NAV = [
 
 const ENTERPRISE_NAV = [
   { href: "/enterprise/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/enterprise/talent", label: "Talent Universe", icon: SearchIcon },
+  { href: "/enterprise/talent", label: "Talent", icon: SearchIcon },
   { href: "/enterprise/postings", label: "Postings", icon: Briefcase },
   { href: "/enterprise/messages", label: "Messages", icon: Mail },
 ];

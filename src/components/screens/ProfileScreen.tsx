@@ -87,8 +87,13 @@ export function ProfileScreen() {
       {error ? (
         <StateCard kind="error" title="Your profile didn't load" detail={error} action={<Button variant="outline" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>} />
       ) : !data ? (
-        <div className="-mt-12 space-y-3" aria-busy="true" aria-label="Loading your profile">
-          <Skeleton className="size-24 rounded-full" />
+        <div className="-mt-14 space-y-3" aria-busy="true" aria-label="Loading your profile">
+          {/* The face is known before the profile arrives (device draft), so it never flashes grey. */}
+          {draft.photo || draft.displayName ? (
+            <Avatar src={draft.photo} name={draft.displayName || "You"} className="relative z-10 size-24 border-4 border-background text-[30px]" />
+          ) : (
+            <Skeleton className="size-24 rounded-full" />
+          )}
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-24 w-full" />
         </div>

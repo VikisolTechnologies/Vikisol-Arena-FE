@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { press, spring } from "@/lib/motion";
 import { useOffline } from "@/hooks/use-arena-session";
 import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
+import { PreviewBar } from "@/components/bplus/Primitives";
 
 const CreateSheet = dynamic(() => import("@/components/create/CreateSheet").then((mod) => mod.CreateSheet), { ssr: false });
 
@@ -30,7 +31,7 @@ const BAR = 76;
  * (Feed · Discover · (+) · Work · You) that respects the safe area, and the Create sheet.
  * Map is Discover's map mode; Jenny is reached from Create, Feed and headers — not a tab.
  */
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children, tone }: { children: ReactNode; /** Full cream page (career boards, review A6); the bottom bar stays dark. */ tone?: "light" }) {
   const pathname = usePathname();
   const offline = useOffline();
   const cookieBanner = useCookieConsentVisible();
@@ -53,13 +54,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   const active = TABS.find((t) => t.match.some((p) => pathname === p || pathname.startsWith(`${p}/`)))?.href;
 
   return (
-    <div data-theme="bplus" className="min-h-svh w-full bg-background text-foreground">
+    <div data-theme="bplus" data-tone={tone} className="min-h-svh w-full bg-background text-foreground">
       {offline && (
         <p role="status" className="sticky top-0 z-30 flex items-center justify-center gap-2 bg-warning px-4 py-2 text-[13px] font-medium text-paper-ink">
           <CloudOff className="size-4" strokeWidth={2} aria-hidden />
           You&apos;re offline. This screen will refresh when you&apos;re back.
         </p>
       )}
+      <PreviewBar className="relative z-20 mx-auto max-w-[480px] bg-background pt-[max(6px,env(safe-area-inset-top))]" />
       <div
         className="mx-auto flex min-h-svh w-full max-w-[480px] flex-col px-5 pt-[max(8px,env(safe-area-inset-top))]"
         style={{ paddingBottom: `calc(${BAR + 24}px + env(safe-area-inset-bottom)${cookieBanner ? " + var(--cookie-banner-h, 88px)" : ""})` }}
@@ -68,8 +70,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       <nav
+        data-tone="dark"
         aria-label="Primary"
-        className="fixed inset-x-0 z-40 mx-auto max-w-[480px] border-t border-line bg-background/92 backdrop-blur-xl"
+        className="fixed inset-x-0 z-40 mx-auto max-w-[480px] border-t border-line bg-background/92 text-foreground backdrop-blur-xl"
         style={{ bottom: cookieBanner ? "var(--cookie-banner-h, 88px)" : 0, paddingBottom: cookieBanner ? 0 : "env(safe-area-inset-bottom)" }}
       >
         <ul className="grid grid-cols-5 items-end" style={{ height: BAR }}>

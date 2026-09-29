@@ -85,13 +85,13 @@ const nextConfig: NextConfig = {
   // recruiter/company_admin-facing list, only HM's own /interviews/mine) - real, scoped
   // follow-up work, not something to improvise in a bug-fix pass. Redirecting to where each
   // role already sees interview-stage info today satisfies "no route may 404" without that.
-  // See DECISIONS.md.
+  // See DECISIONS.md. 29 Sep: /enterprise/interviews is now a real page (P7/P9 interview index),
+  // so its redirect is gone - it was silently sending the Interviews nav item to Jobs.
   async redirects() {
     return [
       { source: "/feed", destination: "/home", permanent: false },
       { source: "/dashboard", destination: "/home", permanent: false },
       { source: "/interviews", destination: "/applications", permanent: false },
-      { source: "/enterprise/interviews", destination: "/enterprise/postings", permanent: false },
     ];
   },
 };

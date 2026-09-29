@@ -60,7 +60,7 @@ export function ApplicationScreen({ id, specimen }: { id: string; specimen?: App
 
   if (app === undefined || (app && job === undefined)) {
     return (
-      <AppShell>
+      <AppShell tone="light">
         <div className="space-y-3 pt-3" aria-busy="true" aria-label="Loading your application">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-64 w-full" />
@@ -70,7 +70,7 @@ export function ApplicationScreen({ id, specimen }: { id: string; specimen?: App
   }
   if (!app) {
     return (
-      <AppShell>
+      <AppShell tone="light">
         <div className="pt-10"><StateCard kind="empty" title="This application isn't here any more" detail="It may have been withdrawn." action={<ButtonLink href="/work">Go to Work</ButtonLink>} /></div>
       </AppShell>
     );
@@ -81,8 +81,8 @@ export function ApplicationScreen({ id, specimen }: { id: string; specimen?: App
   const applied = new Date(app.appliedAt).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 
   return (
-    <AppShell>
-      <div className="-mx-5 -mt-[max(8px,env(safe-area-inset-top))] flex-1 bg-paper px-5 pb-6 pt-[max(12px,env(safe-area-inset-top))] text-paper-ink">
+    <AppShell tone="light">
+      <div className="-mx-5 -mt-[max(8px,env(safe-area-inset-top))] flex-1 px-5 pb-6 pt-[max(12px,env(safe-area-inset-top))]">
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => router.back()} aria-label="Back" className="-ml-2.5 grid size-11 place-items-center rounded-full hover:bg-paper-muted">
             <ArrowLeft className="size-6" strokeWidth={1.75} aria-hidden />
@@ -91,7 +91,7 @@ export function ApplicationScreen({ id, specimen }: { id: string; specimen?: App
         </div>
 
         {job ? (
-          <Link href={`/jobs/${job.id}`} className="mt-3 flex items-center gap-3 rounded-tile bg-white p-3.5 ring-1 ring-paper-ink/10">
+          <Link href={`/jobs/${job.id}`} className="mt-3 flex items-center gap-3 rounded-tile bg-paper-muted p-3.5 ring-1 ring-paper-ink/10">
             <CompanyMark name={job.company} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[17px] font-semibold">{job.title}</span>

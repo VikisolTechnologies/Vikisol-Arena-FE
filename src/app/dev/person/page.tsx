@@ -4,12 +4,14 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { isRealMode } from "@/lib/api/mode";
 import { setOnboarded, setSession } from "@/lib/session";
+import { readApplications, writeApplications } from "@/lib/api/applicationsStore";
+import { ME, MY_APPLICATIONS } from "@/lib/fixtures/world";
 
 /** Keys the preview world lives in; cleared so every visit starts from the same fresh week. */
 const WORLD_KEYS = [
   "arena_posts", "arena_post_joins", "arena_post_comments", "arena_post_reactions", "arena_post_saves",
   "arena_rooms", "arena_room_members", "arena_room_messages", "arena_conversations", "arena_thread_messages",
-  "arena_onboarding_profile",
+  "arena_onboarding_profile", "arena_notifications", "arena_interviews",
 ];
 
 /** Preview-only: signs this browser in as Priya Sharma, a demo neighbour in Gachibowli, in MOCK
@@ -28,7 +30,13 @@ function Seed() {
   useEffect(() => {
     if (blocked) return;
     for (const k of WORLD_KEYS) localStorage.removeItem(k);
-    setSession({ role: "talent", candidateId: "cand-1", name: "Priya Sharma", email: "priya@example.com" });
+    setSession({ role: "talent", candidateId: ME.id, name: ME.name, email: "priya@example.com" });
+    // Her own applications (world.ts); the business side's applicants are left alone.
+    const day = 86_400_000;
+    writeApplications([
+      ...MY_APPLICATIONS.map((a) => ({ id: a.id, candidateId: ME.id, jobId: a.jobId, stage: a.stage, appliedAt: new Date(Date.now() - a.appliedDaysAgo * day).toISOString(), updatedAt: new Date(Date.now() - day).toISOString() })),
+      ...readApplications().filter((a) => a.candidateId !== ME.id || !a.jobId),
+    ]);
     if (onboarding) {
       localStorage.removeItem("arena_onboarded");
       // The "all set" step shows only after a save this session; the preview stands in for it.
@@ -44,10 +52,10 @@ function Seed() {
         area: "Gachibowli / Gopanapally",
         useCurrentLocation: false,
         interests: ["Running", "Badminton", "Volunteering", "Food"],
-        photo: "/fixtures/people/priya.webp",
-        displayName: "Priya Sharma",
-        title: "Product Designer",
-        intro: "Designer by day, runner at sunrise. Happy to help with anything visual.",
+        photo: ME.photo,
+        displayName: ME.name,
+        title: ME.title,
+        intro: ME.bio,
         availability: ["Weekends", "Evenings"],
       }),
     );

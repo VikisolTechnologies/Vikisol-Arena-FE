@@ -58,7 +58,7 @@ export function CareerFlow() {
 
   if (error) {
     return (
-      <AppShell>
+      <AppShell tone="light">
         <div className="pt-10"><StateCard kind="error" title="Your profile didn't load" detail="Check your connection and try again." /></div>
       </AppShell>
     );
@@ -75,8 +75,8 @@ export function CareerFlow() {
     : undefined;
 
   return (
-    <AppShell>
-      <div className="-mx-5 -mt-[max(8px,env(safe-area-inset-top))] flex-1 overflow-x-hidden bg-paper px-5 pb-6 pt-[max(12px,env(safe-area-inset-top))] text-paper-ink">
+    <AppShell tone="light">
+      <div className="-mx-5 -mt-[max(8px,env(safe-area-inset-top))] flex-1 overflow-x-hidden px-5 pb-6 pt-[max(12px,env(safe-area-inset-top))]">
         {!profile ? (
           <div className="space-y-3 pt-12" aria-busy="true" aria-label="Loading">
             <Skeleton className="h-10 w-3/4" />

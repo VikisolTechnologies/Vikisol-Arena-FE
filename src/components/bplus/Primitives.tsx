@@ -6,6 +6,7 @@ import { m } from "motion/react";
 import { CircleAlert, CircleCheck, CloudOff, Gift, HeartHandshake, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { press, spring } from "@/lib/motion";
+import { isRealMode } from "@/lib/api/mode";
 
 type Icon = ComponentType<{ className?: string; strokeWidth?: number; "aria-hidden"?: boolean }>;
 
@@ -93,18 +94,38 @@ export function KindChip({ kind }: { kind: string }) {
   );
 }
 
-/* ── "Preview data": any screen region showing fixtures must carry this (FE-BPLUS-BUILD §6). ── */
-export function PreviewPill({ className }: { className?: string }) {
+/* ── "Preview data" honesty (FE-BPLUS-BUILD §6), quiet by design (architect review A4).
+ * Mock mode: every screen is preview data, so one slim bar at the top of the screen says so and
+ * nothing else is labelled. Real "mixed" mode: only the fixture regions and server demo items
+ * sitting among real content get a small muted "Sample" mark. ── */
+export function PreviewBar({ label = "sample neighbours and activities", className }: { label?: string; className?: string }) {
+  if (isRealMode()) return null;
   return (
-    <span className={cn("inline-flex items-center rounded-full border border-warning/60 bg-warning/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-warning", className)}>
-      Preview data
-    </span>
+    <p role="note" className={cn("flex items-center justify-center gap-2 border-b border-line py-1.5 text-center text-[12px] text-faint", className)}>
+      <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-warning" />
+      Preview data — {label}
+    </p>
   );
 }
 
-/** Per-card version of the "Preview data" label: legible on cream, dark and photos alike. */
-export function DemoBadge({ className }: { className?: string }) {
-  return <span className={cn("inline-flex shrink-0 items-center rounded-full bg-warning px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-paper-ink", className)}>Preview data</span>;
+/** A fixture region inside a real screen (mixed mode only); nothing in mock mode (the bar covers it). */
+export function PreviewPill({ className }: { className?: string }) {
+  return <SampleMark className={className} />;
+}
+
+/** A server demo item among real ones (mixed mode only); nothing in mock mode. */
+export function DemoBadge({ className, onPhoto }: { className?: string; onPhoto?: boolean }) {
+  return <SampleMark className={className} onPhoto={onPhoto} />;
+}
+
+function SampleMark({ className, onPhoto }: { className?: string; onPhoto?: boolean }) {
+  if (!isRealMode()) return null;
+  return (
+    <span className={cn("inline-flex shrink-0 items-center gap-1 text-[11px] font-medium", onPhoto ? "rounded-full bg-black/45 px-1.5 py-0.5 text-white/85" : "text-faint", className)}>
+      <span aria-hidden className="size-1.5 rounded-full bg-warning" />
+      Sample
+    </span>
+  );
 }
 
 export function SectionHeader({ title, href, action }: { title: string; href?: string; action?: ReactNode }) {

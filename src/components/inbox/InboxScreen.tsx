@@ -21,6 +21,7 @@ import { Cover } from "@/components/covers/Cover";
 import { CompanyMark } from "@/components/career/CompanyMark";
 import { isRealMode } from "@/lib/api/mode";
 import { previewMediaForPost } from "@/lib/mock/posts";
+import { JennyOrb } from "@/components/jenny/JennyOrb";
 
 const FILTERS = [
   { id: "all", label: "All" },
@@ -127,6 +128,8 @@ export function InboxScreen() {
       </div>
 
       <div className="mt-5 flex-1">
+        {/* Jenny is pinned above the conversations (board), not one of them. */}
+        {filter === "all" && !q && !error && <div className="border-b border-line"><JennyRow /></div>}
         {error ? (
           <StateCard kind="error" title="Your inbox didn't load" detail="Check your connection and try again." action={<Button variant="outline" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>} />
         ) : loading ? (
@@ -150,6 +153,20 @@ export function InboxScreen() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+/** Board: Jenny sits at the top of the Inbox as her own thread, with the orb (never a photo). */
+function JennyRow() {
+  return (
+    <Link href="/agent" className="flex min-h-[76px] items-center gap-3.5 py-3 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+      <JennyOrb size={56} online still />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[16px] font-semibold">Jenny</span>
+        <span className="block truncate text-[14px] text-faint">{isRealMode() ? "Ask her to find, plan or draft something" : "Two things for your Saturday"}</span>
+      </span>
+      <span className="shrink-0 rounded-full bg-primary/15 px-2 py-0.5 text-[12px] font-semibold text-primary-soft">AI</span>
+    </Link>
   );
 }
 

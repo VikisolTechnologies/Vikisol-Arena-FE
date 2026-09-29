@@ -554,6 +554,9 @@ export interface FeedItem {
   visibility?: PostVisibility;
   capacity?: number;
   spotsFilled?: number;
+  /** Needs: offers of help so far, and who (first few) — FE-API-GAPS #38; mock mode only today. */
+  offerCount?: number;
+  offerNames?: string[];
   startsAt?: string;
   endsAt?: string;
   joinable?: boolean;

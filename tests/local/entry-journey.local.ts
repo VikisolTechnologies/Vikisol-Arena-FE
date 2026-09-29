@@ -101,7 +101,7 @@ test("sign up → why → local life → identity → all set → feed, without 
   await page.getByLabel("Email address").fill("priya@example.com");
   await page.getByLabel("Password").fill("short");
   await page.getByLabel("Full name").click();
-  await expect(page.getByText("Use at least 6 characters.")).toBeVisible();
+  await expect(page.getByText("Use at least 8 characters.")).toBeVisible();
   await page.getByLabel("Password").fill("long-enough");
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page.getByText("Please agree to the Terms of Service and Privacy Policy.")).toBeVisible();
@@ -123,8 +123,8 @@ test("sign up → why → local life → identity → all set → feed, without 
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Set up your local life" })).toBeVisible();
-  // Nothing is pre-selected: Arena doesn't guess where someone lives.
-  await expect(page.getByLabel("Your area")).toHaveValue("");
+  // Board: the area starts on the launch area; the person can change it.
+  await expect(page.getByLabel("Your area")).toHaveValue("Gachibowli / Gopanapally");
   await page.getByLabel("Your area").selectOption("Kondapur");
   await page.getByRole("button", { name: "Running" }).click();
   await noSeriousA11y(page);

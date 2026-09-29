@@ -1,5 +1,5 @@
 import type { Company, CompanySize } from "@/lib/types";
-import { COMPANIES, INDUSTRIES, pick } from "./seed";
+import { COMPANIES } from "@/lib/fixtures/world";
 import { MOCK_JOBS } from "./jobs";
 
 const SIZES: CompanySize[] = ["1-10", "11-50", "51-200", "201-1000", "1000+"];
@@ -9,8 +9,8 @@ function buildCompany(id: string, name: string, emoji: string): Company {
     id,
     name,
     emoji,
-    industry: pick(INDUSTRIES),
-    size: pick(SIZES),
+    industry: MOCK_JOBS.find((j) => j.company === name)?.industry ?? "Engineering",
+    size: SIZES[name.length % SIZES.length],
     openJobCount: MOCK_JOBS.filter((j) => j.company === name).length,
     followerCount: 0,
   };

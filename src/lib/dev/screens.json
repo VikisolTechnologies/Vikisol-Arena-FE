@@ -8,7 +8,7 @@
     "route": "/auth",
     "status": "in-progress",
     "commit": "f523fcf",
-    "note": "Fidelity: board photo shows runners with the city skyline at golden hour; no free-licence photo like it was found \u2014 live uses a golden-light park (Cubbon Park, credited)."
+    "note": "Fidelity: board photo shows runners with the city skyline at golden hour; no free-licence photo like it was found — live uses a golden-light park (Cubbon Park, credited)."
   },
   {
     "id": "sign-up",
@@ -17,7 +17,7 @@
     "index": 2,
     "title": "Sign up",
     "route": "/auth?mode=signup",
-    "status": "done",
+    "status": "built",
     "commit": "f523fcf"
   },
   {
@@ -27,7 +27,7 @@
     "index": 3,
     "title": "Sign in",
     "route": "/auth?mode=signin",
-    "status": "done",
+    "status": "built",
     "commit": "f523fcf"
   },
   {
@@ -37,7 +37,7 @@
     "index": 4,
     "title": "Why are you here?",
     "route": "/dev/person?stage=onboarding&to=/onboarding%3Fstep%3D1",
-    "status": "done",
+    "status": "built",
     "commit": "f523fcf"
   },
   {
@@ -47,7 +47,7 @@
     "index": 5,
     "title": "Set up your local life",
     "route": "/dev/person?stage=onboarding&to=/onboarding%3Fstep%3D2",
-    "status": "done",
+    "status": "built",
     "commit": "f523fcf"
   },
   {
@@ -57,7 +57,7 @@
     "index": 6,
     "title": "Your identity",
     "route": "/dev/person?stage=onboarding&to=/onboarding%3Fstep%3D3",
-    "status": "done",
+    "status": "built",
     "commit": "f523fcf"
   },
   {
@@ -67,7 +67,7 @@
     "index": 7,
     "title": "You're all set",
     "route": "/dev/person?stage=onboarding&to=/onboarding%3Fstep%3D4",
-    "status": "done",
+    "status": "built",
     "commit": "f523fcf"
   },
   {
@@ -77,7 +77,7 @@
     "index": 1,
     "title": "Feed",
     "route": "/dev/person?to=/home",
-    "status": "done",
+    "status": "built",
     "commit": "49552e0"
   },
   {
@@ -87,7 +87,7 @@
     "index": 2,
     "title": "Discover",
     "route": "/dev/person?to=/discover",
-    "status": "done",
+    "status": "built",
     "commit": "49552e0"
   },
   {
@@ -108,7 +108,7 @@
     "index": 4,
     "title": "Work",
     "route": "/dev/person?to=/work",
-    "status": "done",
+    "status": "built",
     "commit": "49552e0"
   },
   {
@@ -118,7 +118,7 @@
     "index": 5,
     "title": "Create sheet",
     "route": "/dev/person?to=/home%3Fcreate%3D1",
-    "status": "done",
+    "status": "built",
     "commit": "49552e0"
   },
   {
@@ -128,7 +128,7 @@
     "index": 6,
     "title": "You (profile)",
     "route": "/dev/person?to=/identity",
-    "status": "done",
+    "status": "built",
     "commit": "49552e0"
   },
   {
@@ -149,7 +149,7 @@
     "index": 1,
     "title": "Personalised feed",
     "route": "/dev/person?to=/home",
-    "status": "done",
+    "status": "built",
     "commit": "1c8e99e"
   },
   {
@@ -172,7 +172,7 @@
     "route": "/dev/person?to=/discover%3Fview%3Dmap",
     "status": "in-progress",
     "commit": "1c8e99e",
-    "note": "Fidelity: same as Map \u2014 no map tiles; category chips differ."
+    "note": "Fidelity: same as Map — no map tiles; category chips differ."
   },
   {
     "id": "activity-details",
@@ -181,7 +181,7 @@
     "index": 4,
     "title": "Activity details",
     "route": "/dev/screen/activity-details",
-    "status": "done",
+    "status": "built",
     "commit": "1c8e99e"
   },
   {
@@ -191,7 +191,7 @@
     "index": 5,
     "title": "Join request sent",
     "route": "/dev/screen/join-sent",
-    "status": "done",
+    "status": "built",
     "commit": "1c8e99e"
   },
   {
@@ -201,7 +201,7 @@
     "index": 6,
     "title": "Approved & ready",
     "route": "/dev/screen/approved-ready",
-    "status": "done",
+    "status": "built",
     "commit": "1c8e99e"
   },
   {
@@ -217,68 +217,68 @@
   },
   {
     "id": "need-create",
-    "phase": "P4 Need \u2192 outcome",
+    "phase": "P4 Need → outcome",
     "board": "need-outcome",
     "index": 1,
     "title": "Create (need)",
     "route": "/dev/person?to=/home%3Fcreate%3D1",
-    "status": "done",
+    "status": "built",
     "commit": "f81aebf"
   },
   {
     "id": "post-need",
-    "phase": "P4 Need \u2192 outcome",
+    "phase": "P4 Need → outcome",
     "board": "need-outcome",
     "index": 2,
     "title": "Post a Need",
     "route": "/dev/person?to=/needs/new",
-    "status": "done",
+    "status": "built",
     "commit": "f81aebf"
   },
   {
     "id": "need-page",
-    "phase": "P4 Need \u2192 outcome",
+    "phase": "P4 Need → outcome",
     "board": "need-outcome",
     "index": 3,
     "title": "Need with offers",
     "route": "/dev/screen/need-page",
-    "status": "done",
+    "status": "built",
     "commit": "f81aebf"
   },
   {
     "id": "offer-details",
-    "phase": "P4 Need \u2192 outcome",
+    "phase": "P4 Need → outcome",
     "board": "need-outcome",
     "index": 4,
     "title": "Offer details",
     "route": "/dev/screen/offer-details",
     "status": "in-progress",
     "commit": "f81aebf",
-    "note": "Fidelity: board is a full page (shared interests, recent outcomes, the offer message); live is a sheet \u2014 interests/outcomes/message need gaps #12\u2013#13."
+    "note": "Fidelity: board is a full page (shared interests, recent outcomes, the offer message); live is a sheet — interests/outcomes/message need gaps #12–#13."
   },
   {
     "id": "coordination-room",
-    "phase": "P4 Need \u2192 outcome",
+    "phase": "P4 Need → outcome",
     "board": "need-outcome",
     "index": 5,
     "title": "Private coordination room",
     "route": "/dev/screen/coordination-room",
-    "status": "done",
+    "status": "built",
     "commit": "f81aebf"
   },
   {
     "id": "mark-completed",
-    "phase": "P4 Need \u2192 outcome",
+    "phase": "P4 Need → outcome",
     "board": "need-outcome",
     "index": 6,
     "title": "Mark as completed",
     "route": "/dev/screen/mark-completed",
-    "status": "done",
+    "status": "built",
     "commit": "f81aebf"
   },
   {
     "id": "see-outcome",
-    "phase": "P4 Need \u2192 outcome",
+    "phase": "P4 Need → outcome",
     "board": "need-outcome",
     "index": 7,
     "title": "See the outcome",
@@ -294,7 +294,7 @@
     "index": 1,
     "title": "Inbox",
     "route": "/dev/person?to=/rooms",
-    "status": "done",
+    "status": "built",
     "commit": "473d591"
   },
   {
@@ -304,7 +304,7 @@
     "index": 2,
     "title": "Conversation",
     "route": "/dev/screen/conversation",
-    "status": "done",
+    "status": "built",
     "commit": "473d591"
   },
   {
@@ -314,7 +314,7 @@
     "index": 3,
     "title": "Notifications",
     "route": "/dev/person?to=/notifications",
-    "status": "done",
+    "status": "built",
     "commit": "473d591"
   },
   {
@@ -335,7 +335,7 @@
     "index": 5,
     "title": "Settings & privacy",
     "route": "/dev/person?to=/settings",
-    "status": "done",
+    "status": "built",
     "commit": "473d591"
   },
   {
@@ -345,7 +345,7 @@
     "index": 6,
     "title": "Report / block",
     "route": "/dev/screen/report-block",
-    "status": "done",
+    "status": "built",
     "commit": "473d591"
   },
   {
@@ -355,7 +355,7 @@
     "index": 7,
     "title": "Resilient states",
     "route": "/dev/screen/resilient-states",
-    "status": "done",
+    "status": "built",
     "commit": "473d591"
   },
   {
@@ -376,7 +376,7 @@
     "index": 2,
     "title": "Career intent",
     "route": "/dev/person?to=/identity/career",
-    "status": "done",
+    "status": "built",
     "commit": "b9d03ce"
   },
   {
@@ -386,7 +386,7 @@
     "index": 3,
     "title": "Job preferences",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
-    "status": "done",
+    "status": "built",
     "commit": "b9d03ce"
   },
   {
@@ -396,7 +396,7 @@
     "index": 4,
     "title": "Visibility preview",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dprivacy",
-    "status": "done",
+    "status": "built",
     "commit": "b9d03ce"
   },
   {
@@ -404,7 +404,7 @@
     "phase": "P6 Career",
     "board": "career",
     "index": 5,
-    "title": "Work \u2192 Jobs",
+    "title": "Work → Jobs",
     "route": "/dev/person?to=/jobs",
     "status": "in-progress",
     "commit": "b9d03ce",
@@ -428,7 +428,7 @@
     "index": 7,
     "title": "Apply & track",
     "route": "/dev/screen/apply-track",
-    "status": "done",
+    "status": "built",
     "commit": "b9d03ce"
   },
   {
@@ -436,66 +436,66 @@
     "phase": "P6 Career",
     "board": "none",
     "index": 0,
-    "title": "Career \u00b7 Where you are now (status, notice)",
+    "title": "Career · Where you are now (status, notice)",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
-    "status": "done",
+    "status": "built",
     "commit": "b9d03ce",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "career-skills",
     "phase": "P6 Career",
     "board": "none",
     "index": 0,
-    "title": "Career \u00b7 Skills & stack (proficiency, SAP)",
+    "title": "Career · Skills & stack (proficiency, SAP)",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
-    "status": "done",
+    "status": "built",
     "commit": "b9d03ce",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "career-pay",
     "phase": "P6 Career",
     "board": "none",
     "index": 0,
-    "title": "Career \u00b7 Compensation (only me)",
+    "title": "Career · Compensation (only me)",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
-    "status": "done",
+    "status": "built",
     "commit": "b9d03ce",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "career-prefs",
     "phase": "P6 Career",
     "board": "none",
     "index": 0,
-    "title": "Career \u00b7 What you're looking for",
+    "title": "Career · What you're looking for",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
-    "status": "done",
+    "status": "built",
     "commit": "b9d03ce",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "career-proof",
     "phase": "P6 Career",
     "board": "none",
     "index": 0,
-    "title": "Career \u00b7 Resume & proof",
+    "title": "Career · Resume & proof",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
-    "status": "done",
+    "status": "built",
     "commit": "b9d03ce",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "career-review",
     "phase": "P6 Career",
     "board": "none",
     "index": 0,
-    "title": "Career \u00b7 Review answers",
+    "title": "Career · Review answers",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
-    "status": "done",
+    "status": "built",
     "commit": "b9d03ce",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "apply-sheet",
@@ -504,9 +504,9 @@
     "index": 0,
     "title": "Apply sheet (what's shared + consent)",
     "route": "/dev/screen/apply-sheet",
-    "status": "done",
+    "status": "built",
     "commit": "b9d03ce",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "activity-kind",
@@ -515,20 +515,20 @@
     "index": 0,
     "title": "A1 What kind? (search + categories)",
     "route": "/dev/person?to=/activities/new",
-    "status": "done",
+    "status": "built",
     "commit": "390af7e",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "activity-intake",
     "phase": "P6b Activities & covers",
     "board": "none",
     "index": 0,
-    "title": "A2\u2013A4 Activity intake (basics, group & cost, type questions, bring, when, where, who)",
+    "title": "A2–A4 Activity intake (basics, group & cost, type questions, bring, when, where, who)",
     "route": "/dev/person?to=/activities/new%3Fstep%3Ddetails",
-    "status": "done",
+    "status": "built",
     "commit": "390af7e",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "activity-cover",
@@ -537,9 +537,9 @@
     "index": 0,
     "title": "A5 Cover by Jenny (procedural card; AI behind a flag)",
     "route": "/dev/screen/activity-cover",
-    "status": "done",
+    "status": "built",
     "commit": "390af7e",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "activity-preview",
@@ -548,31 +548,31 @@
     "index": 0,
     "title": "A6 Preview & publish",
     "route": "/dev/person?to=/activities/new%3Fstep%3Dpreview",
-    "status": "done",
+    "status": "built",
     "commit": "390af7e",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "activity-published",
     "phase": "P6b Activities & covers",
     "board": "none",
     "index": 0,
-    "title": "A7 Published \u2014 share, WhatsApp, invite with a reason",
+    "title": "A7 Published — share, WhatsApp, invite with a reason",
     "route": "/dev/screen/activity-published",
-    "status": "done",
+    "status": "built",
     "commit": "390af7e",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "activity-manage",
     "phase": "P6b Activities & covers",
     "board": "none",
     "index": 0,
-    "title": "A8 Manage \u2014 starting soon, requests, room",
+    "title": "A8 Manage — starting soon, requests, room",
     "route": "/dev/screen/activity-details",
-    "status": "done",
+    "status": "built",
     "commit": "390af7e",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "activity-checkin",
@@ -581,9 +581,9 @@
     "index": 0,
     "title": "A12 Check-in (host marks who came)",
     "route": "/dev/screen/activity-details",
-    "status": "done",
+    "status": "built",
     "commit": "390af7e",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "activity-cancel",
@@ -592,9 +592,9 @@
     "index": 0,
     "title": "A11 Cancel with a reason",
     "route": "/dev/screen/activity-details",
-    "status": "done",
+    "status": "built",
     "commit": "390af7e",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "activity-leave",
@@ -603,9 +603,9 @@
     "index": 0,
     "title": "A16 Leave before the start",
     "route": "/dev/screen/approved-ready",
-    "status": "done",
+    "status": "built",
     "commit": "390af7e",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "activity-covers",
@@ -614,9 +614,9 @@
     "index": 0,
     "title": "Procedural covers (every type)",
     "route": "/dev/covers",
-    "status": "done",
+    "status": "built",
     "commit": "390af7e",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "activity-edit",
@@ -678,44 +678,44 @@
     "phase": "P6c Needs, offers & projects",
     "board": "none",
     "index": 0,
-    "title": "Need \u2014 what kind of help? (12 categories)",
+    "title": "Need — what kind of help? (12 categories)",
     "route": "/dev/person?to=/needs/new",
-    "status": "done",
+    "status": "built",
     "commit": "51f6a4d",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "need-intake",
     "phase": "P6c Needs, offers & projects",
     "board": "none",
     "index": 0,
-    "title": "Need intake \u2014 basics, category questions, where & photos, review",
+    "title": "Need intake — basics, category questions, where & photos, review",
     "route": "/dev/person?to=/needs/new%3Fkind%3Dmoving",
-    "status": "done",
+    "status": "built",
     "commit": "51f6a4d",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "offer-kind",
     "phase": "P6c Needs, offers & projects",
     "board": "none",
     "index": 0,
-    "title": "O1 Offer \u2014 what can you offer?",
+    "title": "O1 Offer — what can you offer?",
     "route": "/dev/person?to=/offers/new",
-    "status": "done",
+    "status": "built",
     "commit": "51f6a4d",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "offer-intake",
     "phase": "P6c Needs, offers & projects",
     "board": "none",
     "index": 0,
-    "title": "O1 Offer intake \u2014 what, when, limits, proof",
+    "title": "O1 Offer intake — what, when, limits, proof",
     "route": "/dev/person?to=/offers/new%3Fkind%3Dtutoring",
-    "status": "done",
+    "status": "built",
     "commit": "51f6a4d",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "offer-page",
@@ -724,31 +724,31 @@
     "index": 0,
     "title": "O2 Offer page",
     "route": "/dev/screen/need-page",
-    "status": "done",
+    "status": "built",
     "commit": "51f6a4d",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "offer-requests",
     "phase": "P6c Needs, offers & projects",
     "board": "none",
     "index": 0,
-    "title": "O3 Requests on my offer \u2192 accept \u2192 room",
+    "title": "O3 Requests on my offer → accept → room",
     "route": "/dev/screen/offer-details",
-    "status": "done",
+    "status": "built",
     "commit": "51f6a4d",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "project-start",
     "phase": "P6c Needs, offers & projects",
     "board": "none",
     "index": 0,
-    "title": "PR1\u2013PR2 Start a project + roles (paid publishes; collaborative saves)",
+    "title": "PR1–PR2 Start a project + roles (paid publishes; collaborative saves)",
     "route": "/dev/person?to=/projects/new",
-    "status": "done",
+    "status": "built",
     "commit": "51f6a4d",
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "project-page",
@@ -801,7 +801,7 @@
     "index": 1,
     "title": "Choose your role",
     "route": "/auth?mode=role",
-    "status": "done",
+    "status": "built",
     "commit": null
   },
   {
@@ -811,7 +811,7 @@
     "index": 2,
     "title": "Company workspace",
     "route": "/dev/business?to=/enterprise/onboarding",
-    "status": "done",
+    "status": "built",
     "commit": null
   },
   {
@@ -821,7 +821,7 @@
     "index": 3,
     "title": "Post a job",
     "route": "/dev/business?to=/enterprise/postings/new",
-    "status": "done",
+    "status": "built",
     "commit": null
   },
   {
@@ -831,7 +831,7 @@
     "index": 4,
     "title": "Manage your job",
     "route": "/dev/business?to=/enterprise/postings/demo-job",
-    "status": "done",
+    "status": "built",
     "commit": null
   },
   {
@@ -852,7 +852,7 @@
     "index": 6,
     "title": "Candidate profile",
     "route": "/dev/business?to=/enterprise/postings/demo-job/candidates/demo-app-0",
-    "status": "done",
+    "status": "built",
     "commit": null
   },
   {
@@ -862,12 +862,12 @@
     "index": 7,
     "title": "Interview & hire",
     "route": "/dev/business?to=/enterprise/interviews/demo-app-5",
-    "status": "done",
+    "status": "built",
     "commit": null
   },
   {
     "id": "jenny-feed",
-    "phase": "P8 Jenny \u2014 active layer",
+    "phase": "P8 Jenny — active layer",
     "board": "jenny-layer",
     "index": 1,
     "title": "Feed: Jenny noticed",
@@ -877,17 +877,17 @@
   },
   {
     "id": "jenny-discover",
-    "phase": "P8 Jenny \u2014 active layer",
+    "phase": "P8 Jenny — active layer",
     "board": "jenny-layer",
     "index": 2,
-    "title": "Discover: intent \u2192 filters",
+    "title": "Discover: intent → filters",
     "route": "/dev/person?to=/discover",
     "status": "not-started",
     "commit": null
   },
   {
     "id": "jenny-create",
-    "phase": "P8 Jenny \u2014 active layer",
+    "phase": "P8 Jenny — active layer",
     "board": "jenny-layer",
     "index": 3,
     "title": "Create: Jenny draft",
@@ -897,7 +897,7 @@
   },
   {
     "id": "smart-match",
-    "phase": "P8 Jenny \u2014 active layer",
+    "phase": "P8 Jenny — active layer",
     "board": "jenny-layer",
     "index": 4,
     "title": "Smart match (why this)",
@@ -907,7 +907,7 @@
   },
   {
     "id": "jenny-work",
-    "phase": "P8 Jenny \u2014 active layer",
+    "phase": "P8 Jenny — active layer",
     "board": "jenny-layer",
     "index": 5,
     "title": "Work: approvals queue",
@@ -917,7 +917,7 @@
   },
   {
     "id": "approve-action",
-    "phase": "P8 Jenny \u2014 active layer",
+    "phase": "P8 Jenny — active layer",
     "board": "jenny-layer",
     "index": 6,
     "title": "Approve action",
@@ -927,7 +927,7 @@
   },
   {
     "id": "jenny-today",
-    "phase": "P8 Jenny \u2014 active layer",
+    "phase": "P8 Jenny — active layer",
     "board": "jenny-layer",
     "index": 7,
     "title": "Jenny: today & automations",
@@ -937,7 +937,7 @@
   },
   {
     "id": "tell-jenny",
-    "phase": "P8 Jenny \u2014 automates the outcome",
+    "phase": "P8 Jenny — automates the outcome",
     "board": "jenny-automation",
     "index": 1,
     "title": "Tell Jenny",
@@ -947,7 +947,7 @@
   },
   {
     "id": "career-draft",
-    "phase": "P8 Jenny \u2014 automates the outcome",
+    "phase": "P8 Jenny — automates the outcome",
     "board": "jenny-automation",
     "index": 2,
     "title": "Career setup draft",
@@ -957,7 +957,7 @@
   },
   {
     "id": "set-privacy",
-    "phase": "P8 Jenny \u2014 automates the outcome",
+    "phase": "P8 Jenny — automates the outcome",
     "board": "jenny-automation",
     "index": 3,
     "title": "Privacy & permission",
@@ -967,7 +967,7 @@
   },
   {
     "id": "set-automation",
-    "phase": "P8 Jenny \u2014 automates the outcome",
+    "phase": "P8 Jenny — automates the outcome",
     "board": "jenny-automation",
     "index": 4,
     "title": "Set automation",
@@ -977,7 +977,7 @@
   },
   {
     "id": "shortlist",
-    "phase": "P8 Jenny \u2014 automates the outcome",
+    "phase": "P8 Jenny — automates the outcome",
     "board": "jenny-automation",
     "index": 5,
     "title": "Today's shortlist",
@@ -987,7 +987,7 @@
   },
   {
     "id": "review-application",
-    "phase": "P8 Jenny \u2014 automates the outcome",
+    "phase": "P8 Jenny — automates the outcome",
     "board": "jenny-automation",
     "index": 6,
     "title": "Review application",
@@ -997,7 +997,7 @@
   },
   {
     "id": "application-tracker",
-    "phase": "P8 Jenny \u2014 automates the outcome",
+    "phase": "P8 Jenny — automates the outcome",
     "board": "jenny-automation",
     "index": 7,
     "title": "Application tracker",
@@ -1012,9 +1012,9 @@
     "index": 1,
     "title": "Business Home (desktop)",
     "route": "/dev/business?to=/enterprise/dashboard",
-    "status": "done",
+    "status": "built",
     "commit": null,
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "biz-jobs",
@@ -1023,9 +1023,9 @@
     "index": 2,
     "title": "Jobs list",
     "route": "/dev/business?to=/enterprise/postings",
-    "status": "done",
+    "status": "built",
     "commit": null,
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "biz-pipeline",
@@ -1034,9 +1034,9 @@
     "index": 3,
     "title": "Pipeline board (drag)",
     "route": "/dev/business?to=/enterprise/postings/demo-job?tab=candidates",
-    "status": "done",
+    "status": "built",
     "commit": null,
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "biz-interviews",
@@ -1045,9 +1045,9 @@
     "index": 4,
     "title": "Interviews index",
     "route": "/dev/business?to=/enterprise/interviews",
-    "status": "done",
+    "status": "built",
     "commit": null,
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "biz-talent",
@@ -1056,9 +1056,9 @@
     "index": 5,
     "title": "Talent search",
     "route": "/dev/business?to=/enterprise/talent",
-    "status": "done",
+    "status": "built",
     "commit": null,
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "biz-messages",
@@ -1067,9 +1067,9 @@
     "index": 6,
     "title": "Business messages",
     "route": "/dev/business?to=/enterprise/messages",
-    "status": "done",
+    "status": "built",
     "commit": null,
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "biz-posts",
@@ -1078,20 +1078,20 @@
     "index": 7,
     "title": "Company posts",
     "route": "/dev/business?to=/enterprise/posts",
-    "status": "done",
+    "status": "built",
     "commit": null,
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "biz-admin",
     "phase": "P9 Arena for Business",
     "board": "none",
     "index": 8,
-    "title": "Company settings \u2014 overview",
+    "title": "Company settings — overview",
     "route": "/dev/business?to=/enterprise/admin",
-    "status": "done",
+    "status": "built",
     "commit": null,
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "biz-team",
@@ -1100,9 +1100,9 @@
     "index": 9,
     "title": "Team & invites",
     "route": "/dev/business?to=/enterprise/admin/team",
-    "status": "done",
+    "status": "built",
     "commit": null,
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "biz-audit",
@@ -1111,9 +1111,9 @@
     "index": 10,
     "title": "Audit log",
     "route": "/dev/business?to=/enterprise/admin/audit",
-    "status": "done",
+    "status": "built",
     "commit": null,
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "biz-billing",
@@ -1122,9 +1122,9 @@
     "index": 11,
     "title": "Billing & plan",
     "route": "/dev/business?to=/enterprise/admin/billing",
-    "status": "done",
+    "status": "built",
     "commit": null,
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "biz-company",
@@ -1133,9 +1133,9 @@
     "index": 12,
     "title": "Company profile",
     "route": "/dev/business?to=/enterprise/admin/company",
-    "status": "done",
+    "status": "built",
     "commit": null,
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   },
   {
     "id": "biz-consent",
@@ -1144,8 +1144,8 @@
     "index": 13,
     "title": "Consent & data",
     "route": "/dev/business?to=/enterprise/admin/consent",
-    "status": "done",
+    "status": "built",
     "commit": null,
-    "note": "No board \u2014 designed in B+"
+    "note": "No board — designed in B+"
   }
 ]

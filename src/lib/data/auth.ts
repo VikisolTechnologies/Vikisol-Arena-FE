@@ -13,9 +13,10 @@ export {
   resetPassword,
 } from "@/lib/api/auth";
 
-/** Matches Arena BE SignUpRequest/ResetPasswordRequest `@Size(min = 6)`. The board says 8;
- *  the backend is the source of truth (docs/design/DECISIONS.md). */
-export const PASSWORD_MIN = 6;
+/** New passwords need 8 characters (board + architect review 29 Sep, for security). Stricter than
+ *  Arena BE's `@Size(min = 6)` on sign-up/reset, so every request the FE sends is still valid;
+ *  the BE should match (FE-API-GAPS #36). Sign-in still accepts older 6–7 character passwords. */
+export const PASSWORD_MIN = 8;
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

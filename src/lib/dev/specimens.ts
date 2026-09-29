@@ -94,10 +94,10 @@ export const SPECIMEN_NEED: Post = {
 const offer = (id: string, userName: string, hoursAgo: number, status: PostJoinRequest["status"] = "pending"): PostJoinRequest => ({
   id, postId: SPECIMEN_NEED.id, userId: `u-${id}`, userName, userEmoji: userName[0], status, createdAt: inHours(-hoursAgo),
 });
-export const SPECIMEN_OFFERS: PostJoinRequest[] = [offer("o1", "Rohit Kumar", 1), offer("o2", "Ananya Reddy", 2), offer("o3", "Arjun Mehta", 2.5)];
+export const SPECIMEN_OFFERS: PostJoinRequest[] = [offer("o1", "Rohit Varma", 1), offer("o2", "Ananya Reddy", 2), offer("o3", "Arjun Mehta", 2.5)];
 
 export const SPECIMEN_OFFERER: PublicCandidateProfile = {
-  id: "u-o1", name: "Rohit Kumar", avatarEmoji: "r", title: "Works at a product company", industry: "Engineering" as PublicCandidateProfile["industry"],
+  id: "u-o1", name: "Rohit Varma", avatarEmoji: "r", title: "Works at a product company", industry: "Engineering" as PublicCandidateProfile["industry"],
   location: "Gachibowli", remote: false, skills: [{ name: "Running" }, { name: "Sustainable living" }, { name: "Community events" }], experienceYears: 6,
   openTo: [], careerHealth: 0, bio: "Kind, reliable and always down to help in the neighborhood.", verificationLevel: "phone", phoneVerified: true,
   homeCity: "Gachibowli", followerCount: 12, followingCount: 9,
@@ -113,12 +113,12 @@ export const SPECIMEN_NEED_ROOM: RoomSpecimen = {
   },
   post: { ...SPECIMEN_NEED, exactMeetingPoint: "Priya's apartment, Gachibowli (near My Home Avatar)", roomId: "specimen-need-room", spotsFilled: 1 },
   messages: [
-    needMsg("n1", false, "Rohit Kumar", "Hi Priya! Looking forward to this. I'll confirm 30 mins before I start.", 12),
+    needMsg("n1", false, "Rohit Varma", "Hi Priya! Looking forward to this. I'll confirm 30 mins before I start.", 12),
     needMsg("n2", true, "Priya Sharma", "Great, thanks! I'll be at the lobby. The sofa is in the living room.", 9),
   ],
   members: [
     { userId: "me", name: "Priya Sharma", emoji: "p", role: "admin" },
-    { userId: "u-o1", name: "Rohit Kumar", emoji: "r", role: "member" },
+    { userId: "u-o1", name: "Rohit Varma", emoji: "r", role: "member" },
   ],
 };
 
@@ -127,7 +127,7 @@ export const SPECIMEN_GARDEN: Post = {
   ...SPECIMEN_ACTIVITY,
   id: "specimen-garden",
   authorUserId: "u-ananya",
-  authorName: "Ananya Sharma",
+  authorName: "Ananya Rao",
   title: "Community Garden Setup",
   body: "Let's make our neighborhood greener together.",
   locationText: "Gachibowli (public park)",
@@ -138,7 +138,7 @@ export const SPECIMEN_GARDEN: Post = {
 const tm = (id: string, fromMe: boolean, content: string, minsAgo: number): ThreadMessage => ({ id, conversationId: "specimen-conv", fromMe, content, timestamp: at(minsAgo) });
 export const SPECIMEN_CONVERSATION = {
   conversation: {
-    id: "specimen-conv", participantId: "u-ananya", participantName: "Ananya Sharma", participantEmoji: "a",
+    id: "specimen-conv", participantId: "u-ananya", participantName: "Ananya Rao", participantEmoji: "a",
     lastMessageAt: at(3), unread: false, postId: "specimen-garden",
   } satisfies Conversation,
   messages: [

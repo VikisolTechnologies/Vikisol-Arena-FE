@@ -50,7 +50,7 @@ export function HeroActivityCard({ item, km }: { item: FeedItem; km: number | nu
                 {when}
               </span>
             )}
-            {isDemo(item) && <DemoBadge />}
+            {isDemo(item) && <DemoBadge onPhoto />}
           </div>
           <div className="absolute inset-x-4 bottom-3">
             {km != null && (
@@ -95,6 +95,9 @@ export function HeroActivityCard({ item, km }: { item: FeedItem; km: number | nu
 /** Board: the two-up cream "Need" cards. */
 export function NeedCard({ item }: { item: FeedItem }) {
   const replies = item.commentCount ?? 0;
+  // Board: "3 offers" with faces. Only when the feed says how many offers there are (gap #38);
+  // otherwise the honest reply count.
+  const offers = item.offerCount;
   return (
     <m.div whileTap={press} transition={spring.snappy} className="h-full">
       <Link href={hrefFor(item)} className="flex h-full flex-col rounded-tile bg-paper p-3.5 text-paper-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
@@ -103,10 +106,16 @@ export function NeedCard({ item }: { item: FeedItem }) {
           {isDemo(item) && <DemoBadge />}
         </div>
         <h3 className="mt-2 line-clamp-2 text-[16px] font-semibold leading-snug">{titleOf(item)}</h3>
-        <p className="mt-1 line-clamp-1 text-[13px] text-paper-ink-muted">
+        <p className="mt-1 line-clamp-2 text-[13px] leading-snug text-paper-ink-muted">
           {[item.locationText, whenLabel(item.startsAt ?? undefined)].filter(Boolean).join(" · ") || "Nearby"}
         </p>
-        {replies > 0 && (
+        {offers != null ? (
+          offers > 0 && (
+            <p className="mt-auto flex items-center gap-1 pt-3 text-[13px] font-semibold text-success-on-paper">
+              <AvatarStack names={(item.offerNames ?? []).slice(0, 3)} total={offers} label={offers === 1 ? "offer" : "offers"} ring="ring-paper" />
+            </p>
+          )
+        ) : replies > 0 && (
           <p className="mt-auto flex items-center gap-1 pt-3 text-[13px] font-semibold text-success-on-paper">
             {facesFor(item, replies).length ? (
               <AvatarStack names={facesFor(item, replies)} total={replies} label={replies === 1 ? "reply" : "replies"} ring="ring-paper" />
@@ -137,7 +146,7 @@ export function RowCard({ item }: { item: FeedItem }) {
             {isDemo(item) && <DemoBadge />}
           </div>
           <h3 className="mt-1 line-clamp-2 text-[16px] font-semibold leading-snug">{titleOf(item)}</h3>
-          {meta && <p className="mt-0.5 line-clamp-1 text-[13px] text-paper-ink-muted">{meta}</p>}
+          {meta && <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-paper-ink-muted">{meta}</p>}
           {left && <p className="mt-1 text-[13px] font-semibold text-success-on-paper">{left}</p>}
         </div>
         <ChevronRight className="size-5 shrink-0 self-center text-paper-ink-muted" strokeWidth={1.75} aria-hidden />

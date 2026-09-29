@@ -5,43 +5,43 @@ import { MOCK_JOBS } from "./jobs";
 const TEMPLATES: Record<ActivityEventType, () => Omit<AgentActivityEvent, "id" | "timestamp">> = {
   scanned: () => ({
     type: "scanned",
-    title: `Scanned ${intBetween(20, 60)} new openings`,
-    description: "Matched against your identity graph — skills, proof of work, salary floor.",
+    title: `Looked through ${intBetween(20, 60)} new openings near Gachibowli`,
+    description: "Checked them against your skills, work and pay floor.",
   }),
   applied: () => {
-    const job = pick(MOCK_JOBS);
+    const job = pick(MOCK_JOBS.filter((j) => j.industry === "Design"));
     return {
       type: "applied",
-      title: `Applied to ${job.title} at ${job.company}`,
-      description: `${job.matchPercentage}% match — resume tailored to this role, ready for your review.`,
+      title: `Prepared an application: ${job.title} at ${job.company}`,
+      description: "Ready for your review. Nothing is sent until you approve it.",
       relatedJobId: job.id,
       rationale: `Matched on ${job.skills.slice(0, 2).join(", ")} and your salary floor.`,
       undoable: true,
     };
   },
   match_found: () => {
-    const job = pick(MOCK_JOBS);
+    const job = pick(MOCK_JOBS.filter((j) => j.industry === "Design"));
     return {
       type: "match_found",
       title: `Found a new match: ${job.title}`,
-      description: `${job.company} · ${job.location} · ${job.matchPercentage}% match`,
+      description: `${job.company} · ${job.location}`,
       relatedJobId: job.id,
     };
   },
   interview_proposed: () => ({
     type: "interview_proposed",
-    title: "Proposed interview slots",
-    description: "Read both calendars and suggested 3 times that work.",
+    title: "Suggested interview times",
+    description: "Three times that fit your calendar — you pick one.",
   }),
   interview_confirmed: () => ({
     type: "interview_confirmed",
-    title: "Interview locked in",
-    description: "Confirmed for Tuesday 3:00 PM. You just have to show up.",
+    title: "Interview confirmed",
+    description: "Lakeshore Tech · Thursday 3:00 PM.",
   }),
   message: () => ({
     type: "message",
-    title: "New message from a recruiter",
-    description: "They'd love to see your portfolio.",
+    title: "New message from Lakeshore Tech",
+    description: "They'd like a first chat on Thursday.",
   }),
 };
 

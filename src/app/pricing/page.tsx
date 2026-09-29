@@ -20,7 +20,7 @@ const TALENT_TIERS: { key: "free" | "pro"; name: string; price: string; period: 
   },
   {
     key: "pro", name: "Pro", price: "₹499", period: "/month",
-    features: ["Everything in Free", "Priority in Talent Universe search", "Tailored resume history", "Priority support"],
+    features: ["Everything in Free", "Priority in employer talent search", "Tailored resume history", "Priority support"],
     highlight: true,
   },
 ];
@@ -97,7 +97,7 @@ export default function PricingPage() {
       <section className="relative z-10 mx-auto w-full max-w-[1000px] px-5 pb-24 sm:px-6">
         <div className="rounded-[24px] border border-border bg-white/[0.03] p-7">
           <p className="font-display text-lg font-bold">Enterprise</p>
-          <p className="mt-1 text-sm text-muted-foreground">Search Talent Universe, unlock candidates, hire on proof.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Search consented talent, unlock candidates, hire on evidence.</p>
           <div className="mt-4 flex items-center gap-4">
             <p className="font-display text-3xl font-bold">
               {formatINR(enterprisePricePerSeat)} <span className="text-sm font-normal text-muted-foreground">/seat/month</span>
@@ -112,7 +112,7 @@ export default function PricingPage() {
           <p className="mt-1 text-xs text-muted-foreground">≈ {formatINR(enterprisePricePerSeat * seats)}/month total</p>
 
           <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
-            {["Unlimited Talent Universe search", "50 candidate unlocks/month", "Applicant pipeline + postings", "Priority support"].map((f) => (
+            {["Unlimited talent search", "50 candidate unlocks/month", "Applicant pipeline + postings", "Priority support"].map((f) => (
               <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground"><Check className="size-4 shrink-0 text-primary-soft" /> {f}</div>
             ))}
           </div>

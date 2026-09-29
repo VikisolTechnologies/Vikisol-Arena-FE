@@ -68,8 +68,8 @@ export default function EnterpriseDashboardPage() {
         </div>
       )}
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[1.2fr_1fr]">
-        <div className="space-y-5">
+      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[1.2fr_1fr]">
+        <div className="min-w-0 space-y-5">
           <Panel title="Needs you">
             {!applicants ? (
               <Skeleton className="h-20" />
@@ -113,7 +113,7 @@ export default function EnterpriseDashboardPage() {
             )}
           </Panel>
         </div>
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5">
           <Panel title="In interview">
             {inInterview.length === 0 ? (
               <p className="text-[14px] text-faint">No one is at the interview stage right now.</p>

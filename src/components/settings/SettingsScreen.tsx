@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { m } from "motion/react";
-import { Ban, Bell, Bot, Briefcase, ChevronRight, Download, KeyRound, LogOut, MapPin, ShieldCheck, Trash2 } from "lucide-react";
+import { ChevronRight, LogOut } from "lucide-react";
+import { IconBadge, type IconBadgeTone } from "@/components/bplus/IconBadge";
+import { BellSolid, BlockSolid, BriefcaseSolid, LockSolid, PinSolid, ShieldSolid, SparkleSolid, TrashSolid, UserCardSolid } from "@/components/bplus/SolidIcons";
 import { cn } from "@/lib/utils";
 import { rise } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
@@ -21,14 +23,14 @@ import { getManualReducedEffects, setManualReducedEffects } from "@/hooks/use-re
 import { requireOnboarded } from "@/lib/auth-guard";
 import type { CandidateProfile } from "@/lib/types";
 
-type Icon = ComponentType<{ className?: string; strokeWidth?: number; "aria-hidden"?: boolean }>;
+type Glyph = typeof PinSolid;
 type Sheet = "location" | "career" | "jenny" | "verification" | "account" | "blocked" | "delete" | null;
 const subscribeNothing = () => () => {};
 
-function Row({ icon: IconCmp, title, detail, onClick, href, danger }: { icon: Icon; title: string; detail?: string; onClick?: () => void; href?: string; danger?: boolean }) {
+function Row({ icon, tone, title, detail, onClick, href, danger }: { icon: Glyph; tone: IconBadgeTone; title: string; detail?: string; onClick?: () => void; href?: string; danger?: boolean }) {
   const body = (
     <>
-      <IconCmp className={cn("size-6 shrink-0", danger ? "text-danger-on-paper" : "text-paper-ink")} strokeWidth={1.75} aria-hidden />
+      <IconBadge icon={icon} tone={tone} size={40} />
       <span className="min-w-0 flex-1 text-left">
         <span className={cn("block text-[16px] font-semibold", danger && "text-danger-on-paper")}>{title}</span>
         {detail && <span className="block text-[14px] text-paper-ink-muted">{detail}</span>}
@@ -123,21 +125,21 @@ export function SettingsScreen() {
           </m.div>
 
           <Group title="Privacy & visibility" index={1}>
-            <Row icon={MapPin} title="Location" detail={locationDetail} onClick={() => setSheet("location")} />
-            <Row icon={Briefcase} title="Career visibility" detail={profile.consent.searchableByEnterprises ? "Visible to employers" : "Hidden from employers"} onClick={() => setSheet("career")} />
-            <Row icon={Bot} title="Jenny's permissions" detail={profile.autonomy === "manual" ? "Only when I ask · you approve" : "Jenny prepares, you approve"} onClick={() => setSheet("jenny")} />
-            <Row icon={ShieldCheck} title="Verification & safety" detail="Date of birth, phone" onClick={() => setSheet("verification")} />
+            <Row icon={PinSolid} tone="blue" title="Location" detail={locationDetail} onClick={() => setSheet("location")} />
+            <Row icon={BriefcaseSolid} tone="brown" title="Career visibility" detail={profile.consent.searchableByEnterprises ? "Visible to employers" : "Hidden from employers"} onClick={() => setSheet("career")} />
+            <Row icon={SparkleSolid} tone="jenny" title="Jenny's permissions" detail={profile.autonomy === "manual" ? "Only when I ask · you approve" : "Jenny prepares, you approve"} onClick={() => setSheet("jenny")} />
+            <Row icon={ShieldSolid} tone="green" title="Verification & safety" detail="Date of birth, phone" onClick={() => setSheet("verification")} />
           </Group>
 
           <Group title="Account & data" index={2}>
-            <Row icon={KeyRound} title="Email & password" detail={email || undefined} onClick={() => setSheet("account")} />
-            <Row icon={Download} title={exporting ? "Preparing your data…" : "Download my data"} detail="A copy of what Arena holds about you" onClick={exportData} />
-            <Row icon={Ban} title="Blocked accounts" detail="Manage people you've blocked" onClick={() => setSheet("blocked")} />
-            <Row icon={Trash2} title="Delete account" detail="Permanently remove your data" onClick={() => setSheet("delete")} danger />
+            <Row icon={LockSolid} tone="slate" title="Email & password" detail={email || undefined} onClick={() => setSheet("account")} />
+            <Row icon={UserCardSolid} tone="blue" title={exporting ? "Preparing your data…" : "Download my data"} detail="A copy of what Arena holds about you" onClick={exportData} />
+            <Row icon={BlockSolid} tone="amber" title="Blocked accounts" detail="Manage people you've blocked" onClick={() => setSheet("blocked")} />
+            <Row icon={TrashSolid} tone="red" title="Delete account" detail="Permanently remove your data" onClick={() => setSheet("delete")} danger />
           </Group>
 
           <Group title="Notifications" index={3}>
-            <Row icon={Bell} title="Notifications" detail="See and clear your notifications" href="/notifications" />
+            <Row icon={BellSolid} tone="orange" title="Notifications" detail="See and clear your notifications" href="/notifications" />
           </Group>
 
           <m.section variants={rise} custom={4} className="mt-6" aria-label="Accessibility">

@@ -3,6 +3,38 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **29 Sep (architect review A)** — One preview world: `src/lib/fixtures/world.ts` holds the 13
+  neighbours (roles, skills, interests, bios), the jobs near them, Priya's applications, chats and
+  notifications, and the business demo (GreenLeaf Labs hiring a Community Program Assistant, with
+  applicants whose work fits). Every mock file derives from it; the random 27 extra candidates and
+  random name generator are gone, and avatar photos match full names only (two people never share
+  a face). A new posting's seeded applicants must share skills or field with the job.
+- **29 Sep (architect review A)** — Preview labelling is quiet: mock mode shows one slim bar at the
+  top of each screen ("Preview data — sample neighbours and activities"); per-card and per-section
+  labels only appear in real "mixed" mode, as a small muted "Sample" mark where fixtures sit among
+  real content.
+- **29 Sep (architect review A)** — Light "paper" pages via a `data-tone="light"` token scope (cream
+  page, near-white cards, ink text; the bottom bar keeps `data-tone="dark"`). Used by every business
+  page, Choose role, and the career intent/setup/privacy, job details and my-application screens.
+  Business on phones gets a bottom bar (Home · Jobs · (+) Post · Candidates · Company); the rest of
+  the business nav and Sign out sit in a ☰ menu. Desktop left nav unchanged. New standalone
+  `/enterprise/candidates` (one job at a time: evidence is checked against that job's must-haves).
+- **29 Sep (architect review A)** — Icon badges are solid white glyphs in 44 px saturated circles
+  (`IconBadge` + `SolidIcons`, hand-drawn 24 px glyphs) on onboarding tiles, next steps, the Create
+  sheet, Choose role and Settings rows. Lucide outline icons stay for inline/UI icons.
+- **29 Sep (architect review A)** — Business tabs read "… · Arena for Business"; "Talent Universe"
+  and "Enterprise Admin" are gone from user-visible text. The plan tier named "Enterprise" (Free /
+  Pro / Enterprise) keeps its name — it's a pricing tier, not the product. The stale
+  `/enterprise/interviews → /enterprise/postings` redirect was removed (the page exists since P7).
+- **29 Sep (architect review A)** — New passwords need 8 characters (FE), stricter than the API's 6
+  (gap #36); sign-in still accepts older passwords. Need cards show "N offers" with the offerers'
+  faces when the feed provides an offer count (mock today, gap #38), else the honest reply count.
+- **29 Sep (architect review A)** — Speed: mock API delays are capped at 60 ms (they chained into
+  multi-second skeletons). Production build, Pixel 7 profile with 4× CPU slowdown on Wi-Fi-speed
+  network: Feed 1.1 s, Discover 0.8 s, Work 0.5 s, You 0.5 s, Inbox ≤1.0 s, Activity 0.7 s, Jobs
+  ≤1.0 s to content. Local preview photos go through `next/image` with sizes from the box
+  (thumbnails download ~96 px); all fixture photos are WebP ≤ 150 KB. Dev-server skeletons are
+  compile time, not the app.
 - **29 Sep (fidelity pass)** — Preview (mock) mode shows credited free-licence photos for the
   fictional neighbours and preview posts (`public/fixtures`, `CREDITS.md`); real mode never does.
   All mock content is labelled "Preview data". "Nearby" = within the radius (default 5 km of the

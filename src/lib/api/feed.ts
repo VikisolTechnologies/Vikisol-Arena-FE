@@ -1,5 +1,5 @@
 import type { FeedItem, FeedTab, Post } from "@/lib/types";
-import { getFeed as getPostFeed } from "@/lib/api/posts";
+import { getFeed as getPostFeed, mockOffersFor } from "@/lib/api/posts";
 import { MOCK_JOBS } from "@/lib/mock/jobs";
 import { MOCK_PROJECTS } from "@/lib/mock/projects";
 import { delay } from "./shared";
@@ -12,7 +12,9 @@ import { apiFetch } from "./httpClient";
 // MOCK_PROJECTS - recency-only ranking (no follow/embedding signals in mock mode), same "honest
 // simplification for the demo path" precedent as getFeed()'s own mock branch.
 function postToFeedItem(post: Post): FeedItem {
+  const offers = post.intentType === "ask" ? mockOffersFor(post.id) : null;
   return {
+    ...(offers ? { offerCount: offers.length, offerNames: offers.map((o) => o.userName) } : {}),
     id: post.id,
     itemType: post.intentType,
     authorUserId: post.authorUserId,

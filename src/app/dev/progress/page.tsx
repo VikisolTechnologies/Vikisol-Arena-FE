@@ -4,13 +4,15 @@ import { PHASES, SCREENS, STATUS_LABEL, type ScreenStatus } from "@/lib/dev/scre
 export const dynamic = "force-static";
 
 const TONE: Record<ScreenStatus, string> = {
-  done: "bg-success/20 text-success",
+  approved: "bg-success/20 text-success",
+  built: "bg-info/20 text-info",
   "in-progress": "bg-warning/20 text-warning",
   "not-started": "bg-foreground/10 text-faint",
 };
 
 export default function ProgressPage() {
-  const done = SCREENS.filter((s) => s.status === "done").length;
+  const approved = SCREENS.filter((s) => s.status === "approved").length;
+  const built = SCREENS.filter((s) => s.status === "built").length;
   return (
     <main className="mx-auto max-w-5xl px-5 py-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -18,15 +20,18 @@ export default function ProgressPage() {
           <p className="text-[13px] font-semibold uppercase tracking-[0.2em] text-primary">Arena B+ build</p>
           <h1 className="mt-1 font-display-serif text-[36px] font-medium">Progress</h1>
           <p className="mt-1 text-[15px] text-faint">
-            {done} of {SCREENS.length} screens done · board on the left, live screen on the right in Compare.
+            {approved} approved · {built} built and waiting for review · {SCREENS.length} screens. Only the architect marks a screen Approved.
           </p>
         </div>
         <Link href="/dev/compare/all" className="inline-flex min-h-11 items-center rounded-button bg-primary px-5 text-[16px] font-bold text-white">
-          Compare all done screens
+          Compare all built screens
         </Link>
       </header>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface" aria-hidden>
-        <div className="h-full rounded-full bg-primary" style={{ width: `${(done / SCREENS.length) * 100}%` }} />
+        <div className="flex h-full">
+          <div className="h-full bg-success" style={{ width: `${(approved / SCREENS.length) * 100}%` }} />
+          <div className="h-full bg-primary" style={{ width: `${(built / SCREENS.length) * 100}%` }} />
+        </div>
       </div>
 
       {PHASES.map((phase) => {

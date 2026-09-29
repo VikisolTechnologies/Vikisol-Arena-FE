@@ -16,6 +16,7 @@ import { getMyBlocks, unblockUser } from "@/lib/api/blocks";
 import { ApiError } from "@/lib/api/httpClient";
 import { isRealMode } from "@/lib/api/mode";
 import { timeAgo } from "@/lib/data/time";
+import { PASSWORD_MIN } from "@/lib/data/auth";
 import type { AutonomyLevel, BlockedUser, CandidateProfile, LocationConsent, VerificationStatus } from "@/lib/types";
 
 /* ── Paper-surface controls used by these sheets ── */
@@ -358,7 +359,7 @@ export function AccountSheet({ open, onClose, email, onEmail }: { open: boolean;
         onSubmit={async (e) => {
           e.preventDefault();
           setPwError(null);
-          if (next.length < 6) return setPwError("New password must be at least 6 characters.");
+          if (next.length < PASSWORD_MIN) return setPwError(`New password must be at least ${PASSWORD_MIN} characters.`);
           setPwState("busy");
           try {
             await changePassword(current, next);
