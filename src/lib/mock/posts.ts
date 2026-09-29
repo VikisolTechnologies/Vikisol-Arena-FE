@@ -20,6 +20,8 @@ function ist(days: number, hh: number, mm = 0) {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + days, hh, mm) - 5.5 * 3600_000).toISOString();
 }
 const ago = (hours: number) => new Date(Date.now() - hours * 3600_000).toISOString();
+/** Days from today (India time) to the coming Saturday — 0 on a Saturday. */
+const toSaturday = () => (6 - new Date(Date.now() + 5.5 * 3600_000).getUTCDay() + 7) % 7;
 const photo = (name: string) => `/fixtures/photos/${name}.webp`;
 
 // Places (approximate public points; ~km from central Gachibowli in comments).
@@ -60,6 +62,18 @@ export const MOCK_POSTS: Post[] = [
     title: "Badminton doubles tonight", body: "Court booked 6–7:30 pm. Need 2 more for doubles — intermediate level.",
     ...PLACES.stadium, visibility: "approval", capacity: 4, spotsFilled: 2, startsAt: ist(0, 18), endsAt: ist(0, 19, 30),
     tags: ["badminton", "sports"], mediaUrls: [photo("badminton")], createdAt: ago(2), commentCount: 2, reactionCount: 4,
+  },
+  {
+    ...base, id: "post-badminton-beginners", ...who("ananya"), intentType: "activity", visibility: "approval",
+    title: "Beginner-friendly badminton", body: "Relaxed doubles for beginners — spare rackets to share, shuttles provided. Come and learn the basics.",
+    ...PLACES.kondapur, capacity: 8, spotsFilled: 5, startsAt: ist(toSaturday(), 10), endsAt: ist(toSaturday(), 12),
+    tags: ["badminton", "sports", "beginner"], mediaUrls: [], createdAt: ago(7), commentCount: 1, reactionCount: 6,
+  },
+  {
+    ...base, id: "post-badminton-social", ...who("kabir"), intentType: "activity", visibility: "public",
+    title: "Weekend social badminton", body: "Two courts booked. Mixed levels, beginners welcome — we rotate partners every game.",
+    ...PLACES.nanakramguda, capacity: 12, spotsFilled: 8, startsAt: ist(toSaturday() + 1, 16), endsAt: ist(toSaturday() + 1, 18),
+    tags: ["badminton", "sports"], mediaUrls: [], createdAt: ago(16), reactionCount: 3,
   },
   {
     ...base, id: "post-sofa", ...who("ravi"), intentType: "ask", visibility: "approval", myJoinStatus: "approved", roomId: "room-sofa",

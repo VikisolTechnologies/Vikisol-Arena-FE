@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Info } from "lucide-react";
 import { vibrate } from "@/lib/motion";
@@ -8,6 +8,7 @@ import { AppShell } from "@/components/bplus/AppShell";
 import { ButtonLink } from "@/components/bplus/Button";
 import { ProceduralCover } from "@/components/covers/ProceduralCover";
 import { IntakeForm, clearIntakeDraft } from "@/components/intake/IntakeForm";
+import { TellJenny } from "@/components/jenny/JennyParts";
 import { useGuest } from "@/hooks/use-arena-session";
 import { createMyProject } from "@/lib/api/myProjects";
 import { PROJECT_SCHEMA } from "@/lib/intake/schemas/project";
@@ -17,7 +18,10 @@ import type { MoneyRange, Values } from "@/lib/intake/types";
  *  projects (roles, applicants, team room) wait for the API (FE-API-GAPS #26) and stay a draft. */
 export function ProjectCreateFlow() {
   const router = useRouter();
+  const params = useSearchParams();
   const guest = useGuest();
+  // A Jenny pre-fill rewrites the draft: remount the form so it reads it (and marks her fields).
+  const [prefilled, setPrefilled] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -54,8 +58,11 @@ export function ProjectCreateFlow() {
           </div>
         ) : (
           <IntakeForm
+            key={prefilled}
             schema={PROJECT_SCHEMA}
             draftKey="project"
+            startAt={params.get("start") ?? undefined}
+            intro={<TellJenny kind="project" example="A map of every lake clean-up spot in Gachibowli" className="mt-4" onPrefill={() => setPrefilled((n) => n + 1)} />}
             onExit={() => router.push("/home")}
             onSubmit={submit}
             submitText={(v) => (v.paid === "paid" ? "Publish project" : "Save draft")}

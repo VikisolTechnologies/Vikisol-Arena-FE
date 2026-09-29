@@ -15,6 +15,8 @@ import { AppShell } from "@/components/bplus/AppShell";
 import { Button } from "@/components/bplus/Button";
 import { StateCard } from "@/components/bplus/Primitives";
 import { FIXTURES_ALLOWED } from "@/lib/data/mode";
+import { ApprovalSheet } from "@/components/jenny/ApprovalSheet";
+import { loadQueue } from "@/lib/data/jenny";
 import { SPECIMEN_ACTIVITY, SPECIMEN_APPLICATION, SPECIMEN_CANDIDATE, SPECIMEN_JOB, SPECIMEN_APPROVED, SPECIMEN_CONVERSATION, SPECIMEN_NEED, SPECIMEN_NEED_ROOM, SPECIMEN_OFFERER, SPECIMEN_OFFERS, SPECIMEN_PENDING, SPECIMEN_ROOM } from "@/lib/dev/specimens";
 
 /** Compare-page specimens: the real screen components with fixed fictional data, for screens
@@ -65,6 +67,14 @@ export default function SpecimenPage() {
       return <JobDetailScreen id="specimen-job" specimen={{ job: SPECIMEN_JOB, profile: SPECIMEN_CANDIDATE, applyOpen: true }} />;
     case "apply-track":
       return <ApplicationScreen id="specimen-app" specimen={{ application: SPECIMEN_APPLICATION, job: SPECIMEN_JOB }} />;
+    case "application-tracker":
+      return <ApplicationScreen id="specimen-app" specimen={{ application: { ...SPECIMEN_APPLICATION, stage: "applied", appliedAt: new Date().toISOString() }, job: SPECIMEN_JOB, viaJenny: true }} />;
+    case "approve-action":
+      return (
+        <AppShell>
+          <ApprovalSheet item={loadQueue().find((q) => q.id === "q-invite") ?? null} onClose={() => {}} onDone={() => {}} />
+        </AppShell>
+      );
     case "activity-kind":
       return <AppShell><div className="-mx-5 -mt-2 flex-1 bg-paper px-5 pb-6 pt-3 text-paper-ink"><KindPicker onPick={() => {}} onClose={() => {}} /></div></AppShell>;
     case "activity-cover":

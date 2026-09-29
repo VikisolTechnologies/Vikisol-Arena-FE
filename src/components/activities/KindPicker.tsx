@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { AnimatePresence, m } from "motion/react";
 import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -8,7 +8,7 @@ import { fade, press, rise, spring } from "@/lib/motion";
 import { ALL_SUBTYPES, CATEGORIES, type Category } from "@/lib/activities/taxonomy";
 
 /** Flow §3 A1 — "What kind?": search, category grid, then its types. */
-export function KindPicker({ onPick, onClose }: { onPick: (subtypeId: string) => void; onClose: () => void }) {
+export function KindPicker({ onPick, onClose, intro }: { onPick: (subtypeId: string) => void; onClose: () => void; /** "Or just tell Jenny" (flow §3 A1). */ intro?: ReactNode }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<Category | null>(null);
   const q = query.trim().toLowerCase();
@@ -23,6 +23,7 @@ export function KindPicker({ onPick, onClose }: { onPick: (subtypeId: string) =>
       </div>
       <h1 className="font-display-serif text-[30px] font-medium leading-[1.12]">What kind of activity?</h1>
       <p className="mt-2 text-[15px] text-paper-ink-muted">Pick the closest — the questions adapt to it.</p>
+      {intro}
       <label className="mt-5 flex h-[52px] items-center gap-2.5 rounded-full border border-field-line bg-white px-4 focus-within:border-primary-on-paper">
         <Search className="size-5 text-paper-ink-muted" aria-hidden />
         <span className="sr-only">Search activity types</span>

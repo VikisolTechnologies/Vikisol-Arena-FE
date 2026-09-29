@@ -3,52 +3,48 @@
 **FE owner: Claude Code. Mission: `docs/missions/FE-BPLUS-BUILD.md`. Design is final
 (`docs/design/*`). Cursor no longer touches FE except the separate P0 security release.**
 
-Updated 29 Sep 2026. Resume from here.
+Updated 30 Sep 2026. Resume from here.
 
-## Summary — 30 Sep, end of session (read this first)
+## Summary — 30 Sep, P8 done (read this first)
 
-**Branch:** `local/wip-2026-09-29` in worktree `arena-fe-vnext` (it holds everything from
-`feature/arena-vnext-mobile-jenny` plus the review work). Nothing on main. Build, typecheck and
-lint clean; **109/109 local Playwright on 3 engines** (incl. the map fallback test); no horizontal overflow at 320 or 430 px on
-24 key screens.
+**Branch:** `feature/arena-vnext-mobile-jenny` in worktree `arena-fe-vnext`. Nothing on main.
+Typecheck, lint and production build clean; **127 passed / 2 skipped local Playwright on 3
+engines** (new `tests/local/jenny.local.ts`, 6 tests × 3); no horizontal overflow at 320 or 430 px
+on the 18 P8 routes.
 
-**Done**
-- Architect review **section A** (A1–A11) — commit "FE review A".
-- **Section B** — commit "FE review B".
-- **F2 list, all items:** Search, Discover activity filters, Map (live MapLibre + OpenFreeMap), Candidates
-  standalone, See the outcome, Activity room header + tools, Offer details page, Job details
-  tabs, Work → Jobs, Career profile tabs, Jenny orb, Welcome (photo accepted).
-- Tracker: **86 screens Built**, 0 In progress, 23 Not started (P8 Jenny boards, P10 Admin and
-  blocked-by-API screens). Only the architect sets Approved.
+**P8 Jenny — done** (commit "FE B+ P8: Jenny boards + pre-fill"). Review: `docs/reviews/p8.md`
+(side-by-sides in `docs/reviews/p8/`). All 14 Jenny board screens Built:
+- AI layer: Feed "Jenny noticed", Discover intent → editable filters (`/discover?q=`), Create with
+  Jenny (`/agent/draft`, Ask Jenny now opens it), Smart match (`/agent/match/[id]`), Work
+  "Needs approval" tab + Approve sheet, Jenny Today / Automations / Reminders / History.
+- Automates the outcome: `/identity/career/jenny` (tell → draft → privacy), `/identity/career/automation`,
+  `/identity/career/shortlist`, `/applications/new?job=` (review), tracker note on `/applications/[id]`.
+- Jenny pre-fill: "Or just tell Jenny" on Need, Offer, Activity (A1) and Project intakes; marks
+  persist per draft until touched.
+- Code: `src/lib/data/jenny.ts` (v2-shaped preview data + device choices), `src/lib/jenny/*`
+  (on-device reader, pre-fill, career view), `src/components/jenny/*`.
+- Honesty: preview world only (v2 not BUILT) — nothing renders in api mode; sample approvals send
+  nothing against a real backend. Decisions in `docs/design/DECISIONS.md` (30 Sep, P8); gaps
+  **#42–#47** are the JennySol v2 plan.
+- Preview world: two weekend badminton posts added (for the Discover board).
 
-**Ready for architect review:** every Built screen — `/dev/compare/all` (board left, live right).
-New since the last review: Search, Map, Map results, Discover filter, Activity room, Offer
-details, Job details, Work → Jobs, Career profile, Candidates, See the outcome, Jenny home.
+Tracker: **100 screens Built**, 0 In progress, 9 Not started (P10 Admin — Cursor's — and
+blocked-by-API screens). Only the architect sets Approved.
 
-**30 Sep — architect answers applied:** live map is MapLibre GL + OpenFreeMap (static image is
-now only the fallback); "You" layout approved and logged; password rule settled (BE change is
-now built by a cloud Claude Code session, not Cursor — gaps still go through
-`docs/FE-API-GAPS.md`, nothing changes for FE work). Pushing: the founder pushes from another
-network — commits stay local here.
+**Ready for architect review:** the 14 P8 screens — `/dev/compare/all`.
 
-**Branch:** `local/wip-2026-09-29` was fast-forwarded onto `feature/arena-vnext-mobile-jenny`
-(clean FF, 12 commits) per the architect. All further FE work happens on
-`feature/arena-vnext-mobile-jenny`; `local/wip-2026-09-29` was left in place, untouched.
-
-**P10 Admin is now built by Cursor on its own branch.** Do not edit `src/app/admin/**` from this
-branch. FE work here does P8, then P11 (P10 is skipped).
+**P10 Admin is built by Cursor on its own branch.** Do not edit `src/app/admin/**` here.
 
 **Blocked**
-- **GitHub is unreachable from this Mac.** All work is committed locally on
-  `feature/arena-vnext-mobile-jenny` / `local/wip-2026-09-29*` in each repo; the founder pushes
-  from another network. **Ready to push.**
-- API gaps logged in `docs/FE-API-GAPS.md` #36–#41 (8-char passwords in BE, inbox previews, need
-  offer counts, need edit/pause, room files, saved jobs / hybrid).
+- **GitHub is unreachable from this Mac.** Commits stay local on `feature/arena-vnext-mobile-jenny`;
+  the founder pushes from another network. **Ready to push.**
+- API gaps `docs/FE-API-GAPS.md` #36–#47.
 
 **Needs your decision:** nothing open.
 
-**Next:** P8 Jenny boards — start in a fresh session with "continue from docs/PROGRESS.md" — then
-P11 (P10 Admin is Cursor's, skip it, don't touch `src/app/admin/**`). Mark screens Built only.
+**Next:** P11 — remaining account and people screens (ARENA-APP-FLOW §1.4, other people's
+profiles, share profile). Start in a fresh session with "continue from docs/PROGRESS.md". Mark
+screens Built only.
 
 ## Earlier phases
 

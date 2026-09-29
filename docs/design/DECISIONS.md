@@ -3,6 +3,34 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **30 Sep (P8)** — Jenny's P8 surfaces run on the **preview world only** (blueprint §2: the v2
+  contract isn't BUILT). In api mode they don't render; Ask Jenny opens her home, and real v1
+  proposals keep using `JennyActionCard`. Gaps #42–#47 are the v2 plan.
+- **30 Sep (P8)** — Jenny's "understanding" in preview is an **on-device reader, not a model**
+  (`src/lib/jenny/understand.ts`): it fills only what the words literally say (kind, type, day,
+  time, number of people, level, a known area) and leaves the rest empty. Same code for Discover
+  filters, the Create draft and "Or just tell Jenny" on the Need/Offer/Activity/Project intakes.
+- **30 Sep (P8)** — The Create draft never publishes: **Edit** and **Preview & approve** write
+  Jenny's answers into that kind's own intake draft and open it — Preview & approve on the first
+  step that still needs an answer (for the lake clean-up that's "All joiners are 18+", then the
+  time). "Jenny filled — check" marks now persist per draft until the field is touched. Kind pills
+  are Need / Offer / Activity / Project (our real kinds) instead of the board's "Post".
+- **30 Sep (P8)** — Work: Jenny's three groups sit on top of **All** and on a new **Needs
+  approval** tab (with the count), rather than replacing Active / Upcoming / Completed. "Jenny can
+  handle" rows are things she *prepared*; the ⋯ sheet opens them or turns off the automation that
+  made them — nothing is done silently.
+- **30 Sep (P8)** — Approve sheet: **"Always ask me"** sends nothing and keeps the item (Jenny
+  never has standing permission to send, so it confirms the default). Approving a sample item
+  against a real backend sends nothing and says "Sample item — nothing was sent"; in mock mode the
+  reply to Rohit really lands in the preview chat. The undo line shows only for `reversible`.
+- **30 Sep (P8)** — Opportunities, "Why this matches you" and Today's plan are **computed**, not
+  invented: interests/availability from this device, joined history, approximate distance, the
+  feed's own times. Soonest first, never ordered by fit; reasons, never numbers.
+- **30 Sep (P8)** — Job search: the Never row is the recipe's fixed floor (no switch, no delete);
+  the three "Then" steps can each be switched off. Review application's answers and Jenny's note
+  are shown but **labelled as not sent** (gaps #20/#47); "Data to be shared" lists only what the
+  apply call actually shares. Two weekend badminton posts were added to the preview world so the
+  Discover board's request has real results.
 - **30 Sep (architect)** — "You" page layout **approved** as built (next entry).
 - **29 Sep (F2)** — "You" has two boards (core Profile and career "My Profile"). One page serves
   both: the core header (cover, photo, Edit, name, title · area) and stats, then the career

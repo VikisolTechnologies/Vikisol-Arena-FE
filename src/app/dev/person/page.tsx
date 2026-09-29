@@ -12,6 +12,7 @@ const WORLD_KEYS = [
   "arena_posts", "arena_post_joins", "arena_post_comments", "arena_post_reactions", "arena_post_saves",
   "arena_rooms", "arena_room_members", "arena_room_messages", "arena_conversations", "arena_thread_messages",
   "arena_onboarding_profile", "arena_notifications", "arena_interviews",
+  "arena_jenny_decisions", "arena_jenny_automations", "arena_jenny_job_search", "arena_jenny_application_drafts",
 ];
 
 /** Preview-only: signs this browser in as Priya Sharma, a demo neighbour in Gachibowli, in MOCK

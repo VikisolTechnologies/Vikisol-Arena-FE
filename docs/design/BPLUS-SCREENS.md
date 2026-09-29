@@ -370,6 +370,9 @@ Forgot = `/auth/forgot`; Reset = `/auth/reset/[token]` and `/reset-password`; on
 
 ## Board: VNext — Jenny, the active AI layer (flows kept, **restyled into B+** — no dark near-black UI, no Map tab, Jenny is not a 7th bottom-bar icon)
 
+- **Think (P8):** Jenny earns trust by being checkable. Every surface says what she noticed and *why* in plain reasons (never a number), and every consequential step ends in the person's tap — the Approve sheet shows the exact words, the exact audience and the exact data, with "Exact location is not shared" and no undo promise unless the action is reversible. She drafts into the same forms people use by hand (fields glow "Jenny filled — check"), so there is one way to publish, not two. Premium moment: the draft card assembling itself under "Drafted by Jenny", then landing the person on the one question still missing. Honesty: preview world only until JennySol's v2 contract is BUILT (gaps #42–#47); the preview "understanding" is an on-device reader of literal words.
+- **Built at (P8):** Feed card `/home`; Discover intent `/discover?q=…`; Create `/agent/draft?q=…` (Ask Jenny); Smart match `/agent/match/[id]`; Work `/work?tab=approval`; Approve sheet (from Work); Jenny `/agent?tab=today|automations|reminders|history`.
+
 ### 1. Feed (Jenny surfaces what matters) — `/home`, layered onto B+-core Feed #1
 - Adds: "Jenny noticed — 2 opportunities near you + 1 pending action" card (orb icon) above the normal feed content, and a "Review" CTA on any feed item Jenny has drafted something for (e.g. "Review your draft post — Needs time and capacity").
 - **Data**: `jenny`, `feed`.
@@ -404,6 +407,9 @@ Forgot = `/auth/forgot`; Reset = `/auth/reset/[token]` and `/reset-password`; on
 ---
 
 ## Board: VNext — Jenny automates the outcome (flows kept, **restyled into B+**) — the job-search automation journey
+
+- **Think (P8):** automation without losing the steering wheel. The recipe reads like a sentence — Trigger → Then → Then → Then → **Never** — and the Never row is a fixed floor, not a setting. Privacy is per field and per audience before anything is watched. The shortlist shows evidence counts against must-haves and plain reasons, newest first. The last step is always a review page where the person sees the job, their answers, the resume, exactly what's shared, and taps Approve & submit (the real apply call).
+- **Built at (P8):** Tell Jenny `/identity/career/jenny`; draft `?step=draft`; privacy `?step=privacy`; automation `/identity/career/automation`; shortlist `/identity/career/shortlist`; review `/applications/new?job=…`; tracker `/applications/[id]` (+ Jenny's note when submitted from the review).
 
 ### 1. Tell Jenny (conversational intent capture) — entry point from Career Intent (Career board #2) via "Ask Jenny", or Jenny home composer
 - **Layout**: Jenny chat bubble: "I'm looking for a product design job, but keep it private." → Jenny's reply: "Got it. I can help you find product design opportunities and handle the repetitive work — privately. Shall we set this up?" with three explainer rows (Use your existing profile / You control what's shared / No auto-apply) → "Let's set it up" / "Maybe later".

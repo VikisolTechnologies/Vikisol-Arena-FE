@@ -8,6 +8,7 @@ import { fade, pageSlide, spring } from "@/lib/motion";
 import { Button } from "@/components/bplus/Button";
 import { IntakeField, type PhotoValue } from "@/components/intake/IntakeField";
 import { defaultsOf, problem, summarize, visibleFields, visibleSteps, type Schema, type Values } from "@/lib/intake/types";
+import { readJennyFilled, writeJennyFilled } from "@/lib/jenny/prefill";
 
 /** Files and object URLs can't be saved as a draft; everything else can. */
 function serializable(v: Values): Values {
@@ -31,6 +32,7 @@ export function readIntakeDraft(key: string): Values | null {
 export function clearIntakeDraft(key: string) {
   try {
     localStorage.removeItem(`arena_intake_${key}`);
+    writeJennyFilled(key, []);
   } catch {
     /* storage blocked */
   }
@@ -55,6 +57,7 @@ export function IntakeForm({
   intro,
   submitText,
   tabBar = true,
+  startAt,
 }: {
   schema: Schema;
   draftKey: string;
@@ -72,11 +75,18 @@ export function IntakeForm({
   submitText?: (values: Values) => string;
   /** False where there's no bottom tab bar (business setup): sticky buttons sit at the bottom. */
   tabBar?: boolean;
+  /** Open on this step id (or "review") — Jenny's "Preview & approve" lands on what's missing. */
+  startAt?: string;
 }) {
   const stick = tabBar ? "bottom-[calc(76px+env(safe-area-inset-bottom))]" : "bottom-0";
   const [values, setValues] = useState<Values>(() => ({ ...defaultsOf(schema), ...(initial ?? {}), ...(readIntakeDraft(draftKey) ?? {}) }));
-  const [jenny, setJenny] = useState<Set<string>>(() => new Set(jennyFilled));
-  const [stepIndex, setStepIndex] = useState(0);
+  // Fields Jenny pre-filled stay marked across visits until the person touches them.
+  const [jenny, setJenny] = useState<Set<string>>(() => new Set([...jennyFilled, ...readJennyFilled(draftKey)]));
+  const [stepIndex, setStepIndex] = useState(() => {
+    if (!startAt) return 0;
+    const steps = visibleSteps(schema, values);
+    return startAt === "review" ? steps.length : Math.max(0, steps.findIndex((s) => s.id === startAt));
+  });
   const [direction, setDirection] = useState<1 | -1>(1);
   const [touched, setTouched] = useState<Set<string>>(new Set());
   const [attempt, setAttempt] = useState(0);
@@ -91,6 +101,7 @@ export function IntakeForm({
     setJenny(new Set(jennyFilled));
   }
 
+  useEffect(() => writeJennyFilled(draftKey, [...jenny]), [jenny, draftKey]);
   useEffect(() => {
     try {
       localStorage.setItem(`arena_intake_${draftKey}`, JSON.stringify(serializable(values)));

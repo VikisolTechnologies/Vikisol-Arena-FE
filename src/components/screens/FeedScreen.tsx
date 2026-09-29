@@ -11,7 +11,9 @@ import { HeroActivityCard, NeedCard, RowCard } from "@/components/cards/FeedCard
 import { dissolve, rise } from "@/lib/motion";
 import { LAUNCH_ZONE, distanceKm, filterFeed, getFeedItems, originFor, type FeedFilter, type FeedItem } from "@/lib/data/feed";
 import { getMyProfile } from "@/lib/data/profile";
-import { readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
+import { EMPTY_DRAFT, readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
+import { JennyNoticedCard } from "@/components/jenny/JennyNoticedCard";
+import { JENNY_PREVIEW } from "@/lib/data/jenny";
 import { getMyRooms } from "@/lib/api/rooms";
 import { useGuest } from "@/hooks/use-arena-session";
 
@@ -32,6 +34,7 @@ type Load = { items: FeedItem[]; me: { lat?: number; lng?: number; city?: string
 export function FeedScreen() {
   const guest = useGuest();
   const draftArea = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().area, () => "");
+  const entry = useSyncExternalStore(subscribeEntryDraft, readEntryDraft, () => EMPTY_DRAFT);
   const [filter, setFilter] = useState<FeedFilter>("nearby");
   const [data, setData] = useState<Load | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -106,6 +109,12 @@ export function FeedScreen() {
         <div className="mt-5">
           <Pills label="Show" options={FILTERS} value={filter} onChange={setFilter} tone="cream" icons={{ nearby: MapPin }} />
         </div>
+
+        {JENNY_PREVIEW && guest === false && data && (
+          <div className="mt-5">
+            <JennyNoticedCard items={data.items} me={{ interests: entry.interests, availability: entry.availability, origin }} />
+          </div>
+        )}
 
         <div className="mt-5">
           <AnimatePresence mode="wait" initial={false}>

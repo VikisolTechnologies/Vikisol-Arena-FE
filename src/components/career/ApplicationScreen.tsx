@@ -17,6 +17,9 @@ import { getJob } from "@/lib/api/jobs";
 import { getMyProfile } from "@/lib/api/profile";
 import { requireOnboarded } from "@/lib/auth-guard";
 import type { Application, ApplicationStage, CandidateProfile, Job } from "@/lib/types";
+import { JennyOrb } from "@/components/jenny/JennyOrb";
+import { useJobSearch } from "@/components/jenny/useJenny";
+import { JENNY_PREVIEW } from "@/lib/data/jenny";
 
 const STEPS: { stage: ApplicationStage | "hired"; title: string; detail: string }[] = [
   { stage: "applied", title: "Application submitted", detail: "" },
@@ -29,6 +32,8 @@ const ORDER: ApplicationStage[] = ["applied", "screening", "interview", "offer"]
 export interface ApplicationSpecimen {
   application: Application;
   job: Job;
+  /** Compare page: as if submitted from Jenny's "Review application". */
+  viaJenny?: boolean;
 }
 
 /** Board "Open the career layer" #7 — Apply & track. Status only from the real stage. */
@@ -40,6 +45,8 @@ export function ApplicationScreen({ id, specimen }: { id: string; specimen?: App
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  // Submitted from Jenny's "Review application" (P8 "Track outcome"): she says she's keeping watch.
+  const jobSearch = useJobSearch();
 
   useEffect(() => {
     if (specimen || !requireOnboarded(router)) return;
@@ -78,6 +85,7 @@ export function ApplicationScreen({ id, specimen }: { id: string; specimen?: App
 
   const rejected = app.stage === "rejected";
   const reached = rejected ? -1 : ORDER.indexOf(app.stage);
+  const viaJenny = JENNY_PREVIEW && (!!specimen?.viaJenny || !!jobSearch?.submitted.includes(app.id));
   const applied = new Date(app.appliedAt).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 
   return (
@@ -122,7 +130,7 @@ export function ApplicationScreen({ id, specimen }: { id: string; specimen?: App
                     {s.title}
                     <span className="sr-only">{done ? " — done" : now ? " — current step" : " — not yet"}</span>
                   </p>
-                  <p className="text-[14px] text-paper-ink-muted">{i === 0 ? applied : s.detail}</p>
+                  <p className="text-[14px] text-paper-ink-muted">{i === 0 ? (viaJenny ? `${applied} (as approved by you)` : applied) : s.detail}</p>
                 </div>
               </li>
             );
@@ -134,6 +142,17 @@ export function ApplicationScreen({ id, specimen }: { id: string; specimen?: App
             </li>
           )}
         </m.ol>
+
+        {viaJenny && !rejected && (
+          <m.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={dissolve} aria-label="Jenny" className="mt-6 flex gap-3 rounded-tile bg-white p-4 ring-1 ring-paper-ink/10">
+            <JennyOrb size={40} online={false} still />
+            <div>
+              <p className="text-[15px] font-semibold">Jenny</p>
+              <p className="mt-0.5 text-[15px] leading-relaxed">Your application is in. I&apos;ll keep an eye on the response and tell you when something changes. You&apos;ll always approve the next steps.</p>
+              <p className="mt-2 text-[13px] text-paper-ink-muted">If there&apos;s no reply in 3 days, I&apos;ll draft a follow-up for you to review — nothing is sent without you.</p>
+            </div>
+          </m.section>
+        )}
 
         {app.stage === "interview" && (
           <ButtonLink href={`/interviews/${app.id}`} className="mt-6"><CalendarCheck2 className="size-5" aria-hidden /> Open interview</ButtonLink>

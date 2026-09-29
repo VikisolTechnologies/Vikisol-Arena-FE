@@ -8,6 +8,7 @@ import { BottomSheet } from "@/components/bplus/BottomSheet";
 import { SkylineFooter } from "@/components/bplus/Screen";
 import { useSessionRole } from "@/hooks/use-arena-session";
 import { IconBadge, type IconBadgeTone } from "@/components/bplus/IconBadge";
+import { JENNY_PREVIEW } from "@/lib/data/jenny";
 import { BriefcaseSolid, GiftSolid, HeartSolid, LeafSolid, PeopleSolid, SparkleSolid } from "@/components/bplus/SolidIcons";
 
 type Icon = typeof HeartSolid;
@@ -30,7 +31,8 @@ export function CreateSheet({ open, onClose }: { open: boolean; onClose: () => v
   const choose = (id: (typeof ROWS)[number]["id"]) => {
     if (id === "jenny") {
       onClose();
-      router.push("/agent");
+      // Board "Create — Jenny drafts, you approve"; without the preview world, her home.
+      router.push(JENNY_PREVIEW ? "/agent/draft" : "/agent");
       return;
     }
     const FLOW: Record<string, string> = { ask: "/needs/new", offer: "/offers/new", activity: "/activities/new", project: "/projects/new" };

@@ -58,6 +58,11 @@ export function SettingsScreen() {
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [error, setError] = useState(false);
   const [sheet, setSheet] = useState<Sheet>(null);
+  // `?sheet=jenny` — Jenny's "Permissions & data" opens straight on her permissions.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads the URL once after hydration
+    if (new URLSearchParams(window.location.search).get("sheet") === "jenny") setSheet("jenny");
+  }, []);
   const sessionEmail = useSyncExternalStore(subscribeNothing, () => getSession()?.email ?? "", () => "");
   const [emailOverride, setEmailOverride] = useState<string | null>(null);
   const storedReduced = useSyncExternalStore(subscribeNothing, getManualReducedEffects, () => false);

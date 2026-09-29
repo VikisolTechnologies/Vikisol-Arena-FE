@@ -17,9 +17,13 @@ import { Avatar } from "@/components/bplus/Avatar";
 import { CompanyMark } from "@/components/career/CompanyMark";
 import { Cover } from "@/components/covers/Cover";
 import { CheckInSheet } from "@/components/activity/CheckInSheet";
+import { JennyWorkSections } from "@/components/jenny/JennyWorkSections";
+import { useJennyQueue } from "@/components/jenny/useJenny";
+import { JENNY_PREVIEW } from "@/lib/data/jenny";
 
 const TABS = [
   { id: "all", label: "All" },
+  { id: "approval", label: "Needs approval" },
   { id: "active", label: "Active" },
   { id: "upcoming", label: "Upcoming" },
   { id: "completed", label: "Completed" },
@@ -44,6 +48,10 @@ export function WorkScreen() {
   const [reload, setReload] = useState(0);
   const [resolveId, setResolveId] = useState<string | null>(null);
   const [attendanceId, setAttendanceId] = useState<string | null>(null);
+  // Jenny's queue (P8 board "Work — Jenny organises"): preview only until the v2 queue exists.
+  const queue = useJennyQueue();
+  const approvals = (queue ?? []).filter((q) => q.group === "approval").length;
+  const tabs = useMemo(() => TABS.filter((t) => t.id !== "approval" || JENNY_PREVIEW).map((t) => (t.id === "approval" && approvals ? { ...t, label: `Needs approval · ${approvals}` } : t)), [approvals]);
 
   useEffect(() => {
     if (guest !== false) return;
@@ -58,7 +66,7 @@ export function WorkScreen() {
 
   const groups = useMemo(
     () =>
-      GROUPS.filter((g) => tab === "all" || tab === g.id).map((g) => ({
+      GROUPS.filter((g) => tab === "all" || tab === "approval" || tab === g.id).map((g) => ({
         ...g,
         rows: (rows ?? []).filter((r) => r.group === g.id && (side === "all" || r.side === side)),
       })),
@@ -83,9 +91,9 @@ export function WorkScreen() {
         </p>
       )}
       <div className="mt-5">
-        <Pills label="Show" options={TABS} value={tab} onChange={setTab} />
+        <Pills label="Show" options={tabs} value={tab} onChange={setTab} compact={tabs.length > 4} />
       </div>
-      <div className="mt-3">
+      <div className={tab === "approval" ? "hidden" : "mt-3"}>
         <Pills
           label="Whose"
           tone="cream"
@@ -100,7 +108,12 @@ export function WorkScreen() {
         />
       </div>
 
-      <div className="mt-6">
+      {!guest && queue && queue.length > 0 && (tab === "all" || tab === "approval") && (
+        <div className="mt-6">
+          <JennyWorkSections queue={queue} />
+        </div>
+      )}
+      <div className={tab === "approval" ? "hidden" : "mt-6"}>
         {guest ? (
           <StateCard kind="empty" title="Sign in to see your work" detail="Needs you're helping with, activities you're going to and applications stay on your account." action={<ButtonLink href="/auth?mode=signin">Sign in</ButtonLink>} />
         ) : error ? (

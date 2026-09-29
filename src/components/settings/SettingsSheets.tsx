@@ -56,13 +56,13 @@ export function PaperRadios<T extends string>({ legend, options, value, onChange
   );
 }
 
-export function PaperSwitch({ label, detail, checked, onChange, disabled }: { label: string; detail?: string; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+export function PaperSwitch({ label, detail, checked, onChange, disabled, compact }: { label: string; detail?: string; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean; /** Smaller type for dense lists (Jenny's automations). */ compact?: boolean }) {
   const id = useId();
   return (
     <div className="flex min-h-14 items-center justify-between gap-4">
       <div className="min-w-0">
-        <p id={`${id}-l`} className="text-[16px] font-semibold">{label}</p>
-        {detail && <p id={`${id}-d`} className="text-[14px] text-paper-ink-muted">{detail}</p>}
+        <p id={`${id}-l`} className={compact ? "text-[15px] font-medium leading-snug" : "text-[16px] font-semibold"}>{label}</p>
+        {detail && <p id={`${id}-d`} className={compact ? "text-[13px] text-paper-ink-muted" : "text-[14px] text-paper-ink-muted"}>{detail}</p>}
       </div>
       <button
         type="button"

@@ -868,8 +868,9 @@
     "index": 1,
     "title": "Feed: Jenny noticed",
     "route": "/dev/person?to=/home",
-    "status": "not-started",
-    "commit": null
+    "status": "built",
+    "commit": null,
+    "note": "Jenny noticed: up to two things nearby that touch your interests (soonest first, never by fit) + the first thing waiting for approval. Preview only."
   },
   {
     "id": "jenny-discover",
@@ -877,9 +878,10 @@
     "board": "jenny-layer",
     "index": 2,
     "title": "Discover: intent → filters",
-    "route": "/dev/person?to=/discover",
-    "status": "not-started",
-    "commit": null
+    "route": "/dev/person?to=/discover?q=I%20want%20a%20beginner%20badminton%20game%20this%20weekend",
+    "status": "built",
+    "commit": null,
+    "note": "A sentence becomes editable filters (activity, level, when, distance, setting); results are every nearby activity passing them, soonest first. 'Why these results?' explains. Preview only (gap #42)."
   },
   {
     "id": "jenny-create",
@@ -887,9 +889,10 @@
     "board": "jenny-layer",
     "index": 3,
     "title": "Create: Jenny draft",
-    "route": null,
-    "status": "not-started",
-    "commit": null
+    "route": "/dev/person?to=/agent/draft?q=Need%20two%20volunteers%20for%20lake%20cleanup%20Saturday%20at%20Gachibowli%20Lake",
+    "status": "built",
+    "commit": null,
+    "note": "Ask Jenny → one sentence becomes a draft of a real Need/Offer/Activity/Project; Edit / Preview & approve continue in that kind's own intake with 'Jenny filled — check' marks. She never publishes."
   },
   {
     "id": "smart-match",
@@ -897,9 +900,10 @@
     "board": "jenny-layer",
     "index": 4,
     "title": "Smart match (why this)",
-    "route": null,
-    "status": "not-started",
-    "commit": null
+    "route": "/dev/person?to=/agent/match/post-cleanup",
+    "status": "built",
+    "commit": null,
+    "note": "'Why this matches you' = checkable reasons from interests, availability, history and distance; no score. I'm interested opens the real activity."
   },
   {
     "id": "jenny-work",
@@ -907,9 +911,10 @@
     "board": "jenny-layer",
     "index": 5,
     "title": "Work: approvals queue",
-    "route": "/dev/person?to=/work",
-    "status": "not-started",
-    "commit": null
+    "route": "/dev/person?to=/work?tab=approval",
+    "status": "built",
+    "commit": null,
+    "note": "Needs your approval / Jenny can handle (… → open or turn the automation off) / Waiting on others. 'Needs approval' is a Work tab; the sections also top 'All'."
   },
   {
     "id": "approve-action",
@@ -917,9 +922,10 @@
     "board": "jenny-layer",
     "index": 6,
     "title": "Approve action",
-    "route": null,
-    "status": "not-started",
-    "commit": null
+    "route": "/dev/screen/approve-action",
+    "status": "built",
+    "commit": null,
+    "note": "Exact words, recipient list (expandable), data used, 'Exact location is not shared'; undo line only when reversible (hidden here). In mock mode the approved reply really lands in Rohit's chat."
   },
   {
     "id": "jenny-today",
@@ -928,8 +934,9 @@
     "index": 7,
     "title": "Jenny: today & automations",
     "route": "/dev/person?to=/agent",
-    "status": "not-started",
-    "commit": null
+    "status": "built",
+    "commit": null,
+    "note": "Today / Automations / Reminders / History. Plan from what you're hosting or joined + the first approval; toggles are yours; status pill only after a real reply."
   },
   {
     "id": "tell-jenny",
@@ -937,9 +944,10 @@
     "board": "jenny-automation",
     "index": 1,
     "title": "Tell Jenny",
-    "route": null,
-    "status": "not-started",
-    "commit": null
+    "route": "/dev/person?to=/identity/career/jenny?say=1",
+    "status": "built",
+    "commit": null,
+    "note": "Your sentence, Jenny's reply in a sheet: existing profile, you control what's shared, no auto-apply."
   },
   {
     "id": "career-draft",
@@ -947,9 +955,10 @@
     "board": "jenny-automation",
     "index": 2,
     "title": "Career setup draft",
-    "route": null,
-    "status": "not-started",
-    "commit": null
+    "route": "/dev/person?to=/identity/career/jenny?step=draft",
+    "status": "built",
+    "commit": null,
+    "note": "Draft = your profile + career answers on this device; missing details open the same career field in a sheet."
   },
   {
     "id": "set-privacy",
@@ -957,9 +966,10 @@
     "board": "jenny-automation",
     "index": 3,
     "title": "Privacy & permission",
-    "route": null,
-    "status": "not-started",
-    "commit": null
+    "route": "/dev/person?to=/identity/career/jenny?step=privacy",
+    "status": "built",
+    "commit": null,
+    "note": "Per-field audience (Private / People I apply to / Verified employers) + Audience view; kept on this device (gap #19)."
   },
   {
     "id": "set-automation",
@@ -967,9 +977,10 @@
     "board": "jenny-automation",
     "index": 4,
     "title": "Set automation",
-    "route": null,
-    "status": "not-started",
-    "commit": null
+    "route": "/dev/person?to=/identity/career/automation",
+    "status": "built",
+    "commit": null,
+    "note": "Trigger → Then ×3 (each can be off) → Never submit without approval (fixed, can't be removed)."
   },
   {
     "id": "shortlist",
@@ -977,9 +988,10 @@
     "board": "jenny-automation",
     "index": 5,
     "title": "Today's shortlist",
-    "route": null,
-    "status": "not-started",
-    "commit": null
+    "route": "/dev/person?to=/identity/career/shortlist",
+    "status": "built",
+    "commit": null,
+    "note": "Roles matching your desired roles, newest first; Matches / Questions / Missing counts against must-haves; Why this in plain reasons."
   },
   {
     "id": "review-application",
@@ -987,9 +999,10 @@
     "board": "jenny-automation",
     "index": 6,
     "title": "Review application",
-    "route": null,
-    "status": "not-started",
-    "commit": null
+    "route": "/dev/person?to=/applications/new?job=job-2",
+    "status": "built",
+    "commit": null,
+    "note": "Answers (not sent yet — gap #20), resume, exactly what's shared, Jenny's note (kept, not attached). Approve & submit = the real apply call."
   },
   {
     "id": "application-tracker",
@@ -997,9 +1010,10 @@
     "board": "jenny-automation",
     "index": 7,
     "title": "Application tracker",
-    "route": null,
-    "status": "not-started",
-    "commit": null
+    "route": "/dev/screen/application-tracker",
+    "status": "built",
+    "commit": null,
+    "note": "Real stages + '(as approved by you)' + Jenny's note that she keeps watch and drafts a follow-up only for review."
   },
   {
     "id": "biz-home",

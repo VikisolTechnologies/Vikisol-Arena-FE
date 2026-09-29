@@ -14,6 +14,7 @@ import { Burst } from "@/components/bplus/Burst";
 import { SuccessCheck } from "@/components/activity/ActivityParts";
 import { IntakeForm, clearIntakeDraft, readIntakeDraft } from "@/components/intake/IntakeForm";
 import { KindPicker } from "@/components/activities/KindPicker";
+import { TellJenny } from "@/components/jenny/JennyParts";
 import { CoverStep, type CoverChoice } from "@/components/activities/CoverStep";
 import { ProceduralCover, coverFile as renderCoverFile } from "@/components/covers/ProceduralCover";
 import { useGuest } from "@/hooks/use-arena-session";
@@ -90,6 +91,17 @@ export function ActivityCreateFlow() {
           <m.div key={step} custom={direction} variants={pageSlide} initial="enter" animate="center" exit="exit">
             {step === "kind" && (
               <KindPicker
+                intro={
+                  <TellJenny
+                    kind="activity"
+                    example="Cricket this Sunday 7am at Gachibowli, 12 players"
+                    className="mt-4"
+                    onPrefill={(p) => {
+                      setSubtypeId(p.subtype ?? "other");
+                      go("details");
+                    }}
+                  />
+                }
                 onClose={() => router.push("/home")}
                 onPick={(id) => {
                   setSubtypeId(id);
@@ -101,7 +113,9 @@ export function ActivityCreateFlow() {
             {step === "details" && schema && subtypeId && (
               <IntakeForm
                 schema={schema}
+                key={subtypeId}
                 draftKey={`activity-${subtypeId}`}
+                startAt={params.get("start") ?? undefined}
                 onExit={() => go("kind")}
                 onSubmit={(v) => {
                   setAnswers(v);

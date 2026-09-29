@@ -22,6 +22,8 @@ import { requireOnboarded } from "@/lib/auth-guard";
 import { DEVICE_ONLY_FIELDS, EMPTY_META, apiFieldsFrom, openToFor, readCareerMeta, writeCareerMeta, type CareerIntent, type CareerMeta } from "@/lib/data/career";
 import type { Values } from "@/lib/intake/types";
 import type { CandidateProfile } from "@/lib/types";
+import { JennyOrb } from "@/components/jenny/JennyOrb";
+import { JENNY_PREVIEW } from "@/lib/data/jenny";
 
 type Step = "intent" | "setup" | "privacy";
 const STEPS: Step[] = ["intent", "setup", "privacy"];
@@ -171,6 +173,11 @@ function IntentStep({ value, onChoose, onContinue }: { value: CareerIntent | nul
         })}
       </m.div>
       <Button className="mt-6" disabled={!value} onClick={onContinue}>Continue</Button>
+      {JENNY_PREVIEW && (
+        <Link href="/identity/career/jenny" className="mt-3 flex min-h-12 items-center justify-center gap-2 text-[15px] font-semibold text-primary-on-paper">
+          <JennyOrb size={22} online={false} still /> Or just tell Jenny what you&apos;re looking for
+        </Link>
+      )}
     </div>
   );
 }

@@ -22,6 +22,9 @@ import { LAUNCH_ZONE, filterFeed, getFeedItems, getTrending, hrefFor, originFor,
 import { isDemo } from "@/lib/data/feed";
 import type { SearchResults } from "@/lib/api/search";
 import { Cover } from "@/components/covers/Cover";
+import { IntentResults, intentFrom } from "@/components/jenny/IntentResults";
+import { JENNY_PREVIEW } from "@/lib/data/jenny";
+import { understand } from "@/lib/jenny/understand";
 
 const CHIPS = [
   { id: "all", label: "All" },
@@ -107,8 +110,9 @@ function DiscoverList() {
   const [when, setWhen] = useState<When>("any");
   const [category, setCategory] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [submitted, setSubmitted] = useState("");
+  // `?q=` opens with a search already made (Jenny's intent deep link, the compare pages).
+  const [query, setQuery] = useState(() => params.get("q") ?? "");
+  const [submitted, setSubmitted] = useState(() => params.get("q") ?? "");
   const [feed, setFeed] = useState<FeedItem[] | null>(null);
   const [trending, setTrending] = useState<Post[] | null>(null);
   const [results, setResults] = useState<SearchResults | null>(null);
@@ -144,8 +148,12 @@ function DiscoverList() {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     setResults(null);
+    setPlain(false);
     setSubmitted(query.trim());
   };
+  // A sentence Jenny can read becomes editable filters (P8 board "Discover"); "plain" = keyword search.
+  const [plain, setPlain] = useState(false);
+  const intent = useMemo(() => (JENNY_PREVIEW && submitted && !plain ? intentFrom(understand(submitted)) : null), [submitted, plain]);
 
   // Discover is "near you": the same radius rule as the Feed's Nearby (fidelity pass).
   const draft = useSyncExternalStore(subscribeEntryDraft, readEntryDraft, () => EMPTY_DRAFT);
@@ -180,7 +188,7 @@ function DiscoverList() {
               setQuery(e.target.value);
               if (!e.target.value) setSubmitted("");
             }}
-            placeholder="Search people, activities, skills…"
+            placeholder={JENNY_PREVIEW ? "Search, or tell Jenny what you're after…" : "Search people, activities, skills…"}
             className="h-12 min-w-0 flex-1 bg-transparent text-[16px] text-foreground outline-none placeholder:text-faint"
           />
         </label>
@@ -199,6 +207,8 @@ function DiscoverList() {
         <div className="mt-6">
           <StateCard kind="error" title="Discover didn't load" detail={error} action={<Button variant="outline" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>} />
         </div>
+      ) : submitted && intent && feed ? (
+        <IntentResults key={submitted} query={submitted} initial={intent} items={feed} origin={origin} area={(draft.area || LAUNCH_ZONE.name).split(" / ")[0]} onPlain={() => setPlain(true)} />
       ) : submitted ? (
         <SearchResultsList results={results} query={submitted} />
       ) : !feed ? (

@@ -33,29 +33,3 @@ export const PREVIEW_SKILLS: PreviewSkill[] = [
   { id: "s-photo", label: "Photography", nearby: 1, tone: "success" },
   { id: "s-tutor", label: "Maths tutoring", nearby: 1, tone: "primary" },
 ];
-
-export interface PreviewSuggestion {
-  headline: string;
-  detail: string;
-  why: { icon: "interest" | "distance" | "people" | "trend"; text: string }[];
-  source: string;
-}
-
-/** Jenny's "For you" card until the v2 contract exists (P8). Evidence lines, never a score. */
-export const PREVIEW_JENNY_SUGGESTION: PreviewSuggestion = {
-  headline: "You might enjoy the Sunrise Run tomorrow at Durgam Lake.",
-  detail: "It matches your interest in running, happens nearby, and people you know are going.",
-  why: [
-    { icon: "interest", text: "Matches your interests" },
-    { icon: "distance", text: "4.3 km from you" },
-    { icon: "people", text: "People you know are going" },
-    { icon: "trend", text: "Popular in your area this month" },
-  ],
-  source: "Source: your activity, interests and nearby trends.",
-};
-
-export const PREVIEW_JENNY_IDEAS: { title: string; detail: string }[] = [
-  { title: "Find a weekend badminton group", detail: "Beginner-friendly games near Gachibowli" },
-  { title: "Offer a skill you already have", detail: "Neighbours often ask for tutoring and repairs" },
-  { title: "Start a lake clean-up", detail: "Jenny drafts the post; you approve before it's shared" },
-];

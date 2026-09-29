@@ -11,6 +11,7 @@ import { useDirection } from "@/components/motion/useDirection";
 import { AppShell } from "@/components/bplus/AppShell";
 import { ButtonLink } from "@/components/bplus/Button";
 import { KindChip } from "@/components/bplus/Primitives";
+import { TellJenny } from "@/components/jenny/JennyParts";
 import { IntakeForm, clearIntakeDraft } from "@/components/intake/IntakeForm";
 import type { PhotoValue } from "@/components/intake/IntakeField";
 import { useGuest, useOffline } from "@/hooks/use-arena-session";
@@ -112,6 +113,12 @@ export function PostFlow({ mode }: { mode: Mode }) {
                   </div>
                   <h1 className="font-display-serif text-[30px] font-medium leading-[1.12]">{mode === "need" ? "What kind of help?" : "What can you offer?"}</h1>
                   <p className="mt-2 text-[15px] text-paper-ink-muted">{mode === "need" ? "Pick the closest — we'll only ask what helps neighbours say yes." : "Pick the closest — you set your own limits."}</p>
+                  <TellJenny
+                    kind={mode === "need" ? "ask" : "offer"}
+                    example={mode === "need" ? "Help moving a sofa tomorrow evening in Kondapur" : "I can tutor Class 10 maths on weekends in Gachibowli"}
+                    className="mt-4"
+                    onPrefill={(p) => router.push(p.href)}
+                  />
                   <m.div initial="hidden" animate="shown" className="mt-5 grid grid-cols-2 gap-2.5">
                     {NEED_KINDS.map((k, i) => (
                       <m.div key={k.id} variants={rise} custom={i} whileTap={press} transition={spring.snappy}>
@@ -137,6 +144,7 @@ export function PostFlow({ mode }: { mode: Mode }) {
                   <IntakeForm
                     schema={schema}
                     draftKey={`${mode}-${kind.id}`}
+                    startAt={params.get("start") ?? undefined}
                     initial={{ area: area || undefined }}
                     onExit={() => router.push(base)}
                     onSubmit={submit}
