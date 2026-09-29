@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { m } from "motion/react";
-import { ArrowLeft, BadgeCheck, CalendarDays, ChevronRight, Flag, HandHeart, MapPin, MoreVertical, Share2, Tag, Users } from "lucide-react";
+import { ArrowLeft, BadgeCheck, CalendarDays, ChevronRight, Flag, HandHeart, MapPin, MessageCircle, MoreVertical, Share2, Tag, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { rise, vibrate } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
@@ -196,13 +196,17 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
 
           <m.div variants={rise} custom={5} className="sticky bottom-[calc(76px+env(safe-area-inset-bottom))] z-10 -mx-5 mt-6 bg-linear-to-t from-paper from-80% to-transparent px-5 pb-2 pt-4">
             {post.mine ? (
-              <div className="grid grid-cols-2 gap-3">
-                {post.roomId ? <ButtonLink href={`/rooms/${post.roomId}`} variant="outline" className="border-paper-ink/55 text-paper-ink">Open chat</ButtonLink> : <Button variant="outline" className="border-paper-ink/55 text-paper-ink" onClick={share}>Share</Button>}
-                {active ? (
+              <>
+                {/* Board: Edit · Pause · Close. Share and Open chat live in the ⋯ menu. Editing and
+                    pausing a posted need have no API yet (FE-API-GAPS #39), so they say so. */}
+                <div className="grid grid-cols-3 gap-2.5">
+                  <Button variant="outline" className="border-paper-ink/30 text-paper-ink" disabled={!active} aria-describedby="need-owner-note" onClick={() => setNotice("Editing a posted need isn't available yet. Close it and post again to change it.")}>Edit</Button>
+                  <Button variant="outline" className="border-paper-ink/30 text-paper-ink" disabled={!active} aria-describedby="need-owner-note" onClick={() => setNotice("Pausing isn't available yet. Close it if you no longer need help.")}>Pause</Button>
                   <Button
                     variant="outline"
                     className="border-danger-on-paper/60 text-danger-on-paper"
                     loading={busy}
+                    disabled={!active}
                     onClick={async () => {
                       setBusy(true);
                       try {
@@ -217,10 +221,9 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
                   >
                     Close
                   </Button>
-                ) : (
-                  <span />
-                )}
-              </div>
+                </div>
+                <p id="need-owner-note" className="sr-only">Edit and Pause aren&apos;t available yet.</p>
+              </>
             ) : !active ? (
               <p className="rounded-tile bg-paper-muted p-4 text-center text-[15px]">This {c.noun.toLowerCase()} is {status.label.toLowerCase()}.</p>
             ) : post.myJoinStatus === "approved" ? (
@@ -249,6 +252,13 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
               <Share2 className="size-5" aria-hidden /> Share
             </button>
           </li>
+          {post.mine && post.roomId && (
+            <li>
+              <Link href={`/rooms/${post.roomId}`} className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-[16px] hover:bg-paper-muted">
+                <MessageCircle className="size-5" aria-hidden /> Open chat
+              </Link>
+            </li>
+          )}
           {!post.mine && (
             <li>
               <button

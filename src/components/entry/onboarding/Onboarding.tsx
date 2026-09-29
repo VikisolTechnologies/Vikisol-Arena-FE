@@ -85,7 +85,7 @@ export function Onboarding() {
   return (
     <Screen>
       <TopBar
-        onBack={step > 1 && step < 4 ? () => go(step - 1) : undefined}
+        onBack={step > 1 && step < 4 ? () => go(step - 1) : step === 1 ? () => (window.history.length > 1 ? router.back() : router.push("/auth")) : undefined}
         center={<StepperDots step={step} total={TOTAL} />}
         onSkip={step === 1 || step === 2 ? () => go(step + 1) : step === 3 && !saving ? () => void save() : undefined}
       />

@@ -14,6 +14,7 @@ import { useGuest, useSessionRole } from "@/hooks/use-arena-session";
 import { closeNeed, loadWork, type WorkGroup, type WorkRow } from "@/lib/data/work";
 import { whenLabel } from "@/lib/data/feed";
 import { Avatar } from "@/components/bplus/Avatar";
+import { CompanyMark } from "@/components/career/CompanyMark";
 import { Cover } from "@/components/covers/Cover";
 import { CheckInSheet } from "@/components/activity/CheckInSheet";
 
@@ -33,9 +34,11 @@ const GROUPS: { id: WorkGroup; label: string }[] = [
 export function WorkScreen() {
   const guest = useGuest();
   const role = useSessionRole();
-  const [tab, setTab] = useState<Tab>("all");
+  const params = useSearchParams();
+  // ?tab=completed etc. — "See the outcome" and notifications open Work on the right section.
+  const [tab, setTab] = useState<Tab>(() => (TABS.some((t) => t.id === params.get("tab")) ? (params.get("tab") as Tab) : "all"));
   const [side, setSide] = useState<"all" | "need" | "offer">("all");
-  const projectDraft = useSearchParams().get("draft") === "project";
+  const projectDraft = params.get("draft") === "project";
   const [rows, setRows] = useState<WorkRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
@@ -112,12 +115,21 @@ export function WorkScreen() {
           <m.div key={`${tab}-${side}`} initial="hidden" animate="shown" className="space-y-7">
             {groups.map((g, gi) => (
               <m.section key={g.id} variants={rise} custom={gi} aria-label={g.label}>
-                <SectionHeader title={g.label} />
+                <SectionHeader
+                  title={g.label}
+                  action={
+                    tab === "all" && g.rows.length > 0 ? (
+                      <button type="button" onClick={() => { setTab(g.id); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="inline-flex min-h-11 items-center text-[14px] text-foreground/85 underline underline-offset-4">
+                        See all
+                      </button>
+                    ) : undefined
+                  }
+                />
                 {g.rows.length === 0 ? (
                   <p className="text-[14px] text-faint">Nothing {g.label.toLowerCase()} right now.</p>
                 ) : (
                   <ul className="space-y-2.5">
-                    {g.rows.map((row) => (
+                    {(tab === "all" ? g.rows.slice(0, 3) : g.rows).map((row) => (
                       <li key={row.id}>
                         <WorkRowCard row={row} onAction={() => (row.action === "resolve" ? setResolveId(row.postId ?? null) : setAttendanceId(row.postId ?? null))} />
                       </li>
@@ -150,7 +162,9 @@ function WorkRowCard({ row, onAction }: { row: WorkRow; onAction: () => void }) 
   const done = row.group === "completed";
   const body = (
     <>
-      {!row.media && row.person && row.kind !== "activity" ? (
+      {row.company ? (
+        <CompanyMark name={row.company} className="size-16 shrink-0 rounded-xl text-[20px]" />
+      ) : !row.media && row.person && row.kind !== "activity" ? (
         <Avatar name={row.person} className="size-16 shrink-0 rounded-xl text-[20px]" />
       ) : (
         <Cover source={{ id: row.postId ?? row.id, kind: row.kind, media: row.media, title: row.title }} className="size-16 shrink-0 rounded-xl" />

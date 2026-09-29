@@ -22,7 +22,7 @@ import { useSessionName } from "@/hooks/use-arena-session";
 import type { Post, Room, RoomMember, RoomMessage } from "@/lib/types";
 import { Cover } from "@/components/covers/Cover";
 
-type Tab = "plan" | "chat" | "details" | "people";
+type Tab = "plan" | "chat" | "files" | "details" | "people";
 
 function time(iso: string) {
   return new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }).toUpperCase();
@@ -232,6 +232,7 @@ export function RoomScreen({ roomId, specimen }: { roomId: string; specimen?: Ro
               ? [
                   { id: "plan", label: "Plan" },
                   { id: "chat", label: "Chat" },
+                  { id: "files", label: "Files" },
                 ]
               : [
                   { id: "chat", label: "Chat" },
@@ -298,6 +299,8 @@ export function RoomScreen({ roomId, specimen }: { roomId: string; specimen?: Ro
                 {post?.startsAt && <p className="mt-1.5 flex items-center gap-2 text-[15px]"><CalendarDays className="size-4 shrink-0" aria-hidden /> {activityWhen(post, { end: false })}</p>}
               </section>
             )}
+
+            {tab === "files" && <RoomFiles post={post} messages={messages} />}
 
             {(tab === "chat" || tab === "plan") && conversation}
 
@@ -382,5 +385,55 @@ export function RoomScreen({ roomId, specimen }: { roomId: string; specimen?: Ro
         </>
       )}
     </AppShell>
+  );
+}
+
+/** Board: the coordination room's Files tab. Rooms have no file storage yet (FE-API-GAPS #40), so
+ *  it gathers what's already shared: the need's photos and every link sent in the chat. */
+function RoomFiles({ post, messages }: { post: Post | null; messages: RoomMessage[] | null }) {
+  const photos = post?.mediaUrls ?? [];
+  const links = (messages ?? []).flatMap((msg) =>
+    (msg.content.match(/https?:\/\/[^\s]+/g) ?? []).map((url) => ({ url, from: msg.fromMe ? "You" : msg.senderName, at: msg.createdAt })),
+  );
+  if (!photos.length && !links.length) {
+    return <StateCard kind="empty" title="Nothing shared yet" detail="Photos on the need and links sent in the chat show up here." />;
+  }
+  return (
+    <div className="space-y-4">
+      {photos.length > 0 && (
+        <section aria-label="Photos">
+          <h2 className="mb-2 text-[15px] font-semibold">Photos</h2>
+          <ul className="grid grid-cols-3 gap-2">
+            {photos.map((src) => (
+              <li key={src}>
+                <a href={src} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-xl">
+                  <Cover source={{ id: src, media: src }} className="aspect-square w-full" sizes="140px" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {links.length > 0 && (
+        <section aria-label="Links">
+          <h2 className="mb-2 text-[15px] font-semibold">Links</h2>
+          <ul className="divide-y divide-paper-ink/10 rounded-tile bg-paper text-paper-ink">
+            {links.map((l, i) => (
+              <li key={`${l.url}-${i}`}>
+                <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex min-h-14 items-center gap-3 px-4 py-2.5">
+                  <Link2 className="size-5 shrink-0 text-info-on-paper" aria-hidden />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-medium">{l.url.replace(/^https?:\/\//, "")}</span>
+                    <span className="block text-[13px] text-paper-ink-muted">Shared by {l.from}</span>
+                  </span>
+                  <ExternalLink className="size-4 shrink-0 text-paper-ink-muted" aria-hidden />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <p className="text-[13px] text-faint">Sending files in a room isn&apos;t available yet.</p>
+    </div>
   );
 }

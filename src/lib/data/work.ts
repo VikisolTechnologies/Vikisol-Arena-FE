@@ -4,6 +4,7 @@
  * this only groups them into Active / Upcoming / Completed and says what *you* are doing.
  */
 import { getMyApplications } from "@/lib/api/applications";
+import { getJob } from "@/lib/api/jobs";
 import { getMyAssignedInterviews } from "@/lib/api/interviews";
 import { getMyBids } from "@/lib/api/myBids";
 import { closeNeed, getJoinedPosts, getJoinRequests, getMyPosts, recordJoinOutcome } from "@/lib/api/posts";
@@ -30,6 +31,8 @@ export interface WorkRow {
   kind?: string;
   /** Whose post it is — their face stands in when there's no photo. */
   person?: string;
+  /** Job applications: the company, for its monogram. */
+  company?: string;
 }
 
 /** One failing or malformed source must never blank the whole Work screen. */
@@ -49,16 +52,21 @@ export async function loadWork(role: string): Promise<WorkRow[]> {
   ]);
   const rows: WorkRow[] = [];
 
-  for (const a of settled(applications, [])) {
+  const apps = settled(applications, []);
+  // The job's title and company (same getJob call the job page uses); unknown jobs stay generic.
+  const jobs = await Promise.all(apps.map((a) => (a.jobId ? getJob(a.jobId).catch(() => undefined) : Promise.resolve(undefined))));
+  apps.forEach((a, i) => {
+    const job = jobs[i];
     rows.push({
       id: `application-${a.id}`,
       group: a.stage === "rejected" ? "completed" : "active",
-      title: "Job application",
+      title: job ? `${job.title} · ${job.company}` : "Job application",
+      company: job?.company,
       when: a.updatedAt,
       role: a.stage === "interview" ? "Interview stage" : a.stage === "offer" ? "Offer received" : a.stage === "rejected" ? "Not selected" : "You applied",
       href: a.stage === "interview" ? `/interviews/${a.id}` : `/applications/${a.id}`,
     });
-  }
+  });
   for (const b of settled(bids, [])) {
     rows.push({
       id: `bid-${b.bidId}`,

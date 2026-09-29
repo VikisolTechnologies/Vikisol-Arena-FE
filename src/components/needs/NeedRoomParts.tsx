@@ -175,7 +175,7 @@ export function CompleteSheet({
             </div>
             {error && <p role="alert" className="mt-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
             <Button className="mt-5" onClick={finish} loading={busy}>Done</Button>
-            <ButtonLink href="/work" variant="link" className="mt-1 w-full text-primary-on-paper">See it on Work</ButtonLink>
+            <ButtonLink href="/work?tab=completed" variant="link" className="mt-1 w-full text-primary-on-paper">See it on Work</ButtonLink>
             <p className="mt-2 text-center text-[13px] text-paper-ink-muted">
               Something not right?{" "}
               {reported ? (
