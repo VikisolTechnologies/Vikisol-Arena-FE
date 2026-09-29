@@ -71,46 +71,48 @@ export function PersistentOrb() {
   if (pathname === "/agent") return null;
 
   return (
-    <Link
-      href="/agent"
-      aria-label={STATE_LABEL[state]}
-      title={STATE_LABEL[state]}
-      className={cn(
-        "fixed bottom-6 right-5 z-30 flex size-15 items-center justify-center rounded-full",
-        "border border-border bg-card backdrop-blur-md transition-transform hover:scale-105 sm:right-7",
-      )}
-      // ARENA-DESIGN-SYSTEM.md kill list: "zero neon orange in the product" - this shadow was a
-      // literal Vikisol-orange rgba, not a token, so it rendered as an orange glow on every
-      // migrated (ivory) screen regardless of theme. Swapped to --gold (matches the same fix
-      // applied to the marketplace bid-highlight and Button's primary-gradient shadow elsewhere
-      // this pass) so the "needs approval" urgency signal reads as gold, not orange.
-      style={{
-        boxShadow:
-          state === "needs-approval"
-            ? "0 0 0 3px rgba(214,168,79,0.28), 0 8px 30px rgba(214,168,79,0.5)"
-            : "0 8px 24px rgba(0,0,0,0.16)",
-      }}
-    >
-      {state === "needs-approval" && !reduced && (
-        <span className="absolute inset-0 -z-10 animate-ping rounded-full bg-primary/30" />
-      )}
-      {state === "needs-approval" && (
-        <span className="absolute -right-0.5 -top-0.5 z-10 size-3.5 rounded-full border-2 border-background bg-primary" />
-      )}
-      {reduced || !sceneReady ? (
-        // Same static disc doubles as the pre-idle placeholder, not just the reduced-motion
-        // fallback - the 3D scene still always arrives (full quality tiering intact), just a
-        // beat later, once the browser's had a chance to get the actual feed content on screen
-        // first. See useIdleReady's own comment.
-        <span
-          className="size-9 rounded-full"
-          style={{ background: "radial-gradient(circle at 35% 30%, #FF8A5B, #FF6B35 70%)" }}
-        />
-      ) : (
-        <div className="size-11">
-          <OrbScene state={state} cameraDistance={2.6} quality={isMobile ? "lite" : "full"} />
-        </div>
-      )}
-    </Link>
+    <nav aria-label="Agent">
+      <Link
+        href="/agent"
+        aria-label={STATE_LABEL[state]}
+        title={STATE_LABEL[state]}
+        className={cn(
+          "fixed bottom-6 right-5 z-30 flex size-15 items-center justify-center rounded-full",
+          "border border-border bg-card backdrop-blur-md transition-transform hover:scale-105 sm:right-7",
+        )}
+        // ARENA-DESIGN-SYSTEM.md kill list: "zero neon orange in the product" - this shadow was a
+        // literal Vikisol-orange rgba, not a token, so it rendered as an orange glow on every
+        // migrated (ivory) screen regardless of theme. Swapped to --gold (matches the same fix
+        // applied to the marketplace bid-highlight and Button's primary-gradient shadow elsewhere
+        // this pass) so the "needs approval" urgency signal reads as gold, not orange.
+        style={{
+          boxShadow:
+            state === "needs-approval"
+              ? "0 0 0 3px rgba(214,168,79,0.28), 0 8px 30px rgba(214,168,79,0.5)"
+              : "0 8px 24px rgba(0,0,0,0.16)",
+        }}
+      >
+        {state === "needs-approval" && !reduced && (
+          <span className="absolute inset-0 -z-10 animate-ping rounded-full bg-primary/30" />
+        )}
+        {state === "needs-approval" && (
+          <span className="absolute -right-0.5 -top-0.5 z-10 size-3.5 rounded-full border-2 border-background bg-primary" />
+        )}
+        {reduced || !sceneReady ? (
+          // Same static disc doubles as the pre-idle placeholder, not just the reduced-motion
+          // fallback - the 3D scene still always arrives (full quality tiering intact), just a
+          // beat later, once the browser's had a chance to get the actual feed content on screen
+          // first. See useIdleReady's own comment.
+          <span
+            className="size-9 rounded-full"
+            style={{ background: "radial-gradient(circle at 35% 30%, #FF8A5B, #FF6B35 70%)" }}
+          />
+        ) : (
+          <div className="size-11">
+            <OrbScene state={state} cameraDistance={2.6} quality={isMobile ? "lite" : "full"} />
+          </div>
+        )}
+      </Link>
+    </nav>
   );
 }

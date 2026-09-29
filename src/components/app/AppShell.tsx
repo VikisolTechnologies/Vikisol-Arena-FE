@@ -112,6 +112,9 @@ export function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const current = activeSpace(pathname);
+  // Screens without a visible title still need one level-one heading for screen readers.
+  const fallbackHeading =
+    SPACES.find((s) => s.key === current)?.label ?? SECONDARY_ITEMS.find((i) => i.href === pathname)?.label ?? "Arena";
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerSession, setComposerSession] = useState(0);
@@ -242,17 +245,20 @@ export function AppShell({
             {title ? (
               <h1 className="min-w-0 flex-1 truncate font-display text-lg font-bold tracking-tight sm:text-xl">{title}</h1>
             ) : (
-              <Link href="/home" className="flex min-w-0 flex-1 items-baseline gap-2 font-display text-base font-bold tracking-wide lg:invisible">
-                <span>
-                  Arena<span className="text-primary">.</span>
-                </span>
-                {loggedIn && profile?.name && (
-                  <span className="truncate text-sm font-medium tracking-normal text-foreground">{profile.name}</span>
-                )}
-                {authReady && !loggedIn && (
-                  <span className="truncate text-xs font-medium tracking-normal text-muted-foreground">Browsing as a guest</span>
-                )}
-              </Link>
+              <>
+                <h1 className="sr-only">{fallbackHeading}</h1>
+                <Link href="/home" className="flex min-w-0 flex-1 items-baseline gap-2 font-display text-base font-bold tracking-wide lg:invisible">
+                  <span>
+                    Arena<span className="text-primary">.</span>
+                  </span>
+                  {loggedIn && profile?.name && (
+                    <span className="truncate text-sm font-medium tracking-normal text-foreground">{profile.name}</span>
+                  )}
+                  {authReady && !loggedIn && (
+                    <span className="truncate text-xs font-medium tracking-normal text-muted-foreground">Browsing as a guest</span>
+                  )}
+                </Link>
+              </>
             )}
             <div className="ml-auto flex shrink-0 items-center gap-2">
               {actions}

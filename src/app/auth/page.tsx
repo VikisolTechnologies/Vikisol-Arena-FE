@@ -204,7 +204,7 @@ function AuthForm() {
     <div className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
       <AuraBackground />
 
-      <div
+      <main
         className="relative z-10 mx-auto grid min-h-svh w-full max-w-[1240px] items-center gap-8 px-5 py-16 sm:px-6 lg:grid-cols-2"
         style={cookieBannerVisible ? { paddingBottom: "var(--cookie-banner-h, 88px)" } : undefined}
       >
@@ -223,6 +223,7 @@ function AuthForm() {
 
         {/* Form panel */}
         <div className="order-1 mx-auto w-full max-w-md lg:order-2 animate-in fade-in-0 slide-in-from-bottom-4 duration-700">
+          <h1 className="sr-only">Sign in to Arena</h1>
           <Link href="/" className="mb-8 flex items-center gap-2.5">
             <span className="font-display text-lg font-bold tracking-wide">
               ARENA<span className="text-primary">.</span>
@@ -497,7 +498,7 @@ function AuthForm() {
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -21,11 +21,13 @@ export default function Home() {
     <div className="relative isolate w-full overflow-x-hidden bg-background text-foreground">
       <AuraBackground />
       <Nav />
-      <Hero />
-      <OvernightReport />
-      <TalentUniverse />
-      <OpenMarket />
-      <CtaFooter />
+      <main>
+        <Hero />
+        <OvernightReport />
+        <TalentUniverse />
+        <OpenMarket />
+        <CtaFooter />
+      </main>
     </div>
   );
 }
