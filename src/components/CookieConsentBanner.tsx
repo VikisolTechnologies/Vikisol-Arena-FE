@@ -59,7 +59,7 @@ export function CookieConsentBanner() {
   if (!visible) return null;
 
   return (
-    <div ref={ref} className="fixed inset-x-0 bottom-0 z-[900] border-t border-border bg-background/95 px-5 py-4 backdrop-blur-[18px] sm:px-6">
+    <div ref={ref} role="region" aria-label="Cookie notice" className="fixed inset-x-0 bottom-0 z-[900] border-t border-border bg-background/95 px-5 py-4 backdrop-blur-[18px] sm:px-6">
       <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3">
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Cookie className="size-4 shrink-0 text-primary-soft" />

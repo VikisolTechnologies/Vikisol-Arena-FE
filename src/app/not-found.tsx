@@ -47,7 +47,7 @@ export default function NotFound() {
   return (
     <div className="relative isolate flex min-h-svh w-full items-center justify-center overflow-hidden bg-background px-5 text-center text-foreground">
       <AuraBackground />
-      <div className="relative z-10">
+      <main className="relative z-10">
         <div className="relative mx-auto scale-75">
           <div
             ref={beamRef}
@@ -64,7 +64,7 @@ export default function NotFound() {
           <Button variant="ghost-glass" size="cta" render={<Link href="/" />} nativeButton={false}>Home</Button>
           <Button variant="primary-gradient" size="cta" render={<Link href={secondary.href} />} nativeButton={false}>{secondary.label}</Button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

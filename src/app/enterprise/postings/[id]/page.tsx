@@ -67,7 +67,7 @@ export default function ApplicantPipelinePage() {
       </button>
       <h1 className="mb-5 font-display text-xl font-bold tracking-tight">{posting.title}</h1>
 
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div role="region" aria-label="Applicant stages" tabIndex={0} className="flex gap-4 overflow-x-auto rounded-lg pb-4 outline-none focus-visible:ring-2 focus-visible:ring-ring">
         {STAGES.map((stage) => {
           const items = applicants.filter((a) => a.stage === stage);
           return (

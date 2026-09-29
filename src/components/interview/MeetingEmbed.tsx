@@ -17,7 +17,7 @@ export function MeetingEmbed({ link, compact }: { link: string; compact?: boolea
         <div className="flex aspect-video items-center justify-center bg-[radial-gradient(circle_at_50%_40%,#1a1a1f,#09090b)]">
           <div className="text-center">
             <Video className="mx-auto mb-2 size-8 text-white/30" />
-            <p className="text-xs text-white/40">Video connects here once you join</p>
+            <p className="text-xs text-subtle">Video connects here once you join</p>
           </div>
         </div>
       )}

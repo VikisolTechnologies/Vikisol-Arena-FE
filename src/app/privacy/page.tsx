@@ -12,7 +12,7 @@ export default function PrivacyPage() {
     <div className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
       <AuraBackground />
       <Nav />
-      <div className="relative z-10 mx-auto max-w-2xl px-5 py-28 sm:px-6">
+      <main className="relative z-10 mx-auto max-w-2xl px-5 py-28 sm:px-6">
         <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
           <strong>Draft — pending legal review.</strong> This page is scaffolding for the real,
           lawyer-reviewed Privacy Policy required before public launch (see PRODUCTION-CHECKLIST.md).
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
           <p><strong className="text-foreground">Breach notification:</strong> we maintain the capability to notify the Data Protection Board and affected users within 72 hours of becoming aware of a personal data breach.</p>
           <p><strong className="text-foreground">Contact:</strong> [Grievance Officer contact — to be added].</p>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

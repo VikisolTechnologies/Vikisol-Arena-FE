@@ -83,7 +83,7 @@ export default function ApplicationsPage() {
 
   return (
     <AppShell title="Applications" profile={profile}>
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div role="region" aria-label="Application stages" tabIndex={0} className="flex gap-4 overflow-x-auto rounded-lg pb-4 outline-none focus-visible:ring-2 focus-visible:ring-ring">
         {COLUMNS.map(({ stage, label }) => {
           const items = apps.filter((a) => a.stage === stage);
           return (

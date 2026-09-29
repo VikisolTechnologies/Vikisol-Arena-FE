@@ -1,0 +1,46 @@
+name: Accessibility (mock build)
+
+# Runs the strict axe suite (playwright.mock.config.ts) against this commit's own production
+# build in mock mode: no backend, no secrets, no production traffic. Independent of e2e.yml,
+# which tests the live site with demo-account credentials.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  a11y-mock:
+    name: Accessibility (mock build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      # The config's webServer builds and starts the app itself with NEXT_PUBLIC_API_MODE=mock.
+      - name: Run strict accessibility suite
+        run: npx playwright test -c playwright.mock.config.ts
+
+      - name: Upload Playwright traces
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: a11y-mock-results
+          path: test-results/
+          retention-days: 14

@@ -31,6 +31,7 @@ export function AgentOrbAvatar({ state = "idle", size = "md" }: { state?: AgentO
       <div
         className="relative size-14 shrink-0 overflow-hidden rounded-full"
         style={{ boxShadow: GLOW[state] }}
+        role="img"
         aria-label={`Agent is ${state.replace("-", " ")}`}
       >
         <OrbScene state={state} cameraDistance={2.4} />
@@ -45,6 +46,7 @@ export function AgentOrbAvatar({ state = "idle", size = "md" }: { state?: AgentO
       style={{
         background: "radial-gradient(circle at 36% 30%, #4a2c1a 0%, #241108 46%, #6e2f12 78%, #FF6B35 100%)",
       }}
+      role="img"
       aria-label={`Agent is ${state.replace("-", " ")}`}
     >
       {state === "acting" && (

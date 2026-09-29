@@ -9,7 +9,7 @@ export default function TermsPage() {
     <div className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground">
       <AuraBackground />
       <Nav />
-      <div className="relative z-10 mx-auto max-w-2xl px-5 py-28 sm:px-6">
+      <main className="relative z-10 mx-auto max-w-2xl px-5 py-28 sm:px-6">
         <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
           <strong>Draft — pending legal review.</strong> Scaffolding for the real Terms of
           Service required before public launch, not final copy.
@@ -24,7 +24,7 @@ export default function TermsPage() {
           <p><strong className="text-foreground">Liability:</strong> Arena is a platform connecting candidates and employers; we don&apos;t guarantee hiring outcomes and aren&apos;t a party to any resulting employment relationship.</p>
           <p><strong className="text-foreground">Termination:</strong> you may delete your account at any time from Settings.</p>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
