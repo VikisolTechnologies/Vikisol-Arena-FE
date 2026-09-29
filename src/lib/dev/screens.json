@@ -138,9 +138,9 @@
     "index": 7,
     "title": "Jenny",
     "route": "/dev/person?to=/agent",
-    "status": "in-progress",
+    "status": "built",
     "commit": "49552e0",
-    "note": "Fidelity: board orb is a glowing orange sun; live orb is muted. Rebuilt in P8."
+    "note": "Orb is the board's glowing sun (halo, warm rim, sparks); it breathes only when Jenny is reachable. The rest of Jenny's boards are P8."
   },
   {
     "id": "personal-feed",
