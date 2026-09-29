@@ -26,18 +26,29 @@ New since the last review: Search, Map, Map results, Discover filter, Activity r
 details, Job details, Work → Jobs, Career profile, Candidates, See the outcome, Jenny home.
 
 **30 Sep — architect answers applied:** live map is MapLibre GL + OpenFreeMap (static image is
-now only the fallback); "You" layout approved and logged; password rule settled (BE change goes
-to Cursor). Pushing: the founder pushes from another network — commits stay local here.
+now only the fallback); "You" layout approved and logged; password rule settled (BE change is
+now built by a cloud Claude Code session, not Cursor — gaps still go through
+`docs/FE-API-GAPS.md`, nothing changes for FE work). Pushing: the founder pushes from another
+network — commits stay local here.
+
+**Branch:** `local/wip-2026-09-29` was fast-forwarded onto `feature/arena-vnext-mobile-jenny`
+(clean FF, 12 commits) per the architect. All further FE work happens on
+`feature/arena-vnext-mobile-jenny`; `local/wip-2026-09-29` was left in place, untouched.
+
+**P10 Admin is now built by Cursor on its own branch.** Do not edit `src/app/admin/**` from this
+branch. FE work here does P8, then P11 (P10 is skipped).
 
 **Blocked**
 - **GitHub is unreachable from this Mac.** All work is committed locally on
-  `local/wip-2026-09-29*` in each repo; the founder pushes from another network. **Ready to push.**
+  `feature/arena-vnext-mobile-jenny` / `local/wip-2026-09-29*` in each repo; the founder pushes
+  from another network. **Ready to push.**
 - API gaps logged in `docs/FE-API-GAPS.md` #36–#41 (8-char passwords in BE, inbox previews, need
   offer counts, need edit/pause, room files, saved jobs / hybrid).
 
 **Needs your decision:** nothing open.
 
-**Next:** P8 Jenny boards — start in a fresh session with "continue from docs/PROGRESS.md" — then P10 Admin, then P11. Mark screens Built only.
+**Next:** P8 Jenny boards — start in a fresh session with "continue from docs/PROGRESS.md" — then
+P11 (P10 Admin is Cursor's, skip it, don't touch `src/app/admin/**`). Mark screens Built only.
 
 ## Earlier phases
 
