@@ -77,11 +77,17 @@ export const HIRING_MANAGER_ROUTES: RouteEntry[] = [
 
 export const PLATFORM_ADMIN_ROUTES: RouteEntry[] = [
   { path: "/admin", label: "Platform admin overview", role: "platform_admin" },
-  { path: "/admin/tenants", label: "Tenants", role: "platform_admin" },
-  { path: "/admin/users", label: "Users", role: "platform_admin" },
+  { path: "/admin/verification", label: "Verification queue", role: "platform_admin" },
   { path: "/admin/moderation", label: "Moderation queue", role: "platform_admin" },
+  { path: "/admin/users", label: "Users", role: "platform_admin" },
+  { path: "/admin/tenants", label: "Companies", role: "platform_admin" },
+  { path: "/admin/content", label: "Content", role: "platform_admin" },
+  { path: "/admin/disputes", label: "Disputes", role: "platform_admin" },
+  { path: "/admin/jenny", label: "Jenny & AI oversight", role: "platform_admin" },
   { path: "/admin/analytics", label: "Platform analytics", role: "platform_admin" },
   { path: "/admin/flags", label: "Feature flags", role: "platform_admin" },
+  { path: "/admin/audit", label: "Audit log", role: "platform_admin" },
+  { path: "/admin/team", label: "Admin team", role: "platform_admin" },
 ];
 
 export const ALL_ROUTES: RouteEntry[] = [

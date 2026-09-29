@@ -1,6 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { DEMO_ACCOUNTS } from "../../fixtures/accounts";
 
+/**
+ * Arena Admin routes in MOCK mode via /dev/admin (never arena.vikisol.in).
+ * Run: npx playwright test -c playwright.mock.config.ts
+ */
 const ADMIN_ROUTES = [
   { path: "/admin", heading: "Overview" },
   { path: "/admin/verification", heading: "Verification queue" },
@@ -16,13 +19,18 @@ const ADMIN_ROUTES = [
   { path: "/admin/team", heading: "Admin team" },
 ] as const;
 
-test.describe("Platform admin — B+ admin routes", () => {
-  test.use({ storageState: DEMO_ACCOUNTS.platform_admin.storageStatePath });
+async function openAdmin(page: import("@playwright/test").Page, path: string) {
+  await page.goto(`/dev/admin?to=${encodeURIComponent(path)}`);
+  await page.waitForURL((url) => url.pathname === path || url.pathname.startsWith(`${path}/`), {
+    timeout: 30_000,
+  });
+}
 
+test.describe("Platform admin — B+ admin routes (mock)", () => {
   for (const { path, heading } of ADMIN_ROUTES) {
     test(`${path} renders for platform_admin`, async ({ page }) => {
-      await page.goto(path);
-      await expect(page).toHaveURL(new RegExp(`${path.replace("/", "\\/")}$`), { timeout: 15_000 });
+      await openAdmin(page, path);
+      await expect(page).toHaveURL(new RegExp(`${path.replace(/\//g, "\\/")}$`));
       await expect(page.getByRole("heading", { name: heading, level: 1 })).toBeVisible({ timeout: 15_000 });
       await expect(page.getByText("Preview data").first()).toBeVisible();
     });
@@ -30,7 +38,9 @@ test.describe("Platform admin — B+ admin routes", () => {
 
   test("desktop sidebar includes Verification nav item", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto("/admin");
-    await expect(page.getByRole("navigation", { name: "Admin navigation" }).getByRole("link", { name: "Verification" })).toBeVisible();
+    await openAdmin(page, "/admin");
+    await expect(
+      page.getByRole("navigation", { name: "Admin navigation" }).getByRole("link", { name: "Verification" }),
+    ).toBeVisible();
   });
 });

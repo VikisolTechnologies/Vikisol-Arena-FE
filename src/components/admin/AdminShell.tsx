@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   ShieldCheck,
@@ -18,7 +19,7 @@ import {
 import { DashShell, type DashNavItem } from "@/components/dash/DashShell";
 import NotFound from "@/app/not-found";
 import { signOut } from "@/lib/api/auth";
-import { usePlatformAdminGate } from "@/components/app/PlatformAdminShell";
+import { getSession } from "@/lib/session";
 
 export const ADMIN_NAV: DashNavItem[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -35,7 +36,21 @@ export const ADMIN_NAV: DashNavItem[] = [
   { href: "/admin/team", label: "Admin team", icon: Shield },
 ];
 
-/** B+ shell for Arena Admin (flow §9). Role gate and sign-out stay on the existing hook. */
+/** PA7: platform_admin-only. Failed check renders a real 404 (not a redirect) so a curious
+ * visitor can't tell "/admin" is a gated route. Exported so every /admin/** page can gate its
+ * own data-fetch on the same check. */
+export function usePlatformAdminGate(): "checking" | "ready" | "denied" {
+  const [state, setState] = useState<"checking" | "ready" | "denied">("checking");
+  useEffect(() => {
+    const session = getSession();
+    // Deliberate: this is the client-only auth-gate flip itself, not a data sync side-effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setState(session && session.role === "platform_admin" ? "ready" : "denied");
+  }, []);
+  return state;
+}
+
+/** B+ shell for Arena Admin (flow §9). */
 export function AdminShell({
   title,
   actions,
@@ -70,5 +85,3 @@ export function AdminShell({
     </DashShell>
   );
 }
-
-export { usePlatformAdminGate };
