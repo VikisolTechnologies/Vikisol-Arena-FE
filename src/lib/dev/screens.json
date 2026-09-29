@@ -6,9 +6,9 @@
     "index": 1,
     "title": "Welcome",
     "route": "/auth",
-    "status": "in-progress",
+    "status": "built",
     "commit": "f523fcf",
-    "note": "Fidelity: board photo shows runners with the city skyline at golden hour; no free-licence photo like it was found — live uses a golden-light park (Cubbon Park, credited)."
+    "note": "Photo is a golden-light park (Cubbon Park, credited); architect accepted it for now (review 29 Sep)."
   },
   {
     "id": "sign-up",
@@ -210,9 +210,8 @@
     "index": 7,
     "title": "Activity room",
     "route": "/dev/screen/activity-room",
-    "status": "in-progress",
-    "commit": "1c8e99e",
-    "note": "Fidelity: board has the activity photo as the room header and a Host tools / Report / Leave bar; live header is an icon."
+    "status": "built",
+    "commit": "1c8e99e"
   },
   {
     "id": "need-create",

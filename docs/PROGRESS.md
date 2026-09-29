@@ -16,7 +16,8 @@ all day; a background loop pushes the WIP branches (never main) when it comes ba
   Arena for Business titles, redrawn skyline, two-line meta + "N offers", speed (prod ≤1.1 s).
 - **Section B — done** (commit "FE review B").
 - **F2 — in progress**: done: Search, Discover activity filters, Map basemap, Candidates standalone,
-  See the outcome. Remaining: Activity room header + tools, Offer details page, Career profile
+  See the outcome, Activity room (photo header + Host tools · Report · Leave), Welcome (photo
+  accepted). Remaining: Offer details page, Career profile
   tabs, Work → Jobs, Job details tabs, Jenny orb (P8).
 - Tracker: statuses are Built / In progress / Not started; only the architect sets Approved.
 

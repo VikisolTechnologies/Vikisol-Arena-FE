@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, m } from "motion/react";
-import { ArrowLeft, Bell, BellOff, CalendarDays, CheckCircle2, ExternalLink, FileText, Flag, Link2, LogOut, MapPin, Pin, SendHorizontal, ShieldCheck, Users } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Settings, CalendarDays, CheckCircle2, ExternalLink, FileText, Flag, Link2, LogOut, MapPin, Pin, SendHorizontal, ShieldCheck, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { dissolve, press, spring } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
@@ -140,7 +140,7 @@ export function RoomScreen({ roomId, specimen }: { roomId: string; specimen?: Ro
       type="button"
       aria-label={room.muted ? "Unmute this room" : "Mute this room"}
       onClick={() => setRoomMuted(room.id, !room.muted).then(() => setRoom({ ...room, muted: !room.muted })).catch(() => setNotice("That didn't change. Try again."))}
-      className="-mr-2 grid size-11 place-items-center rounded-full"
+      className="grid size-11 place-items-center rounded-full"
     >
       {room.muted ? <BellOff className="size-5" aria-hidden /> : <Bell className="size-5" aria-hidden />}
     </button>
@@ -204,20 +204,21 @@ export function RoomScreen({ roomId, specimen }: { roomId: string; specimen?: Ro
         </header>
       ) : (
         <header className="relative -mx-5 -mt-[max(8px,env(safe-area-inset-top))] overflow-hidden px-5 pb-5 pt-[max(12px,env(safe-area-inset-top))]">
-          <Cover source={{ id: post?.id ?? room.postId, kind: "activity", media: post?.mediaUrls[0], tags: post?.tags, title: post?.title ?? room.postBody, body: post?.body, startsAt: post?.startsAt }} className="absolute inset-0 opacity-70" />
-          <div aria-hidden className="absolute inset-0 bg-linear-to-b from-transparent to-background" />
+          {/* Board: the activity's own photo is the room header, full strength, fading into the page. */}
+          <Cover source={{ id: post?.id ?? room.postId, kind: "activity", media: post?.mediaUrls[0], tags: post?.tags, title: post?.title ?? room.postBody, body: post?.body, startsAt: post?.startsAt }} className="absolute inset-0" sizes="480px" />
+          <div aria-hidden className="absolute inset-0 bg-linear-to-b from-black/35 via-black/10 via-40% to-background" />
           <div className="relative">
-            <div className="flex items-center justify-between">
-              <button type="button" onClick={() => router.back()} aria-label="Back" className="-ml-2.5 grid size-11 place-items-center rounded-full">
+            <div className="flex items-center justify-between text-white">
+              <button type="button" onClick={() => router.back()} aria-label="Back" className="-ml-1 grid size-11 place-items-center rounded-full bg-black/30 backdrop-blur-sm">
                 <ArrowLeft className="size-6" strokeWidth={1.75} aria-hidden />
               </button>
-              {muteButton}
+              <span className="rounded-full bg-black/30 backdrop-blur-sm">{muteButton}</span>
             </div>
-            <span className="mt-3 grid size-16 place-items-center rounded-full border-2 border-foreground/80 bg-background/40">
+            <span className="mt-16 grid size-16 place-items-center rounded-full border-2 border-white/90 bg-black/45 text-white backdrop-blur-sm">
               <Users className="size-7" strokeWidth={1.75} aria-hidden />
             </span>
-            <h1 className="mt-3 font-display-serif text-[24px] font-medium leading-tight">{title}</h1>
-            {post?.title && post.body && <p className="mt-1 line-clamp-2 text-[15px] text-foreground/85">{post.body}</p>}
+            <h1 className="mt-3 font-display-serif text-[26px] font-medium leading-tight [text-shadow:0_1px_12px_rgba(0,0,0,.45)]">{title}</h1>
+            {post?.title && post.body && <p className="mt-1 line-clamp-2 text-[15px] text-foreground/90">{post.body}</p>}
           </div>
         </header>
       )}
@@ -321,7 +322,13 @@ export function RoomScreen({ roomId, specimen }: { roomId: string; specimen?: Ro
         </AnimatePresence>
       </div>
 
-      <div className={cn("mt-5 grid gap-2", isNeed ? "grid-cols-3" : "grid-cols-2")}>
+      {/* Board tools bar: Host tools (host) · Report · Leave (guest). */}
+      <div className="mt-5 flex flex-wrap gap-2 [&>*]:flex-auto [&>*]:whitespace-nowrap [&>*]:px-4">
+        {!isNeed && post?.mine && (
+          <ButtonLink href={`/feed/${post.id}`} variant="outline" className="h-11 w-auto gap-2 text-[15px]">
+            <Settings className="size-4" aria-hidden /> Host tools
+          </ButtonLink>
+        )}
         {isNeed && (
           <button type="button" onClick={() => setSafetyOpen(true)} className="flex min-h-11 items-center justify-center gap-2 rounded-button border border-field-line text-[15px] font-semibold">
             <ShieldCheck className="size-4" aria-hidden /> Safety
@@ -342,9 +349,7 @@ export function RoomScreen({ roomId, specimen }: { roomId: string; specimen?: Ro
           >
             <LogOut className="size-4" aria-hidden /> {isNeed ? "End chat" : "Leave"}
           </button>
-        ) : (
-          <span />
-        )}
+        ) : null}
       </div>
       {notice && <p role="status" className="mt-3 text-center text-[14px] text-faint">{notice}</p>}
 
