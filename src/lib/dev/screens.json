@@ -869,7 +869,7 @@
     "title": "Feed: Jenny noticed",
     "route": "/dev/person?to=/home",
     "status": "built",
-    "commit": null,
+    "commit": "4fef634",
     "note": "Jenny noticed: up to two things nearby that touch your interests (soonest first, never by fit) + the first thing waiting for approval. Preview only."
   },
   {
@@ -880,7 +880,7 @@
     "title": "Discover: intent → filters",
     "route": "/dev/person?to=/discover?q=I%20want%20a%20beginner%20badminton%20game%20this%20weekend",
     "status": "built",
-    "commit": null,
+    "commit": "4fef634",
     "note": "A sentence becomes editable filters (activity, level, when, distance, setting); results are every nearby activity passing them, soonest first. 'Why these results?' explains. Preview only (gap #42)."
   },
   {
@@ -891,7 +891,7 @@
     "title": "Create: Jenny draft",
     "route": "/dev/person?to=/agent/draft?q=Need%20two%20volunteers%20for%20lake%20cleanup%20Saturday%20at%20Gachibowli%20Lake",
     "status": "built",
-    "commit": null,
+    "commit": "4fef634",
     "note": "Ask Jenny → one sentence becomes a draft of a real Need/Offer/Activity/Project; Edit / Preview & approve continue in that kind's own intake with 'Jenny filled — check' marks. She never publishes."
   },
   {
@@ -902,7 +902,7 @@
     "title": "Smart match (why this)",
     "route": "/dev/person?to=/agent/match/post-cleanup",
     "status": "built",
-    "commit": null,
+    "commit": "4fef634",
     "note": "'Why this matches you' = checkable reasons from interests, availability, history and distance; no score. I'm interested opens the real activity."
   },
   {
@@ -913,7 +913,7 @@
     "title": "Work: approvals queue",
     "route": "/dev/person?to=/work?tab=approval",
     "status": "built",
-    "commit": null,
+    "commit": "4fef634",
     "note": "Needs your approval / Jenny can handle (… → open or turn the automation off) / Waiting on others. 'Needs approval' is a Work tab; the sections also top 'All'."
   },
   {
@@ -924,7 +924,7 @@
     "title": "Approve action",
     "route": "/dev/screen/approve-action",
     "status": "built",
-    "commit": null,
+    "commit": "4fef634",
     "note": "Exact words, recipient list (expandable), data used, 'Exact location is not shared'; undo line only when reversible (hidden here). In mock mode the approved reply really lands in Rohit's chat."
   },
   {
@@ -935,7 +935,7 @@
     "title": "Jenny: today & automations",
     "route": "/dev/person?to=/agent",
     "status": "built",
-    "commit": null,
+    "commit": "4fef634",
     "note": "Today / Automations / Reminders / History. Plan from what you're hosting or joined + the first approval; toggles are yours; status pill only after a real reply."
   },
   {
@@ -946,7 +946,7 @@
     "title": "Tell Jenny",
     "route": "/dev/person?to=/identity/career/jenny?say=1",
     "status": "built",
-    "commit": null,
+    "commit": "4fef634",
     "note": "Your sentence, Jenny's reply in a sheet: existing profile, you control what's shared, no auto-apply."
   },
   {
@@ -957,7 +957,7 @@
     "title": "Career setup draft",
     "route": "/dev/person?to=/identity/career/jenny?step=draft",
     "status": "built",
-    "commit": null,
+    "commit": "4fef634",
     "note": "Draft = your profile + career answers on this device; missing details open the same career field in a sheet."
   },
   {
@@ -968,7 +968,7 @@
     "title": "Privacy & permission",
     "route": "/dev/person?to=/identity/career/jenny?step=privacy",
     "status": "built",
-    "commit": null,
+    "commit": "4fef634",
     "note": "Per-field audience (Private / People I apply to / Verified employers) + Audience view; kept on this device (gap #19)."
   },
   {
@@ -979,7 +979,7 @@
     "title": "Set automation",
     "route": "/dev/person?to=/identity/career/automation",
     "status": "built",
-    "commit": null,
+    "commit": "4fef634",
     "note": "Trigger → Then ×3 (each can be off) → Never submit without approval (fixed, can't be removed)."
   },
   {
@@ -990,7 +990,7 @@
     "title": "Today's shortlist",
     "route": "/dev/person?to=/identity/career/shortlist",
     "status": "built",
-    "commit": null,
+    "commit": "4fef634",
     "note": "Roles matching your desired roles, newest first; Matches / Questions / Missing counts against must-haves; Why this in plain reasons."
   },
   {
@@ -1001,7 +1001,7 @@
     "title": "Review application",
     "route": "/dev/person?to=/applications/new?job=job-2",
     "status": "built",
-    "commit": null,
+    "commit": "4fef634",
     "note": "Answers (not sent yet — gap #20), resume, exactly what's shared, Jenny's note (kept, not attached). Approve & submit = the real apply call."
   },
   {
@@ -1012,7 +1012,7 @@
     "title": "Application tracker",
     "route": "/dev/screen/application-tracker",
     "status": "built",
-    "commit": null,
+    "commit": "4fef634",
     "note": "Real stages + '(as approved by you)' + Jenny's note that she keeps watch and drafts a follow-up only for review."
   },
   {
