@@ -17,8 +17,8 @@ all day; a background loop pushes the WIP branches (never main) when it comes ba
 - **Section B — done** (commit "FE review B").
 - **F2 — in progress**: done: Search, Discover activity filters, Map basemap, Candidates standalone,
   See the outcome, Activity room (photo header + Host tools · Report · Leave), Welcome (photo
-  accepted), Offer details (full page), Job details (tabs + lists), Work → Jobs. Remaining:
-  Career profile tabs, Jenny orb (P8).
+  accepted), Offer details (full page), Job details (tabs + lists), Work → Jobs, Career profile tabs.
+  Remaining: Jenny orb (P8).
 - Tracker: statuses are Built / In progress / Not started; only the architect sets Approved.
 
 

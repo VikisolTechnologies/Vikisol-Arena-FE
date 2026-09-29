@@ -3,6 +3,15 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **29 Sep (F2)** — "You" has two boards (core Profile and career "My Profile"). One page serves
+  both: the core header (cover, photo, Edit, name, title · area) and stats, then the career
+  board's For you / About / Impact tabs. For you = intro card with interests, recent outcomes
+  (See all → Work › Completed) and the Open career profile card; About = availability, area,
+  title, skills, privacy; Impact = a plain-words summary and every outcome.
+- **29 Sep (F2)** — Job details: Apply sits in the company card (board); About / People / Reviews.
+  Must-haves come from the posting text when the employer wrote them, else its skills.
+- **29 Sep (F2)** — Offer details is a full page with its own history entry (Back returns to the
+  need), not a sheet.
 - **29 Sep (F2)** — Map: a static dark basemap of the launch zone (12 × 16 km), rendered once from
   OpenStreetMap tiles and restyled to the board's graphite/teal (`public/fixtures/map/`, 133 KB,
   "© OpenStreetMap contributors" on the map). Pins are placed by Web Mercator from each item's

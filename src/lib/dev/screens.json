@@ -362,9 +362,9 @@
     "index": 1,
     "title": "My profile (career entry)",
     "route": "/dev/person?to=/identity",
-    "status": "in-progress",
+    "status": "built",
     "commit": "b9d03ce",
-    "note": "Fidelity: board is a For you / About / Impact tabbed career profile with an 'Open career profile' card; live shows the personal profile with a career card."
+    "note": "One You page serves both boards: the core header and stats, then the career board's For you / About / Impact tabs and the Open career profile card."
   },
   {
     "id": "career-intent",
