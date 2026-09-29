@@ -1143,5 +1143,104 @@
     "status": "built",
     "commit": null,
     "note": "No board — designed in B+"
+  },
+  {
+    "id": "account-session-expired",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 1,
+    "title": "Session expired",
+    "route": "/dev/person?to=/account/session-expired",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Live 401 wiring listed in docs/account/SHARED-CHANGES-NEEDED.md"
+  },
+  {
+    "id": "account-edit",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 2,
+    "title": "Edit profile",
+    "route": "/dev/person?to=/account/edit",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Gap #53"
+  },
+  {
+    "id": "account-notifications",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 3,
+    "title": "Notification preferences",
+    "route": "/dev/person?to=/account/notifications",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Gap #52"
+  },
+  {
+    "id": "account-blocked",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 4,
+    "title": "Blocked accounts",
+    "route": "/dev/person?to=/account/blocked",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Uses existing blocks API"
+  },
+  {
+    "id": "account-export",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 5,
+    "title": "Download my data",
+    "route": "/dev/person?to=/account/export",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Uses exportMyData"
+  },
+  {
+    "id": "account-delete",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 6,
+    "title": "Delete account",
+    "route": "/dev/person?to=/account/delete",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Clear confirm + consequences"
+  },
+  {
+    "id": "account-help",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 7,
+    "title": "Help & safety centre",
+    "route": "/dev/person?to=/account/help",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+"
+  },
+  {
+    "id": "account-share",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 8,
+    "title": "Share profile",
+    "route": "/dev/person?to=/account/share",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Link to /neighbour/{id}"
+  },
+  {
+    "id": "neighbour-profile",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 9,
+    "title": "Neighbour public profile",
+    "route": "/dev/person?to=/neighbour/n-arjun",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Hidden specimen: /neighbour/n-hidden. Gap #54"
   }
 ]
