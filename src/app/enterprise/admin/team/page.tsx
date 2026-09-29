@@ -128,25 +128,29 @@ export default function TeamPage() {
             <Panel title="Members">
               <ul className="divide-y divide-line">
                 {team.map((x) => (
-                  <li key={x.membershipId} className="flex flex-wrap items-center gap-3 py-3">
-                    <Avatar name={x.name} className="size-10 text-[14px]" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-semibold">{x.name}</span>
-                      <span className="block truncate text-[13px] text-faint">{x.email}</span>
-                    </span>
-                    <label>
-                      <span className="sr-only">Role for {x.name}</span>
-                      <select value={x.role} onChange={(e) => act(() => changeMemberRole(x.membershipId, e.target.value as Role), "The role didn't change. Try again.")} className="min-h-11 rounded-full border border-field-line bg-transparent px-3 text-[14px] [&>option]:text-paper-ink">
-                        {ROLES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
-                      </select>
-                    </label>
-                    <StatusPill status={x.status} />
-                    {x.status === "suspended" ? (
-                      <DashButton variant="outline" onClick={() => act(() => setMemberSuspended(x.membershipId, false), "Didn't reactivate. Try again.")}><UserCheck className="size-4" aria-hidden /> Reactivate</DashButton>
-                    ) : (
-                      <DashButton variant="outline" onClick={() => act(() => setMemberSuspended(x.membershipId, true), "Didn't suspend. Try again.")}><UserX className="size-4" aria-hidden /> Suspend</DashButton>
-                    )}
-                    <button type="button" aria-label={`Remove ${x.name}`} onClick={() => setRemoving(x)} className="grid size-11 place-items-center rounded-full text-danger-on-dark hover:bg-danger/10"><Trash2 className="size-4" aria-hidden /></button>
+                  <li key={x.membershipId} className="py-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar name={x.name} className="size-10 text-[14px]" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[15px] font-semibold">{x.name}</span>
+                        <span className="block truncate text-[13px] text-faint">{x.email}</span>
+                      </span>
+                      <StatusPill status={x.status} />
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 pl-[52px]">
+                      <label>
+                        <span className="sr-only">Role for {x.name}</span>
+                        <select value={x.role} onChange={(e) => act(() => changeMemberRole(x.membershipId, e.target.value as Role), "The role didn't change. Try again.")} className="min-h-11 rounded-full border border-field-line bg-transparent px-3 text-[14px] [&>option]:text-paper-ink">
+                          {ROLES.map((r) => <option key={r.key} value={r.key}>{r.label}</option>)}
+                        </select>
+                      </label>
+                      {x.status === "suspended" ? (
+                        <DashButton variant="outline" onClick={() => act(() => setMemberSuspended(x.membershipId, false), "Didn't reactivate. Try again.")}><UserCheck className="size-4" aria-hidden /> Reactivate</DashButton>
+                      ) : (
+                        <DashButton variant="outline" onClick={() => act(() => setMemberSuspended(x.membershipId, true), "Didn't suspend. Try again.")}><UserX className="size-4" aria-hidden /> Suspend</DashButton>
+                      )}
+                      <button type="button" aria-label={`Remove ${x.name}`} onClick={() => setRemoving(x)} className="ml-auto grid size-11 place-items-center rounded-full text-danger-on-dark hover:bg-danger/10"><Trash2 className="size-4" aria-hidden /></button>
+                    </div>
                   </li>
                 ))}
               </ul>

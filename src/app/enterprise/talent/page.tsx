@@ -33,6 +33,7 @@ export default function TalentPage() {
   const [results, setResults] = useState<Result[] | null>(null);
   const [error, setError] = useState(false);
   const [shortlist, setShortlist] = useState<string[]>([]);
+  const [limit, setLimit] = useState(12);
 
   useEffect(() => {
     if (!requireEnterpriseOnboarded(router)) return;
@@ -51,6 +52,7 @@ export default function TalentPage() {
       .then((r) => {
         if (!live) return;
         setError(false);
+        setLimit(12);
         setResults(r as Result[]);
       })
       .catch(() => live && setError(true));
@@ -90,7 +92,7 @@ export default function TalentPage() {
           <>
             <p className="mb-3 text-[14px] text-faint" role="status">{results.length} {results.length === 1 ? "person" : "people"}</p>
             <m.ul initial="hidden" animate="shown" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {results.map(({ candidate: c }, i) => {
+              {results.slice(0, limit).map(({ candidate: c }, i) => {
                 const saved = shortlist.includes(c.id);
                 return (
                   <m.li key={c.id} variants={rise} custom={i} className="relative flex flex-col rounded-tile border border-line bg-surface p-5 transition-colors duration-200 hover:border-foreground/25">
@@ -113,6 +115,11 @@ export default function TalentPage() {
                 );
               })}
             </m.ul>
+            {results.length > limit && (
+              <div className="mt-5 flex justify-center">
+                <button type="button" onClick={() => setLimit((n) => n + 12)} className="min-h-11 rounded-full border border-field-line px-5 text-[15px] font-semibold hover:bg-foreground/5">Show more ({results.length - limit} left)</button>
+              </div>
+            )}
           </>
         )}
       </div>

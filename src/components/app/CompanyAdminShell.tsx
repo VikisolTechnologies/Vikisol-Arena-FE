@@ -64,7 +64,7 @@ export function CompanyAdminShell({
       nav={NAV_ITEMS}
       switcher={
         <Link href="/enterprise" className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-[14px] font-semibold text-foreground/80 hover:bg-foreground/5">
-          <ArrowLeftRight className="size-4" aria-hidden /> Recruiting workspace
+          <ArrowLeftRight className="size-4" aria-hidden /> <span className="whitespace-nowrap"><span className="sr-only sm:not-sr-only">Recruiting </span>workspace</span>
         </Link>
       }
       title={title}
