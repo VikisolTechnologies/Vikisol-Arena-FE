@@ -3,6 +3,20 @@
 One line per non-obvious call, newest first. Source order per the mission: (1) the B+ boards,
 (2) FE-BPLUS-BUILD.md §2 corrections, (3) judgement — logged here when judgement was needed.
 
+- **29 Sep (F2)** — Map: a static dark basemap of the launch zone (12 × 16 km), rendered once from
+  OpenStreetMap tiles and restyled to the board's graphite/teal (`public/fixtures/map/`, 133 KB,
+  "© OpenStreetMap contributors" on the map). Pins are placed by Web Mercator from each item's
+  approximate point; outside the basemap the drawn map is used. No runtime tile requests. The
+  nearest activity is previewed under the map until a pin is tapped (board).
+- **29 Sep (F2)** — Discover → Activities uses the board's filters: Today / Weekend / Free, then
+  Fitness / Learning / All filters (sheet with every category). "Free" narrows nothing — every
+  Arena activity is free (paid work is a project) — and the sheet says so. Discover lists only
+  items within the Nearby radius, like the Feed.
+- **29 Sep (F2)** — Search matches the board: scopes People / Activities / Needs / Jobs / Skills,
+  "Near <area>" (shared with Feed/Discover), a distance filter (2/5/10 km/any; items without a
+  point stay, marked "distance unknown"), a Safe & private explainer, photo results with save.
+  Before typing it shows the newest things nearby as results. People/Skills use preview
+  neighbours in preview mode only (gap #17 in real mode).
 - **29 Sep (architect review A)** — One preview world: `src/lib/fixtures/world.ts` holds the 13
   neighbours (roles, skills, interests, bios), the jobs near them, Priya's applications, chats and
   notifications, and the business demo (GreenLeaf Labs hiring a Community Program Assistant, with

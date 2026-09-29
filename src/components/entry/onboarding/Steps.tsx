@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { AnimatePresence, m } from "motion/react";
-import { Briefcase, Check, ChevronRight, Eye, Footprints, Info, MapPin, Plus } from "lucide-react";
+import { Check, ChevronRight, Eye, Footprints, Info, MapPin, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { press, rise, spring } from "@/lib/motion";
 import { Button, ButtonLink } from "@/components/bplus/Button";

@@ -166,7 +166,7 @@ export function SearchScreen() {
   }
   // Radius: items with a point outside it drop out; items without one stay, marked "distance unknown".
   if (radius) rows = rows.filter((r) => r.km == null || r.km <= radius);
-  if (sort === "nearest") rows = [...rows].sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
+  if (sort === "nearest" || peopleScope) rows = [...rows].sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
   const waiting = !peopleScope && (trimmed.length >= 2 ? !current : !nearby);
 
   const toggleSave = async (postId: string) => {
@@ -233,10 +233,10 @@ export function SearchScreen() {
         ) : (
           <>
             <div className="mb-2 flex items-baseline justify-between">
-              <h2 className="text-[17px] font-semibold">{trimmed ? "Results" : "Newest nearby"}</h2>
-              <button type="button" onClick={() => setSort((s) => (s === "recent" ? "nearest" : "recent"))} className="min-h-11 text-[13px] text-faint underline underline-offset-4" aria-label={`Sort: ${sort === "recent" ? "most recent first" : "nearest first"}. Change`}>
+              <h2 className="text-[17px] font-semibold">{trimmed ? "Results" : peopleScope ? "People nearby" : "Newest nearby"}</h2>
+              {peopleScope ? <p className="text-[13px] text-faint">Nearest first</p> : <button type="button" onClick={() => setSort((s) => (s === "recent" ? "nearest" : "recent"))} className="min-h-11 text-[13px] text-faint underline underline-offset-4" aria-label={`Sort: ${sort === "recent" ? "most recent first" : "nearest first"}. Change`}>
                 {sort === "recent" ? "Most recent first" : "Nearest first"}
-              </button>
+              </button>}
             </div>
             <m.ul key={`${key}-${sort}-${radius}`} initial="hidden" animate="shown" className="space-y-2.5" aria-label="Search results">
               {rows.map((r, i) => (
