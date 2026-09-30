@@ -13,8 +13,6 @@ const ROUTES = [
   { path: "/account/delete", heading: "Delete account" },
   { path: "/account/help", heading: "Help & safety" },
   { path: "/account/share", heading: "Share profile" },
-  { path: "/neighbour/n-arjun", heading: "Arjun Nair" },
-  { path: "/neighbour/n-hidden", heading: "Private profile" },
 ] as const;
 
 async function openAsPerson(page: import("@playwright/test").Page, path: string) {
@@ -29,7 +27,7 @@ test.describe("Account & people — P11 (mock)", () => {
     test(`${path} renders`, async ({ page }) => {
       await openAsPerson(page, path);
       await expect(page.getByRole("heading", { name: heading, level: 1 })).toBeVisible({ timeout: 15_000 });
-      if (path.startsWith("/account/") || path.startsWith("/neighbour/")) {
+      if (path.startsWith("/account/")) {
         await expect(page.getByText("Preview data").first()).toBeVisible();
       }
     });
@@ -39,5 +37,12 @@ test.describe("Account & people — P11 (mock)", () => {
     await openAsPerson(page, "/account/delete");
     await expect(page.getByText("What happens")).toBeVisible();
     await expect(page.getByRole("button", { name: /Delete my account forever/ })).toBeVisible();
+  });
+
+  // Architect call (30 Sep, merging P11): canonical public-profile URL is /people/[id];
+  // /neighbour/[id] (this branch's B+ page) redirects there instead of the reverse.
+  test("/neighbour/:id redirects to the canonical /people/:id", async ({ page }) => {
+    const response = await page.goto("/neighbour/n-arjun");
+    expect(response?.url()).toContain("/people/n-arjun");
   });
 });

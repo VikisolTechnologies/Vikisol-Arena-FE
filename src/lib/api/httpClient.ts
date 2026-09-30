@@ -1,5 +1,7 @@
 import { API_BASE_URL } from "./mode";
 import { reportApiUnreachable, reportApiReachable } from "./apiHealth";
+import { clearSessionExpired, reportSessionExpired } from "./sessionExpired";
+import { clearSession } from "@/lib/session";
 
 const TOKEN_KEY = "arena_jwt_token";
 
@@ -10,6 +12,7 @@ export function getToken(): string | null {
 
 export function setToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token);
+  clearSessionExpired();
 }
 
 export function clearToken() {
@@ -134,7 +137,11 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
         throw new ApiError(0, "Can't reach the Arena backend right now.");
       }
     } else {
+      // Drafts (intake, compose, ...) live under their own localStorage keys, untouched by
+      // clearSession() - only the session record goes, same as an explicit sign-out.
       clearToken();
+      clearSession();
+      reportSessionExpired();
     }
   }
 

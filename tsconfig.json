@@ -40,7 +40,9 @@
     ".next-founder/types/**/*.ts",
     ".next-founder/dev/types/**/*.ts",
     ".next-perf/types/**/*.ts",
-    ".next-perf/dev/types/**/*.ts"
+    ".next-perf/dev/types/**/*.ts",
+    ".next-mock-tests/types/**/*.ts",
+    ".next-mock-tests/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

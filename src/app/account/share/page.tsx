@@ -17,7 +17,7 @@ export default function ShareProfilePage() {
   useEffect(() => {
     const id = getSession()?.candidateId || ME.id;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setUrl(`${window.location.origin}/neighbour/${id}`);
+    setUrl(`${window.location.origin}/people/${id}`);
   }, []);
 
   const copy = async () => {
@@ -46,7 +46,7 @@ export default function ShareProfilePage() {
     <AccountPage title="Share profile" lede="Send a link to your public profile. Only what you've made visible is shown.">
       {!isRealMode() && (
         <div className="mb-4">
-          <StateCard kind="empty" title="Preview link" detail="In preview this opens the B+ neighbour profile specimen." />
+          <StateCard kind="empty" title="Preview link" detail="In preview this opens the public profile specimen." />
         </div>
       )}
       <div className="rounded-tile bg-paper p-4 text-paper-ink">
@@ -77,7 +77,7 @@ export default function ShareProfilePage() {
         </Button>
       </div>
       <p className="mt-4 text-[13px] text-paper-ink-muted">
-        If your profile visibility is Hidden, neighbours who open the link see a private message instead of your details (gap #54).
+        If your profile visibility is Hidden, neighbours who open the link see a private message instead of your details (gap #60).
       </p>
     </AccountPage>
   );

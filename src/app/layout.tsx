@@ -9,6 +9,7 @@ import { BuildStamp } from "@/components/BuildStamp";
 import { PageTransition } from "@/components/PageTransition";
 import { RouteTransition } from "@/components/RouteTransition";
 import { DeferredCommandPalette } from "@/components/vnext/DeferredCommandPalette";
+import { DeferredSessionExpired } from "@/components/account/DeferredSessionExpired";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 
 // Self-hosted (src/app/fonts, OFL - licences alongside) rather than next/font/google: the
@@ -104,6 +105,7 @@ export default function RootLayout({
           <PageTransition>{children}</PageTransition>
         </MotionProvider>
         <DeferredCommandPalette />
+        <DeferredSessionExpired />
         <CookieConsentBanner />
         <WebVitalsReporter />
         <BuildStamp />

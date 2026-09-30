@@ -6,17 +6,16 @@ import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react
 import { m } from "motion/react";
 import { ChevronRight, LogOut } from "lucide-react";
 import { IconBadge, type IconBadgeTone } from "@/components/bplus/IconBadge";
-import { BellSolid, BlockSolid, BriefcaseSolid, LockSolid, PinSolid, ShieldSolid, SparkleSolid, TrashSolid, UserCardSolid } from "@/components/bplus/SolidIcons";
+import { BellSolid, BlockSolid, BriefcaseSolid, HelpSolid, LockSolid, PinSolid, ShareSolid, ShieldSolid, SparkleSolid, TrashSolid, UserCardSolid } from "@/components/bplus/SolidIcons";
 import { cn } from "@/lib/utils";
 import { rise } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
 import { Avatar } from "@/components/bplus/Avatar";
-import { BottomSheet } from "@/components/bplus/BottomSheet";
 import { Button } from "@/components/bplus/Button";
 import { Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { Toggle } from "@/components/bplus/Controls";
-import { AccountSheet, BlockedSheet, CareerSheet, JennySheet, LocationSheet, VerificationSheet } from "@/components/settings/SettingsSheets";
-import { deleteMyAccount, exportMyData, getMyProfile } from "@/lib/api/profile";
+import { AccountSheet, CareerSheet, JennySheet, LocationSheet, VerificationSheet } from "@/components/settings/SettingsSheets";
+import { getMyProfile } from "@/lib/api/profile";
 import { signOut } from "@/lib/api/auth";
 import { getSession } from "@/lib/session";
 import { getManualReducedEffects, setManualReducedEffects } from "@/hooks/use-reduced-motion";
@@ -24,7 +23,7 @@ import { requireOnboarded } from "@/lib/auth-guard";
 import type { CandidateProfile } from "@/lib/types";
 
 type Glyph = typeof PinSolid;
-type Sheet = "location" | "career" | "jenny" | "verification" | "account" | "blocked" | "delete" | null;
+type Sheet = "location" | "career" | "jenny" | "verification" | "account" | null;
 const subscribeNothing = () => () => {};
 
 function Row({ icon, tone, title, detail, onClick, href, danger }: { icon: Glyph; tone: IconBadgeTone; title: string; detail?: string; onClick?: () => void; href?: string; danger?: boolean }) {
@@ -67,10 +66,6 @@ export function SettingsScreen() {
   const [emailOverride, setEmailOverride] = useState<string | null>(null);
   const storedReduced = useSyncExternalStore(subscribeNothing, getManualReducedEffects, () => false);
   const [reducedOverride, setReducedOverride] = useState<boolean | null>(null);
-  const [exporting, setExporting] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [notice, setNotice] = useState("");
-
   useEffect(() => {
     if (!requireOnboarded(router)) return;
     getMyProfile().then(setProfile).catch(() => setError(true));
@@ -78,25 +73,6 @@ export function SettingsScreen() {
 
   const email = emailOverride ?? sessionEmail;
   const reduced = reducedOverride ?? storedReduced;
-
-  const exportData = async () => {
-    setExporting(true);
-    setNotice("");
-    try {
-      const data = await exportMyData();
-      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "arena-my-data.json";
-      a.click();
-      URL.revokeObjectURL(url);
-      setNotice("Your data file was downloaded.");
-    } catch {
-      setNotice("Your data didn't download. Try again.");
-    } finally {
-      setExporting(false);
-    }
-  };
 
   if (error) {
     return (
@@ -134,20 +110,27 @@ export function SettingsScreen() {
             <Row icon={BriefcaseSolid} tone="brown" title="Career visibility" detail={profile.consent.searchableByEnterprises ? "Visible to employers" : "Hidden from employers"} onClick={() => setSheet("career")} />
             <Row icon={SparkleSolid} tone="jenny" title="Jenny's permissions" detail={profile.autonomy === "manual" ? "Only when I ask · you approve" : "Jenny prepares, you approve"} onClick={() => setSheet("jenny")} />
             <Row icon={ShieldSolid} tone="green" title="Verification & safety" detail="Date of birth, phone" onClick={() => setSheet("verification")} />
+            <Row icon={ShareSolid} tone="jenny" title="Share profile" detail="Send a link to your public profile" href="/account/share" />
           </Group>
 
           <Group title="Account & data" index={2}>
+            <Row icon={UserCardSolid} tone="blue" title="Edit profile" detail="Name, title, interests, photo" href="/account/edit" />
             <Row icon={LockSolid} tone="slate" title="Email & password" detail={email || undefined} onClick={() => setSheet("account")} />
-            <Row icon={UserCardSolid} tone="blue" title={exporting ? "Preparing your data…" : "Download my data"} detail="A copy of what Arena holds about you" onClick={exportData} />
-            <Row icon={BlockSolid} tone="amber" title="Blocked accounts" detail="Manage people you've blocked" onClick={() => setSheet("blocked")} />
-            <Row icon={TrashSolid} tone="red" title="Delete account" detail="Permanently remove your data" onClick={() => setSheet("delete")} danger />
+            <Row icon={UserCardSolid} tone="blue" title="Download my data" detail="A copy of what Arena holds about you" href="/account/export" />
+            <Row icon={BlockSolid} tone="amber" title="Blocked accounts" detail="Manage people you've blocked" href="/account/blocked" />
+            <Row icon={TrashSolid} tone="red" title="Delete account" detail="Permanently remove your data" href="/account/delete" danger />
           </Group>
 
           <Group title="Notifications" index={3}>
             <Row icon={BellSolid} tone="orange" title="Notifications" detail="See and clear your notifications" href="/notifications" />
+            <Row icon={BellSolid} tone="orange" title="Notification preferences" detail="Choose what Arena notifies you about" href="/account/notifications" />
           </Group>
 
-          <m.section variants={rise} custom={4} className="mt-6" aria-label="Accessibility">
+          <Group title="Help" index={4}>
+            <Row icon={HelpSolid} tone="green" title="Help & safety" detail="Staying safe, reporting, your data" href="/account/help" />
+          </Group>
+
+          <m.section variants={rise} custom={5} className="mt-6" aria-label="Accessibility">
             <h2 className="mb-2 text-[17px] font-semibold">Accessibility</h2>
             <div className="rounded-tile bg-surface px-4 py-2">
               <Toggle
@@ -162,9 +145,7 @@ export function SettingsScreen() {
             </div>
           </m.section>
 
-          {notice && <p role="status" className="mt-4 text-center text-[14px] text-faint">{notice}</p>}
-
-          <m.div variants={rise} custom={5} className="mt-8">
+          <m.div variants={rise} custom={6} className="mt-8">
             <Button variant="outline" onClick={() => void signOut().then(() => router.replace("/auth?mode=signin"))}>
               <LogOut className="size-5" aria-hidden /> Sign out
             </Button>
@@ -175,32 +156,6 @@ export function SettingsScreen() {
           <JennySheet open={sheet === "jenny"} onClose={() => setSheet(null)} profile={profile} onProfile={setProfile} />
           <VerificationSheet open={sheet === "verification"} onClose={() => setSheet(null)} />
           <AccountSheet open={sheet === "account"} onClose={() => setSheet(null)} email={email} onEmail={setEmailOverride} />
-          <BlockedSheet open={sheet === "blocked"} onClose={() => setSheet(null)} />
-          <BottomSheet open={sheet === "delete"} onClose={() => setSheet(null)} title="Delete account">
-            <h2 className="mt-3 pr-12 font-display-serif text-[26px] font-medium">Delete your account?</h2>
-            <p className="mt-2 text-[15px] text-paper-ink-muted">This permanently erases your profile and signs you out everywhere. Your name, bio, skills and CV are removed. This can&apos;t be undone.</p>
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <Button variant="outline" className="border-paper-ink/55 text-paper-ink" onClick={() => setSheet(null)}>Keep my account</Button>
-              <Button
-                loading={deleting}
-                className="bg-danger-on-paper px-3 hover:bg-danger-on-paper active:bg-danger-on-paper"
-                onClick={async () => {
-                  setDeleting(true);
-                  try {
-                    await deleteMyAccount();
-                    await signOut();
-                    router.replace("/");
-                  } catch {
-                    setDeleting(false);
-                    setNotice("Your account wasn't deleted. Try again.");
-                    setSheet(null);
-                  }
-                }}
-              >
-                Delete
-              </Button>
-            </div>
-          </BottomSheet>
         </m.div>
       )}
     </AppShell>

@@ -117,6 +117,10 @@ const nextConfig: NextConfig = {
       { source: "/feed", destination: "/home", permanent: false },
       { source: "/dashboard", destination: "/home", permanent: false },
       { source: "/interviews", destination: "/applications", permanent: false },
+      // Architect call (30 Sep, merging P11): the public profile's canonical URL is
+      // /people/[id] (existing follow/block/posts functionality); /neighbour/[id]'s B+ page
+      // (feature/arena-account-bplus) redirects here rather than the reverse.
+      { source: "/neighbour/:id", destination: "/people/:id", permanent: true },
     ];
   },
 };

@@ -156,6 +156,12 @@ export const TrashSolid = (p: P) => (
   </S>
 );
 
+export const ShareSolid = (p: P) => (
+  <S {...p}>
+    <path d="M18 2a3 3 0 100 6 3 3 0 001.6-.46l-6.2 3.6a3 3 0 100 1.72l6.2 3.6A3 3 0 1021 13a3 3 0 00-1.6.46l-6.2-3.6a3 3 0 000-1.72l6.2-3.6A3 3 0 1018 2z" />
+  </S>
+);
+
 export const ChartSolid = (p: P) => (
   <S {...p}>
     <path d="M4 3h2.4v15.6H21V21H4zM8.5 12h3v5h-3zM13 8h3v9h-3zM17.5 5h3v12h-3z" />

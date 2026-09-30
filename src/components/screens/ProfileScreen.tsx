@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, m } from "motion/react";
-import { Briefcase, ChevronRight, Lock, LogOut, MapPin, Plus, Settings } from "lucide-react";
+import { Briefcase, ChevronRight, Lock, LogOut, MapPin, Plus, Settings, Share2 } from "lucide-react";
 import { dissolve, rise } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
 import { Avatar } from "@/components/bplus/Avatar";
@@ -114,9 +114,14 @@ export function ProfileScreen() {
       <div className="relative -mx-5 -mt-[max(8px,env(safe-area-inset-top))] h-40 overflow-hidden">
         <Image src="/brand/welcome-park.webp" alt="" fill sizes="480px" className="object-cover object-[50%_25%]" />
         <div aria-hidden className="absolute inset-0 bg-linear-to-b from-transparent to-background" />
-        <Link href="/settings" aria-label="Settings" className="absolute right-3 top-[max(12px,env(safe-area-inset-top))] grid size-11 place-items-center rounded-full bg-background/50 text-foreground backdrop-blur">
-          <Settings className="size-5" strokeWidth={1.75} aria-hidden />
-        </Link>
+        <div className="absolute right-3 top-[max(12px,env(safe-area-inset-top))] flex gap-2">
+          <Link href="/account/share" aria-label="Share profile" className="grid size-11 place-items-center rounded-full bg-background/50 text-foreground backdrop-blur">
+            <Share2 className="size-5" strokeWidth={1.75} aria-hidden />
+          </Link>
+          <Link href="/settings" aria-label="Settings" className="grid size-11 place-items-center rounded-full bg-background/50 text-foreground backdrop-blur">
+            <Settings className="size-5" strokeWidth={1.75} aria-hidden />
+          </Link>
+        </div>
       </div>
 
       {error ? (

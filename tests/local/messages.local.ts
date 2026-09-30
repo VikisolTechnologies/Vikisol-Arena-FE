@@ -147,10 +147,12 @@ test("settings: career visibility saves; blocked accounts can be unblocked", asy
   await expect(career.getByRole("switch", { name: "Visible to employers" })).toHaveAttribute("aria-checked", "true");
   expect(calls.find((c) => c.path === "/profile/me/consent")?.body).toEqual({ autoApply: false, searchableByEnterprises: true });
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: /Blocked accounts/ }).click();
-  const blocked = page.getByRole("dialog", { name: "Blocked accounts" });
-  await expect(blocked.getByText("Kabir Das")).toBeVisible();
-  await blocked.getByRole("button", { name: "Unblock" }).click();
-  await expect(blocked.getByText("You haven't blocked anyone.")).toBeVisible();
+  // Blocked accounts is a full page now (/account/blocked), no longer an inline sheet.
+  await page.getByRole("link", { name: /Blocked accounts/ }).click();
+  await expect(page).toHaveURL(/\/account\/blocked/);
+  await expect(page.getByRole("heading", { name: "Blocked accounts", level: 1 })).toBeVisible();
+  await expect(page.getByText("Kabir Das")).toBeVisible();
+  await page.getByRole("button", { name: "Unblock" }).click();
+  await expect(page.getByText("No one blocked")).toBeVisible();
   expect(calls.some((c) => c.method === "DELETE" && c.path === "/blocks/u9")).toBe(true);
 });

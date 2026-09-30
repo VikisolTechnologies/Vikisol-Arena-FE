@@ -17,18 +17,6 @@ export interface HelpTopic {
   body: string;
 }
 
-export interface NeighbourPublic {
-  id: string;
-  name: string;
-  title: string;
-  area: string;
-  bio: string;
-  interests: string[];
-  visibility: "nearby" | "everyone" | "hidden";
-  verifiedNeighbour: boolean;
-  photo?: string;
-}
-
 const KEY = "arena_account_notif_prefs";
 
 export function getDefaultNotifPrefs(): NotifPref[] {
@@ -80,43 +68,6 @@ export function getHelpTopics(): HelpTopic[] {
       body: "Jenny drafts and suggests. She never publishes, applies or sends without your tap.",
     },
   ];
-}
-
-/** Fictional neighbours for the B+ public profile specimen (correction #3 — no real brands). */
-export function getNeighbourPublic(id: string): NeighbourPublic | null {
-  const roster: NeighbourPublic[] = [
-    {
-      id: "n-arjun",
-      name: "Arjun Nair",
-      title: "Community organiser",
-      area: "Gachibowli",
-      bio: "Running groups and weekend volunteering around the lake.",
-      interests: ["Running", "Volunteering", "Badminton"],
-      visibility: "nearby",
-      verifiedNeighbour: true,
-    },
-    {
-      id: "n-meera",
-      name: "Meera Khan",
-      title: "Product designer",
-      area: "Gopanapally",
-      bio: "Quiet evenings, board games, and the occasional pottery workshop.",
-      interests: ["Design", "Board games"],
-      visibility: "everyone",
-      verifiedNeighbour: false,
-    },
-    {
-      id: "n-hidden",
-      name: "Hidden neighbour",
-      title: "",
-      area: "",
-      bio: "",
-      interests: [],
-      visibility: "hidden",
-      verifiedNeighbour: false,
-    },
-  ];
-  return roster.find((n) => n.id === id) ?? roster[0];
 }
 
 export interface EditProfileDraft {
