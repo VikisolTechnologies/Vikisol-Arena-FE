@@ -56,3 +56,4 @@ next-env.d.ts
 .next-local-tests/
 .next-founder/
 .next-mock-tests/
+docs/reviews/shots/**/*.png
