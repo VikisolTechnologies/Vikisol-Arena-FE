@@ -37,7 +37,7 @@ const JOIN_STEPS = [
 
 /** Board "Discover & join an activity" screens 4–6: details, request sent, approved & ready. */
 /** Compare-page specimens only: a fixed request list and a sheet already open. */
-export type ActivitySpecimen = { requests?: PostJoinRequest[]; open?: "checkin" | "cancel" | "leave" };
+export type ActivitySpecimen = { requests?: PostJoinRequest[]; open?: "checkin" | "cancel" | "leave"; now?: number };
 
 export function ActivityScreen({ post: initial, sentOpen: sentInitially = false, specimen }: { post: Post; sentOpen?: boolean; specimen?: ActivitySpecimen }) {
   const router = useRouter();
@@ -372,7 +372,7 @@ function HostPanel({ post, onChanged, specimen }: { post: Post; onChanged: () =>
   const [busyId, setBusyId] = useState<string | null>(null);
   const [cancelOpen, setCancelOpen] = useState(specimen?.open === "cancel");
   const [checkInOpen, setCheckInOpen] = useState(specimen?.open === "checkin");
-  const timing = dayOf(post.startsAt);
+  const timing = dayOf(post.startsAt, specimen?.now);
   useEffect(() => {
     if (specimen?.requests) return;
     getJoinRequests(post.id).then(setRequests).catch((err: unknown) => setError(err instanceof Error ? err.message : "Requests didn't load."));
@@ -408,7 +408,7 @@ function HostPanel({ post, onChanged, specimen }: { post: Post; onChanged: () =>
         ))}
       </ul>
       <div className="mt-6 space-y-2">
-        {timing.soon && post.status !== "cancelled" && <StartingSoon startsAt={post.startsAt!} point={post.exactMeetingPoint} />}
+        {timing.soon && post.status !== "cancelled" && <StartingSoon startsAt={post.startsAt!} point={post.exactMeetingPoint} now={specimen?.now} />}
         {timing.checkIn && approved.length > 0 && post.status !== "cancelled" && <Button onClick={() => setCheckInOpen(true)}>Check people in</Button>}
         {post.roomId && <ButtonLink href={`/rooms/${post.roomId}`} variant={timing.checkIn ? "outline" : "primary"} className={timing.checkIn ? "border-paper-ink/55 text-paper-ink" : undefined}>Open activity room</ButtonLink>}
         {post.status !== "cancelled" && !timing.started && (

@@ -168,10 +168,11 @@ export const SPECIMEN_APPLICATION: Application = {
   id: "specimen-app", candidateId: "me", jobId: "specimen-job", stage: "screening", appliedAt: new Date(Date.now() - 3 * 86_400_000).toISOString(), updatedAt: new Date(Date.now() - 86_400_000).toISOString(),
 };
 
-/* Host's own activity (manage, check in, cancel). Times are relative to today so "starting soon"
- * and the check-in window are real; rounded to the half hour so server and client agree. */
-const HALF_HOUR = 30 * 60_000;
-const soonAt = (minutes: number) => new Date(Math.ceil((Date.now() + minutes * 60_000) / HALF_HOUR) * HALF_HOUR).toISOString();
+/* Host's own activity (manage, check in, cancel). Each keeps the fixture's own clock time (a 6:30 AM
+ * run); only the date moves, relative to today. "Starting soon" uses a fixed clock (`now`) 45 min
+ * before the start so the window shows whatever time it is. */
+const DAY = 86_400_000;
+const clockOnDay = (days: number) => new Date(Math.floor(Date.now() / DAY) * DAY + days * DAY + (BASE % DAY)).toISOString();
 const req = (id: string, userName: string, status: PostJoinRequest["status"], outcome?: PostJoinRequest["outcome"]): PostJoinRequest => ({
   id, postId: "specimen-host-activity", userId: `u-${id}`, userName, userEmoji: userName[0], status, createdAt: new Date(Date.now() - 3 * 3600_000).toISOString(), outcome,
 });
@@ -183,8 +184,9 @@ export const SPECIMEN_HOST_REQUESTS: PostJoinRequest[] = [
 ];
 const hostBase: Post = { ...SPECIMEN_ACTIVITY, id: "specimen-host-activity", authorName: "Priya Sharma", mine: true, spotsFilled: 2, roomId: "specimen-room" };
 /** Two days out: the request queue and Cancel. */
-export const SPECIMEN_HOST_UPCOMING: Post = { ...hostBase, startsAt: soonAt(2 * 24 * 60), endsAt: soonAt(2 * 24 * 60 + 60) };
+export const SPECIMEN_HOST_UPCOMING: Post = { ...hostBase, startsAt: clockOnDay(2), endsAt: new Date(Date.parse(clockOnDay(2)) + 3600_000).toISOString() };
 /** Starting within the hour: "Starting soon" and Check people in. */
-export const SPECIMEN_HOST_SOON: Post = { ...hostBase, startsAt: soonAt(45), endsAt: soonAt(105), exactMeetingPoint: "Durgam Lake – East Gate" };
+export const SPECIMEN_HOST_SOON_NOW = BASE - 45 * 60_000;
+export const SPECIMEN_HOST_SOON: Post = { ...hostBase, startsAt: inHours(0), endsAt: inHours(1), exactMeetingPoint: "Durgam Lake – East Gate" };
 /** Three days from today (YYYY-MM-DD) for the activity preview specimen. */
 export const SPECIMEN_PREVIEW_DATE = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);

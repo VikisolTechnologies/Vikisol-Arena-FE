@@ -20,8 +20,8 @@ export function dayOf(startsAt?: string, now = Date.now()) {
   return { soon: t - now > 0 && t - now <= 3 * HOUR, checkIn: now >= t - HOUR && now <= t + 72 * HOUR, started: now >= t, minutes: Math.max(0, Math.round((t - now) / 60_000)) };
 }
 
-export function StartingSoon({ startsAt, point }: { startsAt: string; point?: string }) {
-  const { minutes } = dayOf(startsAt);
+export function StartingSoon({ startsAt, point, now }: { startsAt: string; point?: string; now?: number }) {
+  const { minutes } = dayOf(startsAt, now);
   const when = minutes < 60 ? `in ${minutes} min` : `in about ${Math.round(minutes / 60)} h`;
   return (
     <m.div initial="hidden" animate="shown" variants={rise} className="flex items-center gap-3 rounded-tile bg-primary/10 p-4" role="status">

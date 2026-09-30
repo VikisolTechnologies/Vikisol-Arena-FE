@@ -200,7 +200,7 @@
     "index": 6,
     "title": "Approved & ready",
     "route": "/dev/screen/approved-ready",
-    "status": "built",
+    "status": "approved",
     "commit": "1c8e99e"
   },
   {
@@ -230,7 +230,7 @@
     "index": 2,
     "title": "Post a Need",
     "route": "/dev/person?to=/needs/new%3Fkind%3Dmoving",
-    "status": "built",
+    "status": "approved",
     "commit": "f81aebf"
   },
   {
@@ -425,7 +425,7 @@
     "index": 7,
     "title": "Apply & track",
     "route": "/dev/screen/apply-track",
-    "status": "built",
+    "status": "approved",
     "commit": "b9d03ce"
   },
   {
@@ -435,7 +435,7 @@
     "index": 0,
     "title": "Career · Where you are now (status, notice)",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup%26start%3Dstatus",
-    "status": "built",
+    "status": "approved",
     "commit": "b9d03ce",
     "note": "No board — designed in B+"
   },
@@ -446,7 +446,7 @@
     "index": 0,
     "title": "Career · Skills & stack (proficiency, SAP)",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup%26start%3Dskills",
-    "status": "built",
+    "status": "approved",
     "commit": "b9d03ce",
     "note": "No board — designed in B+"
   },
@@ -457,7 +457,7 @@
     "index": 0,
     "title": "Career · Compensation (only me)",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup%26start%3Dpay",
-    "status": "built",
+    "status": "approved",
     "commit": "b9d03ce",
     "note": "No board — designed in B+"
   },
@@ -468,7 +468,7 @@
     "index": 0,
     "title": "Career · What you're looking for",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup%26start%3Dprefs",
-    "status": "built",
+    "status": "approved",
     "commit": "b9d03ce",
     "note": "No board — designed in B+"
   },
@@ -479,7 +479,7 @@
     "index": 0,
     "title": "Career · Resume & proof",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup%26start%3Dproof",
-    "status": "built",
+    "status": "approved",
     "commit": "b9d03ce",
     "note": "No board — designed in B+"
   },
@@ -490,7 +490,7 @@
     "index": 0,
     "title": "Career · Review answers",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup%26start%3Dreview",
-    "status": "built",
+    "status": "approved",
     "commit": "b9d03ce",
     "note": "No board — designed in B+"
   },
@@ -523,7 +523,7 @@
     "index": 0,
     "title": "A2–A4 Activity intake (basics, group & cost, type questions, bring, when, where, who)",
     "route": "/dev/screen/activity-intake",
-    "status": "built",
+    "status": "approved",
     "commit": "390af7e",
     "note": "No board — designed in B+"
   },
@@ -545,7 +545,7 @@
     "index": 0,
     "title": "A6 Preview & publish",
     "route": "/dev/screen/activity-preview",
-    "status": "built",
+    "status": "approved",
     "commit": "390af7e",
     "note": "No board — designed in B+"
   },
@@ -567,7 +567,7 @@
     "index": 0,
     "title": "A8 Manage — starting soon, requests, room",
     "route": "/dev/screen/activity-manage",
-    "status": "built",
+    "status": "approved",
     "commit": "390af7e",
     "note": "No board — designed in B+"
   },
@@ -578,7 +578,7 @@
     "index": 0,
     "title": "A12 Check-in (host marks who came)",
     "route": "/dev/screen/activity-checkin",
-    "status": "built",
+    "status": "approved",
     "commit": "390af7e",
     "note": "No board — designed in B+"
   },
@@ -589,7 +589,7 @@
     "index": 0,
     "title": "A11 Cancel with a reason",
     "route": "/dev/screen/activity-cancel",
-    "status": "built",
+    "status": "approved",
     "commit": "390af7e",
     "note": "No board — designed in B+"
   },
@@ -600,7 +600,7 @@
     "index": 0,
     "title": "A16 Leave before the start",
     "route": "/dev/screen/activity-leave",
-    "status": "built",
+    "status": "approved",
     "commit": "390af7e",
     "note": "No board — designed in B+"
   },
@@ -858,7 +858,7 @@
     "index": 7,
     "title": "Interview & hire",
     "route": "/dev/business?to=/enterprise/interviews/demo-app-5",
-    "status": "built",
+    "status": "approved",
     "commit": null
   },
   {
@@ -1022,7 +1022,7 @@
     "index": 1,
     "title": "Business Home (desktop)",
     "route": "/dev/business?to=/enterprise/dashboard",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1044,7 +1044,7 @@
     "index": 3,
     "title": "Pipeline board (drag)",
     "route": "/dev/business?to=/enterprise/postings/demo-job?tab=candidates",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1055,7 +1055,7 @@
     "index": 4,
     "title": "Interviews index",
     "route": "/dev/business?to=/enterprise/interviews",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1077,7 +1077,7 @@
     "index": 6,
     "title": "Business messages",
     "route": "/dev/business?to=/enterprise/messages",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1099,7 +1099,7 @@
     "index": 8,
     "title": "Company settings — overview",
     "route": "/dev/business?to=/enterprise/admin",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1110,7 +1110,7 @@
     "index": 9,
     "title": "Team & invites",
     "route": "/dev/business?to=/enterprise/admin/team",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1121,7 +1121,7 @@
     "index": 10,
     "title": "Audit log",
     "route": "/dev/business?to=/enterprise/admin/audit",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1132,7 +1132,7 @@
     "index": 11,
     "title": "Billing & plan",
     "route": "/dev/business?to=/enterprise/admin/billing",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1165,7 +1165,7 @@
     "index": 1,
     "title": "Overview",
     "route": "/dev/admin?to=/admin",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "Flow §9 — launch metrics + platform snapshot"
   },
@@ -1176,7 +1176,7 @@
     "index": 2,
     "title": "Verification queue",
     "route": "/dev/admin?to=/admin/verification",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "Companies: domain, GSTIN/CIN — preview fixtures (gap #49)"
   },
@@ -1187,7 +1187,7 @@
     "index": 3,
     "title": "Moderation",
     "route": "/dev/admin?to=/admin/moderation",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "24h SLA timer; dismiss/remove + preview warn/suspend/ban"
   },
@@ -1220,7 +1220,7 @@
     "index": 6,
     "title": "Content",
     "route": "/dev/admin?to=/admin/content",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "Activities/needs/jobs takedown — preview (gap #50)"
   },
@@ -1264,7 +1264,7 @@
     "index": 10,
     "title": "Feature flags",
     "route": "/dev/admin?to=/admin/flags",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "Existing flags API"
   },
@@ -1297,7 +1297,7 @@
     "index": 1,
     "title": "Session expired",
     "route": "/dev/person?to=/account/session-expired",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+. Live 401 wiring listed in docs/account/SHARED-CHANGES-NEEDED.md"
   },
@@ -1374,7 +1374,7 @@
     "index": 8,
     "title": "Share profile",
     "route": "/dev/person?to=/account/share",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+. Link to /people/{id} (canonical)"
   },
@@ -1385,7 +1385,7 @@
     "index": 9,
     "title": "Public profile",
     "route": "/dev/person?to=/people/cand-2",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+. Canonical /people/{id}; /neighbour/{id} redirects. Hidden/unavailable profiles show 'This profile isn't available'. Gap #60"
   }

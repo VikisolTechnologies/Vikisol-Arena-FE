@@ -136,6 +136,7 @@ export default function EnterpriseInterviewPage() {
             me={{ name: profile?.companyName ?? "Your team", avatarEmoji: profile?.logoEmoji ?? "" }}
             counterpart={{ name, avatarEmoji: candidate?.avatarEmoji ?? "" }}
             canGiveFeedback
+            stage={app.stage}
             mustHaves={must}
             place={posting ? `${posting.location}${posting.remote ? " (remote)" : ""}` : undefined}
             onInterviewUpdate={(iv) => {

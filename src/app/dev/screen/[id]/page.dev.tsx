@@ -19,7 +19,7 @@ import { StateCard } from "@/components/bplus/Primitives";
 import { FIXTURES_ALLOWED } from "@/lib/data/mode";
 import { ApprovalSheet } from "@/components/jenny/ApprovalSheet";
 import { loadQueue } from "@/lib/data/jenny";
-import { SPECIMEN_ACTIVITY, SPECIMEN_APPLICATION, SPECIMEN_CANDIDATE, SPECIMEN_JOB, SPECIMEN_APPROVED, SPECIMEN_CONVERSATION, SPECIMEN_HOST_REQUESTS, SPECIMEN_PREVIEW_DATE, SPECIMEN_HOST_SOON, SPECIMEN_HOST_UPCOMING, SPECIMEN_NEED, SPECIMEN_NEED_ROOM, SPECIMEN_OFFERER, SPECIMEN_OFFERS, SPECIMEN_PENDING, SPECIMEN_ROOM } from "@/lib/dev/specimens";
+import { SPECIMEN_ACTIVITY, SPECIMEN_APPLICATION, SPECIMEN_CANDIDATE, SPECIMEN_JOB, SPECIMEN_APPROVED, SPECIMEN_CONVERSATION, SPECIMEN_HOST_REQUESTS, SPECIMEN_PREVIEW_DATE, SPECIMEN_HOST_SOON, SPECIMEN_HOST_SOON_NOW, SPECIMEN_HOST_UPCOMING, SPECIMEN_NEED, SPECIMEN_NEED_ROOM, SPECIMEN_OFFERER, SPECIMEN_OFFERS, SPECIMEN_PENDING, SPECIMEN_ROOM } from "@/lib/dev/specimens";
 
 /** Compare-page specimens: the real screen components with fixed fictional data, for screens
  *  whose live route needs a real record id. Buttons still call the real API (and will fail
@@ -33,7 +33,7 @@ export default function SpecimenPage() {
     case "activity-manage":
       return <ActivityScreen post={SPECIMEN_HOST_UPCOMING} specimen={{ requests: SPECIMEN_HOST_REQUESTS }} />;
     case "activity-checkin":
-      return <ActivityScreen post={SPECIMEN_HOST_SOON} specimen={{ requests: SPECIMEN_HOST_REQUESTS, open: "checkin" }} />;
+      return <ActivityScreen post={SPECIMEN_HOST_SOON} specimen={{ requests: SPECIMEN_HOST_REQUESTS, open: "checkin", now: SPECIMEN_HOST_SOON_NOW }} />;
     case "activity-cancel":
       return <ActivityScreen post={SPECIMEN_HOST_UPCOMING} specimen={{ requests: SPECIMEN_HOST_REQUESTS, open: "cancel" }} />;
     case "activity-leave":

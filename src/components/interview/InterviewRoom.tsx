@@ -9,7 +9,7 @@ import { MeetingEmbed } from "./MeetingEmbed";
 import { Button } from "@/components/bplus/Button";
 import { downloadIcs } from "@/components/activity/ActivityParts";
 import { saveInterviewNotes, submitInterviewFeedback } from "@/lib/api/interviews";
-import type { Interview, InterviewRecommendation } from "@/lib/types";
+import type { ApplicationStage, Interview, InterviewRecommendation } from "@/lib/types";
 
 type Participant = { name: string; avatarEmoji: string };
 type Seen = "strong" | "some" | "none";
@@ -44,6 +44,7 @@ export function InterviewRoom({
   onInterviewUpdate,
   mustHaves = [],
   place,
+  stage,
 }: {
   interview: Interview;
   me: Participant;
@@ -52,6 +53,8 @@ export function InterviewRoom({
   onInterviewUpdate: (updated: Interview) => void;
   mustHaves?: string[];
   place?: string;
+  /** Application stage: once decided (Hired / Not selected) offered times no longer matter. */
+  stage?: ApplicationStage;
 }) {
   const [notes, setNotes] = useState(interview.notes ?? "");
   const [notesState, setNotesState] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -107,6 +110,19 @@ export function InterviewRoom({
 
   if (interview.status === "cancelled") {
     return <p data-surface="paper" className={cn(card, "flex items-center gap-3 text-[15px] text-faint")}><CalendarX2 className="size-5" aria-hidden /> This interview was cancelled.</p>;
+  }
+
+  if (interview.status === "proposed" && (stage === "hired" || stage === "rejected")) {
+    const hired = stage === "hired";
+    return (
+      <div data-surface="paper" className={card}>
+        <p className="flex items-center gap-2 text-[16px] font-semibold">
+          {hired ? <CheckCircle2 className="size-5 text-success-on-dark" aria-hidden /> : <CalendarX2 className="size-5 text-faint" aria-hidden />}
+          {canGiveFeedback ? (hired ? `${first} is hired` : `${first} was not selected`) : hired ? "You were hired" : "You were not selected"}
+        </p>
+        <p className="mt-1 text-[14px] text-faint">{hired ? "The interview didn't need a time — the hiring decision is made." : "No interview time is needed."}</p>
+      </div>
+    );
   }
 
   if (interview.status === "proposed") {

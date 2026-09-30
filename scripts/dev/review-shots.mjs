@@ -3,7 +3,7 @@
  * src/lib/dev/screens.json, opened the way the compare page opens it (through /dev/person,
  * /dev/business or /dev/admin, which sign the browser in on the preview world).
  *   ARENA_NEXT_DIST_DIR=.next-founder npm run dev -- -H 0.0.0.0 -p 3001   (or any preview server)
- *   node scripts/dev/review-shots.mjs [--out docs/reviews/shots/review3] [--only id,id]
+ *   node scripts/dev/review-shots.mjs [--out docs/reviews/shots/review4] [--only id,id]
  * 390×844 at 1x; admin screens 1280×800. Reduced motion is emulated so nothing is mid-animation.
  * Writes <id>.png plus INDEX.md (id, route, board frame). The PNGs are not committed.
  */
@@ -14,7 +14,7 @@ import { join } from "node:path";
 const BASE = process.env.BASE ?? "http://localhost:3001";
 const args = process.argv.slice(2);
 const arg = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback);
-const OUT = arg("--out", "docs/reviews/shots/review3");
+const OUT = arg("--out", "docs/reviews/shots/review4");
 const ONLY = arg("--only", "")?.split(",").filter(Boolean);
 
 const allBuilt = JSON.parse(readFileSync("src/lib/dev/screens.json", "utf8")).filter((s) => s.status === "built" && s.route);
@@ -40,6 +40,8 @@ async function shoot(s) {
     reducedMotion: "reduce",
     isMobile: false,
   });
+  // Specimens under /dev/screen/* don't go through a sign-in helper: accept cookies up front so the bar never sits across a shot.
+  await ctx.addInitScript(() => localStorage.setItem("arena_cookie_consent", "accepted"));
   const page = await ctx.newPage();
   try {
     await page.goto(BASE + s.route, { waitUntil: "load", timeout: 120_000 });
