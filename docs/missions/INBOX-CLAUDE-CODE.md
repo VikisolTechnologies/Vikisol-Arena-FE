@@ -3,7 +3,7 @@
 
 ---
 
-## Mission M5 (OPEN, 1 Oct 2026): backend follow-ups, before the real-API switch
+## Mission M5 (DONE, 1 Oct 2026, commit 735c049): backend follow-ups, before the real-API switch
 The backend (PR #4, `feature/admin-account-gaps`, 253 tests) has shipped row 61 (report a person), row 62 (open industries) and CORS max-age. Do **not** switch any screen to the real API yet; that is M6.
 
 1. **Commit and push this inbox file first** (together with `INBOX-BACKEND.md`), so the backend session can read them on GitHub.

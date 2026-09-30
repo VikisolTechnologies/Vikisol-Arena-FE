@@ -5,7 +5,11 @@
 
 ---
 
-## Mission B7 (OPEN, 1 Oct 2026)
+## Mission B7 (DONE, 1 Oct 2026, by the cloud session)
+Result: every row from 48 to 62 is built across PR #2, #3 and #4. PR-P0 was already merged to main as PR #1. JAVA_OPTS, the 60/min read limit, trigram and CORS max-age are all done. Rows 42–47 stay in JennySol.
+
+<details><summary>Original B7 text</summary>
+
 1. **Gap rows:** read the canonical list in `docs/FE-API-GAPS.md` on FE branch **`feature/arena-vnext-mobile-jenny`** (rows 42–62; rows 55–62 are there).
    - Your "highest row 54" came from an older or Cursor branch.
    - **Match rows by endpoint, not by number.**
@@ -30,3 +34,17 @@
    - never loosen a test;
    - no secrets in code, logs or PR text;
    - no scheduled check-ins.
+
+</details>
+
+---
+
+## Mission B8 (OPEN, 1 Oct 2026): backend moves to Claude Code on the Mac (the cloud session is retired)
+1. In `~/Developer/Vikisol-Arena-BE`, run `git fetch` over the hotspot or WARP, then `git checkout feature/admin-account-gaps && git pull`. Do not touch the `local/wip-2026-09-29` branch.
+2. Run `./mvnw test` and confirm 253 tests pass locally, using the embedded Postgres. Report the result.
+3. Then **stop and wait**. The architect is reviewing PR #2 → #3 → #4 and will write the fixes here as B9.
+4. The rules are unchanged:
+   - nothing merges to `main`;
+   - never loosen a test;
+   - no secrets;
+   - push after every commit.
