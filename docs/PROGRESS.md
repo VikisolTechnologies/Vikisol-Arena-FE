@@ -66,21 +66,24 @@ handled everywhere; "nearby only" visibility hidden on needs (unsupported); cand
 withdraw their own application. Still on preview fixtures — not switched to the real BE PR #3
 endpoints (`Vikisol-Arena-BE` `feature/be-fe-gaps` `API-CHANGES.md`) until the architect says so.
 
+**Cursor branches merged (30 Sep, founder-confirmed):** `feature/arena-admin-bplus` (P10, 12
+admin screens) and `feature/arena-account-bplus` (P11, 8 account screens) are in this branch.
+Gap rows renumbered on merge: P8 #42-47, admin #48-57, account #58-60. `/people/[id]` is the
+canonical public profile; `/neighbour/*` redirects there. `SessionExpiredSheet` shows on an
+unrecoverable 401. Settings and You link to the `/account/*` pages (You's main Edit stays
+`/identity/edit`, the API-backed editor). Mock suite (admin + account) 23/23; local suite green on
+3 engines incl. new `session-expired.local.ts`. Details: `docs/account/SHARED-CHANGES-NEEDED.md`.
+
+**Architect decisions (30 Sep):** backend will add `Access-Control-Max-Age` — re-measure Feed and
+the pipeline LCP after it ships, no FE change. Revised JS budget accepted provided MapLibre,
+charts and other heavy libraries stay lazy per route (they do: ArenaMap is `dynamic`).
+
 **Blocked**
-- **GitHub is unreachable from this Mac.** Commits stay local on `feature/arena-vnext-mobile-jenny`;
-  retried after every commit per standing policy. **Ready to push.**
-- Merging Cursor's `feature/arena-admin-bplus` and `feature/arena-account-bplus` into this branch
-  (with `docs/admin/SHARED-CHANGES-NEEDED.md` / `docs/account/SHARED-CHANGES-NEEDED.md`,
-  `/neighbour/*` → `/people/[id]` redirect, `SessionExpiredSheet` on 401) — the founder asked for
-  this next, but the merge itself needs an explicit go-ahead before it runs.
-- API gaps `docs/FE-API-GAPS.md` #36–#54.
+- Nothing. GitHub is reachable again; branch pushed.
+- API gaps `docs/FE-API-GAPS.md` #36-#60.
 
-**Needs your decision:** confirm the Cursor-branch merge above, then it proceeds without stopping
-again.
-
-**Next:** once the merge is confirmed — apply both SHARED-CHANGES-NEEDED docs, the `/people/[id]`
-redirect, mount `SessionExpiredSheet`, full mock Playwright green. P11 itself stays Cursor's; do
-not build new account/people screens here.
+**Next:** architect review of all Built screens (`/dev/compare/all`); switch screens to the real
+BE PR #3 endpoints only when the architect says so.
 
 ## Earlier phases
 
