@@ -5,7 +5,7 @@ import { jitterCoord } from "@/lib/geo";
 import { getCounts } from "./follows";
 import { delay } from "./shared";
 import { isRealMode } from "./mode";
-import { apiFetch } from "./httpClient";
+import { ApiError, apiFetch } from "./httpClient";
 
 interface CandidateProfileResponse {
   id: string;
@@ -343,11 +343,17 @@ export async function deleteMyAccount(): Promise<void> {
   return delay(undefined, 300);
 }
 
-/** Report a profile (proposed, gap #61: POST /profile/{id}/report). Preview mode records nothing. */
-export async function reportProfile(userId: string, reason: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>(`/profile/${userId}/report`, { method: "POST", body: { reason } });
+/** Report a person (POST /profile/{id}/report). Preview mode records nothing. */
+export async function reportPerson(id: string, body: { reason: string; evidenceUrls?: string[] }): Promise<void> {
+  if (!isRealMode()) {
+    await delay(undefined, 300);
     return;
   }
-  await delay(undefined, 300);
+  try {
+    await apiFetch<void>(`/profile/${id}/report`, { method: "POST", body });
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 400) throw new Error("You've already reported this person — we're looking at it");
+    if (err instanceof ApiError && err.status === 404) throw new Error("This profile isn't available");
+    throw err;
+  }
 }

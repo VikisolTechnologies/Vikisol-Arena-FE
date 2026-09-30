@@ -1,15 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Info } from "lucide-react";
 import { ArenaLogo } from "@/components/brand/ArenaLogo";
 import { IntakeForm, clearIntakeDraft } from "@/components/intake/IntakeForm";
 import { saveMyEnterpriseProfile } from "@/lib/api/enterprise";
 import { setEnterpriseOnboarded } from "@/lib/session";
 import { requireSession } from "@/lib/auth-guard";
-import { BUSINESS_SCHEMA } from "@/lib/intake/schemas/business";
-import type { CompanySize, Industry } from "@/lib/types";
+import { businessSchema } from "@/lib/intake/schemas/business";
+import { useIndustries } from "@/lib/data/industries";
+import type { CompanySize } from "@/lib/types";
 import type { Values } from "@/lib/intake/types";
 
 const subscribeNothing = () => () => {};
@@ -19,6 +20,8 @@ const subscribeNothing = () => () => {};
 export default function EnterpriseOnboardingPage() {
   const router = useRouter();
   const ready = useSyncExternalStore(subscribeNothing, () => true, () => false);
+  const industries = useIndustries();
+  const schema = useMemo(() => businessSchema(industries), [industries]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -34,7 +37,7 @@ export default function EnterpriseOnboardingPage() {
       await saveMyEnterpriseProfile({
         companyName: String(v.companyName ?? "").trim(),
         logoEmoji: "🏢",
-        industry: v.industry as Industry,
+        industry: String(v.industry ?? ""),
         size: (v.size as CompanySize) ?? "11-50",
         hiringFor: (v.hiringFor as string[] | undefined) ?? [],
         plan: "free",
@@ -61,7 +64,7 @@ export default function EnterpriseOnboardingPage() {
         </p>
         {ready && (
           <IntakeForm
-            schema={BUSINESS_SCHEMA}
+            schema={schema}
             draftKey="business"
             tabBar={false}
             onExit={() => router.push("/auth")}

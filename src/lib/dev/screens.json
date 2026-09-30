@@ -332,7 +332,7 @@
     "index": 5,
     "title": "Settings & privacy",
     "route": "/dev/person?to=/settings",
-    "status": "approved",
+    "status": "built",
     "commit": "473d591"
   },
   {
@@ -808,7 +808,7 @@
     "index": 2,
     "title": "Company workspace",
     "route": "/dev/business?to=/enterprise/onboarding",
-    "status": "approved",
+    "status": "built",
     "commit": null
   },
   {
@@ -1066,7 +1066,7 @@
     "index": 5,
     "title": "Talent search",
     "route": "/dev/business?to=/enterprise/talent",
-    "status": "approved",
+    "status": "built",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1143,7 +1143,7 @@
     "index": 12,
     "title": "Company profile",
     "route": "/dev/business?to=/enterprise/admin/company",
-    "status": "approved",
+    "status": "built",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1264,7 +1264,7 @@
     "index": 10,
     "title": "Feature flags",
     "route": "/dev/admin?to=/admin/flags",
-    "status": "approved",
+    "status": "built",
     "commit": null,
     "note": "Existing flags API"
   },
@@ -1385,7 +1385,7 @@
     "index": 9,
     "title": "Public profile",
     "route": "/dev/person?to=/people/cand-2",
-    "status": "approved",
+    "status": "built",
     "commit": null,
     "note": "No board — designed in B+. Canonical /people/{id}; /neighbour/{id} redirects. Hidden/unavailable profiles show 'This profile isn't available'. Gap #60"
   }

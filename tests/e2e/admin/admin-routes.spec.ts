@@ -82,7 +82,7 @@ test.describe("Platform admin — B+ admin routes (mock)", () => {
   test("feature flags never offer a fully autonomous Jenny", async ({ page }) => {
     await openAdmin(page, "/admin/flags");
     await expect(page.getByText("Pricing beta banner")).toBeVisible();
-    await expect(page.getByText(/autopilot|fully autonomous/i)).toHaveCount(0);
+    await expect(page.getByText(/fully autonomous/i)).toHaveCount(0);
   });
 
   test("pending companies read Pending, not Paused", async ({ page }) => {

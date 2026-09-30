@@ -9,7 +9,8 @@ export type Role = "talent" | "recruiter" | "company_admin" | "hiring_manager" |
 
 export type OpenTo = "full-time" | "contract" | "projects";
 
-export type Industry = "Engineering" | "Design" | "Sales" | "Healthcare" | "Logistics";
+/** The industry label. The list is open and staff-managed (src/lib/data/industries.ts). */
+export type Industry = string;
 
 export type EmploymentType = "Full Time" | "Contract" | "Internship";
 
@@ -23,7 +24,7 @@ export interface ConsentSettings {
   searchableByEnterprises: boolean;
 }
 
-export type AutonomyLevel = "manual" | "supervised" | "autopilot";
+export type AutonomyLevel = "manual" | "supervised";
 
 export interface CandidateProfile {
   id: string;

@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("approval requires a click even for an autopilot profile and survives reload", async ({ page }) => {
+test("approval requires a click on a supervised profile (per-action approval) and survives reload", async ({ page }) => {
   let decisions = 0;
   let state = "pending";
   const action = () => ({ id: "action-1", toolName: "arena.joinActivity", args: { postId: "post-1" }, status: state,
@@ -13,7 +13,7 @@ test("approval requires a click even for an autopilot profile and survives reloa
   await page.route("http://127.0.0.1:3199/api/v1/**", async (route) => {
     const request = route.request(); const path = new URL(request.url()).pathname;
     let data: unknown = { content: [] };
-    if (path === "/api/v1/profile/me" || path === "/api/v1/me/profile") data = { id: "test-user", name: "Test", skills: [], consent: {}, autonomy: "autopilot" };
+    if (path === "/api/v1/profile/me" || path === "/api/v1/me/profile") data = { id: "test-user", name: "Test", skills: [], consent: {}, autonomy: "supervised" };
     if (path === "/api/v1/agent/conversation") data = { id: "conversation-1" };
     if (path.endsWith("/messages")) data = [{ id: "reply-1", role: "agent", content: "Review this activity before joining.", actions: [action()], createdAt: "2026-09-26T00:00:00Z" }];
     if (path === "/api/v1/agent/actions/action-1") {
@@ -25,7 +25,7 @@ test("approval requires a click even for an autopilot profile and survives reloa
   });
   await page.goto("/agent");
   await expect(page.getByRole("button", { name: "Approve", exact: true })).toBeVisible();
-  // Longer than the removed autopilot effect's 1200ms timer.
+  // Longer than any old auto-approve timer would have been (1200ms): nothing is decided without the tap.
   await page.waitForTimeout(1600);
   expect(decisions).toBe(0);
   const cookies = page.getByRole("button", { name: "Accept", exact: true });

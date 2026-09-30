@@ -14,7 +14,7 @@ import { Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { getMyEnterpriseProfile, searchTalent } from "@/lib/api/enterprise";
 import { getShortlistIds, toggleShortlist } from "@/lib/api/shortlist";
 import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
-import { INDUSTRIES } from "@/lib/mock/seed";
+import { useIndustries } from "@/lib/data/industries";
 import type { CandidateProfile, EnterpriseProfile } from "@/lib/types";
 
 type Result = { candidate: CandidateProfile; availability: string };
@@ -29,6 +29,7 @@ export default function TalentPage() {
   const [text, setText] = useState("");
   const [query, setQuery] = useState("");
   const [industry, setIndustry] = useState("All");
+  const industries = useIndustries();
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [results, setResults] = useState<Result[] | null>(null);
   const [error, setError] = useState(false);
@@ -75,7 +76,7 @@ export default function TalentPage() {
           <span className="sr-only">Industry</span>
           <select value={industry} onChange={(e) => setIndustry(e.target.value)} className="min-h-12 rounded-full border border-field-line bg-surface px-4 text-[15px] [&>option]:text-paper-ink">
             <option value="All">All industries</option>
-            {INDUSTRIES.map((ind) => <option key={ind} value={ind}>{ind}</option>)}
+            {industries.map((ind) => <option key={ind} value={ind}>{ind}</option>)}
           </select>
         </label>
         <Chip selected={remoteOnly} onToggle={() => setRemoteOnly((v) => !v)}>Open to remote</Chip>

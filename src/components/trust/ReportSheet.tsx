@@ -13,7 +13,7 @@ import { reportPost } from "@/lib/api/posts";
 import { reportChat } from "@/lib/api/messages";
 import { reportRoom } from "@/lib/api/rooms";
 import { blockUser } from "@/lib/api/blocks";
-import { reportProfile } from "@/lib/api/profile";
+import { reportPerson } from "@/lib/api/profile";
 
 export const REPORT_REASONS = [
   "Inappropriate messages",
@@ -61,7 +61,7 @@ export function ReportSheet({
     try {
       if (target.kind === "room") await reportRoom(target.id, text);
       else if (target.kind === "chat") await reportChat(target.id, text);
-      else if (target.kind === "profile") await reportProfile(target.id, text);
+      else if (target.kind === "profile") await reportPerson(target.id, { reason: text });
       else await reportPost(target.id, text);
       if (alsoBlock && person?.userId) await blockUser(person.userId);
       vibrate();

@@ -182,8 +182,8 @@ export function CareerSheet({ open, onClose, profile, onProfile }: SheetProps) {
 }
 
 /* ── Jenny's permissions. Product rule (architect review 29 Sep): Jenny prepares, you approve.
- *  Nothing auto-applies, so "Autopilot" and "Auto-apply" are not offered; if an older account
- *  still has them on, the sheet says so and offers to turn them off. ── */
+ *  Nothing auto-applies, so "Auto-apply" is not offered; if an older account still has it on,
+ *  the sheet says so and offers to turn it off. ── */
 const AUTONOMY: { value: AutonomyLevel; label: string; detail: string }[] = [
   { value: "manual", label: "Only when I ask", detail: "Jenny researches and drafts only when you ask her to." },
   { value: "supervised", label: "Suggest for me", detail: "Jenny prepares strong matches and drafts. You approve each one before anything is sent." },
@@ -209,12 +209,12 @@ export function JennySheet({ open, onClose, profile, onProfile }: SheetProps) {
         <PaperRadios
           legend="How Jenny helps"
           options={AUTONOMY}
-          value={profile.autonomy === "autopilot" ? "supervised" : profile.autonomy}
+          value={profile.autonomy}
           onChange={(v) => save(() => updateMyAutonomy(v))}
           disabled={busy}
         />
       </div>
-      {(profile.autonomy === "autopilot" || profile.consent.autoApply) && (
+      {profile.consent.autoApply && (
         <div className="mt-4 rounded-tile bg-warning/25 p-3.5 text-[14px]">
           <p className="font-semibold">An older setting lets Jenny act on her own.</p>
           <p className="mt-1 text-paper-ink-muted">Arena now works one way: Jenny prepares, you approve.</p>
@@ -224,10 +224,7 @@ export function JennySheet({ open, onClose, profile, onProfile }: SheetProps) {
             loading={busy}
             onClick={() =>
               save(async () => {
-                let next = profile;
-                if (profile.consent.autoApply) next = await updateMyConsent({ ...profile.consent, autoApply: false });
-                if (profile.autonomy === "autopilot") next = await updateMyAutonomy("supervised");
-                return next;
+                return updateMyConsent({ ...profile.consent, autoApply: false });
               })
             }
           >

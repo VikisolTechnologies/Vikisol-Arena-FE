@@ -10,8 +10,8 @@ import { Skeleton } from "@/components/bplus/Primitives";
 import { CompanyMark } from "@/components/career/CompanyMark";
 import { Panel } from "@/components/dash/Parts";
 import { getMyEnterpriseProfile, saveMyEnterpriseProfile } from "@/lib/api/enterprise";
-import { INDUSTRIES } from "@/lib/mock/seed";
-import type { CompanySize, EnterpriseProfile, Industry } from "@/lib/types";
+import { useIndustries } from "@/lib/data/industries";
+import type { CompanySize, EnterpriseProfile } from "@/lib/types";
 
 const SIZES: CompanySize[] = ["1-10", "11-50", "51-200", "201-1000", "1000+"];
 const field = "mt-1.5 min-h-12 w-full rounded-xl border border-field-line bg-transparent px-3 text-[15px] outline-none focus-visible:border-primary aria-[invalid=true]:border-danger-on-dark [&>option]:text-paper-ink";
@@ -20,6 +20,7 @@ const field = "mt-1.5 min-h-12 w-full rounded-xl border border-field-line bg-tra
  *  get/saveMyEnterpriseProfile. Logo upload, website and verification wait for gap #29. */
 export default function CompanyProfilePage() {
   const [profile, setProfile] = useState<EnterpriseProfile | null>(null);
+  const industries = useIndustries(profile?.industry);
   const [role, setRole] = useState("");
   const [touched, setTouched] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -78,8 +79,8 @@ export default function CompanyProfilePage() {
               </m.div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-[15px] font-semibold">Industry
-                  <select value={profile.industry} onChange={(e) => update("industry", e.target.value as Industry)} className={field}>
-                    {INDUSTRIES.map((x) => <option key={x} value={x}>{x}</option>)}
+                  <select value={profile.industry} onChange={(e) => update("industry", e.target.value)} className={field}>
+                    {industries.map((x) => <option key={x} value={x}>{x}</option>)}
                   </select>
                 </label>
                 <label className="block text-[15px] font-semibold">Company size
