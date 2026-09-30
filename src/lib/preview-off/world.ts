@@ -15,7 +15,7 @@ export const person: typeof Real.person = () => NOBODY;
 export const toCandidate: typeof Real.toCandidate = (p) => ({ id: p.id, name: p.name, avatarEmoji: "", title: "", industry: p.industry, location: "", remote: false, skills: [], experienceYears: 0, rateFloor: 0, openTo: [], careerHealth: 0, consent: { autoApply: false, searchableByEnterprises: false }, autonomy: "manual" });
 export const COMPANIES: typeof Real.COMPANIES = [];
 export const JOBS: typeof Real.JOBS = [];
-export const BUSINESS: typeof Real.BUSINESS = { recruiter: { name: "", email: "" }, company: { companyName: "", logoEmoji: "", industry: "Design", size: "11-50", hiringFor: [] }, job: { id: "", title: "", must: [], experience: "" }, applicants: [] as unknown as typeof Real.BUSINESS.applicants };
+export const BUSINESS: typeof Real.BUSINESS = { recruiter: { name: "", email: "" }, company: { companyName: "", logoEmoji: "", industry: "Design", size: "11-50", hiringFor: [] }, plan: { plan: "pro", seatsUsed: 0, seatsTotal: 0, unlockCreditsUsed: 0, unlockCreditsTotal: 0 }, job: { id: "", title: "", must: [], experience: "" }, applicants: [] as unknown as typeof Real.BUSINESS.applicants };
 export const MY_APPLICATIONS: typeof Real.MY_APPLICATIONS = [];
 export const CONVERSATIONS: typeof Real.CONVERSATIONS = [];
 export const MESSAGES: typeof Real.MESSAGES = [];

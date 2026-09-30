@@ -50,7 +50,7 @@ export default function DisputesPage() {
         <StateCard
           kind="empty"
           title="Dispute queue not connected"
-          detail="Attendance disputes (72h window) need a platform-admin endpoint — see gap #46."
+          detail="Attendance disputes (72h window) need a platform-admin endpoint."
         />
       ) : !items ? (
         <AdminLoading />

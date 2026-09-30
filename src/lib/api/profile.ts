@@ -280,12 +280,21 @@ export async function updateMyResume(input: { file: File; skills?: string[] }): 
 // mock store is intentionally single-user, matching how there's only ever one "you" in this
 // demo) - other candidates show the honest default (basic/unverified) rather than fabricating
 // per-candidate state that doesn't exist anywhere else in mock mode.
+/** Preview-only ids for the visibility rules (docs/FE-API-GAPS.md #60). */
+export const HIDDEN_PREVIEW_ID = "cand-hidden";
+export const NEARBY_ONLY_PREVIEW_IDS = ["cand-7"];
+
 export async function getPublicProfile(userId: string): Promise<PublicCandidateProfile | undefined> {
   if (isRealMode()) return apiFetch<PublicCandidateProfile>(`/profile/${userId}`).catch(() => undefined);
+  // Preview visibility rules: one neighbour is Nearby-only (signed-in people), one is Hidden.
+  if (userId === HIDDEN_PREVIEW_ID) {
+    return delay({ id: userId, name: "Hidden neighbour", avatarEmoji: "?", title: "", industry: "Sales", location: "", remote: false, skills: [], experienceYears: 0, openTo: [], careerHealth: 0, verificationLevel: "basic", phoneVerified: false, followerCount: 0, followingCount: 0, visibility: "hidden" }, 200);
+  }
   const c = getCandidateById(userId);
   if (!c) return undefined;
   const counts = await getCounts(userId);
   return delay({
+    visibility: NEARBY_ONLY_PREVIEW_IDS.includes(userId) ? "nearby" : "everyone",
     id: c.id, name: c.name, avatarEmoji: c.avatarEmoji, title: c.title, industry: c.industry,
     location: c.location, remote: c.remote, skills: c.skills, experienceYears: c.experienceYears,
     openTo: c.openTo, careerHealth: c.careerHealth, bio: c.bio,
@@ -332,4 +341,13 @@ export async function deleteMyAccount(): Promise<void> {
     return;
   }
   return delay(undefined, 300);
+}
+
+/** Report a profile (proposed, gap #61: POST /profile/{id}/report). Preview mode records nothing. */
+export async function reportProfile(userId: string, reason: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch<void>(`/profile/${userId}/report`, { method: "POST", body: { reason } });
+    return;
+  }
+  await delay(undefined, 300);
 }

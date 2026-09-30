@@ -55,11 +55,11 @@ export default function InterviewsPage() {
     <EnterpriseAppShell title="Interviews" profile={profile}>
       {error && <p role="alert" className="mb-4 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">Interviews didn&apos;t load. Refresh to try again.</p>}
       {!items ? (
-        <div className="grid gap-5 lg:grid-cols-2"><Skeleton className="h-48" /><Skeleton className="h-48" /></div>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2"><Skeleton className="h-48" /><Skeleton className="h-48" /></div>
       ) : items.length === 0 && !error ? (
         <StateCard kind="empty" title="No one at interview yet" detail="Move a candidate to Interview from a job's pipeline to start scheduling." action={<DashButton href="/enterprise/postings">Open jobs</DashButton>} />
       ) : (
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <div className="space-y-5">
             <Panel title="Upcoming" action={<CalendarClock className="size-5 text-faint" aria-hidden />}>
               {upcoming.length ? <ul>{upcoming.map((x) => row(x, slotOf(x.iv) ? when(slotOf(x.iv)!.start) : "Time set"))}</ul> : <p className="text-[14px] text-faint">Nothing scheduled.</p>}

@@ -77,7 +77,7 @@ export default function ShareProfilePage() {
         </Button>
       </div>
       <p className="mt-4 text-[13px] text-paper-ink-muted">
-        If your profile visibility is Hidden, neighbours who open the link see a private message instead of your details (gap #60).
+        If your profile visibility is Hidden, neighbours who open the link see a private message instead of your details.
       </p>
     </AccountPage>
   );

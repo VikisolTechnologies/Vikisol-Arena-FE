@@ -9,7 +9,7 @@ import { API_BASE_URL } from "@/lib/api/mode";
 // permitAll now, so no auth header is needed anyway.
 type PublicProfileShape = { name?: string; title?: string; industry?: string; bio?: string };
 
-const FALLBACK_TITLE = "Profile — Arena";
+const FALLBACK_TITLE = "Profile · Arena";
 const FALLBACK_DESCRIPTION = "View this Arena member's profile.";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {

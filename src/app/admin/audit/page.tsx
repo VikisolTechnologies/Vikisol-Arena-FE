@@ -41,7 +41,7 @@ export default function PlatformAuditPage() {
         <StateCard
           kind="empty"
           title="Platform audit log not connected"
-          detail="Every admin action (who, what, when, why) needs GET /admin/audit — see gap #48."
+          detail="Every admin action (who, what, when, why) needs GET /admin/audit."
         />
       ) : events === null ? (
         <AdminLoading />

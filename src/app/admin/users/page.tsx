@@ -184,7 +184,7 @@ export default function PlatformUsersPage() {
             )}
             <p className="text-[12px] text-paper-ink-muted">Passwords are never shown in Arena Admin.</p>
             {!isRealMode() && (
-              <p className="text-[12px] text-paper-ink-muted">Suspend, restore and force sign-out are preview actions until gap #51 ships.</p>
+              <p className="text-[12px] text-paper-ink-muted">Suspend, restore and force sign-out are preview actions until the API supports them.</p>
             )}
           </div>
         )}

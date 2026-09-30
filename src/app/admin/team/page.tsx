@@ -26,7 +26,7 @@ export default function AdminTeamPage() {
         <StateCard
           kind="empty"
           title="Admin team API not connected"
-          detail="2FA status and launch-area assignments need GET /admin/team — see gap #49."
+          detail="2FA status and launch-area assignments need GET /admin/team."
         />
       ) : team === null ? (
         <AdminLoading />

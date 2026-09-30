@@ -14,12 +14,11 @@ import { Pills, SectionHeader, Skeleton, StateCard } from "@/components/bplus/Pr
 import { useGuest } from "@/hooks/use-arena-session";
 import { getMyProfile, type CandidateProfile } from "@/lib/data/profile";
 import { EMPTY_DRAFT, readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
-import { whenLabel } from "@/lib/data/feed";
 import { getJoinedPosts, getMyPosts } from "@/lib/api/posts";
 import { getMyBids } from "@/lib/api/myBids";
 import { signOut } from "@/lib/api/auth";
 import type { Post } from "@/lib/types";
-import { Cover } from "@/components/covers/Cover";
+import { Outcomes } from "@/components/profile/Outcomes";
 import { CountUp } from "@/components/bplus/CountUp";
 
 const PROFILE_TABS = [
@@ -28,32 +27,6 @@ const PROFILE_TABS = [
   { id: "impact", label: "Impact" },
 ] as const;
 type ProfileTab = (typeof PROFILE_TABS)[number]["id"];
-
-/** Finished and past things, with their photos (or covers). */
-function Outcomes({ outcomes, seeAll }: { outcomes: Post[]; seeAll?: boolean }) {
-  return (
-    <section className="mt-6" aria-label="Recent outcomes">
-      <SectionHeader title="Recent outcomes" href={seeAll && outcomes.length ? "/work?tab=completed" : undefined} />
-      {outcomes.length === 0 ? (
-        <p className="text-[14px] text-faint">Outcomes show here once a need is resolved or an activity happens.</p>
-      ) : (
-        <ul className="space-y-3">
-          {outcomes.map((p) => (
-            <li key={p.id}>
-              <Link href={`/feed/${p.id}`} className="flex items-center gap-3 rounded-tile outline-none focus-visible:outline-2 focus-visible:outline-primary">
-                <Cover source={{ id: p.id, kind: p.intentType, media: p.mediaUrls[0], tags: p.tags, title: p.title, body: p.body, startsAt: p.startsAt }} className="size-14 shrink-0 rounded-xl" />
-                <span className="min-w-0">
-                  <span className="block truncate text-[15px] font-medium">{p.title || p.body.slice(0, 60)}</span>
-                  <span className="block text-[13px] text-faint">{[p.locationText, whenLabel(p.startsAt ?? p.createdAt)].filter(Boolean).join(" · ")}</span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
 
 type Data = { profile: CandidateProfile; posts: Post[]; joined: Post[]; won: number; outcomes: Post[] };
 

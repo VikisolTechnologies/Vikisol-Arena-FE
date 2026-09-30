@@ -53,14 +53,14 @@ export default function AdminContentPage() {
         <StateCard
           kind="empty"
           title="Content browse not connected"
-          detail="Activities, needs and jobs takedown need a platform-admin content API — see gap #44."
+          detail="Activities, needs and jobs takedown need a platform-admin content API."
         />
       ) : !items ? (
         <AdminLoading />
       ) : (
         <>
           <p className="mb-4 text-[14px] text-faint">
-            Browse live posts and take down policy-breaking content. Category and activity-type lists will live here once catalog endpoints exist (gap #45).
+            Browse live posts and take down policy-breaking content. Category and activity-type lists will live here once catalog endpoints exist.
           </p>
           <Pills options={KIND_FILTER} value={filter} onChange={setFilter} label="Content type" compact />
           <div className="mt-5">

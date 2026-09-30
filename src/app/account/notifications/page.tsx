@@ -31,7 +31,7 @@ export default function NotificationPrefsPage() {
           <StateCard
             kind="empty"
             title="Preferences aren't saved yet"
-            detail="GET/PUT /notifications/preferences isn't live (gap #18 / #52). Toggles show the planned set; they don't persist in real mode."
+            detail="GET/PUT /notifications/preferences isn't live. Toggles show the planned set; they don't persist in real mode."
           />
         </div>
       )}

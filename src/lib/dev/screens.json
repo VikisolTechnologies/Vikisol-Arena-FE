@@ -229,7 +229,7 @@
     "board": "need-outcome",
     "index": 2,
     "title": "Post a Need",
-    "route": "/dev/person?to=/needs/new",
+    "route": "/dev/person?to=/needs/new%3Fkind%3Dmoving",
     "status": "built",
     "commit": "f81aebf"
   },
@@ -434,7 +434,7 @@
     "board": "none",
     "index": 0,
     "title": "Career · Where you are now (status, notice)",
-    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
+    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup%26start%3Dstatus",
     "status": "built",
     "commit": "b9d03ce",
     "note": "No board — designed in B+"
@@ -445,7 +445,7 @@
     "board": "none",
     "index": 0,
     "title": "Career · Skills & stack (proficiency, SAP)",
-    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
+    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup%26start%3Dskills",
     "status": "built",
     "commit": "b9d03ce",
     "note": "No board — designed in B+"
@@ -456,7 +456,7 @@
     "board": "none",
     "index": 0,
     "title": "Career · Compensation (only me)",
-    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
+    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup%26start%3Dpay",
     "status": "built",
     "commit": "b9d03ce",
     "note": "No board — designed in B+"
@@ -467,7 +467,7 @@
     "board": "none",
     "index": 0,
     "title": "Career · What you're looking for",
-    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
+    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup%26start%3Dprefs",
     "status": "built",
     "commit": "b9d03ce",
     "note": "No board — designed in B+"
@@ -478,7 +478,7 @@
     "board": "none",
     "index": 0,
     "title": "Career · Resume & proof",
-    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
+    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup%26start%3Dproof",
     "status": "built",
     "commit": "b9d03ce",
     "note": "No board — designed in B+"
@@ -489,7 +489,7 @@
     "board": "none",
     "index": 0,
     "title": "Career · Review answers",
-    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
+    "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup%26start%3Dreview",
     "status": "built",
     "commit": "b9d03ce",
     "note": "No board — designed in B+"
@@ -522,7 +522,7 @@
     "board": "none",
     "index": 0,
     "title": "A2–A4 Activity intake (basics, group & cost, type questions, bring, when, where, who)",
-    "route": "/dev/person?to=/activities/new%3Fstep%3Ddetails",
+    "route": "/dev/screen/activity-intake",
     "status": "built",
     "commit": "390af7e",
     "note": "No board — designed in B+"
@@ -544,7 +544,7 @@
     "board": "none",
     "index": 0,
     "title": "A6 Preview & publish",
-    "route": "/dev/person?to=/activities/new%3Fstep%3Dpreview",
+    "route": "/dev/screen/activity-preview",
     "status": "built",
     "commit": "390af7e",
     "note": "No board — designed in B+"
@@ -566,7 +566,7 @@
     "board": "none",
     "index": 0,
     "title": "A8 Manage — starting soon, requests, room",
-    "route": "/dev/screen/activity-details",
+    "route": "/dev/screen/activity-manage",
     "status": "built",
     "commit": "390af7e",
     "note": "No board — designed in B+"
@@ -577,7 +577,7 @@
     "board": "none",
     "index": 0,
     "title": "A12 Check-in (host marks who came)",
-    "route": "/dev/screen/activity-details",
+    "route": "/dev/screen/activity-checkin",
     "status": "built",
     "commit": "390af7e",
     "note": "No board — designed in B+"
@@ -588,7 +588,7 @@
     "board": "none",
     "index": 0,
     "title": "A11 Cancel with a reason",
-    "route": "/dev/screen/activity-details",
+    "route": "/dev/screen/activity-cancel",
     "status": "built",
     "commit": "390af7e",
     "note": "No board — designed in B+"
@@ -599,8 +599,8 @@
     "board": "none",
     "index": 0,
     "title": "A16 Leave before the start",
-    "route": "/dev/screen/approved-ready",
-    "status": "approved",
+    "route": "/dev/screen/activity-leave",
+    "status": "built",
     "commit": "390af7e",
     "note": "No board — designed in B+"
   },
@@ -858,7 +858,7 @@
     "index": 7,
     "title": "Interview & hire",
     "route": "/dev/business?to=/enterprise/interviews/demo-app-5",
-    "status": "approved",
+    "status": "built",
     "commit": null
   },
   {
@@ -1022,7 +1022,7 @@
     "index": 1,
     "title": "Business Home (desktop)",
     "route": "/dev/business?to=/enterprise/dashboard",
-    "status": "approved",
+    "status": "built",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1077,7 +1077,7 @@
     "index": 6,
     "title": "Business messages",
     "route": "/dev/business?to=/enterprise/messages",
-    "status": "approved",
+    "status": "built",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1099,7 +1099,7 @@
     "index": 8,
     "title": "Company settings — overview",
     "route": "/dev/business?to=/enterprise/admin",
-    "status": "approved",
+    "status": "built",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1110,7 +1110,7 @@
     "index": 9,
     "title": "Team & invites",
     "route": "/dev/business?to=/enterprise/admin/team",
-    "status": "approved",
+    "status": "built",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1121,7 +1121,7 @@
     "index": 10,
     "title": "Audit log",
     "route": "/dev/business?to=/enterprise/admin/audit",
-    "status": "approved",
+    "status": "built",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1132,7 +1132,7 @@
     "index": 11,
     "title": "Billing & plan",
     "route": "/dev/business?to=/enterprise/admin/billing",
-    "status": "approved",
+    "status": "built",
     "commit": null,
     "note": "No board — designed in B+"
   },

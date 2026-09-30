@@ -68,7 +68,7 @@ export default function VerificationQueuePage() {
         <StateCard
           kind="empty"
           title="Verification API not connected"
-          detail="Company verification (domain, website, GSTIN/CIN) needs a platform-admin endpoint — see gap #43 in docs/FE-API-GAPS.md."
+          detail="Company verification (domain, website, GSTIN/CIN) needs a platform-admin endpoint."
         />
       ) : !items ? (
         <AdminLoading />
@@ -118,7 +118,7 @@ export default function VerificationQueuePage() {
                             <p className="mt-2 text-[13px] text-danger-on-dark">Rejected: {item.rejectReason}</p>
                           )}
                         </div>
-                        <StatusPill status={item.status === "pending" ? "paused" : item.status === "approved" ? "active" : "suspended"} />
+                        <StatusPill status={item.status} />
                       </div>
                       {item.status === "pending" && (
                         <div className="mt-3 flex flex-wrap gap-2">

@@ -727,6 +727,8 @@ export interface PublicCandidateProfile {
   followerCount: number;
   followingCount: number;
   viewerFollows?: boolean;
+  /** Who may see this profile (gap #60). "hidden" (or a 404) means nobody else; absent means everyone. */
+  visibility?: "nearby" | "everyone" | "hidden";
 }
 
 

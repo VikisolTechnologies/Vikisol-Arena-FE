@@ -41,7 +41,8 @@ export function SessionExpiredSheet({
     <AnimatePresence>
       {open && (
         <m.div
-          className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-4 sm:items-center"
+          data-theme="bplus"
+          className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50 p-4 pb-[max(16px,env(safe-area-inset-bottom))] sm:items-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

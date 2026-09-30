@@ -18,8 +18,8 @@ test("Feed: the badminton activities show the badminton photo", async ({ page })
   await loaded(page, /fixtures\/photos\/badminton\.webp/);
   await page.getByRole("radio", { name: "All" }).click();
   await expect(page.getByText("Beginner-friendly badminton").first()).toBeVisible();
-  const cards = page.locator("a", { hasText: "Beginner-friendly badminton" }).first();
-  await expect(cards.locator("img").first()).toHaveAttribute("src", /badminton/);
+  const card = page.locator('a[href="/feed/post-badminton-beginners"]').filter({ has: page.locator("img") }).first();
+  await expect(card.locator("img").first()).toHaveAttribute("src", /badminton/);
 });
 
 test("Discover: the beginner badminton result uses the badminton photo", async ({ page }) => {

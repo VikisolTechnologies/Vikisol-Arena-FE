@@ -36,7 +36,10 @@ const JOIN_STEPS = [
 ];
 
 /** Board "Discover & join an activity" screens 4–6: details, request sent, approved & ready. */
-export function ActivityScreen({ post: initial, sentOpen: sentInitially = false }: { post: Post; sentOpen?: boolean }) {
+/** Compare-page specimens only: a fixed request list and a sheet already open. */
+export type ActivitySpecimen = { requests?: PostJoinRequest[]; open?: "checkin" | "cancel" | "leave" };
+
+export function ActivityScreen({ post: initial, sentOpen: sentInitially = false, specimen }: { post: Post; sentOpen?: boolean; specimen?: ActivitySpecimen }) {
   const router = useRouter();
   const [post, setPost] = useState(initial);
   const [me, setMe] = useState<{ lat?: number; lng?: number } | null>(null);
@@ -126,7 +129,7 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false 
     }
   };
 
-  if (post.myJoinStatus === "approved" && !post.mine) return <ApprovedView post={post} title={title} host={host} onShare={share} onLeft={() => void reload()} />;
+  if (post.myJoinStatus === "approved" && !post.mine) return <ApprovedView post={post} title={title} host={host} onShare={share} onLeft={() => void reload()} leaveOpen={specimen?.open === "leave"} />;
 
   const facts = [
     spots != null && { icon: Users, text: spots > 0 ? `${spots} ${spots === 1 ? "spot" : "spots"} available` : "This activity is full" },
@@ -214,7 +217,7 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false 
         )}
 
         {post.mine ? (
-          <HostPanel post={post} onChanged={reload} />
+          <HostPanel post={post} onChanged={reload} specimen={specimen} />
         ) : (
           <m.div variants={rise} custom={4} className="sticky bottom-[calc(76px+env(safe-area-inset-bottom))] z-10 -mx-5 mt-7 bg-linear-to-t from-paper from-80% to-transparent px-5 pb-2 pt-4">
             {error && <p role="alert" className="mb-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
@@ -286,9 +289,9 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false 
   );
 }
 
-function ApprovedView({ post, title, host, onShare, onLeft }: { post: Post; title: string; host: string; onShare: () => void; onLeft: () => void }) {
+function ApprovedView({ post, title, host, onShare, onLeft, leaveOpen: leaveInitially = false }: { post: Post; title: string; host: string; onShare: () => void; onLeft: () => void; leaveOpen?: boolean }) {
   const router = useRouter();
-  const [leaveOpen, setLeaveOpen] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(leaveInitially);
   const point = post.exactMeetingPoint || post.locationText;
   return (
     <AppShell>
@@ -363,16 +366,17 @@ function ApprovedView({ post, title, host, onShare, onLeft }: { post: Post; titl
 }
 
 /** Host's view: the request queue (approve / decline) and cancel. */
-function HostPanel({ post, onChanged }: { post: Post; onChanged: () => void }) {
-  const [requests, setRequests] = useState<PostJoinRequest[] | null>(null);
+function HostPanel({ post, onChanged, specimen }: { post: Post; onChanged: () => void; specimen?: ActivitySpecimen }) {
+  const [requests, setRequests] = useState<PostJoinRequest[] | null>(specimen?.requests ?? null);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [cancelOpen, setCancelOpen] = useState(false);
-  const [checkInOpen, setCheckInOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(specimen?.open === "cancel");
+  const [checkInOpen, setCheckInOpen] = useState(specimen?.open === "checkin");
   const timing = dayOf(post.startsAt);
   useEffect(() => {
+    if (specimen?.requests) return;
     getJoinRequests(post.id).then(setRequests).catch((err: unknown) => setError(err instanceof Error ? err.message : "Requests didn't load."));
-  }, [post.id]);
+  }, [post.id, specimen?.requests]);
   const pending = (requests ?? []).filter((r) => r.status === "pending");
   const approved = (requests ?? []).filter((r) => r.status === "approved");
   const decide = async (r: PostJoinRequest, approve: boolean) => {
@@ -413,7 +417,7 @@ function HostPanel({ post, onChanged }: { post: Post; onChanged: () => void }) {
           </Button>
         )}
       </div>
-      <CheckInSheet postId={checkInOpen ? post.id : null} onClose={() => setCheckInOpen(false)} />
+      <CheckInSheet postId={checkInOpen ? post.id : null} onClose={() => setCheckInOpen(false)} specimen={specimen?.requests} />
       <CancelActivitySheet open={cancelOpen} onClose={() => setCancelOpen(false)} postId={post.id} roomId={post.roomId} onCancelled={onChanged} />
     </section>
   );

@@ -93,7 +93,7 @@ export default function ModerationPage() {
   return (
     <AdminShell title="Moderation">
       <p className="mb-4 text-[14px] text-faint">
-        Reports queue with context. Pending items show a 24-hour review timer. Warn, suspend and ban are preview-only until the API supports them (gap #50).
+        Reports queue with context. Pending items show a 24-hour review timer. Warn, suspend and ban are preview-only until the API supports them.
       </p>
       <Pills
         options={TABS.map((t) => ({ id: t.key, label: t.label }))}

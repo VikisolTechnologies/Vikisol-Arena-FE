@@ -101,6 +101,7 @@ export function CareerFlow() {
                 <IntakeForm
                   schema={CAREER_SCHEMA}
                   draftKey="career"
+                  startAt={params.get("start") ?? undefined}
                   initial={initial}
                   onExit={() => go("intent")}
                   onSubmit={(v) => {

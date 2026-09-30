@@ -23,6 +23,16 @@ test("401 with a failed refresh shows the session-expired sheet and keeps drafts
   await expect(sheet.getByText("Your draft is still on this device.")).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem("arena_session"))).toBeNull();
   expect(await page.evaluate(() => localStorage.getItem("arena_entry_draft"))).toContain("my unsaved words");
+  // Portaled outside the app shell: it must carry its own theme (an opaque sheet, not the tab bar
+  // showing through it) and sit above the tab bar with both buttons reachable.
+  const panelBg = await sheet.evaluate((e) => getComputedStyle(e).backgroundColor);
+  expect(panelBg).not.toMatch(/rgba\(.*,\s*0\)|transparent/);
+  for (const name of ["Sign in again", "Stay here"]) {
+    const box = await sheet.getByRole("button", { name }).boundingBox();
+    expect(box).not.toBeNull();
+    const coveredBy = await page.evaluate(({ x, y }) => (document.elementFromPoint(x, y)?.closest("[role=dialog]") ? "dialog" : "other"), { x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 });
+    expect(coveredBy, `${name} is covered`).toBe("dialog");
+  }
   await sheet.getByRole("button", { name: "Sign in again" }).click();
   await expect(page).toHaveURL(/\/auth/);
 });

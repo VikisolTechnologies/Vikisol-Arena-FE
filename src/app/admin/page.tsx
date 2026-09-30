@@ -84,7 +84,7 @@ export default function AdminOverviewPage() {
             </MetricGrid>
             {!isRealMode() && (
               <p className="mt-3 text-[13px] text-faint">
-                Preview: jobs, applications and reports use sample numbers; retention metrics stay empty until the API exists (gap #42).
+                Preview: jobs, applications and reports use sample numbers; retention metrics stay empty until the API exists.
               </p>
             )}
           </section>

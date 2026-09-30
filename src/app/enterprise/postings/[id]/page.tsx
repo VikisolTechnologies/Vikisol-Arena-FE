@@ -271,7 +271,7 @@ function JobPage() {
             <div>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="w-[220px]"><Pills label="View" options={[{ id: "board", label: "Board" }, { id: "list", label: "List" }] as const} value={activeView} onChange={setView} segmented /></div>
-                <p className="text-[13px] text-faint">{activeView === "board" && canDrag ? "Drag a card to move it, or use its menu." : "Hired isn't a stage in Arena yet — use Offer."}</p>
+                <p className="text-[13px] text-faint">{activeView === "board" && canDrag ? "Drag a card to move it, or use its menu." : "Use a candidate's menu to move them to another stage, including Hired."}</p>
               </div>
               {!applicants ? (
                 <Skeleton className="h-72" />

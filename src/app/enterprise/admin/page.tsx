@@ -60,7 +60,20 @@ export default function AdminDashboardPage() {
               {data.recruiterActivity.length === 0 ? (
                 <StateCard kind="empty" title="No team activity yet" detail="Invite recruiters from Team to see their work here." />
               ) : (
-                <div className="-mx-5 overflow-x-auto px-5" tabIndex={0} role="region" aria-label="Team activity table">
+                <>
+                <ul className="space-y-3 sm:hidden" aria-label="Team activity">
+                  {data.recruiterActivity.map((r) => (
+                    <li key={r.userId} className="rounded-tile bg-foreground/5 p-3.5">
+                      <p className="text-[15px] font-semibold">{r.name} <span className="font-normal text-[13px] text-faint">· {ROLE[r.role] ?? r.role}</span></p>
+                      <dl className="mt-2 grid grid-cols-3 gap-x-3 gap-y-2 text-[13px]">
+                        {([["Jobs", r.postings], ["Moves", r.stageMoves], ["Interviews", r.interviewsHeld], ["Messages", r.messagesSent], ["Unlocks", r.unlocks], ["Avg. between moves", r.avgHoursBetweenStageMoves != null ? `${r.avgHoursBetweenStageMoves.toFixed(1)} h` : "—"]] as const).map(([k, v]) => (
+                          <div key={k}><dt className="text-faint">{k}</dt><dd className="text-[15px] font-semibold tabular-nums">{v}</dd></div>
+                        ))}
+                      </dl>
+                    </li>
+                  ))}
+                </ul>
+                <div className="-mx-5 hidden overflow-x-auto px-5 sm:block" tabIndex={0} role="region" aria-label="Team activity table">
                   <table className="w-full min-w-[640px] text-left text-[14px]">
                     <thead className="text-[13px] text-faint">
                       <tr className="border-b border-line">
@@ -88,6 +101,7 @@ export default function AdminDashboardPage() {
                     </tbody>
                   </table>
                 </div>
+                </>
               )}
             </Panel>
           </m.div>

@@ -21,7 +21,9 @@ export default function FeatureFlagsPage() {
   const [saving, setSaving] = useState(false);
 
   const load = () => {
-    listFeatureFlags().then(setFlags);
+    // Jenny prepares and the person approves, always: a fully autonomous mode is never listed, even
+    // if an older backend or saved preview still returns one.
+    listFeatureFlags().then((all) => setFlags(all.filter((f) => f.key !== "agent_autopilot")));
   };
 
   useEffect(() => {

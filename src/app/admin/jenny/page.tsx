@@ -54,7 +54,7 @@ export default function JennyOversightPage() {
         <StateCard
           kind="empty"
           title="Jenny oversight not connected"
-          detail="Automations, approvals, failures, cover flags and provider status need platform-admin endpoints — see gap #47."
+          detail="Automations, approvals, failures, cover flags and provider status need platform-admin endpoints."
         />
       ) : loading ? (
         <AdminLoading />

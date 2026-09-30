@@ -54,7 +54,9 @@ test("overview, team invite + remove, audit, billing (display only), consent", a
   await setup(page, calls);
   await page.goto("/enterprise/admin");
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
-  await expect(page.getByRole("rowheader", { name: /Neha Iyer/ })).toBeVisible();
+  // Team activity is a table from tablet width up and a stacked list on phones (the table's last
+  // column was cut off there); either way the teammate shows, in the layout that is visible.
+  await expect(page.locator("[aria-label='Team activity'], [aria-label='Team activity table']").getByText(/Neha Iyer/).locator("visible=true").first()).toBeVisible();
   await noSeriousA11y(page);
 
   await page.goto("/enterprise/admin/team");

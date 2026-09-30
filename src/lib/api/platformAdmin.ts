@@ -88,7 +88,6 @@ function seedFlags(): FeatureFlag[] {
   return [
     { id: "flag-1", key: "pricing_beta_banner", label: "Pricing beta banner", description: "Shows the early-access pricing banner on the marketing site.", enabled: true },
     { id: "flag-2", key: "open_market_bidding", label: "Open Market bidding", description: "Enables project bidding for talent accounts.", enabled: true },
-    { id: "flag-3", key: "agent_autopilot", label: "Agent autopilot mode", description: "Lets candidates set their agent to fully autonomous (no per-action approval).", enabled: false },
   ];
 }
 

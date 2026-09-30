@@ -65,6 +65,32 @@ test.describe("Platform admin — B+ admin routes (mock)", () => {
     await expect(page.getByText(/approved after manual review: Checked the company registry/)).toBeVisible();
   });
 
+  test("no page shows an internal gap number", async ({ page }) => {
+    for (const { path } of ADMIN_ROUTES) {
+      await openAdmin(page, path);
+      await page.waitForLoadState("networkidle");
+      expect(await page.locator("body").innerText(), path).not.toMatch(/\bgaps? #\d/i);
+    }
+    for (const path of ["/account/share", "/account/edit", "/account/notifications"]) {
+      await page.goto(`/dev/person?to=${encodeURIComponent(path)}`);
+      await page.waitForURL((u) => u.pathname === path);
+      await page.waitForLoadState("networkidle");
+      expect(await page.locator("body").innerText(), path).not.toMatch(/\bgaps? #\d/i);
+    }
+  });
+
+  test("feature flags never offer a fully autonomous Jenny", async ({ page }) => {
+    await openAdmin(page, "/admin/flags");
+    await expect(page.getByText("Pricing beta banner")).toBeVisible();
+    await expect(page.getByText(/autopilot|fully autonomous/i)).toHaveCount(0);
+  });
+
+  test("pending companies read Pending, not Paused", async ({ page }) => {
+    await openAdmin(page, "/admin/verification");
+    await expect(page.getByText("Pending", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("Paused")).toHaveCount(0);
+  });
+
   test("desktop sidebar includes Verification nav item", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await openAdmin(page, "/admin");

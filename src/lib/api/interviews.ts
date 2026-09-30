@@ -27,10 +27,16 @@ function writeAll(interviews: Interview[]) {
   localStorage.setItem(KEY, JSON.stringify(interviews));
 }
 
+/** Three clean slots (11:00, 15:00 and 16:30 India time) on the next three days, never an odd
+ *  time like 11:25. */
 function threeSlotsFromNow(): InterviewSlotOption[] {
-  return [1, 2, 3].map((days, i) => ({
+  const DAY = 24 * 3600 * 1000;
+  const IST = 5.5 * 3600 * 1000;
+  const todayStart = Math.floor((Date.now() + IST) / DAY) * DAY - IST;
+  const hours = [11, 15, 16.5];
+  return hours.map((h, i) => ({
     id: `slot-${i}`,
-    start: new Date(Date.now() + days * 24 * 3600 * 1000 + 14 * 3600 * 1000).toISOString(),
+    start: new Date(todayStart + (i + 1) * DAY + h * 3600 * 1000).toISOString(),
     durationMinutes: 45,
   }));
 }

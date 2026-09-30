@@ -25,7 +25,7 @@ import { istToIso, toCreatePost } from "@/lib/activities/publish";
 import { findSubtype } from "@/lib/activities/taxonomy";
 import { timeOfDayFor } from "@/lib/covers/procedural";
 import { activityWhen } from "@/components/activity/ActivityParts";
-import type { MoneyRange, Values } from "@/lib/intake/types";
+import { defaultsOf, problem, visibleFields, visibleSteps, type MoneyRange, type Values } from "@/lib/intake/types";
 
 type Step = "kind" | "details" | "cover" | "preview" | "done";
 const STEPS: Step[] = ["kind", "details", "cover", "preview", "done"];
@@ -54,8 +54,7 @@ export function ActivityCreateFlow() {
   const router = useRouter();
   const params = useSearchParams();
   const guest = useGuest();
-  const step = (STEPS.includes(params.get("step") as Step) ? params.get("step") : "kind") as Step;
-  const direction = useDirection(STEPS.indexOf(step));
+  const requested = (STEPS.includes(params.get("step") as Step) ? params.get("step") : "kind") as Step;
   // Client-only (rendered after `guest` resolves), so reading storage here can't mismatch.
   const [subtypeId, setSubtypeId] = useState<string | null>(() => read(KIND_KEY));
   const [seed] = useState(() => read(SEED_KEY) ?? `a-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`);
@@ -70,6 +69,17 @@ export function ActivityCreateFlow() {
   const go = (s: Step, extra = "") => router.push(`/activities/new?step=${s}${extra}`);
   const schema = useMemo(() => (subtypeId ? activitySchema(subtypeId) : null), [subtypeId]);
   const values = answers ?? (subtypeId ? readIntakeDraft(`activity-${subtypeId}`) : null) ?? {};
+
+  // Opening a later step directly never shows a blank page: with no kind chosen it is step 1
+  // (What kind?); with a kind but an unfinished draft, cover and preview fall back to the details.
+  const merged = schema ? { ...defaultsOf(schema), ...values } : null;
+  const incomplete = !!schema && !!merged && visibleSteps(schema, merged).some((st) => visibleFields(st, merged).some((f) => problem(f, merged[f.id])));
+  const step: Step = requested === "kind" || requested === "done" ? requested : !schema || !subtypeId ? "kind" : (requested === "cover" || requested === "preview") && incomplete ? "details" : requested;
+  const direction = useDirection(STEPS.indexOf(step));
+  useEffect(() => {
+    // history, not router: the screen is already the right one; only the address needs to agree.
+    if (guest === false && step !== requested) window.history.replaceState(null, "", step === "kind" ? "/activities/new" : `/activities/new?step=${step}`);
+  }, [guest, step, requested]);
 
   if (guest === null) return <AppShell><div className="flex-1" /></AppShell>;
   if (guest) {
@@ -173,7 +183,7 @@ export function ActivityCreateFlow() {
   );
 }
 
-function Preview({
+export function Preview({
   subtypeId,
   seed,
   values,

@@ -54,6 +54,9 @@ const PILL: Record<string, string> = {
   closed: "bg-foreground/10 text-faint",
   suspended: "bg-danger/15 text-danger-on-dark",
   invited: "bg-info/15 text-info-on-dark",
+  pending: "bg-warning/15 text-warning",
+  approved: "bg-success/15 text-success-on-dark",
+  rejected: "bg-danger/15 text-danger-on-dark",
 };
 const PILL_PAPER: Record<string, string> = {
   open: "bg-success-on-paper text-white",
@@ -62,6 +65,9 @@ const PILL_PAPER: Record<string, string> = {
   paused: "bg-warning/30 text-paper-ink",
   suspended: "bg-danger-on-paper text-white",
   invited: "bg-info-on-paper text-white",
+  pending: "bg-warning/30 text-paper-ink",
+  approved: "bg-success-on-paper text-white",
+  rejected: "bg-danger-on-paper text-white",
 };
 const PILL_LABEL: Record<string, string> = { open: "Published" };
 

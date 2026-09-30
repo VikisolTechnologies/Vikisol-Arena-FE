@@ -7,7 +7,9 @@ import { NeedScreen } from "@/components/needs/NeedScreen";
 import { JobDetailScreen } from "@/components/career/JobDetailScreen";
 import { ApplicationScreen } from "@/components/career/ApplicationScreen";
 import { CoverStep } from "@/components/activities/CoverStep";
-import { Published } from "@/components/activities/ActivityCreateFlow";
+import { Preview, Published } from "@/components/activities/ActivityCreateFlow";
+import { IntakeForm } from "@/components/intake/IntakeForm";
+import { activitySchema } from "@/lib/intake/schemas/activity";
 import { KindPicker } from "@/components/activities/KindPicker";
 import { ConversationScreen } from "@/components/inbox/ConversationScreen";
 import { ReportSheet } from "@/components/trust/ReportSheet";
@@ -17,7 +19,7 @@ import { StateCard } from "@/components/bplus/Primitives";
 import { FIXTURES_ALLOWED } from "@/lib/data/mode";
 import { ApprovalSheet } from "@/components/jenny/ApprovalSheet";
 import { loadQueue } from "@/lib/data/jenny";
-import { SPECIMEN_ACTIVITY, SPECIMEN_APPLICATION, SPECIMEN_CANDIDATE, SPECIMEN_JOB, SPECIMEN_APPROVED, SPECIMEN_CONVERSATION, SPECIMEN_NEED, SPECIMEN_NEED_ROOM, SPECIMEN_OFFERER, SPECIMEN_OFFERS, SPECIMEN_PENDING, SPECIMEN_ROOM } from "@/lib/dev/specimens";
+import { SPECIMEN_ACTIVITY, SPECIMEN_APPLICATION, SPECIMEN_CANDIDATE, SPECIMEN_JOB, SPECIMEN_APPROVED, SPECIMEN_CONVERSATION, SPECIMEN_HOST_REQUESTS, SPECIMEN_PREVIEW_DATE, SPECIMEN_HOST_SOON, SPECIMEN_HOST_UPCOMING, SPECIMEN_NEED, SPECIMEN_NEED_ROOM, SPECIMEN_OFFERER, SPECIMEN_OFFERS, SPECIMEN_PENDING, SPECIMEN_ROOM } from "@/lib/dev/specimens";
 
 /** Compare-page specimens: the real screen components with fixed fictional data, for screens
  *  whose live route needs a real record id. Buttons still call the real API (and will fail
@@ -28,6 +30,39 @@ export default function SpecimenPage() {
   switch (id) {
     case "activity-details":
       return <ActivityScreen post={SPECIMEN_ACTIVITY} />;
+    case "activity-manage":
+      return <ActivityScreen post={SPECIMEN_HOST_UPCOMING} specimen={{ requests: SPECIMEN_HOST_REQUESTS }} />;
+    case "activity-checkin":
+      return <ActivityScreen post={SPECIMEN_HOST_SOON} specimen={{ requests: SPECIMEN_HOST_REQUESTS, open: "checkin" }} />;
+    case "activity-cancel":
+      return <ActivityScreen post={SPECIMEN_HOST_UPCOMING} specimen={{ requests: SPECIMEN_HOST_REQUESTS, open: "cancel" }} />;
+    case "activity-leave":
+      return <ActivityScreen post={SPECIMEN_APPROVED} specimen={{ open: "leave" }} />;
+    case "activity-intake":
+      return (
+        <AppShell>
+          <div className="-mx-5 -mt-2 flex-1 bg-paper px-5 pb-6 pt-3 text-paper-ink">
+            <IntakeForm schema={activitySchema("cricket")} draftKey="specimen-activity-intake" initial={{ title: "Sunday tennis-ball cricket", format: "tennis-ball" }} startAt="details" onExit={() => {}} onSubmit={() => {}} />
+          </div>
+        </AppShell>
+      );
+    case "activity-preview":
+      return (
+        <AppShell>
+          <div className="-mx-5 -mt-2 flex-1 bg-paper px-5 pb-6 pt-3 text-paper-ink">
+            <Preview
+              subtypeId="cricket"
+              seed="specimen-cricket"
+              values={{ title: "Sunday tennis-ball cricket", date: SPECIMEN_PREVIEW_DATE, start: "07:00", end: "09:00", area: "Gachibowli", size: { max: 12 } }}
+              cover={{ mode: "card", variant: 0 }}
+              coverFile={null}
+              onEdit={() => {}}
+              onCover={() => {}}
+              onPublish={async () => {}}
+            />
+          </div>
+        </AppShell>
+      );
     case "join-sent":
       return <ActivityScreen post={SPECIMEN_PENDING} sentOpen />;
     case "approved-ready":

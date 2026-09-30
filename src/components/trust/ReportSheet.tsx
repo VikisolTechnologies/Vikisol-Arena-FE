@@ -13,6 +13,7 @@ import { reportPost } from "@/lib/api/posts";
 import { reportChat } from "@/lib/api/messages";
 import { reportRoom } from "@/lib/api/rooms";
 import { blockUser } from "@/lib/api/blocks";
+import { reportProfile } from "@/lib/api/profile";
 
 export const REPORT_REASONS = [
   "Inappropriate messages",
@@ -23,7 +24,7 @@ export const REPORT_REASONS = [
   "Other",
 ] as const;
 
-export type ReportTarget = { kind: "room" | "chat" | "post"; id: string };
+export type ReportTarget = { kind: "room" | "chat" | "post" | "profile"; id: string };
 
 /**
  * Board "Messages, trust…" #6 — Report a problem. One sheet for rooms, chats and posts, using
@@ -60,6 +61,7 @@ export function ReportSheet({
     try {
       if (target.kind === "room") await reportRoom(target.id, text);
       else if (target.kind === "chat") await reportChat(target.id, text);
+      else if (target.kind === "profile") await reportProfile(target.id, text);
       else await reportPost(target.id, text);
       if (alsoBlock && person?.userId) await blockUser(person.userId);
       vibrate();

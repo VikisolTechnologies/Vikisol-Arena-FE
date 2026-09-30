@@ -58,7 +58,7 @@ export default function EditProfilePage() {
         <StateCard
           kind="empty"
           title="Some fields stay on this device"
-          detail="Display name, title, intro, interests and availability need PATCH /profile/me (gap #4 / #53). Area and photo upload use existing calls where available."
+          detail="Display name, title, intro, interests and availability need PATCH /profile/me. Area and photo upload use existing calls where available."
         />
       )}
       <div className="space-y-5">
@@ -122,7 +122,7 @@ export default function EditProfilePage() {
         </div>
         <p className="text-[13px] text-paper-ink-muted">
           {isRealMode()
-            ? "Saved fields that Arena can store go to the API; the rest stay on this device until gap #53."
+            ? "Saved fields that Arena can store go to the API; the rest stay on this device until the API supports them."
             : "Preview: changes save on this device only."}
         </p>
         <Button type="button" onClick={save} success={saved}>

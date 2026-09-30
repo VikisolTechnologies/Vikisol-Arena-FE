@@ -141,20 +141,26 @@ function pushAudit(entry: Omit<AuditEvent, "id" | "createdAt">) {
 
 export async function getDashboard(rangeDays: number): Promise<AdminDashboard> {
   if (isRealMode()) return apiFetch<AdminDashboard>("/enterprise/admin/dashboard", { query: { range: rangeDays } });
+  const { getEnterpriseProfile } = await import("@/lib/session");
+  const profile = getEnterpriseProfile();
   const team = readTeam().filter((m) => m.status === "active");
-  const audit = readAudit();
+  const since = Date.now() - rangeDays * 86_400_000;
+  const audit = readAudit().filter((a) => Date.parse(a.createdAt) >= since);
   const activity = team.map((m) => {
     const mine = audit.filter((a) => a.actorName === m.name);
+    const moves = mine.filter((a) => a.action === "stage.moved").map((a) => Date.parse(a.createdAt)).sort((a, b) => a - b);
+    const gaps = moves.slice(1).map((t, i) => (t - moves[i]) / 3_600_000);
     return {
       userId: m.userId, name: m.name, role: m.role,
       postings: mine.filter((a) => a.action === "posting.created").length,
       unlocks: mine.filter((a) => a.action === "candidate.unlocked").length,
-      stageMoves: mine.filter((a) => a.action === "stage.moved").length,
+      stageMoves: moves.length,
       interviewsHeld: mine.filter((a) => a.action === "interview.scheduled").length,
       messagesSent: mine.filter((a) => a.action === "message.sent").length,
-      avgHoursBetweenStageMoves: null,
+      avgHoursBetweenStageMoves: gaps.length ? gaps.reduce((s, g) => s + g, 0) / gaps.length : null,
     };
   });
+  const total = profile?.unlockCreditsTotal ?? 25;
   return delay({
     rangeDays,
     totals: {
@@ -165,9 +171,10 @@ export async function getDashboard(rangeDays: number): Promise<AdminDashboard> {
       messages: activity.reduce((s, a) => s + a.messagesSent, 0),
     },
     recruiterActivity: activity,
-    creditsBalance: 23,
-    creditsTotal: 25,
-    creditsSpentInRange: 2,
+    // The same plan and balance Home and Billing read, never a number of its own.
+    creditsBalance: total - (profile?.unlockCreditsUsed ?? 0),
+    creditsTotal: total,
+    creditsSpentInRange: audit.filter((a) => a.action === "candidate.unlocked").length,
   }, 300);
 }
 

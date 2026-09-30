@@ -119,7 +119,11 @@ export const JOBS: Job[] = [
 
 export const BUSINESS = {
   recruiter: { name: "Alex Rao", email: "alex@greenleaf.example" },
+  // GreenLeaf sells sustainable home products and runs neighbourhood refill programs. The industry
+  // list is the backend's closed five (Industry.java), so "Sales" is the closest fit (gap #62).
   company: { companyName: "GreenLeaf Labs", logoEmoji: "🌿", industry: "Sales" as Industry, size: "11-50" as const, hiringFor: ["Community"] },
+  /** One plan everywhere (Home, Overview, Billing): Pro = 10 seats, 50 unlock credits; 3 people on the team, 7 profiles unlocked. */
+  plan: { plan: "pro" as const, seatsUsed: 3, seatsTotal: 10, unlockCreditsUsed: 7, unlockCreditsTotal: 50 },
   job: {
     id: "demo-job",
     title: "Community Program Assistant",
@@ -133,7 +137,7 @@ export const BUSINESS = {
     { key: "ravi", stage: "screening" },
     { key: "divya", stage: "screening" },
     { key: "meera", stage: "applied" },
-    { key: "lakshmi", stage: "applied" },
+    { key: "lakshmi", stage: "hired" },
     { key: "venkat", stage: "applied" },
     { key: "ananya", stage: "rejected" },
   ] as const,

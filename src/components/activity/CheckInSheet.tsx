@@ -7,11 +7,11 @@ import { getJoinRequests, recordJoinOutcome } from "@/lib/api/posts";
 import type { PostJoinRequest } from "@/lib/types";
 
 /** Flow §3 A12 — the host marks who came (real `recordJoinOutcome`). Private to host and person. */
-export function CheckInSheet({ postId, onClose }: { postId: string | null; onClose: () => void }) {
-  const [joins, setJoins] = useState<PostJoinRequest[] | null>(null);
+export function CheckInSheet({ postId, onClose, specimen }: { postId: string | null; onClose: () => void; specimen?: PostJoinRequest[] }) {
+  const [joins, setJoins] = useState<PostJoinRequest[] | null>(specimen ?? null);
   const [error, setError] = useState("");
   useEffect(() => {
-    if (!postId) return;
+    if (!postId || specimen) return;
     let cancelled = false;
     getJoinRequests(postId)
       .then((j) => !cancelled && setJoins(j))
@@ -19,7 +19,7 @@ export function CheckInSheet({ postId, onClose }: { postId: string | null; onClo
     return () => {
       cancelled = true;
     };
-  }, [postId]);
+  }, [postId, specimen]);
   const approved = (joins ?? []).filter((j) => j.status === "approved");
   return (
     <BottomSheet open={!!postId} onClose={onClose} title="Check in">
