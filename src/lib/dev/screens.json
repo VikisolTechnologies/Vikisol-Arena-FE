@@ -108,7 +108,7 @@
     "index": 4,
     "title": "Work",
     "route": "/dev/person?to=/work",
-    "status": "built",
+    "status": "approved",
     "commit": "49552e0"
   },
   {
@@ -291,7 +291,7 @@
     "index": 1,
     "title": "Inbox",
     "route": "/dev/person?to=/rooms",
-    "status": "built",
+    "status": "approved",
     "commit": "473d591"
   },
   {
@@ -848,7 +848,7 @@
     "index": 6,
     "title": "Candidate profile",
     "route": "/dev/business?to=/enterprise/postings/demo-job/candidates/demo-app-0",
-    "status": "built",
+    "status": "approved",
     "commit": null
   },
   {
@@ -879,7 +879,7 @@
     "index": 2,
     "title": "Discover: intent → filters",
     "route": "/dev/person?to=/discover?q=I%20want%20a%20beginner%20badminton%20game%20this%20weekend",
-    "status": "built",
+    "status": "approved",
     "commit": "4fef634",
     "note": "A sentence becomes editable filters (activity, level, when, distance, setting); results are every nearby activity passing them, soonest first. 'Why these results?' explains. Preview only (gap #42)."
   },
@@ -890,7 +890,7 @@
     "index": 3,
     "title": "Create: Jenny draft",
     "route": "/dev/person?to=/agent/draft?q=Need%20two%20volunteers%20for%20lake%20cleanup%20Saturday%20at%20Gachibowli%20Lake",
-    "status": "built",
+    "status": "approved",
     "commit": "4fef634",
     "note": "Ask Jenny → one sentence becomes a draft of a real Need/Offer/Activity/Project; Edit / Preview & approve continue in that kind's own intake with 'Jenny filled — check' marks. She never publishes."
   },
@@ -912,7 +912,7 @@
     "index": 5,
     "title": "Work: approvals queue",
     "route": "/dev/person?to=/work?tab=approval",
-    "status": "built",
+    "status": "approved",
     "commit": "4fef634",
     "note": "Needs your approval / Jenny can handle (… → open or turn the automation off) / Waiting on others. 'Needs approval' is a Work tab; the sections also top 'All'."
   },
@@ -923,7 +923,7 @@
     "index": 6,
     "title": "Approve action",
     "route": "/dev/screen/approve-action",
-    "status": "built",
+    "status": "approved",
     "commit": "4fef634",
     "note": "Exact words, recipient list (expandable), data used, 'Exact location is not shared'; undo line only when reversible (hidden here). In mock mode the approved reply really lands in Rohit's chat."
   },
@@ -934,7 +934,7 @@
     "index": 7,
     "title": "Jenny: today & automations",
     "route": "/dev/person?to=/agent",
-    "status": "built",
+    "status": "approved",
     "commit": "4fef634",
     "note": "Today / Automations / Reminders / History. Plan from what you're hosting or joined + the first approval; toggles are yours; status pill only after a real reply."
   },
@@ -978,7 +978,7 @@
     "index": 4,
     "title": "Set automation",
     "route": "/dev/person?to=/identity/career/automation",
-    "status": "built",
+    "status": "approved",
     "commit": "4fef634",
     "note": "Trigger → Then ×3 (each can be off) → Never submit without approval (fixed, can't be removed)."
   },
@@ -1165,7 +1165,7 @@
     "index": 1,
     "title": "Overview",
     "route": "/dev/admin?to=/admin",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "Flow §9 — launch metrics + platform snapshot"
   },
@@ -1176,7 +1176,7 @@
     "index": 2,
     "title": "Verification queue",
     "route": "/dev/admin?to=/admin/verification",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "Companies: domain, GSTIN/CIN — preview fixtures (gap #49)"
   },
