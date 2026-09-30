@@ -6,7 +6,7 @@
     "index": 1,
     "title": "Welcome",
     "route": "/auth",
-    "status": "built",
+    "status": "approved",
     "commit": "f523fcf",
     "note": "Photo is a golden-light park (Cubbon Park, credited); architect accepted it for now (review 29 Sep)."
   },
@@ -17,7 +17,7 @@
     "index": 2,
     "title": "Sign up",
     "route": "/auth?mode=signup",
-    "status": "built",
+    "status": "approved",
     "commit": "f523fcf"
   },
   {
@@ -27,7 +27,7 @@
     "index": 3,
     "title": "Sign in",
     "route": "/auth?mode=signin",
-    "status": "built",
+    "status": "approved",
     "commit": "f523fcf"
   },
   {
@@ -37,7 +37,7 @@
     "index": 4,
     "title": "Why are you here?",
     "route": "/dev/person?stage=onboarding&to=/onboarding%3Fstep%3D1",
-    "status": "built",
+    "status": "approved",
     "commit": "f523fcf"
   },
   {
@@ -47,7 +47,7 @@
     "index": 5,
     "title": "Set up your local life",
     "route": "/dev/person?stage=onboarding&to=/onboarding%3Fstep%3D2",
-    "status": "built",
+    "status": "approved",
     "commit": "f523fcf"
   },
   {
@@ -57,7 +57,7 @@
     "index": 6,
     "title": "Your identity",
     "route": "/dev/person?stage=onboarding&to=/onboarding%3Fstep%3D3",
-    "status": "built",
+    "status": "approved",
     "commit": "f523fcf"
   },
   {
@@ -67,7 +67,7 @@
     "index": 7,
     "title": "You're all set",
     "route": "/dev/person?stage=onboarding&to=/onboarding%3Fstep%3D4",
-    "status": "built",
+    "status": "approved",
     "commit": "f523fcf"
   },
   {
@@ -77,7 +77,7 @@
     "index": 1,
     "title": "Feed",
     "route": "/dev/person?to=/home",
-    "status": "built",
+    "status": "approved",
     "commit": "49552e0"
   },
   {
@@ -87,7 +87,7 @@
     "index": 2,
     "title": "Discover",
     "route": "/dev/person?to=/discover",
-    "status": "built",
+    "status": "approved",
     "commit": "49552e0"
   },
   {
@@ -97,7 +97,7 @@
     "index": 3,
     "title": "Map (Discover map mode)",
     "route": "/dev/person?to=/discover%3Fview%3Dmap",
-    "status": "built",
+    "status": "approved",
     "commit": "49552e0",
     "note": "Live map: MapLibre GL + OpenFreeMap tiles (free, no key), restyled dark; pins, preview card and privacy note. Falls back to the static launch-zone basemap if tiles fail."
   },
@@ -118,7 +118,7 @@
     "index": 5,
     "title": "Create sheet",
     "route": "/dev/person?to=/home%3Fcreate%3D1",
-    "status": "built",
+    "status": "approved",
     "commit": "49552e0"
   },
   {
@@ -128,7 +128,7 @@
     "index": 6,
     "title": "You (profile)",
     "route": "/dev/person?to=/identity",
-    "status": "built",
+    "status": "approved",
     "commit": "49552e0"
   },
   {
@@ -138,7 +138,7 @@
     "index": 7,
     "title": "Jenny",
     "route": "/dev/person?to=/agent",
-    "status": "built",
+    "status": "approved",
     "commit": "49552e0",
     "note": "Orb is the board's glowing sun (halo, warm rim, sparks); it breathes only when Jenny is reachable. The rest of Jenny's boards are P8."
   },
@@ -149,7 +149,7 @@
     "index": 1,
     "title": "Personalised feed",
     "route": "/dev/person?to=/home",
-    "status": "built",
+    "status": "approved",
     "commit": "1c8e99e"
   },
   {
@@ -159,7 +159,7 @@
     "index": 2,
     "title": "Discover & filter",
     "route": "/dev/person?to=/discover%3Fshow%3Dactivities",
-    "status": "built",
+    "status": "approved",
     "commit": "1c8e99e"
   },
   {
@@ -169,7 +169,7 @@
     "index": 3,
     "title": "Map results",
     "route": "/dev/person?to=/discover%3Fview%3Dmap",
-    "status": "built",
+    "status": "approved",
     "commit": "1c8e99e",
     "note": "Same live map. Chips are All / Activities / Needs / Offers (board shows category chips); category filters live in Discover → Activities."
   },
@@ -180,7 +180,7 @@
     "index": 4,
     "title": "Activity details",
     "route": "/dev/screen/activity-details",
-    "status": "built",
+    "status": "approved",
     "commit": "1c8e99e"
   },
   {
@@ -190,7 +190,7 @@
     "index": 5,
     "title": "Join request sent",
     "route": "/dev/screen/join-sent",
-    "status": "built",
+    "status": "approved",
     "commit": "1c8e99e"
   },
   {
@@ -210,7 +210,7 @@
     "index": 7,
     "title": "Activity room",
     "route": "/dev/screen/activity-room",
-    "status": "built",
+    "status": "approved",
     "commit": "1c8e99e"
   },
   {
@@ -220,7 +220,7 @@
     "index": 1,
     "title": "Create (need)",
     "route": "/dev/person?to=/home%3Fcreate%3D1",
-    "status": "built",
+    "status": "approved",
     "commit": "f81aebf"
   },
   {
@@ -240,7 +240,7 @@
     "index": 3,
     "title": "Need with offers",
     "route": "/dev/screen/need-page",
-    "status": "built",
+    "status": "approved",
     "commit": "f81aebf"
   },
   {
@@ -250,7 +250,7 @@
     "index": 4,
     "title": "Offer details",
     "route": "/dev/screen/offer-details",
-    "status": "built",
+    "status": "approved",
     "commit": "f81aebf",
     "note": "Full page. Shared interests compare your interests (device) with their skills; the offer message waits for gap #13."
   },
@@ -261,7 +261,7 @@
     "index": 5,
     "title": "Private coordination room",
     "route": "/dev/screen/coordination-room",
-    "status": "built",
+    "status": "approved",
     "commit": "f81aebf"
   },
   {
@@ -271,7 +271,7 @@
     "index": 6,
     "title": "Mark as completed",
     "route": "/dev/screen/mark-completed",
-    "status": "built",
+    "status": "approved",
     "commit": "f81aebf"
   },
   {
@@ -281,7 +281,7 @@
     "index": 7,
     "title": "See the outcome",
     "route": "/dev/person?to=/work%3Ftab%3Dcompleted",
-    "status": "built",
+    "status": "approved",
     "commit": "f81aebf"
   },
   {
@@ -301,7 +301,7 @@
     "index": 2,
     "title": "Conversation",
     "route": "/dev/screen/conversation",
-    "status": "built",
+    "status": "approved",
     "commit": "473d591"
   },
   {
@@ -311,7 +311,7 @@
     "index": 3,
     "title": "Notifications",
     "route": "/dev/person?to=/notifications",
-    "status": "built",
+    "status": "approved",
     "commit": "473d591"
   },
   {
@@ -321,7 +321,7 @@
     "index": 4,
     "title": "Search",
     "route": "/dev/person?to=/search",
-    "status": "built",
+    "status": "approved",
     "commit": "473d591",
     "note": "People and Skills search use preview neighbours in preview mode; real mode waits for gap #17."
   },
@@ -332,7 +332,7 @@
     "index": 5,
     "title": "Settings & privacy",
     "route": "/dev/person?to=/settings",
-    "status": "built",
+    "status": "approved",
     "commit": "473d591"
   },
   {
@@ -342,7 +342,7 @@
     "index": 6,
     "title": "Report / block",
     "route": "/dev/screen/report-block",
-    "status": "built",
+    "status": "approved",
     "commit": "473d591"
   },
   {
@@ -352,7 +352,7 @@
     "index": 7,
     "title": "Resilient states",
     "route": "/dev/screen/resilient-states",
-    "status": "built",
+    "status": "approved",
     "commit": "473d591"
   },
   {
@@ -362,7 +362,7 @@
     "index": 1,
     "title": "My profile (career entry)",
     "route": "/dev/person?to=/identity",
-    "status": "built",
+    "status": "approved",
     "commit": "b9d03ce",
     "note": "One You page serves both boards: the core header and stats, then the career board's For you / About / Impact tabs and the Open career profile card."
   },
@@ -373,7 +373,7 @@
     "index": 2,
     "title": "Career intent",
     "route": "/dev/person?to=/identity/career",
-    "status": "built",
+    "status": "approved",
     "commit": "b9d03ce"
   },
   {
@@ -383,7 +383,7 @@
     "index": 3,
     "title": "Job preferences",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dsetup",
-    "status": "built",
+    "status": "approved",
     "commit": "b9d03ce"
   },
   {
@@ -393,7 +393,7 @@
     "index": 4,
     "title": "Visibility preview",
     "route": "/dev/person?to=/identity/career%3Fstep%3Dprivacy",
-    "status": "built",
+    "status": "approved",
     "commit": "b9d03ce"
   },
   {
@@ -403,7 +403,7 @@
     "index": 5,
     "title": "Work → Jobs",
     "route": "/dev/person?to=/jobs",
-    "status": "built",
+    "status": "approved",
     "commit": "b9d03ce",
     "note": "Kind chips link to where each kind lives (All → Work, People/Activities/Needs → Discover). No Hybrid chip: jobs are remote or on-site only. Saved jobs are on this device (gap #41)."
   },
@@ -414,7 +414,7 @@
     "index": 6,
     "title": "Job details",
     "route": "/dev/screen/job-details",
-    "status": "built",
+    "status": "approved",
     "commit": "b9d03ce",
     "note": "About / People / Reviews with must-haves and nice-to-haves. Hiring team (gap #22), reviews and company verification (gap #29) show honest empty states."
   },
@@ -501,7 +501,7 @@
     "index": 0,
     "title": "Apply sheet (what's shared + consent)",
     "route": "/dev/screen/apply-sheet",
-    "status": "built",
+    "status": "approved",
     "commit": "b9d03ce",
     "note": "No board — designed in B+"
   },
@@ -512,7 +512,7 @@
     "index": 0,
     "title": "A1 What kind? (search + categories)",
     "route": "/dev/person?to=/activities/new",
-    "status": "built",
+    "status": "approved",
     "commit": "390af7e",
     "note": "No board — designed in B+"
   },
@@ -534,7 +534,7 @@
     "index": 0,
     "title": "A5 Cover by Jenny (procedural card; AI behind a flag)",
     "route": "/dev/screen/activity-cover",
-    "status": "built",
+    "status": "approved",
     "commit": "390af7e",
     "note": "No board — designed in B+"
   },
@@ -556,7 +556,7 @@
     "index": 0,
     "title": "A7 Published — share, WhatsApp, invite with a reason",
     "route": "/dev/screen/activity-published",
-    "status": "built",
+    "status": "approved",
     "commit": "390af7e",
     "note": "No board — designed in B+"
   },
@@ -600,7 +600,7 @@
     "index": 0,
     "title": "A16 Leave before the start",
     "route": "/dev/screen/approved-ready",
-    "status": "built",
+    "status": "approved",
     "commit": "390af7e",
     "note": "No board — designed in B+"
   },
@@ -611,7 +611,7 @@
     "index": 0,
     "title": "Procedural covers (every type)",
     "route": "/dev/covers",
-    "status": "built",
+    "status": "approved",
     "commit": "390af7e",
     "note": "No board — designed in B+"
   },
@@ -677,7 +677,7 @@
     "index": 0,
     "title": "Need — what kind of help? (12 categories)",
     "route": "/dev/person?to=/needs/new",
-    "status": "built",
+    "status": "approved",
     "commit": "51f6a4d",
     "note": "No board — designed in B+"
   },
@@ -688,7 +688,7 @@
     "index": 0,
     "title": "Need intake — basics, category questions, where & photos, review",
     "route": "/dev/person?to=/needs/new%3Fkind%3Dmoving",
-    "status": "built",
+    "status": "approved",
     "commit": "51f6a4d",
     "note": "No board — designed in B+"
   },
@@ -699,7 +699,7 @@
     "index": 0,
     "title": "O1 Offer — what can you offer?",
     "route": "/dev/person?to=/offers/new",
-    "status": "built",
+    "status": "approved",
     "commit": "51f6a4d",
     "note": "No board — designed in B+"
   },
@@ -710,7 +710,7 @@
     "index": 0,
     "title": "O1 Offer intake — what, when, limits, proof",
     "route": "/dev/person?to=/offers/new%3Fkind%3Dtutoring",
-    "status": "built",
+    "status": "approved",
     "commit": "51f6a4d",
     "note": "No board — designed in B+"
   },
@@ -721,7 +721,7 @@
     "index": 0,
     "title": "O2 Offer page",
     "route": "/dev/screen/need-page",
-    "status": "built",
+    "status": "approved",
     "commit": "51f6a4d",
     "note": "No board — designed in B+"
   },
@@ -732,7 +732,7 @@
     "index": 0,
     "title": "O3 Requests on my offer → accept → room",
     "route": "/dev/screen/offer-details",
-    "status": "built",
+    "status": "approved",
     "commit": "51f6a4d",
     "note": "No board — designed in B+"
   },
@@ -743,7 +743,7 @@
     "index": 0,
     "title": "PR1–PR2 Start a project + roles (paid publishes; collaborative saves)",
     "route": "/dev/person?to=/projects/new",
-    "status": "built",
+    "status": "approved",
     "commit": "51f6a4d",
     "note": "No board — designed in B+"
   },
@@ -798,7 +798,7 @@
     "index": 1,
     "title": "Choose your role",
     "route": "/auth?mode=role",
-    "status": "built",
+    "status": "approved",
     "commit": null
   },
   {
@@ -808,7 +808,7 @@
     "index": 2,
     "title": "Company workspace",
     "route": "/dev/business?to=/enterprise/onboarding",
-    "status": "built",
+    "status": "approved",
     "commit": null
   },
   {
@@ -818,7 +818,7 @@
     "index": 3,
     "title": "Post a job",
     "route": "/dev/business?to=/enterprise/postings/new",
-    "status": "built",
+    "status": "approved",
     "commit": null
   },
   {
@@ -828,7 +828,7 @@
     "index": 4,
     "title": "Manage your job",
     "route": "/dev/business?to=/enterprise/postings/demo-job",
-    "status": "built",
+    "status": "approved",
     "commit": null
   },
   {
@@ -838,7 +838,7 @@
     "index": 5,
     "title": "Review candidates",
     "route": "/dev/business?to=/enterprise/candidates",
-    "status": "built",
+    "status": "approved",
     "commit": null
   },
   {
@@ -848,7 +848,7 @@
     "index": 6,
     "title": "Candidate profile",
     "route": "/dev/business?to=/enterprise/postings/demo-job/candidates/demo-app-0",
-    "status": "built",
+    "status": "approved",
     "commit": null
   },
   {
@@ -858,7 +858,7 @@
     "index": 7,
     "title": "Interview & hire",
     "route": "/dev/business?to=/enterprise/interviews/demo-app-5",
-    "status": "built",
+    "status": "approved",
     "commit": null
   },
   {
@@ -868,7 +868,7 @@
     "index": 1,
     "title": "Feed: Jenny noticed",
     "route": "/dev/person?to=/home",
-    "status": "built",
+    "status": "approved",
     "commit": "4fef634",
     "note": "Jenny noticed: up to two things nearby that touch your interests (soonest first, never by fit) + the first thing waiting for approval. Preview only."
   },
@@ -879,7 +879,7 @@
     "index": 2,
     "title": "Discover: intent → filters",
     "route": "/dev/person?to=/discover?q=I%20want%20a%20beginner%20badminton%20game%20this%20weekend",
-    "status": "built",
+    "status": "approved",
     "commit": "4fef634",
     "note": "A sentence becomes editable filters (activity, level, when, distance, setting); results are every nearby activity passing them, soonest first. 'Why these results?' explains. Preview only (gap #42)."
   },
@@ -901,7 +901,7 @@
     "index": 4,
     "title": "Smart match (why this)",
     "route": "/dev/person?to=/agent/match/post-cleanup",
-    "status": "built",
+    "status": "approved",
     "commit": "4fef634",
     "note": "'Why this matches you' = checkable reasons from interests, availability, history and distance; no score. I'm interested opens the real activity."
   },
@@ -945,7 +945,7 @@
     "index": 1,
     "title": "Tell Jenny",
     "route": "/dev/person?to=/identity/career/jenny?say=1",
-    "status": "built",
+    "status": "approved",
     "commit": "4fef634",
     "note": "Your sentence, Jenny's reply in a sheet: existing profile, you control what's shared, no auto-apply."
   },
@@ -956,7 +956,7 @@
     "index": 2,
     "title": "Career setup draft",
     "route": "/dev/person?to=/identity/career/jenny?step=draft",
-    "status": "built",
+    "status": "approved",
     "commit": "4fef634",
     "note": "Draft = your profile + career answers on this device; missing details open the same career field in a sheet."
   },
@@ -967,7 +967,7 @@
     "index": 3,
     "title": "Privacy & permission",
     "route": "/dev/person?to=/identity/career/jenny?step=privacy",
-    "status": "built",
+    "status": "approved",
     "commit": "4fef634",
     "note": "Per-field audience (Private / People I apply to / Verified employers) + Audience view; kept on this device (gap #19)."
   },
@@ -989,7 +989,7 @@
     "index": 5,
     "title": "Today's shortlist",
     "route": "/dev/person?to=/identity/career/shortlist",
-    "status": "built",
+    "status": "approved",
     "commit": "4fef634",
     "note": "Roles matching your desired roles, newest first; Matches / Questions / Missing counts against must-haves; Why this in plain reasons."
   },
@@ -1000,7 +1000,7 @@
     "index": 6,
     "title": "Review application",
     "route": "/dev/person?to=/applications/new?job=job-2",
-    "status": "built",
+    "status": "approved",
     "commit": "4fef634",
     "note": "Answers (not sent yet — gap #20), resume, exactly what's shared, Jenny's note (kept, not attached). Approve & submit = the real apply call."
   },
@@ -1011,7 +1011,7 @@
     "index": 7,
     "title": "Application tracker",
     "route": "/dev/screen/application-tracker",
-    "status": "built",
+    "status": "approved",
     "commit": "4fef634",
     "note": "Real stages + '(as approved by you)' + Jenny's note that she keeps watch and drafts a follow-up only for review."
   },
@@ -1022,7 +1022,7 @@
     "index": 1,
     "title": "Business Home (desktop)",
     "route": "/dev/business?to=/enterprise/dashboard",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1033,7 +1033,7 @@
     "index": 2,
     "title": "Jobs list",
     "route": "/dev/business?to=/enterprise/postings",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1066,7 +1066,7 @@
     "index": 5,
     "title": "Talent search",
     "route": "/dev/business?to=/enterprise/talent",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1077,7 +1077,7 @@
     "index": 6,
     "title": "Business messages",
     "route": "/dev/business?to=/enterprise/messages",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1088,7 +1088,7 @@
     "index": 7,
     "title": "Company posts",
     "route": "/dev/business?to=/enterprise/posts",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1099,7 +1099,7 @@
     "index": 8,
     "title": "Company settings — overview",
     "route": "/dev/business?to=/enterprise/admin",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1110,7 +1110,7 @@
     "index": 9,
     "title": "Team & invites",
     "route": "/dev/business?to=/enterprise/admin/team",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1121,7 +1121,7 @@
     "index": 10,
     "title": "Audit log",
     "route": "/dev/business?to=/enterprise/admin/audit",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1132,7 +1132,7 @@
     "index": 11,
     "title": "Billing & plan",
     "route": "/dev/business?to=/enterprise/admin/billing",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1143,7 +1143,7 @@
     "index": 12,
     "title": "Company profile",
     "route": "/dev/business?to=/enterprise/admin/company",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1154,7 +1154,7 @@
     "index": 13,
     "title": "Consent & data",
     "route": "/dev/business?to=/enterprise/admin/consent",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
@@ -1198,7 +1198,7 @@
     "index": 4,
     "title": "Users",
     "route": "/dev/admin?to=/admin/users",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "Search, profile sheet, suspend/restore preview (gap #57)"
   },
@@ -1209,7 +1209,7 @@
     "index": 5,
     "title": "Companies",
     "route": "/dev/admin?to=/admin/tenants",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "Plan, seats, status — existing API"
   },
@@ -1231,7 +1231,7 @@
     "index": 7,
     "title": "Disputes",
     "route": "/dev/admin?to=/admin/disputes",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "Attendance 72h — preview (gap #52)"
   },
@@ -1242,7 +1242,7 @@
     "index": 8,
     "title": "Jenny & AI oversight",
     "route": "/dev/admin?to=/admin/jenny",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "Automations, providers, AI log — preview (gap #53)"
   },
@@ -1253,7 +1253,7 @@
     "index": 9,
     "title": "Analytics",
     "route": "/dev/admin?to=/admin/analytics",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "Existing platform analytics API"
   },
@@ -1275,7 +1275,7 @@
     "index": 11,
     "title": "Audit log",
     "route": "/dev/admin?to=/admin/audit",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "Who/what/when/why — preview localStorage (gap #54)"
   },
@@ -1286,7 +1286,7 @@
     "index": 12,
     "title": "Admin team",
     "route": "/dev/admin?to=/admin/team",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "2FA + launch areas — preview (gap #55)"
   },
@@ -1308,7 +1308,7 @@
     "index": 2,
     "title": "Edit profile",
     "route": "/dev/person?to=/account/edit",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+. Gap #59"
   },
@@ -1319,7 +1319,7 @@
     "index": 3,
     "title": "Notification preferences",
     "route": "/dev/person?to=/account/notifications",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+. Gap #58"
   },
@@ -1330,7 +1330,7 @@
     "index": 4,
     "title": "Blocked accounts",
     "route": "/dev/person?to=/account/blocked",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+. Uses existing blocks API"
   },
@@ -1341,7 +1341,7 @@
     "index": 5,
     "title": "Download my data",
     "route": "/dev/person?to=/account/export",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+. Uses exportMyData"
   },
@@ -1352,7 +1352,7 @@
     "index": 6,
     "title": "Delete account",
     "route": "/dev/person?to=/account/delete",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+. Clear confirm + consequences"
   },
@@ -1363,7 +1363,7 @@
     "index": 7,
     "title": "Help & safety centre",
     "route": "/dev/person?to=/account/help",
-    "status": "built",
+    "status": "approved",
     "commit": null,
     "note": "No board — designed in B+"
   },
