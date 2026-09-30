@@ -65,6 +65,9 @@ backend plan (FE-BPLUS-BUILD §6). One row per gap; newest phase last.
 | 55 | Admin — Team (P10) | Vikisol staff accounts, 2FA status, launch areas | `GET /admin/team` → `[{ id, name, email, twoFactorEnabled, launchAreas[], lastActiveAt }]` — never returns passwords | Preview fixtures only |
 | 56 | Admin — Moderation (P10) | Warn, suspend user, ban user (beyond dismiss/takedown) | `PUT /admin/moderation/{id}/warn` `{ reason }`, `/suspend` `{ reason, durationDays? }`, `/ban` `{ reason }` | Dismiss and takedown use existing API; warn/suspend/ban are preview-only |
 | 57 | Admin — Users (P10) | Suspend/restore user, force sign-out, profile detail | `GET /admin/users/{id}` → profile (no password fields), `PUT /admin/users/{id}/suspend` `{ reason }`, `/restore`, `POST /admin/users/{id}/force-signout`; list export/delete request flags | Search uses existing API; actions preview-only |
+| 58 | Account — Notification preferences (P11) | Persist notification category toggles | `GET/PUT /notifications/preferences` `{ messages, activities, needs, jobs, jenny, marketing: boolean }` (extends gap #18) | Preview: device localStorage; real mode toggles don't persist |
+| 59 | Account — Edit profile (P11) | Partial profile update for You fields | `PATCH /profile/me` `{ name?, title?, bio?, interests?, availability?, photoUrl? }` (extends gaps #2–#5) | Preview: `arena_entry_draft` on device |
+| 60 | Neighbour profile / Share (P11) | Profile visibility honouring on public GET | `GET /profile/{id}` returns 404 or `{ visibility:"hidden" }` when viewer isn't allowed; `PUT /profile/me/visibility` `{ profile: "nearby"\|"everyone"\|"hidden" }` (see #18) | Fixture `n-hidden` shows private empty; share link uses `/people/{id}` (canonical) — `/neighbour/{id}` redirects there |
 
 Saved for real today (no gap): sign up, sign in, 2FA code, forgot/reset password, area
 (`PUT /profile/me/location` with `consent: "city"`) and current location (`consent: "precise"`,

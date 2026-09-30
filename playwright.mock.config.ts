@@ -3,8 +3,8 @@ import { defineConfig, devices } from "@playwright/test";
 /** Mock-mode browser tests against a local Next server. No arena.vikisol.in, no live auth.
  * Uses /dev/* sign-in helpers. Default API mode is mock (NEXT_PUBLIC_API_MODE unset). */
 export default defineConfig({
-  testDir: "./tests/e2e/admin",
-  testMatch: "**/*.spec.ts",
+  testDir: "./tests/e2e",
+  testMatch: ["**/admin/**/*.spec.ts", "**/account/**/*.spec.ts"],
   timeout: 60_000,
   workers: 1,
   retries: 0,

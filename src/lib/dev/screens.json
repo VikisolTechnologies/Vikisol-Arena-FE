@@ -1178,7 +1178,7 @@
     "route": "/admin/verification",
     "status": "built",
     "commit": null,
-    "note": "Companies: domain, GSTIN/CIN — preview fixtures (gap #43)"
+    "note": "Companies: domain, GSTIN/CIN — preview fixtures (gap #49)"
   },
   {
     "id": "admin-moderation",
@@ -1200,7 +1200,7 @@
     "route": "/admin/users",
     "status": "built",
     "commit": null,
-    "note": "Search, profile sheet, suspend/restore preview (gap #51)"
+    "note": "Search, profile sheet, suspend/restore preview (gap #57)"
   },
   {
     "id": "admin-companies",
@@ -1222,7 +1222,7 @@
     "route": "/admin/content",
     "status": "built",
     "commit": null,
-    "note": "Activities/needs/jobs takedown — preview (gap #44)"
+    "note": "Activities/needs/jobs takedown — preview (gap #50)"
   },
   {
     "id": "admin-disputes",
@@ -1233,7 +1233,7 @@
     "route": "/admin/disputes",
     "status": "built",
     "commit": null,
-    "note": "Attendance 72h — preview (gap #46)"
+    "note": "Attendance 72h — preview (gap #52)"
   },
   {
     "id": "admin-jenny",
@@ -1244,7 +1244,7 @@
     "route": "/admin/jenny",
     "status": "built",
     "commit": null,
-    "note": "Automations, providers, AI log — preview (gap #47)"
+    "note": "Automations, providers, AI log — preview (gap #53)"
   },
   {
     "id": "admin-analytics",
@@ -1277,7 +1277,7 @@
     "route": "/admin/audit",
     "status": "built",
     "commit": null,
-    "note": "Who/what/when/why — preview localStorage (gap #48)"
+    "note": "Who/what/when/why — preview localStorage (gap #54)"
   },
   {
     "id": "admin-team",
@@ -1288,6 +1288,105 @@
     "route": "/admin/team",
     "status": "built",
     "commit": null,
-    "note": "2FA + launch areas — preview (gap #49)"
+    "note": "2FA + launch areas — preview (gap #55)"
+  },
+  {
+    "id": "account-session-expired",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 1,
+    "title": "Session expired",
+    "route": "/dev/person?to=/account/session-expired",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Live 401 wiring listed in docs/account/SHARED-CHANGES-NEEDED.md"
+  },
+  {
+    "id": "account-edit",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 2,
+    "title": "Edit profile",
+    "route": "/dev/person?to=/account/edit",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Gap #59"
+  },
+  {
+    "id": "account-notifications",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 3,
+    "title": "Notification preferences",
+    "route": "/dev/person?to=/account/notifications",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Gap #58"
+  },
+  {
+    "id": "account-blocked",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 4,
+    "title": "Blocked accounts",
+    "route": "/dev/person?to=/account/blocked",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Uses existing blocks API"
+  },
+  {
+    "id": "account-export",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 5,
+    "title": "Download my data",
+    "route": "/dev/person?to=/account/export",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Uses exportMyData"
+  },
+  {
+    "id": "account-delete",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 6,
+    "title": "Delete account",
+    "route": "/dev/person?to=/account/delete",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Clear confirm + consequences"
+  },
+  {
+    "id": "account-help",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 7,
+    "title": "Help & safety centre",
+    "route": "/dev/person?to=/account/help",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+"
+  },
+  {
+    "id": "account-share",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 8,
+    "title": "Share profile",
+    "route": "/dev/person?to=/account/share",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Link to /people/{id} (canonical)"
+  },
+  {
+    "id": "neighbour-profile",
+    "phase": "P11 Account & people",
+    "board": "none",
+    "index": 9,
+    "title": "Public profile",
+    "route": "/dev/person?to=/people/n-arjun",
+    "status": "built",
+    "commit": null,
+    "note": "No board — designed in B+. Canonical /people/{id}; /neighbour/{id} redirects. Hidden specimen: /people/n-hidden. Gap #60"
   }
 ]
