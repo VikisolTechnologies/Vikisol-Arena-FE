@@ -4,7 +4,7 @@ import { defineConfig, devices } from "@playwright/test";
  * Uses /dev/* sign-in helpers. Default API mode is mock (NEXT_PUBLIC_API_MODE unset). */
 export default defineConfig({
   testDir: "./tests/e2e",
-  testMatch: ["**/admin/**/*.spec.ts", "**/account/**/*.spec.ts"],
+  testMatch: ["**/admin/**/*.spec.ts", "**/account/**/*.spec.ts", "**/preview/**/*.spec.ts"],
   timeout: 60_000,
   workers: 1,
   retries: 0,

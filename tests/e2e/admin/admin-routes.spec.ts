@@ -36,6 +36,35 @@ test.describe("Platform admin — B+ admin routes (mock)", () => {
     });
   }
 
+  test("every admin page has its own title", async ({ page }) => {
+    for (const { path, heading } of ADMIN_ROUTES) {
+      await openAdmin(page, path);
+      const short: Record<string, string> = { "/admin/tenants": "Companies", "/admin/jenny": "Jenny & AI", "/admin/team": "Admin team", "/admin/verification": "Verification" };
+      const expected = path === "/admin" ? "Overview" : short[path] ?? heading;
+      await expect(page).toHaveTitle(`${expected} · Arena Admin`);
+    }
+  });
+
+  test("approving a domain mismatch needs a written note, which lands in the audit log", async ({ page }) => {
+    await openAdmin(page, "/admin/verification");
+    await expect(page.getByText("Mismatch — review manually")).toBeVisible();
+    // Matching domain: approves at once, no sheet.
+    await page.getByRole("button", { name: "Approve" }).first().click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    // Mismatch: a confirmation with a required note.
+    await page.getByRole("button", { name: "Approve" }).first().click();
+    const sheet = page.getByRole("dialog", { name: "Approve despite a domain mismatch?" });
+    await expect(sheet).toBeVisible();
+    await sheet.getByRole("button", { name: "Approve with note" }).click();
+    await expect(sheet.getByText("A reason is required.")).toBeVisible();
+    await expect(page.getByText("Mismatch — review manually")).toBeVisible();
+    await sheet.getByLabel("Reason").fill("Checked the company registry; the domain moved last month.");
+    await sheet.getByRole("button", { name: "Approve with note" }).click();
+    await expect(page.getByText("No pending verifications")).toBeVisible();
+    await openAdmin(page, "/admin/audit");
+    await expect(page.getByText(/approved after manual review: Checked the company registry/)).toBeVisible();
+  });
+
   test("desktop sidebar includes Verification nav item", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await openAdmin(page, "/admin");

@@ -88,7 +88,7 @@ export function ShortlistScreen() {
         </p>
         {recipe && !recipe.on && (
           <p className="mt-3 rounded-tile bg-paper-muted p-3.5 text-[14px]">
-            Your job search automation is off, so this list won&apos;t refresh. <Link href="/identity/career/automation" className="font-semibold text-primary-on-paper underline underline-offset-4">Turn it on</Link>
+            Automation ready, not turned on: this list won&apos;t refresh until you turn it on. <Link href="/identity/career/automation" className="font-semibold text-primary-on-paper underline underline-offset-4">Turn it on</Link>
           </p>
         )}
 

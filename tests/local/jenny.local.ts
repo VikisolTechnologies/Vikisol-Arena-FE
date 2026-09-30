@@ -168,3 +168,18 @@ test("Job search: Never is fixed; shortlist shows counts; apply happens only on 
   await expect(page.getByText(/as approved by you/)).toBeVisible();
   await expect(page.getByText(/I'll keep an eye on the response/)).toBeVisible();
 });
+
+test("Shortlist and Automation read the same job-search state", async ({ page }) => {
+  await setup(page, []);
+  await page.goto("/identity/career/automation");
+  await expect(page.getByText("Automation ready")).toBeVisible();
+  // Off: the shortlist says the same thing the automation screen does.
+  await page.goto("/identity/career/shortlist");
+  await expect(page.getByText(/Automation ready, not turned on/)).toBeVisible();
+  await page.goto("/identity/career/automation");
+  await page.getByRole("button", { name: "Turn on automation" }).click();
+  await page.waitForURL(/career\/shortlist/);
+  await expect(page.getByText(/not turned on/)).toHaveCount(0);
+  await page.goto("/identity/career/automation");
+  await expect(page.getByText("Automation is on")).toBeVisible();
+});

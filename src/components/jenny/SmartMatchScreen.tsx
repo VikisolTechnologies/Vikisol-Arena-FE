@@ -63,8 +63,8 @@ export function SmartMatchScreen({ id }: { id: string }) {
         </div>
       ) : (
         <m.div initial="hidden" animate="shown" className="mt-3">
-          <m.div variants={rise} custom={0} className="relative aspect-[16/10] overflow-hidden rounded-[var(--radius-card)]">
-            <Cover source={{ id: post.id, kind: post.intentType, media: post.mediaUrls[0], title: post.title ?? undefined }} className="absolute inset-0 size-full" sizes="480px" />
+          <m.div variants={rise} custom={0} className="relative aspect-[16/10] overflow-hidden rounded-[var(--radius-card)] bg-surface">
+            <Cover source={{ id: post.id, kind: post.intentType, media: post.mediaUrls[0], title: post.title ?? undefined }} className="absolute inset-0 size-full" sizes="480px" priority />
           </m.div>
           <m.div variants={rise} custom={1}>
             <h2 className="mt-4 font-display-serif text-[26px] font-medium leading-tight">{post.title ?? post.body.slice(0, 60)}</h2>
@@ -100,7 +100,7 @@ export function SmartMatchScreen({ id }: { id: string }) {
           <m.section variants={rise} custom={3} aria-label="Additional context" className="mt-5">
             <h3 className="flex items-center gap-2 text-[17px] font-semibold">Additional context <Info className="size-4 text-faint" aria-hidden /></h3>
             <div className="mt-2 flex items-center gap-3">
-              <Avatar name={post.authorName ?? "Host"} className="size-10 text-[14px]" />
+              <Avatar name={post.authorName ?? "Host"} className="size-10 text-[14px]" eager />
               <p className="text-[15px]">
                 Organised by {post.authorName ?? "a neighbour"}
                 <span className="block text-[14px] text-faint">{[post.reactionCount ? `${post.reactionCount} people interested` : null, post.spotsFilled ? `${post.spotsFilled} going` : null].filter(Boolean).join(" · ") || "Be one of the first"}</span>

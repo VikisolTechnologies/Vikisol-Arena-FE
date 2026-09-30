@@ -36,7 +36,37 @@ test.describe("Account & people — P11 (mock)", () => {
   test("delete account requires confirmation tick", async ({ page }) => {
     await openAsPerson(page, "/account/delete");
     await expect(page.getByText("What happens")).toBeVisible();
-    await expect(page.getByRole("button", { name: /Delete my account forever/ })).toBeVisible();
+    const del = page.getByRole("button", { name: /Delete my account forever/ });
+    await expect(del).toBeVisible();
+    // Disabled (and aria-disabled) until the confirmation box is ticked.
+    await expect(del).toBeDisabled();
+    await expect(del).toHaveAttribute("aria-disabled", "true");
+    // The input is visually hidden; people tick it by pressing its label.
+    const box = page.getByRole("checkbox", { name: /I understand this can.t be undone/ });
+    await page.getByText(/I understand this can.t be undone/).click();
+    await expect(box).toBeChecked();
+    await expect(del).toBeEnabled();
+    await expect(del).toHaveAttribute("aria-disabled", "false");
+    await page.getByText(/I understand this can.t be undone/).click();
+    await expect(box).not.toBeChecked();
+    await expect(del).toBeDisabled();
+  });
+
+  test("every account page has its own title", async ({ page }) => {
+    const titles: Record<string, string> = {
+      "/account/session-expired": "Session expired · Arena",
+      "/account/edit": "Edit profile · Arena",
+      "/account/notifications": "Notification preferences · Arena",
+      "/account/blocked": "Blocked accounts · Arena",
+      "/account/export": "Download my data · Arena",
+      "/account/delete": "Delete account · Arena",
+      "/account/help": "Help & safety · Arena",
+      "/account/share": "Share profile · Arena",
+    };
+    for (const [path, title] of Object.entries(titles)) {
+      await openAsPerson(page, path);
+      await expect(page).toHaveTitle(title);
+    }
   });
 
   // Architect call (30 Sep, merging P11): canonical public-profile URL is /people/[id];

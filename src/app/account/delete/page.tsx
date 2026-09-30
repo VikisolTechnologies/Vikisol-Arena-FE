@@ -16,10 +16,7 @@ export default function DeleteAccountPage() {
   const [error, setError] = useState("");
 
   const confirm = async () => {
-    if (!understood) {
-      setError("Tick the box to confirm you understand.");
-      return;
-    }
+    if (!understood) return;
     setBusy(true);
     setError("");
     try {
@@ -44,17 +41,17 @@ export default function DeleteAccountPage() {
         </ul>
       </div>
       <div className="mt-5">
-        <Checkbox checked={understood} onChange={setUnderstood} error={error && !understood ? error : undefined}>
+        <Checkbox checked={understood} onChange={setUnderstood}>
           I understand this can&apos;t be undone and I want to delete my account.
         </Checkbox>
       </div>
-      {error && understood && (
+      {error && (
         <div className="mt-4">
           <StateCard kind="error" title="Deletion failed" detail={error} />
         </div>
       )}
       <div className="mt-6 space-y-3">
-        <Button type="button" onClick={confirm} loading={busy} className="!bg-danger hover:!bg-danger">
+        <Button type="button" onClick={confirm} loading={busy} disabled={!understood} aria-disabled={!understood} className="!bg-danger hover:!bg-danger disabled:!opacity-50">
           Delete my account forever
         </Button>
         <Button type="button" variant="outline" onClick={() => router.push("/settings")} className="!text-paper-ink border-paper-ink/40">

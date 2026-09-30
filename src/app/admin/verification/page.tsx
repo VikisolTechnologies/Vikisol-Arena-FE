@@ -21,6 +21,7 @@ export default function VerificationQueuePage() {
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("pending");
   const [items, setItems] = useState<VerificationRequest[] | null>(null);
   const [rejecting, setRejecting] = useState<VerificationRequest | null>(null);
+  const [confirmingMismatch, setConfirmingMismatch] = useState<VerificationRequest | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,7 +31,8 @@ export default function VerificationQueuePage() {
     setItems(isRealMode() ? [] : getVerificationQueue());
   }, [gate]);
 
-  const approve = async (item: VerificationRequest) => {
+  // A domain mismatch can't be approved in one tap: it needs a written note, kept in the audit log.
+  const approve = async (item: VerificationRequest, note?: string) => {
     if (isRealMode()) return;
     setBusyId(item.id);
     setItems((prev) =>
@@ -40,7 +42,7 @@ export default function VerificationQueuePage() {
       actorName: "Platform Admin",
       action: "verification.approved",
       target: item.companyName,
-      metadata: `Domain ${item.domain}`,
+      metadata: note ? `Domain ${item.domain} did not match the work email; approved after manual review: ${note}` : `Domain ${item.domain}`,
     });
     setBusyId(null);
   };
@@ -120,7 +122,7 @@ export default function VerificationQueuePage() {
                       </div>
                       {item.status === "pending" && (
                         <div className="mt-3 flex flex-wrap gap-2">
-                          <DashButton variant="primary" disabled={busyId === item.id} onClick={() => approve(item)}>
+                          <DashButton variant="primary" disabled={busyId === item.id} onClick={() => (item.domainMatch ? approve(item) : setConfirmingMismatch(item))}>
                             <Check className="size-4" aria-hidden /> Approve
                           </DashButton>
                           <DashButton variant="danger" onClick={() => setRejecting(item)}>
@@ -133,6 +135,17 @@ export default function VerificationQueuePage() {
               </AdminList>
             )}
           </div>
+          <ReasonSheet
+            open={!!confirmingMismatch}
+            title="Approve despite a domain mismatch?"
+            detail={confirmingMismatch ? `${confirmingMismatch.companyName}'s domain (${confirmingMismatch.domain}) doesn't match the work email. Write why you're approving it anyway; the note goes into the audit log.` : undefined}
+            confirmLabel="Approve with note"
+            tone="primary"
+            onClose={() => setConfirmingMismatch(null)}
+            onConfirm={async (note) => {
+              if (confirmingMismatch) await approve(confirmingMismatch, note);
+            }}
+          />
           <ReasonSheet
             open={!!rejecting}
             title="Reject verification"

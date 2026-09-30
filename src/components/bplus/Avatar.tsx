@@ -10,11 +10,11 @@ export function initials(name: string) {
 
 /** A person's own photo, or their initials on a warm disc. In preview (mock) mode only, the
  *  fictional preview neighbours show their credited fixture photo (public/fixtures/CREDITS.md). */
-export function Avatar({ src, name, className }: { src?: string | null; name: string; className?: string }) {
+export function Avatar({ src, name, className, eager }: { src?: string | null; name: string; className?: string; eager?: boolean }) {
   const photo = src || (isRealMode() ? undefined : previewPhotoForName(name));
   if (photo) {
     // eslint-disable-next-line @next/next/no-img-element -- user photo / local data URL / fixture
-    return <img src={photo} alt="" loading="lazy" decoding="async" className={cn("size-12 rounded-full bg-paper-muted object-cover", className)} />;
+    return <img src={photo} alt="" loading={eager ? "eager" : "lazy"} decoding="async" className={cn("size-12 rounded-full bg-paper-muted object-cover", className)} />;
   }
   return (
     <span aria-hidden className={cn("grid size-12 place-items-center rounded-full bg-[color-mix(in_oklch,var(--primary)_24%,var(--paper))] font-display-serif text-[18px] text-paper-ink", className)}>

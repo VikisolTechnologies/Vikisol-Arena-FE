@@ -848,7 +848,7 @@
     "index": 6,
     "title": "Candidate profile",
     "route": "/dev/business?to=/enterprise/postings/demo-job/candidates/demo-app-0",
-    "status": "approved",
+    "status": "built",
     "commit": null
   },
   {
@@ -879,7 +879,7 @@
     "index": 2,
     "title": "Discover: intent → filters",
     "route": "/dev/person?to=/discover?q=I%20want%20a%20beginner%20badminton%20game%20this%20weekend",
-    "status": "approved",
+    "status": "built",
     "commit": "4fef634",
     "note": "A sentence becomes editable filters (activity, level, when, distance, setting); results are every nearby activity passing them, soonest first. 'Why these results?' explains. Preview only (gap #42)."
   },
@@ -1165,7 +1165,7 @@
     "index": 1,
     "title": "Overview",
     "route": "/dev/admin?to=/admin",
-    "status": "approved",
+    "status": "built",
     "commit": null,
     "note": "Flow §9 — launch metrics + platform snapshot"
   },
@@ -1176,7 +1176,7 @@
     "index": 2,
     "title": "Verification queue",
     "route": "/dev/admin?to=/admin/verification",
-    "status": "approved",
+    "status": "built",
     "commit": null,
     "note": "Companies: domain, GSTIN/CIN — preview fixtures (gap #49)"
   },

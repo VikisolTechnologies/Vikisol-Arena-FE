@@ -67,13 +67,13 @@ export const MOCK_POSTS: Post[] = [
     ...base, id: "post-badminton-beginners", ...who("ananya"), intentType: "activity", visibility: "approval",
     title: "Beginner-friendly badminton", body: "Relaxed doubles for beginners — spare rackets to share, shuttles provided. Come and learn the basics.",
     ...PLACES.kondapur, capacity: 8, spotsFilled: 5, startsAt: ist(toSaturday(), 10), endsAt: ist(toSaturday(), 12),
-    tags: ["badminton", "sports", "beginner"], mediaUrls: [], createdAt: ago(7), commentCount: 1, reactionCount: 6,
+    tags: ["badminton", "sports", "beginner"], mediaUrls: [photo("badminton")], createdAt: ago(7), commentCount: 1, reactionCount: 6,
   },
   {
     ...base, id: "post-badminton-social", ...who("kabir"), intentType: "activity", visibility: "public",
     title: "Weekend social badminton", body: "Two courts booked. Mixed levels, beginners welcome — we rotate partners every game.",
     ...PLACES.nanakramguda, capacity: 12, spotsFilled: 8, startsAt: ist(toSaturday() + 1, 16), endsAt: ist(toSaturday() + 1, 18),
-    tags: ["badminton", "sports"], mediaUrls: [], createdAt: ago(16), reactionCount: 3,
+    tags: ["badminton", "sports"], mediaUrls: [photo("badminton")], createdAt: ago(16), reactionCount: 3,
   },
   {
     ...base, id: "post-sofa", ...who("ravi"), intentType: "ask", visibility: "approval", myJoinStatus: "approved", roomId: "room-sofa",
