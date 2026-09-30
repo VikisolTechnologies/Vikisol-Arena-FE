@@ -9,9 +9,9 @@ import { PROJECT_SCHEMA } from "@/lib/intake/schemas/project";
 import { isEmpty, problem, visibleFields, visibleSteps, type Schema, type Values } from "@/lib/intake/types";
 import { findSubtype } from "@/lib/activities/taxonomy";
 import type { DraftKind, Understood } from "@/lib/jenny/understand";
+import { filledKey } from "@/lib/jenny/filled";
 
 export const ACTIVITY_KIND_KEY = "arena_activity_kind";
-const filledKey = (draftKey: string) => `arena_jenny_filled_${draftKey}`;
 
 export interface Prefill {
   kind: DraftKind;
@@ -84,23 +84,6 @@ export function applyPrefill(p: Prefill) {
     if (p.kind === "activity" && p.subtype) localStorage.setItem(ACTIVITY_KIND_KEY, p.subtype);
   } catch {
     /* storage blocked — the intake simply starts empty */
-  }
-}
-
-export function readJennyFilled(draftKey: string): string[] {
-  try {
-    const raw = localStorage.getItem(filledKey(draftKey));
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
-}
-export function writeJennyFilled(draftKey: string, ids: string[]) {
-  try {
-    if (ids.length) localStorage.setItem(filledKey(draftKey), JSON.stringify(ids));
-    else localStorage.removeItem(filledKey(draftKey));
-  } catch {
-    /* storage blocked */
   }
 }
 

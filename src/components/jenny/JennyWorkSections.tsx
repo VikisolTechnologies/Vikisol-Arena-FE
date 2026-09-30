@@ -10,7 +10,7 @@ import { BottomSheet } from "@/components/bplus/BottomSheet";
 import { Button, ButtonLink } from "@/components/bplus/Button";
 import { PreviewPill } from "@/components/bplus/Primitives";
 import { ApprovalSheet } from "@/components/jenny/ApprovalSheet";
-import { QueueTile } from "@/components/jenny/JennyParts";
+import { QueueTile } from "@/components/jenny/QueueTile";
 import { AUTOMATION_ROWS, ago, readAutomations, writeAutomations, type QueueGroup, type QueueItem } from "@/lib/data/jenny";
 
 const GROUPS: { id: QueueGroup; title: string; tone: string }[] = [

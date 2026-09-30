@@ -22,9 +22,13 @@ import { LAUNCH_ZONE, filterFeed, getFeedItems, getTrending, hrefFor, originFor,
 import { isDemo } from "@/lib/data/feed";
 import type { SearchResults } from "@/lib/api/search";
 import { Cover } from "@/components/covers/Cover";
-import { IntentResults, intentFrom } from "@/components/jenny/IntentResults";
+import dynamic from "next/dynamic";
+import { intentFrom } from "@/lib/jenny/intent";
 import { JENNY_PREVIEW } from "@/lib/data/jenny";
 import { understand } from "@/lib/jenny/understand";
+
+// Preview-only (P8): its code loads only where it can render.
+const IntentResults = dynamic(() => import("@/components/jenny/IntentResults").then((m) => m.IntentResults), { ssr: false });
 
 const CHIPS = [
   { id: "all", label: "All" },

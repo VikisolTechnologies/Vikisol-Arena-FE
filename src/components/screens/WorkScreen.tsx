@@ -17,9 +17,12 @@ import { Avatar } from "@/components/bplus/Avatar";
 import { CompanyMark } from "@/components/career/CompanyMark";
 import { Cover } from "@/components/covers/Cover";
 import { CheckInSheet } from "@/components/activity/CheckInSheet";
-import { JennyWorkSections } from "@/components/jenny/JennyWorkSections";
+import dynamic from "next/dynamic";
 import { useJennyQueue } from "@/components/jenny/useJenny";
 import { JENNY_PREVIEW } from "@/lib/data/jenny";
+
+// Preview-only (P8): its code loads only where it can render.
+const JennyWorkSections = dynamic(() => import("@/components/jenny/JennyWorkSections").then((m) => m.JennyWorkSections), { ssr: false });
 
 const TABS = [
   { id: "all", label: "All" },

@@ -16,7 +16,9 @@ import { Cover } from "@/components/covers/Cover";
 
 // Live map (MapLibre GL + OpenFreeMap, no key). If WebGL or the tiles fail, the static
 // launch-zone image below takes over, then the drawn map outside it.
-const ArenaMap = dynamic(() => import("@/components/map/ArenaMap").then((mod) => mod.ArenaMap), { ssr: false });
+// MapLibre loads only here, on demand; the placeholder keeps the map's box so nothing below it
+// moves when it arrives (performance pass: map CLS was 0.2).
+const ArenaMap = dynamic(() => import("@/components/map/ArenaMap").then((mod) => mod.ArenaMap), { ssr: false, loading: () => <Skeleton className="aspect-[3/4] w-full rounded-none" /> });
 
 /** Launch zone centre (Gachibowli / Gopanapally) — used until we know the person's approximate area. */
 const LAUNCH = { lat: 17.4401, lng: 78.3489 };
@@ -35,8 +37,8 @@ type Filter = (typeof FILTERS)[number]["id"];
 const PIN: Record<string, string> = { activity: "bg-info", ask: "bg-primary", offer: "bg-success" };
 
 /** Fallback only: a static dark basemap of the launch zone, rendered once from OpenStreetMap tiles
- *  (© OSM contributors, ODbL), shown when the live map can't load. Web Mercator bounds of public/fixtures/map/launch-zone.webp (12 × 16 km). */
-const BASEMAP = { src: "/fixtures/map/launch-zone.webp", north: 17.512172, south: 17.368028, west: 78.292241, east: 78.405559 };
+ *  (© OSM contributors, ODbL), shown when the live map can't load. Web Mercator bounds of public/map/launch-zone.webp (12 × 16 km). */
+const BASEMAP = { src: "/map/launch-zone.webp", north: 17.512172, south: 17.368028, west: 78.292241, east: 78.405559 };
 const mercY = (lat: number) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
 function onBasemap(lat: number, lng: number) {
   const x = (lng - BASEMAP.west) / (BASEMAP.east - BASEMAP.west);

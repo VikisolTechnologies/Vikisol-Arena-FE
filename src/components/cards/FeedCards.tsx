@@ -20,10 +20,10 @@ function facesFor(item: FeedItem, n: number) {
 
 /** A photo that reserves its box before it loads (no layout shift); without one, a unique
  *  procedural cover for activities/projects, or a warm gradient — never a stock image. */
-function Photo({ item, className, layoutId }: { item: FeedItem; className?: string; layoutId?: string }) {
+function Photo({ item, className, layoutId, priority }: { item: FeedItem; className?: string; layoutId?: string; priority?: boolean }) {
   return (
     <m.div layoutId={layoutId} className={cn("relative overflow-hidden", className)}>
-      <Cover source={{ id: item.id, kind: item.itemType, media: item.mediaUrls[0], tags: item.tags, title: item.title, body: item.body, startsAt: item.startsAt, company: item.authorCompanyName ?? item.authorName }} className="absolute inset-0" />
+      <Cover source={{ id: item.id, kind: item.itemType, media: item.mediaUrls[0], tags: item.tags, title: item.title, body: item.body, startsAt: item.startsAt, company: item.authorCompanyName ?? item.authorName }} className="absolute inset-0" priority={priority} />
     </m.div>
   );
 }
@@ -41,7 +41,7 @@ export function HeroActivityCard({ item, km }: { item: FeedItem; km: number | nu
     <article className="overflow-hidden rounded-[var(--radius-card)] bg-surface">
       <Link href={href} className="block outline-none focus-visible:outline-2 focus-visible:outline-primary" aria-label={titleOf(item)}>
         <div className="relative aspect-[4/3]">
-          <Photo item={item} className="absolute inset-0" layoutId={`media-${item.id}`} />
+          <Photo item={item} className="absolute inset-0" layoutId={`media-${item.id}`} priority />
           <div aria-hidden className="absolute inset-0 bg-linear-to-t from-surface via-surface/30 to-transparent" />
           <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2 pr-16">
             {when && (

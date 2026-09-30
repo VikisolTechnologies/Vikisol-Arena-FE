@@ -16,11 +16,13 @@ COPY . .
 # right API. --max-old-space-size matches the local memory-constraint finding in DECISIONS.md;
 # harmless headroom to set even on a build machine that doesn't need it.
 ARG NEXT_PUBLIC_API_MODE
+ARG NEXT_PUBLIC_ARENA_DATA
 ARG NEXT_PUBLIC_API_BASE_URL
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ARG NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 ENV NEXT_PUBLIC_API_MODE=$NEXT_PUBLIC_API_MODE
+ENV NEXT_PUBLIC_ARENA_DATA=$NEXT_PUBLIC_ARENA_DATA
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
@@ -33,6 +35,9 @@ ENV NODE_OPTIONS="--max-old-space-size=3584"
 ARG RAILWAY_GIT_COMMIT_SHA=local
 RUN echo "NEXT_PUBLIC_BUILD_COMMIT=${RAILWAY_GIT_COMMIT_SHA}" >> .env.production.local && \
     echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> .env.production.local
+# Production data mode: preview fixture photos never ship (next.config.ts swaps the preview
+# world's code for empty stand-ins; this drops its images).
+RUN if [ "$NEXT_PUBLIC_ARENA_DATA" = "api" ]; then rm -rf public/fixtures; fi
 RUN npm run build
 
 FROM node:20-alpine AS runner

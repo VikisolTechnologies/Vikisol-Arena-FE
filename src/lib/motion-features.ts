@@ -1,7 +1,7 @@
-import { domMax } from "motion/react";
+import { domAnimation } from "motion/react";
 
-// Loaded synchronously by MotionProvider: with async loading, an AnimatePresence exit that starts
-// before the features arrive never completes, leaving a screen stuck between states.
-// domMax rather than domAnimation: drag-to-dismiss sheets and shared-element (layoutId)
-// transitions are both required by the mission, and neither exists in domAnimation.
-export default domMax;
+// Loaded with the app by MotionProvider. domAnimation carries animate, exit (AnimatePresence) and
+// tap/hover/focus — so an exit can never be left waiting for features (the reason the loading
+// used to be synchronous). The domMax extras — drag-to-dismiss sheets and layoutId slides — are
+// fetched at idle (motion-features-max.ts); until then a pill jumps instead of sliding.
+export default domAnimation;

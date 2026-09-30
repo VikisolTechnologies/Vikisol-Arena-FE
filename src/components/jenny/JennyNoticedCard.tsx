@@ -6,7 +6,7 @@ import { ChevronRight, Sparkles } from "lucide-react";
 import { rise } from "@/lib/motion";
 import { ButtonLink } from "@/components/bplus/Button";
 import { PreviewPill } from "@/components/bplus/Primitives";
-import { QueueTile } from "@/components/jenny/JennyParts";
+import { QueueTile } from "@/components/jenny/QueueTile";
 import { useJennyQueue } from "@/components/jenny/useJenny";
 import { guessType } from "@/lib/activities/taxonomy";
 import { distanceKm, type FeedItem } from "@/lib/data/feed";

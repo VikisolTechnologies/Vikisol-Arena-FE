@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, m, useDragControls, type PanInfo } from "motion/react";
+import { AnimatePresence, animate, m, useMotionValue } from "motion/react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { duration, ease, fade, spring } from "@/lib/motion";
@@ -36,7 +36,10 @@ export function BottomSheet({
   const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
   const panel = useRef<HTMLDivElement>(null);
   const opener = useRef<Element | null>(null);
-  const drag = useDragControls();
+  // Drag-to-dismiss by hand (pointer events on the handle + a motion value) rather than motion's
+  // drag feature, which would put its whole drag/projection engine in every page's first load.
+  const dragY = useMotionValue(0);
+  const drag = useRef<{ startY: number; lastY: number; lastT: number; v: number } | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -67,9 +70,31 @@ export function BottomSheet({
     };
   }, [open, onClose]);
 
-  const onDragEnd = (_: unknown, info: PanInfo) => {
-    if (info.offset.y > DISMISS_DISTANCE || info.velocity.y > DISMISS_VELOCITY) onClose();
+  const onHandleDown = (e: React.PointerEvent) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    drag.current = { startY: e.clientY, lastY: e.clientY, lastT: e.timeStamp, v: 0 };
   };
+  const onHandleMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d) return;
+    const dy = e.clientY - d.startY;
+    // Down follows the finger; up resists (the sheet can't be pulled off its resting place).
+    dragY.set(dy > 0 ? dy : dy * 0.15);
+    const dt = e.timeStamp - d.lastT;
+    if (dt > 0) d.v = ((e.clientY - d.lastY) / dt) * 1000;
+    d.lastY = e.clientY;
+    d.lastT = e.timeStamp;
+  };
+  const onHandleUp = () => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d) return;
+    if (dragY.get() > DISMISS_DISTANCE || d.v > DISMISS_VELOCITY) onClose();
+    else animate(dragY, 0, spring.gentle);
+  };
+  useEffect(() => {
+    if (open) dragY.set(0);
+  }, [open, dragY]);
 
   // Portals need `document`: render nothing on the server and during hydration, so a sheet that
   // starts open can't mismatch.
@@ -92,12 +117,7 @@ export function BottomSheet({
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            drag="y"
-            dragControls={drag}
-            dragListener={false}
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.6 }}
-            onDragEnd={onDragEnd}
+            style={{ translateY: dragY }}
             initial={{ y: "100%" }}
             animate={{ y: 0, transition: spring.gentle }}
             exit={{ y: "100%", transition: { duration: duration.base, ease: ease.out } }}
@@ -108,7 +128,10 @@ export function BottomSheet({
           >
             <div
               className="mx-auto flex h-6 w-full cursor-grab touch-none items-center justify-center active:cursor-grabbing"
-              onPointerDown={(e) => drag.start(e)}
+              onPointerDown={onHandleDown}
+              onPointerMove={onHandleMove}
+              onPointerUp={onHandleUp}
+              onPointerCancel={onHandleUp}
               aria-hidden
             >
               <span className={cn("h-1 w-10 rounded-full", tone === "paper" ? "bg-paper-ink/25" : "bg-foreground/25")} />

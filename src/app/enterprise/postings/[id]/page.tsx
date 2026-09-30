@@ -28,6 +28,25 @@ type View = "board" | "list";
 
 const noop = () => () => {};
 
+let early: { id: string; posting: ReturnType<typeof getPosting>; applicants: ReturnType<typeof getApplicantsForPosting> } | null = null;
+if (typeof window !== "undefined") {
+  const m = window.location.pathname.match(/^\/enterprise\/postings\/([^/]+)$/);
+  if (m && m[1] !== "new") {
+    const id = decodeURIComponent(m[1]);
+    early = { id, posting: getPosting(id), applicants: getApplicantsForPosting(id) };
+    early.posting.catch(() => {});
+    early.applicants.catch(() => {});
+  }
+}
+function requestsFor(id: string) {
+  const e = early;
+  early = null;
+  if (e && e.id === id) return e;
+  const applicants = getApplicantsForPosting(id);
+  applicants.catch(() => {});
+  return { posting: getPosting(id), applicants };
+}
+
 /** Recruiter board 4 (job page) + board 5 / flow §8 pipeline. Same getPosting / applicants /
  *  moveApplicantStage / setPostingStatus calls as before; Not selected always goes through the
  *  kind-message sheet, and "advance" never lands anyone in Not selected by accident. */
@@ -51,11 +70,14 @@ function JobPage() {
   useEffect(() => {
     if (!requireEnterpriseOnboarded(router)) return;
     getMyEnterpriseProfile().then(setProfile).catch(() => {});
-    getPosting(id)
+    // Job and applicants in parallel (they only share the id), started when this route's code
+    // arrived if the URL matched (see `early`): the job title is the page's main content.
+    const { posting: postingRequest, applicants: applicantsRequest } = requestsFor(id);
+    postingRequest
       .then((p) => {
         setPosting(p ?? null);
         if (!p) return;
-        return getApplicantsForPosting(id).then((as) => setApplicants(as.map((a) => ({ ...a, posting: p }))));
+        return applicantsRequest.then((as) => setApplicants(as.map((a) => ({ ...a, posting: p }))));
       })
       .catch(() => {
         setPosting((cur) => cur ?? null);

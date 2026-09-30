@@ -10,32 +10,13 @@ import { ButtonLink } from "@/components/bplus/Button";
 import { RowCard } from "@/components/cards/FeedCards";
 import { JennyByline } from "@/components/jenny/JennyParts";
 import { ALL_SUBTYPES, findSubtype, guessType } from "@/lib/activities/taxonomy";
-import { LAUNCH_ZONE, distanceKm, type FeedItem, type Origin } from "@/lib/data/feed";
-import type { Understood } from "@/lib/jenny/understand";
-
-type When = "any" | "today" | "weekend" | "week" | "date";
-type Level = "any" | "beginner" | "intermediate" | "advanced";
-type Setting = "either" | "indoor" | "outdoor";
-interface Intent {
-  subtype: string | null;
-  level: Level;
-  when: When;
-  date?: string;
-  radius: number | null;
-  setting: Setting;
-}
+import { distanceKm, type FeedItem, type Origin } from "@/lib/data/feed";
+import type { Intent, Level, Setting, When } from "@/lib/jenny/intent";
 
 const WHEN_LABEL: Record<When, string> = { any: "Any time", today: "Today", weekend: "This weekend", week: "This week", date: "That day" };
 const LEVEL_LABEL: Record<Level, string> = { any: "Any level", beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" };
 const SETTING_LABEL: Record<Setting, string> = { either: "Indoor/Outdoor", indoor: "Indoor", outdoor: "Outdoor" };
 const LEVEL_WORDS = ["beginner", "intermediate", "advanced"];
-
-/** An intent the words can carry: an activity type, or a level/day for an activity. */
-export function intentFrom(u: Understood | null): Intent | null {
-  if (!u || u.kind !== "activity" || (!u.subtype && !u.level && !u.dayWord)) return null;
-  const when: When = u.dayWord === "This weekend" ? "weekend" : u.dayWord === "Today" || u.dayWord === "Tonight" ? "today" : u.date ? "date" : "any";
-  return { subtype: u.subtype ?? null, level: u.level && u.level !== "all-levels" ? u.level : "any", when, date: u.date, radius: LAUNCH_ZONE.radiusKm, setting: u.setting ?? "either" };
-}
 
 function localDay(iso: string) {
   const d = new Date(iso);

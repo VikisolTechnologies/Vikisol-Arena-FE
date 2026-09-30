@@ -12,7 +12,7 @@ import { dissolve, rise } from "@/lib/motion";
 import { LAUNCH_ZONE, distanceKm, filterFeed, getFeedItems, originFor, type FeedFilter, type FeedItem } from "@/lib/data/feed";
 import { getMyProfile } from "@/lib/data/profile";
 import { EMPTY_DRAFT, readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
-import { JennyNoticedCard } from "@/components/jenny/JennyNoticedCard";
+import dynamic from "next/dynamic";
 import { JENNY_PREVIEW } from "@/lib/data/jenny";
 import { getMyRooms } from "@/lib/api/rooms";
 import { useGuest } from "@/hooks/use-arena-session";
@@ -23,6 +23,9 @@ const FILTERS = [
   { id: "all", label: "All" },
 ] as const;
 
+// Preview-only (P8): its code loads only where it can render.
+const JennyNoticedCard = dynamic(() => import("@/components/jenny/JennyNoticedCard").then((m) => m.JennyNoticedCard), { ssr: false });
+
 function greeting(hour: number) {
   if (hour < 12) return { text: "Good morning,", icon: Sun };
   if (hour < 17) return { text: "Good afternoon,", icon: CloudSun };
@@ -30,6 +33,16 @@ function greeting(hour: number) {
 }
 
 type Load = { items: FeedItem[]; me: { lat?: number; lng?: number; city?: string } | null };
+
+// The feed request starts when this screen's code arrives, not after hydration and the session
+// check — the hero photo (the screen's LCP) can't be found before the feed is back. Used once.
+let earlyFeed: Promise<FeedItem[]> | null = typeof window !== "undefined" ? getFeedItems("for-you", 0, 30) : null;
+earlyFeed?.catch(() => {});
+function feedRequest() {
+  const early = earlyFeed;
+  earlyFeed = null;
+  return early ?? getFeedItems("for-you", 0, 30);
+}
 
 export function FeedScreen() {
   const guest = useGuest();
@@ -48,7 +61,7 @@ export function FeedScreen() {
     if (guest === null) return;
     let cancelled = false;
     Promise.all([
-      getFeedItems("for-you", 0, 30),
+      feedRequest(),
       guest ? Promise.resolve(null) : getMyProfile().then((p) => ({ lat: p.approxLat, lng: p.approxLng, city: p.homeCity })).catch(() => null),
     ])
       .then(([items, me]) => {
@@ -123,7 +136,9 @@ export function FeedScreen() {
                 <StateCard kind="error" title="The feed didn't load" detail={error} action={<Button variant="outline" onClick={refresh}>Try again</Button>} />
               </m.div>
             ) : !data ? (
-              <m.div key="loading" exit={{ opacity: 0 }} transition={dissolve} className="space-y-3" aria-busy="true" aria-label="Loading the feed">
+              // The skeleton leaves at once so the feed (and its hero photo, the LCP) mounts the
+              // moment data arrives; the content itself still dissolves in.
+              <m.div key="loading" exit={{ opacity: 0, transition: { duration: 0 } }} className="space-y-3" aria-busy="true" aria-label="Loading the feed">
                 <Skeleton className="aspect-[4/3] w-full" />
                 <div className="grid grid-cols-2 gap-3">
                   <Skeleton className="h-36" />

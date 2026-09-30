@@ -112,7 +112,7 @@ export function ProfileScreen() {
   return (
     <AppShell>
       <div className="relative -mx-5 -mt-[max(8px,env(safe-area-inset-top))] h-40 overflow-hidden">
-        <Image src="/brand/welcome-park.jpg" alt="" fill sizes="480px" className="object-cover object-[50%_25%]" />
+        <Image src="/brand/welcome-park.webp" alt="" fill sizes="480px" className="object-cover object-[50%_25%]" />
         <div aria-hidden className="absolute inset-0 bg-linear-to-b from-transparent to-background" />
         <Link href="/settings" aria-label="Settings" className="absolute right-3 top-[max(12px,env(safe-area-inset-top))] grid size-11 place-items-center rounded-full bg-background/50 text-foreground backdrop-blur">
           <Settings className="size-5" strokeWidth={1.75} aria-hidden />

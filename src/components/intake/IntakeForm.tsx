@@ -8,7 +8,7 @@ import { fade, pageSlide, spring } from "@/lib/motion";
 import { Button } from "@/components/bplus/Button";
 import { IntakeField, type PhotoValue } from "@/components/intake/IntakeField";
 import { defaultsOf, problem, summarize, visibleFields, visibleSteps, type Schema, type Values } from "@/lib/intake/types";
-import { readJennyFilled, writeJennyFilled } from "@/lib/jenny/prefill";
+import { readJennyFilled, writeJennyFilled } from "@/lib/jenny/filled";
 
 /** Files and object URLs can't be saved as a draft; everything else can. */
 function serializable(v: Values): Values {

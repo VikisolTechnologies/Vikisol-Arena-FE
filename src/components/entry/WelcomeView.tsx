@@ -14,7 +14,7 @@ export function WelcomeView({ onJoin, onSignIn }: { onJoin: () => void; onSignIn
     <div className="relative min-h-svh overflow-hidden bg-background">
       <m.div className="absolute inset-0 will-change-transform" animate={kenBurns.animate} transition={kenBurns.transition}>
         <Image
-          src="/brand/welcome-park.jpg"
+          src="/brand/welcome-park.webp"
           alt=""
           fill
           priority

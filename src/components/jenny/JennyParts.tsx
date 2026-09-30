@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { m } from "motion/react";
-import { BriefcaseBusiness, CalendarDays, FilePen, Mail, Mic, Send, Share2, Sparkles, UserRoundCheck, UsersRound } from "lucide-react";
+import { Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { press, spring } from "@/lib/motion";
 import { JennyOrb } from "@/components/jenny/JennyOrb";
 import { PreviewPill } from "@/components/bplus/Primitives";
-import { JENNY_PREVIEW, type QueueIcon } from "@/lib/data/jenny";
+import { JENNY_PREVIEW } from "@/lib/data/jenny";
 import { understand, type DraftKind } from "@/lib/jenny/understand";
 import { applyPrefill, prefillFor, type Prefill } from "@/lib/jenny/prefill";
 
@@ -23,27 +23,6 @@ export function JennyByline({ title, detail, className }: { title: string; detai
         {detail && <p className="text-[14px] text-faint">{detail}</p>}
       </div>
     </div>
-  );
-}
-
-const ICON: Record<QueueIcon, { icon: typeof Sparkles; cls: string }> = {
-  post: { icon: FilePen, cls: "bg-[#f1e2c8] text-[#7a4d00]" },
-  invite: { icon: Mail, cls: "bg-[#f1e2c8] text-[#7a4d00]" },
-  share: { icon: Share2, cls: "bg-[#f1e2c8] text-[#7a4d00]" },
-  calendar: { icon: CalendarDays, cls: "bg-[#dcebfb] text-[#1d57b8]" },
-  notify: { icon: Send, cls: "bg-[#d9f0e2] text-[#1f6e3e]" },
-  project: { icon: UsersRound, cls: "bg-[#e7e2dc] text-[#4a3f38]" },
-  join: { icon: UserRoundCheck, cls: "bg-[#e7e2dc] text-[#4a3f38]" },
-  job: { icon: BriefcaseBusiness, cls: "bg-[#e7e2dc] text-[#4a3f38]" },
-};
-
-/** Board's rounded-square tiles on Work's Jenny rows. */
-export function QueueTile({ icon, className }: { icon: QueueIcon; className?: string }) {
-  const { icon: Glyph, cls } = ICON[icon];
-  return (
-    <span aria-hidden className={cn("grid size-12 shrink-0 place-items-center rounded-xl", cls, className)}>
-      <Glyph className="size-6" strokeWidth={1.75} />
-    </span>
   );
 }
 

@@ -9,36 +9,40 @@ import { BuildStamp } from "@/components/BuildStamp";
 import { PageTransition } from "@/components/PageTransition";
 import { RouteTransition } from "@/components/RouteTransition";
 import { DeferredCommandPalette } from "@/components/vnext/DeferredCommandPalette";
-import { SentryClient } from "@/components/SentryClient";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 
 // Self-hosted (src/app/fonts, OFL - licences alongside) rather than next/font/google: the
 // Google variant downloads the fonts at build time, and Vercel builds kept failing when that
 // download did ("next/font/google queries have exactly one entry"). Same families, variable
 // weights, no network needed to build.
+// Performance pass: fonts are latin-only variable files trimmed to the weights the product uses
+// (Inter 400–700, Fraunces 400–600). Space Grotesk only serves older screens, so it isn't
+// preloaded on every page; the B+ fonts are, with metric-matched fallbacks (no swap shift).
 const spaceGrotesk = localFont({
   src: "./fonts/space-grotesk-latin-var.woff2",
   variable: "--font-space-grotesk",
   weight: "300 700",
   display: "swap",
+  preload: false,
 });
 
 const inter = localFont({
   src: "./fonts/inter-latin-var.woff2",
   variable: "--font-inter",
-  weight: "100 900",
+  weight: "400 700",
   display: "swap",
 });
 
 // docs/design/TOKENS.md — the B+ display serif (Arena VNext headings, hero copy). Same
 // self-hosting rationale as the two fonts above (avoid the next/font/google build-time
-// download failure), latin subset only, variable weight 300-700 covers the 400/500/600 the
+// download failure), latin subset only, variable weight 400-600 covers the 400/500/600 the
 // design actually uses.
 const fraunces = localFont({
   src: "./fonts/fraunces-latin-var.woff2",
   variable: "--font-fraunces",
-  weight: "300 700",
+  weight: "400 600",
   display: "swap",
+  adjustFontFallback: "Times New Roman",
 });
 
 export const metadata: Metadata = {
@@ -58,6 +62,14 @@ export const metadata: Metadata = {
 };
 
 // viewport-fit=cover so env(safe-area-inset-*) works on notched phones; zoom stays enabled.
+const API_ORIGIN = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_API_BASE_URL ?? "").origin;
+  } catch {
+    return null;
+  }
+})();
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -80,6 +92,11 @@ export default function RootLayout({
         fraunces.variable,
       )}
     >
+      <head>
+        {/* The API and the photo CDN are needed for every screen's first content: connect early. */}
+        {API_ORIGIN && <link rel="preconnect" href={API_ORIGIN} crossOrigin="use-credentials" />}
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
         <ApiDownBanner />
         <RouteTransition />
@@ -87,7 +104,6 @@ export default function RootLayout({
           <PageTransition>{children}</PageTransition>
         </MotionProvider>
         <DeferredCommandPalette />
-        <SentryClient />
         <CookieConsentBanner />
         <WebVitalsReporter />
         <BuildStamp />
