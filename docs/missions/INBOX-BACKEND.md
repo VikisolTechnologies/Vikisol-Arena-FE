@@ -3,6 +3,32 @@
 
 **Rule:** when the founder says "check your inbox", `git fetch` the FE repo, read this file, do every OPEN mission, and report. You cannot push to the FE repo, so put your status in your PR descriptions and your reply.
 
+
+**Reporting (new, 1 Oct):** when you finish a mission, also write your full final report into `docs/missions/REPORTS.md`: newest first, headed `## <Mission> — <date>`. Commit and push it. The architect reads it straight from the Mac, so the founder no longer needs to paste replies.
+
+
+
+## Token discipline (founder, 1 Oct 2026)
+- **Start each mission in a fresh session** (`/clear`). This inbox carries the context; don't re-read the whole repo or all the docs.
+- Read only the files the current area needs. Use `grep` rather than opening big files whole.
+- Run **targeted tests** while working. Run the full suite **once per area**, before you report.
+- **No screenshots** unless the architect asks for them.
+- Keep chat replies to 5 lines or fewer. The full report goes in `REPORTS.md`.
+- If you're stuck after two attempts, write the problem in the report and move on; don't loop.
+
+## Release rule (founder, 1 Oct 2026)
+- **Production:**
+  - frontend `arena.vikisol.in` deploys **only from `main`**;
+  - backend `api-arena.vikisol.in` deploys only from BE `main`.
+- **Feature branches never deploy to production.** A push to a feature branch only gives a Vercel preview URL.
+- **A production release is a milestone merge to `main`:**
+  - the architect reviews it and says "release-ready";
+  - the founder gives the OK;
+  - the founder (or a builder, on his explicit instruction) merges;
+  - the backend goes first, then the frontend.
+- The frontend production build requires `NEXT_PUBLIC_ARENA_DATA=api`, so no dummy data can go live.
+- Builders never merge to `main` on their own.
+
 ---
 
 ## Mission B7 (DONE, 1 Oct 2026, by the cloud session)
@@ -48,3 +74,24 @@ Result: every row from 48 to 62 is built across PR #2, #3 and #4. PR-P0 was alre
    - never loosen a test;
    - no secrets;
    - push after every commit.
+
+---
+
+## Mission B9 (OPEN, 1 Oct 2026, TOP PRIORITY): run the real backend for the frontend integration
+The founder wants a working prototype on real data. The frontend (M6) will call this backend running locally on the Mac.
+1. **Run locally.** Get `feature/admin-account-gaps` running on `http://localhost:8081/api/v1` with a local Postgres and Redis (Docker Compose, or Homebrew if Docker isn't installed).
+   - `SEED_ENABLED=false`: no demo data.
+   - CORS allows `http://localhost:3001` and `http://localhost:3000`.
+   - Write the exact start commands into the backend README: one command to start, one to reset the database.
+2. **The first platform admin, locally.** Give a one-time CLI or bootstrap path that creates a platform admin from environment variables. The founder types the password himself; never commit or log it.
+3. **API issues.** Watch `../arena-fe-vnext/docs/missions/API-ISSUES.md`.
+   - Fix each mismatch on the backend, with a test, and push.
+   - Mark the entry FIXED with the commit.
+4. **Deploy readiness (don't deploy):** list exactly what Railway `arena-api` needs for this branch:
+   - env vars (names only);
+   - 1 GB memory;
+   - migrations V38–V44 run automatically;
+   - CORS origins for `preview-arena.vikisol.in`.
+
+   The architect is reviewing PR #2 → #3 → #4 in parallel. After approval, the founder merges and Railway deploys.
+5. **Report** in `../arena-fe-vnext/docs/missions/REPORTS.md` (newest first).
