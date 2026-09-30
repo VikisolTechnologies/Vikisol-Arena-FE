@@ -5,12 +5,36 @@
 
 Updated 30 Sep 2026. Resume from here.
 
-## Summary — 30 Sep, P8 done (read this first)
+## Summary — 30 Sep, performance pass done (read this first)
 
 **Branch:** `feature/arena-vnext-mobile-jenny` in worktree `arena-fe-vnext`. Nothing on main.
 Typecheck, lint and production build clean; **127 passed / 2 skipped local Playwright on 3
-engines** (new `tests/local/jenny.local.ts`, 6 tests × 3); no horizontal overflow at 320 or 430 px
-on the 18 P8 routes.
+engines**; no horizontal overflow at 320 or 430 px on the 18 P8 routes.
+
+**Performance pass — done** (commit "perf: production build meets Core Web Vitals targets on
+5/7 screens"). Production build, mobile Lighthouse, 4G + 4x CPU, median of 5 runs, on Feed,
+Discover, Activity, Work, You, Map and the business pipeline. Full numbers and before/after route
+sizes: `docs/reviews/performance.md`.
+- Met on all 7 screens: CLS < 0.1, INP < 200ms, Lighthouse score >= 85.
+- Met on 5 of 7: LCP < 2.5s. Not met on Feed (2.71s) and the pipeline (2.89s) — root-caused to
+  CORS preflight round-trips against a cross-origin API; the fix (same-origin proxy or
+  `Access-Control-Max-Age` tuning) is infra-scope, recommended in the report rather than applied.
+- Not met: first-load JS <= 200KB/route. Next's framework runtime plus the mission's motion
+  library alone exceed 200KB before any Arena code ships; a revised budget is proposed in the
+  report rather than the target being declared met.
+- What changed: single lazy Sentry init (two duplicate/unscrubbed ones removed); preview/fixture
+  code excluded from production bundles (Turbopack `resolveAlias` + `.dev.tsx` route gating);
+  motion split into `domAnimation` (ships with the app) + `domMax`/layout+drag (idle-loaded);
+  BottomSheet's drag rewritten off motion's drag APIs; image `srcset`/`fetchPriority` on hero
+  photos, `welcome-park.jpg` → webp; fonts subset + self-hosted with `adjustFontFallback`; Feed's
+  hero photo requested as soon as the screen's JS arrives; 404 rewritten as a lightweight server
+  component; Dockerfile strips `public/fixtures` from production images.
+- Caught and fixed during verification (not a perf change): `MotionProvider`'s idle-loaded
+  `domMax` bundle lived in a disconnected sibling `LazyMotion`, so it never reached the app's real
+  tree; in strict mode, any `m` component using `layoutId` (every feed card) hit a hard failure
+  that silently wedged `AnimatePresence` on its first key change (filter pills, map/list toggle).
+  Fixed in `MotionProvider.tsx` — the idle-loaded bundle now replaces `features` on the same
+  `LazyMotion`, strict mode dropped so an unloaded feature degrades instead of throwing.
 
 **P8 Jenny — done** (commit "FE B+ P8: Jenny boards + pre-fill"). Review: `docs/reviews/p8.md`
 (side-by-sides in `docs/reviews/p8/`). All 14 Jenny board screens Built:
@@ -33,18 +57,30 @@ blocked-by-API screens). Only the architect sets Approved.
 
 **Ready for architect review:** the 14 P8 screens — `/dev/compare/all`.
 
-**P10 Admin is built by Cursor on its own branch.** Do not edit `src/app/admin/**` here.
+**P10 Admin and P11 account/people are Cursor's**, on `feature/arena-admin-bplus` and
+`feature/arena-account-bplus`. Do not edit `src/app/admin/**` or start P11 work here.
+
+**BE PR #3 readiness — done** (commit "FE: handle application stage 'hired' and post type
+'collab'; no nearby-only audience on needs"): application stage `hired` and post type `collab`
+handled everywhere; "nearby only" visibility hidden on needs (unsupported); candidates can only
+withdraw their own application. Still on preview fixtures — not switched to the real BE PR #3
+endpoints (`Vikisol-Arena-BE` `feature/be-fe-gaps` `API-CHANGES.md`) until the architect says so.
 
 **Blocked**
 - **GitHub is unreachable from this Mac.** Commits stay local on `feature/arena-vnext-mobile-jenny`;
-  the founder pushes from another network. **Ready to push.**
-- API gaps `docs/FE-API-GAPS.md` #36–#47.
+  retried after every commit per standing policy. **Ready to push.**
+- Merging Cursor's `feature/arena-admin-bplus` and `feature/arena-account-bplus` into this branch
+  (with `docs/admin/SHARED-CHANGES-NEEDED.md` / `docs/account/SHARED-CHANGES-NEEDED.md`,
+  `/neighbour/*` → `/people/[id]` redirect, `SessionExpiredSheet` on 401) — the founder asked for
+  this next, but the merge itself needs an explicit go-ahead before it runs.
+- API gaps `docs/FE-API-GAPS.md` #36–#54.
 
-**Needs your decision:** nothing open.
+**Needs your decision:** confirm the Cursor-branch merge above, then it proceeds without stopping
+again.
 
-**Next:** P11 — remaining account and people screens (ARENA-APP-FLOW §1.4, other people's
-profiles, share profile). Start in a fresh session with "continue from docs/PROGRESS.md". Mark
-screens Built only.
+**Next:** once the merge is confirmed — apply both SHARED-CHANGES-NEEDED docs, the `/people/[id]`
+redirect, mount `SessionExpiredSheet`, full mock Playwright green. P11 itself stays Cursor's; do
+not build new account/people screens here.
 
 ## Earlier phases
 
