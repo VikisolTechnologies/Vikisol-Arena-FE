@@ -1,68 +1,134 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Building2, Users, ShieldAlert, Activity } from "lucide-react";
-import { PlatformAdminShell, usePlatformAdminGate } from "@/components/app/PlatformAdminShell";
-import { OrbLoader } from "@/components/ui/orb-loader";
+import {
+  UserPlus,
+  CheckCircle2,
+  Calendar,
+  Users,
+  HeartHandshake,
+  Briefcase,
+  FileText,
+  TrendingUp,
+  ShieldAlert,
+  Activity,
+} from "lucide-react";
+import Link from "next/link";
+import { AdminShell, usePlatformAdminGate } from "@/components/admin/AdminShell";
+import { AdminList, AdminLoading, AdminRow, MetricGrid, NoDataYet } from "@/components/admin/parts";
+import { getLaunchMetrics } from "@/components/admin/fixtures";
+import { Stat } from "@/components/dash/Parts";
+import { StateCard } from "@/components/bplus/Primitives";
 import { getPlatformDashboard } from "@/lib/api/platformAdmin";
 import { formatDateTime } from "@/lib/format";
+import { isRealMode } from "@/lib/api/mode";
 import type { PlatformDashboard } from "@/lib/types";
 
-const METRICS = [
-  { key: "tenantsTotal", label: "Tenants", icon: Building2 },
-  { key: "usersTotal", label: "Users", icon: Users },
-  { key: "moderationPending", label: "Moderation pending", icon: ShieldAlert },
-  { key: "tenantsSuspended", label: "Tenants suspended", icon: Activity },
-] as const;
+const METRIC_ICONS: Record<string, typeof UserPlus> = {
+  signups: UserPlus,
+  onboarding: CheckCircle2,
+  "activities-created": Calendar,
+  "activities-joined": Users,
+  "activities-completed": CheckCircle2,
+  "needs-resolved": HeartHandshake,
+  jobs: Briefcase,
+  applications: FileText,
+  d1: TrendingUp,
+  d7: TrendingUp,
+  reports: ShieldAlert,
+};
 
-export default function PlatformDashboardPage() {
+export default function AdminOverviewPage() {
   const gate = usePlatformAdminGate();
   const [dashboard, setDashboard] = useState<PlatformDashboard | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    // Gated on the same role check the shell itself uses - a page's own effect otherwise fires
-    // regardless of what the shell renders (see usePlatformAdminGate's doc comment).
-    if (gate === "ready") getPlatformDashboard().then(setDashboard);
+    if (gate !== "ready") return;
+    getPlatformDashboard()
+      .then(setDashboard)
+      .catch(() => setError("Overview didn't load. Try again."));
   }, [gate]);
 
-  return (
-    <PlatformAdminShell title="Platform dashboard">
-      {!dashboard ? (
-        <OrbLoader className="h-96" />
-      ) : (
-        <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {METRICS.map(({ key, label, icon: Icon }) => (
-              <div key={key} className="rounded-[24px] border border-border bg-secondary p-5">
-                <Icon className="size-4 text-primary-soft" />
-                <p className="mt-3 font-display text-2xl font-bold">{dashboard[key]}</p>
-                <p className="text-xs text-muted-foreground">{label}</p>
-              </div>
-            ))}
-          </div>
+  const launchMetrics = getLaunchMetrics();
 
-          <div>
-            {/* This feed is the enterprise-sales pitch surface, same idea as CA3's audit log but
-                cross-tenant - see DECISIONS.md / the founder's demo note. */}
-            <p className="mb-3 font-display text-sm font-bold">Recent activity across every tenant</p>
-            <div className="space-y-2">
-              {dashboard.recentActivity.map((e) => (
-                <div key={e.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-secondary px-4 py-3 text-sm">
-                  <span className="font-medium">{e.actorName}</span>
-                  <span className="text-muted-foreground">{e.action}</span>
-                  {e.target && <span className="truncate text-muted-foreground">— {e.target}</span>}
-                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">{formatDateTime(e.createdAt)}</span>
-                </div>
-              ))}
-              {dashboard.recentActivity.length === 0 && (
-                <p className="rounded-2xl border border-dashed border-border-strong px-6 py-8 text-center text-sm text-muted-foreground">
-                  No activity recorded yet.
-                </p>
-              )}
+  return (
+    <AdminShell title="Overview">
+      {error ? (
+        <StateCard kind="error" title="Couldn't load overview" detail={error} />
+      ) : !dashboard ? (
+        <AdminLoading />
+      ) : (
+        <div className="space-y-8">
+          <section aria-labelledby="launch-metrics-heading">
+            <h2 id="launch-metrics-heading" className="mb-4 text-[17px] font-semibold">
+              Launch metrics
+            </h2>
+            <MetricGrid>
+              {launchMetrics.map((m) => {
+                const Icon = METRIC_ICONS[m.id] ?? Activity;
+                if (m.value === null) {
+                  return (
+                    <div key={m.id} className="rounded-tile border border-dashed border-line bg-surface/50 p-4">
+                      <span className="grid size-10 place-items-center rounded-xl bg-foreground/10 text-faint">
+                        <Icon className="size-5" strokeWidth={1.9} aria-hidden />
+                      </span>
+                      <p className="mt-3 font-display-serif text-[28px] font-medium leading-none text-faint">—</p>
+                      <p className="mt-1 text-[14px] text-faint">{m.label}</p>
+                      <p className="mt-2 text-[12px] text-faint">{m.hint ?? "No data yet"}</p>
+                    </div>
+                  );
+                }
+                return <Stat key={m.id} icon={Icon} value={m.value} label={m.label} tone="primary" />;
+              })}
+            </MetricGrid>
+            {!isRealMode() && (
+              <p className="mt-3 text-[13px] text-faint">
+                Preview: jobs, applications and reports use sample numbers; retention metrics stay empty until the API exists (gap #42).
+              </p>
+            )}
+          </section>
+
+          <section aria-labelledby="platform-snapshot-heading">
+            <h2 id="platform-snapshot-heading" className="mb-4 text-[17px] font-semibold">
+              Platform snapshot
+            </h2>
+            <MetricGrid>
+              <Stat icon={Briefcase} value={dashboard.tenantsTotal} label="Companies" href="/admin/tenants" />
+              <Stat icon={Users} value={dashboard.usersTotal} label="Users" href="/admin/users" />
+              <Stat icon={ShieldAlert} value={dashboard.moderationPending} label="Reports pending" href="/admin/moderation" tone="warning" />
+              <Stat icon={Activity} value={dashboard.tenantsSuspended} label="Companies suspended" tone="warning" />
+            </MetricGrid>
+          </section>
+
+          <section aria-labelledby="recent-activity-heading">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 id="recent-activity-heading" className="text-[17px] font-semibold">
+                Recent admin activity
+              </h2>
+              <Link href="/admin/audit" className="text-[14px] font-medium text-primary underline-offset-4 hover:underline">
+                Full audit log
+              </Link>
             </div>
-          </div>
+            {dashboard.recentActivity.length === 0 ? (
+              <NoDataYet label="No admin actions recorded yet." />
+            ) : (
+              <AdminList>
+                {dashboard.recentActivity.map((e) => (
+                  <AdminRow key={e.id}>
+                    <div className="flex flex-wrap items-center gap-3 text-[14px]">
+                      <span className="font-semibold">{e.actorName}</span>
+                      <span className="text-faint">{e.action.replace(/\./g, " ")}</span>
+                      {e.target && <span className="truncate text-faint">— {e.target}</span>}
+                      <span className="ml-auto shrink-0 text-[12px] text-faint">{formatDateTime(e.createdAt)}</span>
+                    </div>
+                  </AdminRow>
+                ))}
+              </AdminList>
+            )}
+          </section>
         </div>
       )}
-    </PlatformAdminShell>
+    </AdminShell>
   );
 }
