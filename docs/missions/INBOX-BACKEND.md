@@ -113,3 +113,27 @@ Read `docs/reviews/ARCHITECT-REVIEW-BE-1-2026-10-01.md` (in arena-fe-vnext).
   - Don't loosen the assertion.
   - The full suite must be 253/253 green.
 - **Support the 18+ rule at sign-up:** if `POST /auth/signup` or onboarding can't take a date of birth or an 18+ confirmation, add it. The age rule must be enforced on the backend, not only in the UI.
+
+### Architect notes on B10 (1 Oct): ACCEPTED
+All 7 blockers are verified fixed. Thank you; that was clean work.
+
+## Mission B11 (OPEN, after the frontend reports area 3): pre-launch hardening
+Do these items from `ARCHITECT-REVIEW-BE-1` SHOULD-FIX, in this order, one commit and one test each:
+1. **Withdrawn applications:** exclude them from company access (an "active application" query).
+2. **People search:** exclude banned users, and blocks in both directions, at the query level.
+3. **`GET /needs/{id}`:** audience, block and paused filter.
+4. **Waitlist:** head-of-queue promotion, or refuse non-head `/join`.
+5. **Check-in:** upsert on the race.
+6. **NO_SHOW:** stamp `outcomeRecordedAt`.
+7. **`ReminderService`:** `SKIP LOCKED`.
+8. **`evidenceUrls`:** `@Size(4)` and Arena-only URLs.
+9. **`autoFlag`:** run it on title edits too.
+10. **The needs respond-loop:** rate-limit it.
+11. **Force sign-out:** fix the same-second gap, and make it reach Jenny tokens.
+12. **Audit-log CSV export:** audit it.
+13. **`OutcomeView`:** drop "with whom".
+14. **Notification actor names:** render them from the actor id, not text baked in.
+15. **Public suffixes:** reject them in domain verification.
+16. **Unlock credits:** atomic, with a race test.
+
+**Before then:** keep serving `API-ISSUES.md`. Don't merge anything.

@@ -79,3 +79,12 @@
 
 ## Release path
 B10 (the blockers plus the migration safety items) → architect re-check of only those diffs → founder OK → merge #2 → #3 → #4 to `main` → Railway deploys.
+
+---
+## Re-check after B10 (1 Oct 2026, afternoon)
+**All 7 blockers are verified fixed** in `d57f165`…`ab7df1b`; I read each diff. Also verified: the V40/V44 safety changes, the 18+ rule at sign-up and on DOB set, and `dateOfBirthSet`.
+
+**The backend is release-ready for the first milestone**, subject to:
+1. **Contract break (frontend):** `POST /auth/signup` now *requires* `dateOfBirth`, but the frontend's `auth.ts` doesn't send it. As things stand, sign-up against the new backend fails with a 400. The frontend fixes this (M6 notes).
+2. **The founder checks the production database before the merge:** Flyway history and stray industry values (SQL in the founder notes). V40 and V44 were edited, which is only safe if production has never run them.
+3. **Before the public launch (not before founder testing):** the deferred SHOULD-FIX items move to B11. The most important are withdrawn-application exclusion, banned users in people search, the waitlist/check-in race, and the needs `GET` audience filter.

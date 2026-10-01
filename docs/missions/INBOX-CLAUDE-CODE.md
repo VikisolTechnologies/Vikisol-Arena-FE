@@ -117,3 +117,10 @@ Read `docs/reviews/ARCHITECT-REVIEW-5-2026-10-01.md`.
   3. **Onboarding persistence.** Verify every onboarding answer (area, interests, intro, photo) is saved to the backend, not to localStorage, and survives signing in on another browser.
 - `jenny.local.ts` failures are acceptable until area 9. Don't skip or loosen them; they get fixed in area 9.
 - **REPORTS.md:** the backend writes its section; you commit and push it with your next commit.
+
+### Architect notes on area 2 (1 Oct): accepted. FIRST, before area 3:
+- **The backend now requires `dateOfBirth` on `POST /auth/signup`** (B10, `50ea099`). `src/lib/api/auth.ts` doesn't send it, so **sign-up is broken against the current backend.**
+  - Add a date-of-birth field to the sign-up form, send it, and show the backend's under-18 message kindly.
+  - Keep the onboarding age gate **only** for accounts without a DOB (Google or phone sign-up), using `dateOfBirthSet` from `GET /verification/status`. Don't ask twice.
+  - Test: new email sign-up → straight past the age gate; under-18 sign-up → refused.
+- Then do **area 3** (Feed, Discover, Map, activities, covers).
