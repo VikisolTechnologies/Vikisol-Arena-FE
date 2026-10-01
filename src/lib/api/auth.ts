@@ -95,9 +95,14 @@ function mockNameFor(role: Role): string {
   }
 }
 
-export async function signUp(name: string, email: string, password: string, role: Role): Promise<Session> {
+// dateOfBirth (ISO yyyy-mm-dd): required by the real backend as of B10 (architect notes on
+// area 2, 1 Oct 2026) - SignUpRequest.dateOfBirth, enforced server-side (AgeUtil.isAdult) so
+// sign-up itself refuses anyone under 18, not only the onboarding age gate. Only this email
+// sign-up path collects it; phone and Google sign-up don't ask for one (AuthService never
+// requires it on those paths) - they still go through onboarding's AgeGateStep.
+export async function signUp(name: string, email: string, password: string, role: Role, dateOfBirth: string): Promise<Session> {
   if (isRealMode()) {
-    const res = await apiFetch<SessionResponse>("/auth/signup", { method: "POST", auth: false, body: { name, email, password, role } });
+    const res = await apiFetch<SessionResponse>("/auth/signup", { method: "POST", auth: false, body: { name, email, password, role, dateOfBirth } });
     setToken(res.token as string);
     const session = toSession(res);
     setSession(session);

@@ -661,6 +661,9 @@ export interface VerificationStatus {
   phoneNumber?: string;
   /** True while a requested OTP hasn't been confirmed or has expired unconfirmed. */
   otpPending: boolean;
+  /** Real mode only — whether a date of birth is already on file (B10). Lets onboarding's age
+   *  gate skip itself for an account that gave one at sign-up, instead of asking twice. */
+  dateOfBirthSet: boolean;
 }
 
 export interface BlockedUser {

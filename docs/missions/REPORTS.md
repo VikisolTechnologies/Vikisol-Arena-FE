@@ -1,6 +1,46 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## Mission M6 — sign-up date-of-birth fix (B10 follow-up) — 1 Oct 2026
+**Frontend repo, `feature/arena-vnext-mobile-jenny`.** The architect's first-before-area-3 ask:
+the backend now requires `dateOfBirth` on `POST /auth/signup` (B10, `50ea099`/`48a9a4f`) and
+sign-up was broken against it.
+
+**1. Sign-up form.** Added a "Date of birth" field to `SignUpView`
+(`src/components/entry/AuthForms.tsx`) — a plain `type="date"` input, same pattern as the
+onboarding age gate's. `signUp()` (`src/lib/api/auth.ts`) now takes `dateOfBirth` and sends it;
+mock mode is unaffected (the mock branch never needed it). Added `validateDateOfBirth()`
+(`src/lib/data/auth.ts`) for client-side "did you fill it in / is it a real, non-future date"
+checks, and taught `fieldForServerError()` to route the backend's own under-18 message ("You
+must be 18 or older to join Arena") and bad-format message to this field specifically, not a
+generic banner — verified live (curl: a 15-year-old's `dateOfBirth` gets refused with that exact
+message; an adult's succeeds).
+
+**2. Don't ask twice.** `GET /verification` now returns `dateOfBirthSet` (B10,
+`VerificationStatusResponse`) — added it to `VerificationStatus`
+(`src/lib/types.ts`) and `src/lib/api/verification.ts`'s mock mapping. `Onboarding.tsx` checks it
+on mount (real mode only) and skips straight past the age gate (step 1 → step 2, "why are you
+here") when it's already true, so an email sign-up (which now collects it at sign-up) never sees
+the age gate; phone and Google sign-up (which don't collect it there) still do. Verified live:
+browser test signs up with a DOB, lands on "Why are you here?" directly — "When's your birthday?"
+never renders.
+
+**3. API-ISSUES.md.** Marked both entries FIXED with the backend's commit hashes (the backend did
+this directly on disk; I take it as current per the architect's own note). Nothing left open from
+area 1/2's findings.
+
+**Tests.** `npx tsc --noEmit`: clean. `entry-journey.local.ts`: added a dedicated "sign-up
+itself refuses an under-18 date of birth" case, updated the main sign-up flow test to fill in
+and assert the new field, added a `GET /verification` stub (`dateOfBirthSet: false`) so the
+existing age-gate tests keep their old behavior unless specifically testing the skip. All 6
+tests in the file pass. A throwaway browser run against the real local backend (not a stub, port
+3001 for CORS) confirmed the whole path for real: sign-up with a DOB → straight to "Why are you
+here?", no age gate shown; deleted before committing. Full local suite run once: **45 passed, 7
+failed** — same `jenny.local.ts` / area 9 failures as every report so far, still expected.
+
+**Note:** `Vikisol-Arena-BE`'s `mvnw` lost its execute bit between sessions (not a git-tracked
+mode change I made) — `chmod +x mvnw` fixed it locally; mentioning it in case it recurs.
+
 ## Mission B10 — 1 Oct 2026
 **Backend repo, `feature/admin-account-gaps`**, 9 commits (`d57f165`..`10733f4`..`48a9a4f`), pushed.
 Full suite **259/259 green** (started at 253; +6 new tests). Nothing merged to `main`. No test

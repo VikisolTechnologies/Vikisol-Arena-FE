@@ -6,10 +6,11 @@ import { apiFetch } from "./httpClient";
 // ARENA-V2-PRODUCT-ARCHITECTURE.md §4 (Phase B). Mirrors VerificationService's phone-OTP flow:
 // request -> confirm. Mock mode simulates the round-trip with a fixed demo code instead of a
 // real SMS provider (same spirit as the backend's NoopPhoneOtpProvider, which logs instead of
-// sending). dateOfBirth is intentionally never returned by the real /verification endpoint
-// (VerificationStatusResponse only exposes verification tier state, not the birthdate itself) -
-// mock mode mirrors that by keeping it out of VerificationStatus too, exposing it only via the
-// mock-only helper below that posts.ts's age-gate reads directly.
+// sending). The birthdate itself is intentionally never returned by the real /verification
+// endpoint - only whether one is on file (`dateOfBirthSet`, B10), which onboarding's age gate
+// uses to skip itself for an account that already gave one at sign-up. Mock mode mirrors that
+// shape but derives it from the mock-only helper below, which posts.ts's age-gate reads
+// directly for the actual date.
 
 const KEY = "arena_verification";
 const MOCK_OTP = "123456";
@@ -45,7 +46,7 @@ export function getMockDateOfBirth(): string | undefined {
 }
 
 function toStatus(s: MockVerificationState): VerificationStatus {
-  return { verificationLevel: s.verificationLevel, phoneVerified: s.phoneVerified, phoneNumber: s.phoneNumber, otpPending: s.otpPending };
+  return { verificationLevel: s.verificationLevel, phoneVerified: s.phoneVerified, phoneNumber: s.phoneNumber, otpPending: s.otpPending, dateOfBirthSet: !!s.dateOfBirth };
 }
 
 export async function getVerificationStatus(): Promise<VerificationStatus> {

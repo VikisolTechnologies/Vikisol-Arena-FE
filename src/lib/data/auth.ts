@@ -38,6 +38,18 @@ export function validatePassword(value: string) {
   return value ? "" : "Enter your password.";
 }
 
+/** Required on sign-up as of B10 (architect notes on area 2, 1 Oct 2026) — the backend enforces
+ *  18+ here now, not only at onboarding's age gate. Just checks the field is a real, non-future
+ *  date; the under-18 refusal itself is the backend's own message (fieldForServerError routes
+ *  it to this field). */
+export function validateDateOfBirth(value: string) {
+  if (!value) return "Enter your date of birth.";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "Enter a valid date.";
+  if (d > new Date()) return "That date hasn't happened yet.";
+  return "";
+}
+
 /** Honest, specific copy for a failed auth call. The server's own message wins when it has one. */
 export function authErrorMessage(err: unknown): string {
   if (typeof navigator !== "undefined" && !navigator.onLine) return "You're offline. Check your connection and try again.";
@@ -46,10 +58,13 @@ export function authErrorMessage(err: unknown): string {
 }
 
 /** Which field a server error belongs to, so it's shown next to that field instead of on top. */
-export function fieldForServerError(message: string): "email" | "password" | "name" | null {
+export function fieldForServerError(message: string): "email" | "password" | "name" | "dob" | null {
   const m = message.toLowerCase();
   if (m.includes("email")) return "email";
   if (m.includes("password")) return "password";
+  // "18 or older" (the age refusal) and "dateofbirth ..." (bad format / future date) both
+  // belong on the date-of-birth field, not a generic banner.
+  if (m.includes("18 or older") || m.includes("dateofbirth")) return "dob";
   if (m.includes("name")) return "name";
   return null;
 }

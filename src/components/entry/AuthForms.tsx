@@ -16,6 +16,7 @@ import {
   signIn,
   signInWithGoogle,
   signUp,
+  validateDateOfBirth,
   validateEmail,
   validateName,
   validateNewPassword,
@@ -58,6 +59,7 @@ export function SignUpView({ onBack, onSignIn, land, initialAccount = "talent" }
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [dob, setDob] = useState("");
   const [agree, setAgree] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -71,6 +73,7 @@ export function SignUpView({ onBack, onSignIn, land, initialAccount = "talent" }
     name: validateName(name),
     email: validateEmail(email),
     password: validateNewPassword(password),
+    dob: validateDateOfBirth(dob),
     agree: agree ? "" : "Please agree to the Terms of Service and Privacy Policy.",
   };
   const shown = (field: keyof typeof errors) => {
@@ -104,7 +107,7 @@ export function SignUpView({ onBack, onSignIn, land, initialAccount = "talent" }
     e.preventDefault();
     setSubmitted(true);
     setFormError("");
-    const invalid = (["name", "email", "password", "agree"] as const).filter((f) => errors[f]);
+    const invalid = (["name", "email", "password", "dob", "agree"] as const).filter((f) => errors[f]);
     if (invalid.length) {
       setShake((s) => s + 1);
       focusFirst(invalid.map((f) => `signup-${f}`));
@@ -112,7 +115,7 @@ export function SignUpView({ onBack, onSignIn, land, initialAccount = "talent" }
     }
     setLoading(true);
     try {
-      const session = await signUp(name.trim(), email.trim(), password, account);
+      const session = await signUp(name.trim(), email.trim(), password, account, dob);
       setSuccess(true);
       vibrate();
       window.setTimeout(() => land(session, true), SUCCESS_HOLD_MS);
@@ -168,6 +171,19 @@ export function SignUpView({ onBack, onSignIn, land, initialAccount = "talent" }
           onBlur={blur("password")}
           error={shown("password")}
           hint={`Use at least ${PASSWORD_MIN} characters`}
+          shakeSignal={shakeSignal}
+        />
+        <TextField
+          id="signup-dob"
+          label="Date of birth"
+          type="date"
+          max={new Date().toISOString().slice(0, 10)}
+          autoComplete="bday"
+          value={dob}
+          onChange={edit(setDob, "dob")}
+          onBlur={blur("dob")}
+          error={shown("dob")}
+          hint="Arena connects neighbors in person, so you need to be 18 or older."
           shakeSignal={shakeSignal}
         />
         <Checkbox id="signup-agree" checked={agree} onChange={setAgree} error={submitted ? errors.agree : ""}>

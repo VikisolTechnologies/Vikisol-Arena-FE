@@ -37,6 +37,10 @@ async function stubApi(page: Page, calls: Call[]) {
     let data: unknown = null;
     if (path.endsWith("/auth/signup") || path.endsWith("/auth/signin")) {
       data = { role: "talent", candidateId: "person-1", name: "Priya Sharma", email: "priya@example.com", token: "local-token", mfaRequired: false, mfaPendingToken: null };
+    } else if (path.endsWith("/verification")) {
+      // dateOfBirthSet: false — sign-up already collects it for real now (B10), but this stub
+      // simulates an account without one on file, so the onboarding age gate still shows.
+      data = { verificationLevel: "basic", phoneVerified: false, otpPending: false, dateOfBirthSet: false };
     } else if (path.includes("/profile/me")) {
       data = profile;
     } else if (path.endsWith("/feed") || path.includes("/rooms")) {
@@ -106,6 +110,8 @@ test("sign up → why → local life → identity → all set → feed, without 
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page.getByText("Please agree to the Terms of Service and Privacy Policy.")).toBeVisible();
   expect(calls.some((c) => c.path.endsWith("/auth/signup"))).toBe(false);
+  // B10: sign-up now collects date of birth itself, enforced server-side too.
+  await page.getByLabel("Date of birth").fill("1990-01-01");
   // Tap the visible box, as a person would (the real input is visually hidden).
   await page.locator('label[for="signup-agree"] > span').first().click();
   await expect(page.getByLabel(/I agree to the/)).toBeChecked();
@@ -113,7 +119,7 @@ test("sign up → why → local life → identity → all set → feed, without 
 
   // First visit compiles /onboarding on the dev server; give that navigation time.
   await expect(page).toHaveURL(/\/onboarding\?step=1/, { timeout: 15_000 });
-  expect(calls.find((c) => c.path.endsWith("/auth/signup"))?.body).toMatchObject({ name: "Priya Sharma", email: "priya@example.com", role: "talent" });
+  expect(calls.find((c) => c.path.endsWith("/auth/signup"))?.body).toMatchObject({ name: "Priya Sharma", email: "priya@example.com", role: "talent", dateOfBirth: "1990-01-01" });
 
   // Step 1: the age gate. Mandatory, no skip, runs before everything else.
   await expect(page.getByRole("heading", { name: "When's your birthday?" })).toBeVisible();
@@ -223,6 +229,41 @@ test("Under 18 gets a kind refusal, not the app", async ({ page }) => {
   // Refused, not saved — the under-18 date never reaches the backend.
   expect(calls.some((c) => c.path.endsWith("/verification/date-of-birth"))).toBe(false);
   await noSeriousA11y(page);
+});
+
+test("Sign-up itself refuses an under-18 date of birth (B10) with the backend's own message", async ({ page }) => {
+  const calls: Call[] = [];
+  await page.route("**/api/v1/**", async (route) => {
+    const req = route.request();
+    const path = new URL(req.url()).pathname;
+    let body: unknown = null;
+    try {
+      body = req.postDataJSON();
+    } catch {
+      body = null;
+    }
+    calls.push({ method: req.method(), path, body });
+    if (path.endsWith("/auth/signup")) {
+      await route.fulfill({ status: 400, json: { success: false, message: "You must be 18 or older to join Arena" } });
+      return;
+    }
+    await route.fulfill({ json: { success: true, data: null } });
+  });
+  await goto(page, "/auth");
+  await dismissCookies(page);
+  await page.getByRole("button", { name: "Join Arena" }).click();
+  await page.getByLabel("Full name").fill("Too Young");
+  await page.getByLabel("Email address").fill("tooyoung@example.com");
+  await page.getByLabel("Password").fill("long-enough");
+  const fifteenYearsAgo = new Date();
+  fifteenYearsAgo.setFullYear(fifteenYearsAgo.getFullYear() - 15);
+  await page.getByLabel("Date of birth").fill(fifteenYearsAgo.toISOString().slice(0, 10));
+  await page.locator('label[for="signup-agree"] > span').first().click();
+  await page.getByRole("button", { name: "Create account" }).click();
+  // Shown next to the date-of-birth field (fieldForServerError routes "18 or older" there),
+  // not a generic banner — and the page never navigates to onboarding.
+  await expect(page.getByText("You must be 18 or older to join Arena")).toBeVisible();
+  await expect(page).toHaveURL(/\/auth/);
 });
 
 test("sign in, forgot password, expired reset and session notice", async ({ page }) => {

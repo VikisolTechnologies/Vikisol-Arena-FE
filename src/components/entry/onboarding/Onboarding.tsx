@@ -8,6 +8,8 @@ import { StepperDots } from "@/components/bplus/Controls";
 import { pageSlide } from "@/lib/motion";
 import { useDirection } from "@/components/motion/useDirection";
 import { getSession, setOnboarded } from "@/lib/session";
+import { isRealMode } from "@/lib/api/mode";
+import { getVerificationStatus } from "@/lib/api/verification";
 import {
   clearEntryPending,
   EMPTY_DRAFT,
@@ -39,15 +41,30 @@ export function Onboarding() {
   const saved = useSyncExternalStore(subscribeNothing, () => sessionStorage.getItem(SAVED_KEY) === "1", () => false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  // Architect notes on area 2 (1 Oct 2026): sign-up now collects date of birth itself (B10) for
+  // email accounts, so an account that already has one on file shouldn't be asked again here —
+  // only phone/Google sign-up still need this step. null = still checking (real mode only).
+  const [dobSet, setDobSet] = useState<boolean | null>(null);
 
   const requested = Math.min(TOTAL, Math.max(1, Number(params.get("step")) || 1));
+  const checkingDob = requested === 1 && dobSet === null;
   // "You're all set" only after a real save in this session — never reached by URL alone.
-  const step = requested === TOTAL && !saved ? TOTAL - 1 : requested;
+  const step = requested === TOTAL && !saved ? TOTAL - 1 : requested === 1 && dobSet === true ? 2 : requested;
   const direction = useDirection(step);
 
   useEffect(() => {
     if (!hasSession) router.replace("/auth?mode=signin");
   }, [hasSession, router]);
+
+  useEffect(() => {
+    if (!hasSession) return;
+    if (!isRealMode()) { setDobSet(false); return; }
+    let cancelled = false;
+    getVerificationStatus()
+      .then((v) => { if (!cancelled) setDobSet(v.dateOfBirthSet); })
+      .catch(() => { if (!cancelled) setDobSet(false); });
+    return () => { cancelled = true; };
+  }, [hasSession]);
 
   const go = (next: number) => {
     router.push(`/onboarding?step=${next}`, { scroll: false });
@@ -102,7 +119,7 @@ export function Onboarding() {
           exit="exit"
           className="flex flex-1 flex-col"
         >
-          {step === 1 && <AgeGateStep draft={draft} update={update} onContinue={() => go(2)} />}
+          {step === 1 && !checkingDob && <AgeGateStep draft={draft} update={update} onContinue={() => go(2)} />}
           {step === 2 && <IntentStep draft={draft} update={update} onContinue={() => (draft.intents.includes("explore") ? finishToFeed() : go(3))} />}
           {step === 3 && <LocalLifeStep draft={draft} update={update} onContinue={() => go(4)} />}
           {step === 4 && <IdentityStep draft={draft} update={update} accountName={accountName} onSave={save} saving={saving} saveError={saveError} />}
