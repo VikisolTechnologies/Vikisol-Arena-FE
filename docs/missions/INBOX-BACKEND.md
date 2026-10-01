@@ -140,3 +140,11 @@ Do these items from `ARCHITECT-REVIEW-BE-1` SHOULD-FIX, in this order, one commi
 17. **Phone and Google sign-ups have no date of birth** until onboarding's age gate.
     - Every write action (post, join, message, apply, connect) must refuse an account whose `dateOfBirth` is null: "Add your date of birth to continue".
     - Reads stay allowed.
+
+### Mission B12 (OPEN, small; do it when the founder opens this window)
+- **Local photo uploads:** `POST /media/upload-signature` says uploads aren't set up locally (no Cloudinary variables).
+  - Add a **dev-only** fallback: when the Cloudinary variables are absent **and** the profile is `local`, store uploads on local disk through the existing `FileStorageService` and serve them signed.
+  - Never enable this fallback in production; there, startup should warn loudly if Cloudinary is missing.
+- **Check the local database for demo content:** the frontend saw "seeded" activity and project rows.
+  - With `SEED_ENABLED=false` there should be none.
+  - Report where they came from (a migration or an earlier seed run), and give a one-line reset that leaves a clean database.

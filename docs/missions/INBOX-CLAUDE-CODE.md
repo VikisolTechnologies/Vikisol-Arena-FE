@@ -128,3 +128,34 @@ Read `docs/reviews/ARCHITECT-REVIEW-5-2026-10-01.md`.
 ### Architect notes on `bce5681` (1 Oct): ACCEPTED. Go to area 3.
 - Remember for the final clean-up: `mockNameFor` and the mock branches in `src/lib/api/auth.ts` (and the other `api/*` files) go when the mocks are deleted.
 - **Area 3 tip:** the area is big, so split the commits (feed → discover/map → activity lifecycle → covers) and report once at the end.
+
+### Architect review of area 3 (1 Oct, night): NOT ACCEPTED. Do area 3b next.
+"No code changed" was wrong. **The frontend calls none of the backend's `/activities/*` endpoints** (`grep -rn '"/activities' src/lib` returns nothing). Only the generic `/posts` calls were checked. The whole activity flow from `docs/design/ARENA-APP-FLOW.md` is therefore still unconnected.
+
+The two "missing" endpoints in `API-ISSUES.md` are not missing; you called the wrong path (`/posts/...`). They live in `ActivitiesController` under **`/activities`**. Close those entries as "FE path error".
+
+**Area 3b: wire every `/activities/*` endpoint to its screen** (read `Vikisol-Arena-BE/src/main/java/com/vikisol/arena/activities/controller/ActivitiesController.java` first):
+
+| Endpoint | Screen |
+|---|---|
+| `GET /activities/kinds` | activity kinds and subtypes for the intake "What kind?" step (no hardcoded list) |
+| `GET /activities/{id}` | activity details (type-specific fields; exact meeting point only for approved people) |
+| `PUT /activities/{id}/details` | the type-specific intake answers (cricket format/overs, trek difficulty, and so on) |
+| `POST /activities/{id}/cover` (multipart), `DELETE /activities/{id}/cover` | photo cover upload and remove; the procedural cover stays the fallback |
+| `PUT /activities/{id}/questions` | host questions |
+| `POST /activities/{id}/join` | join with answers to the host's questions |
+| `GET /activities/{id}/answers/{userId}` | host reads a joiner's answers |
+| `POST`, `DELETE`, `GET /activities/{id}/waitlist` | the waitlist |
+| `POST /activities/{id}/check-in` | self check-in |
+| `PUT /activities/{id}/attendance/{joinId}/check-in` | host check-in |
+| `GET /activities/{id}/attendance` | attendance |
+| `POST /activities/{id}/attendance/confirm` | the joiner confirms |
+| `POST /activities/{id}/attendance/dispute`, `PUT /activities/{id}/attendance/{joinId}/accept-dispute` | the 72h dispute |
+| `POST /activities/{id}/feedback`, `GET /activities/feedback/received` | private feedback (no public stars) |
+| `GET /activities/{id}/emergency-contacts` | host only, treks |
+
+**Rules:**
+- Verify each one **through the screens in the browser** (not only with curl), with two real accounts (host and joiner).
+- Add or extend a local test for the full journey: create → details → questions → join with answers → approve → exact point revealed → check-in → confirm or dispute → feedback.
+- Any real mismatch goes in `API-ISSUES.md`. Before logging one, check the backend controller for the right path.
+- Report what you **changed**, file by file, plus the journey test result.
