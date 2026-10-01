@@ -24,7 +24,7 @@ export default defineConfig({
     timeout: 300_000,
     reuseExistingServer: false,
     env: {
-      ARENA_NEXT_DIST_DIR: ".next-local-tests", NEXT_PUBLIC_API_MODE: "real",
+      ARENA_NEXT_DIST_DIR: ".next-local-tests", NEXT_PUBLIC_ARENA_DATA: "api",
       NEXT_PUBLIC_API_BASE_URL: "http://127.0.0.1:3199/api/v1",
       NEXT_PUBLIC_SENTRY_DSN: "", SENTRY_DSN: "", STAGING_BASIC_AUTH: "",
     },

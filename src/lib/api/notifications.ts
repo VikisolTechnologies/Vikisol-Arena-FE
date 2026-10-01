@@ -61,3 +61,24 @@ export async function markAllNotificationsRead(): Promise<void> {
   writeAll(readAll().map((n) => ({ ...n, read: true })));
   return delay(undefined, 150);
 }
+
+// --- M6 area 2: GET/PUT /notifications/preferences (FE-API-GAPS #18/#58), now live. ---
+
+export interface NotificationPreferences {
+  messages: boolean;
+  activities: boolean;
+  needs: boolean;
+  jobs: boolean;
+  jenny: boolean;
+  marketing: boolean;
+}
+
+export async function getNotificationPreferences(): Promise<NotificationPreferences> {
+  return apiFetch<NotificationPreferences>("/notifications/preferences");
+}
+
+/** Safety notices can't be turned off; the backend rejects an explicit `false` for them, and
+ * this never sends that field. */
+export async function setNotificationPreferences(prefs: NotificationPreferences): Promise<NotificationPreferences> {
+  return apiFetch<NotificationPreferences>("/notifications/preferences", { method: "PUT", body: prefs });
+}

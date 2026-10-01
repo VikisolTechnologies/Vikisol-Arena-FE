@@ -352,8 +352,79 @@ export async function reportPerson(id: string, body: { reason: string; evidenceU
   try {
     await apiFetch<void>(`/profile/${id}/report`, { method: "POST", body });
   } catch (err) {
-    if (err instanceof ApiError && err.status === 400) throw new Error("You've already reported this person — we're looking at it");
+    // The backend sends one 400 for two different reasons (reporting yourself vs. a duplicate
+    // open report — see AuthController... ModerationService.fileUserReport) with its own exact
+    // wording each time; a single hardcoded "duplicate" message was wrong for the self-report
+    // case (verified live: a self-report 400's body is "You can't report yourself", not a
+    // duplicate). Pass the server's own message through instead of guessing which one it was.
+    if (err instanceof ApiError && err.status === 400) throw new Error(err.message || "You've already reported this person — we're looking at it");
     if (err instanceof ApiError && err.status === 404) throw new Error("This profile isn't available");
     throw err;
   }
+}
+
+// --- M6 area 2: the onboarding basics (FE-API-GAPS #1-5, #53) and visibility (#60). Real mode
+// only — mock mode keeps using the onboarding draft/localStorage it already has, unchanged. ---
+
+export interface ProfileBasics {
+  name: string;
+  title: string;
+  bio: string;
+  photoUrl?: string;
+  intents: string[];
+  interests: string[];
+  availability: string[];
+}
+
+export async function getProfileBasics(): Promise<ProfileBasics | undefined> {
+  if (!isRealMode()) return undefined;
+  return apiFetch<ProfileBasics>("/profile/me/basics");
+}
+
+/** PATCH /profile/me — every field optional, only what's passed changes. Mock mode no-ops;
+ * the onboarding draft already holds these fields on this device. */
+export async function patchProfile(patch: { name?: string; title?: string; bio?: string; availability?: string[]; interests?: string[]; photoUrl?: string }): Promise<void> {
+  if (!isRealMode()) {
+    await delay(undefined, 200);
+    return;
+  }
+  await apiFetch<void>("/profile/me", { method: "PATCH", body: patch });
+}
+
+export async function setProfileIntents(intents: string[]): Promise<void> {
+  if (!isRealMode()) {
+    await delay(undefined, 200);
+    return;
+  }
+  await apiFetch<void>("/profile/me/intents", { method: "PUT", body: { intents } });
+}
+
+/** Uploads the onboarding photo for real. The picker already hands back a small (~256px)
+ * JPEG data URL (see PhotoPicker's own comment) — converted to a Blob here rather than
+ * changing what the picker returns. Returns the stored photoUrl, or undefined in mock mode
+ * (the data URL already in the draft is the "stored" value there). */
+export async function uploadProfilePhoto(dataUrl: string): Promise<string | undefined> {
+  if (!isRealMode()) return undefined;
+  const blob = await fetch(dataUrl).then((r) => r.blob());
+  const formData = new FormData();
+  formData.append("file", blob, "photo.jpg");
+  const res = await apiFetch<ProfileBasics>("/profile/me/photo", { method: "POST", formData });
+  return res.photoUrl;
+}
+
+export type ProfileVisibility = "nearby" | "everyone" | "hidden";
+
+export async function getMyVisibility(): Promise<ProfileVisibility> {
+  if (!isRealMode()) return "everyone";
+  const res = await apiFetch<{ profile: ProfileVisibility }>("/profile/me/visibility");
+  return res.profile;
+}
+
+export async function setMyVisibility(profile: ProfileVisibility): Promise<ProfileVisibility> {
+  if (!isRealMode()) {
+    await delay(undefined, 200);
+    return profile;
+  }
+  const res = await apiFetch<{ profile: ProfileVisibility }>("/profile/me/visibility", { method: "PUT", body: { profile } });
+  return res.profile;
 }

@@ -26,6 +26,10 @@ import {
   type EntryDraft,
   type EntryIntent,
 } from "@/lib/data/onboarding";
+import { isAdult } from "@/lib/geo";
+import { setDateOfBirth } from "@/lib/api/verification";
+import { signOut } from "@/lib/api/auth";
+import { useRouter } from "next/navigation";
 
 type Glyph = typeof RunnerSolid;
 type StepProps = { draft: EntryDraft; update: (patch: Partial<EntryDraft>) => void };
@@ -52,6 +56,92 @@ function SectionLabel({ children, hint }: { children: ReactNode; hint?: string }
       <h2 className="text-[15px] font-semibold text-foreground">{children}</h2>
       {hint && <p className="mt-0.5 text-[13px] text-faint">{hint}</p>}
     </div>
+  );
+}
+
+/* ───────────────────────── 0. Age gate ─────────────────────────
+ * Architect note, 1 Oct 2026: a new account must give its date of birth before it enters the
+ * app at all — not only in Settings (where it already lived, for the activity-creation gate).
+ * This runs first, before "why are you here", so it also covers the "Explore first" path that
+ * otherwise skips straight to the feed. The backend has no sign-up-time age check of its own
+ * yet (API-ISSUES.md) — PUT /verification/date-of-birth stores whatever date it's given — so
+ * the under-18 refusal below is enforced here, client-side, same as the existing activity-join
+ * gate in posts.ts. */
+
+export function AgeGateStep({ draft, update, onContinue }: StepProps & { onContinue: () => void }) {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [refused, setRefused] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const submit = async () => {
+    if (!draft.dateOfBirth) return;
+    if (new Date(draft.dateOfBirth) > new Date()) {
+      setError("That date hasn't happened yet.");
+      return;
+    }
+    if (!isAdult(draft.dateOfBirth)) {
+      setRefused(true);
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      await setDateOfBirth(draft.dateOfBirth);
+      onContinue();
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : "Couldn't save that — try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (refused) {
+    return (
+      <>
+        <Title className="mt-3">Arena is for people 18 and older</Title>
+        <Lede>We can&apos;t set up an account for you right now. Come back once you turn 18.</Lede>
+        <Footer>
+          <Button
+            variant="outline"
+            loading={signingOut}
+            onClick={async () => {
+              setSigningOut(true);
+              await signOut();
+              router.push("/auth");
+            }}
+          >
+            Sign out
+          </Button>
+        </Footer>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Title className="mt-3">When&apos;s your birthday?</Title>
+      <Lede>Arena connects neighbors in person, so everyone here needs to be 18 or older. We never show this to anyone else.</Lede>
+      <div className="mt-6">
+        <TextField
+          id="age-gate-dob"
+          labelStyle="stacked"
+          label="Date of birth"
+          type="date"
+          max={new Date().toISOString().slice(0, 10)}
+          value={draft.dateOfBirth}
+          onChange={(dateOfBirth) => { update({ dateOfBirth }); setError(""); }}
+          error={error}
+          aria-required
+        />
+      </div>
+      <Footer>
+        <Button onClick={() => void submit()} disabled={!draft.dateOfBirth} loading={saving}>
+          Continue
+        </Button>
+      </Footer>
+    </>
   );
 }
 

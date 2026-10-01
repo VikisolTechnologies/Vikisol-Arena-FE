@@ -1,7 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /** Mock-mode browser tests against a local Next server. No arena.vikisol.in, no live auth.
- * Uses /dev/* sign-in helpers. Default API mode is mock (NEXT_PUBLIC_API_MODE unset). */
+ * Uses /dev/* sign-in helpers. Forces mock mode below regardless of .env.local, since
+ * NEXT_PUBLIC_ARENA_DATA is now the one flag for both real-mode data calls and fixtures. */
 export default defineConfig({
   testDir: "./tests/e2e",
   testMatch: ["**/admin/**/*.spec.ts", "**/account/**/*.spec.ts", "**/preview/**/*.spec.ts"],
@@ -18,7 +19,7 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     env: {
       ARENA_NEXT_DIST_DIR: ".next-mock-tests",
-      NEXT_PUBLIC_API_MODE: "",
+      NEXT_PUBLIC_ARENA_DATA: "",
       NEXT_PUBLIC_SENTRY_DSN: "",
       SENTRY_DSN: "",
       STAGING_BASIC_AUTH: "",

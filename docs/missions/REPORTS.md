@@ -1,6 +1,74 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## Mission M6, area 2 (You, profile and settings) — 1 Oct 2026
+**Frontend repo, `feature/arena-vnext-mobile-jenny`.** Also did the architect's three area-2
+asks (one flag, 18+ in onboarding, onboarding persistence) and verified report-a-person.
+
+**1. One flag.** Merged `NEXT_PUBLIC_API_MODE` into `NEXT_PUBLIC_ARENA_DATA`:
+`src/lib/api/mode.ts`'s `isRealMode()` now reads `NEXT_PUBLIC_ARENA_DATA === "api"` directly.
+Deleted the old flag everywhere: `Dockerfile` (build arg), `playwright.mock.config.ts` (now forces
+mock by setting `NEXT_PUBLIC_ARENA_DATA: ""`), `playwright.local.config.ts` (now sets
+`NEXT_PUBLIC_ARENA_DATA: "api"`), `.env.local.example`, `scripts/dev/perf*.mjs` comments. `grep -rn
+NEXT_PUBLIC_API_MODE` now only hits historical report/review text, not code. Production and local
+setup need one variable from here on.
+
+**2. 18+ in onboarding, not only Settings.** Added a mandatory `AgeGateStep`
+(`src/components/entry/onboarding/Steps.tsx`) as onboarding's first step — before "why are you
+here", so it also covers "Explore first", which used to jump straight to the feed. It calls the
+real `PUT /verification/date-of-birth` immediately (not deferred to the final save) and, for
+anyone under 18, shows a dead-end "Arena is for people 18 and older" screen with only a sign-out
+button — no further app access. **The backend has no sign-up-time or storage-time age check of
+its own** (confirmed reading `VerificationService.setDateOfBirth` — it stores any past date
+unconditionally; `AgeUtil.isAdult` is only ever consulted later, at activity create/join), so
+this is enforced client-side only for now. Logged as `API-ISSUES.md`'s first entry; the architect
+already asked the backend to add a real check (notes on B8/B9).
+
+**3. Onboarding persistence.** `saveOnboarding()` (`src/lib/data/onboarding.ts`) used to save only
+location; everything else (name, title, intro, interests, availability, "why you're here", photo)
+was explicitly local-only, with the Identity step saying so. Backend already had the endpoints
+(`PATCH /profile/me`, `PUT /profile/me/intents`, `POST /profile/me/photo`) — just never wired up
+on the frontend. Wired all of them (new functions in `src/lib/api/profile.ts`:
+`patchProfile`, `setProfileIntents`, `uploadProfilePhoto`, plus `getProfileBasics` for later
+reads); `localOnlyFields()` now returns `[]` and the "stays on this device" note is gone. Verified
+live against the local backend (curl, then a full browser run) that every field round-trips.
+
+**4. Area 2 proper — #58–60, visibility, report a person.**
+- **#58 notification preferences:** `GET/PUT /notifications/preferences` is live on the backend
+  now (`src/app/account/notifications/page.tsx` used to show "not saved yet"). Wired it for real
+  (`src/lib/api/notifications.ts`'s `getNotificationPreferences`/`setNotificationPreferences`);
+  mock mode unchanged (still localStorage).
+- **#59 edit profile:** covered by the same `patchProfile()` used by onboarding — `PATCH
+  /profile/me` is the same endpoint FE-API-GAPS describes for "Account — Edit profile."
+- **#60 profile visibility:** no FE control existed at all for the real
+  `GET/PUT /profile/me/visibility` (nearby/everyone/hidden) — only the *reading* side
+  (`getPublicProfile`) was wired, from before. Added a new Settings sheet
+  (`VisibilitySheet` in `SettingsSheets.tsx`, row in `SettingsScreen.tsx`) and verified the
+  round-trip live (browser test: set "Signed-in neighbors", reload Settings, still selected).
+- **Report a person:** already wired (M5). Verified live and **found and fixed a real bug**: the
+  backend sends one 400 for two different reasons (self-report vs. duplicate open report) with
+  its own exact wording each time; `reportPerson()` hardcoded one message for every 400, so a
+  self-report showed the wrong text ("…we're looking at it" instead of "You can't report
+  yourself"). Now passes the server's message straight through. Updated
+  `tests/local/m5-followups.local.ts` to cover both 400 cases distinctly instead of one.
+
+**API-ISSUES.md:** two new entries — the 18+ gap above, and `PATCH /profile/me` lowercasing
+`availability` (`"Weekends"` sent → `"weekends"` back, confirmed live with curl). Not worked
+around in the FE; flagged for the backend.
+
+**Tests.** `npx tsc --noEmit`: clean. Targeted: `entry-journey.local.ts` (rewritten for the new
+5-step flow, plus a new "under 18 gets a kind refusal" test) and `m5-followups.local.ts`
+(rewritten for the report-person fix) — both green. A throwaway browser run against the actual
+local backend (not a stub) confirmed signup → age gate → onboarding save → Settings visibility
+all round-trip for real; deleted before committing. Full local suite run once:
+**44 passed, 7 failed** — the same 7 `jenny.local.ts` failures as area 1's report (area 9,
+expected until that area's own mission work).
+
+**What's blocked:** nothing in area 2 itself. The two API-ISSUES entries above are backend work,
+not frontend workarounds.
+
+**Next:** area 3 (Feed, Discover and Map, activities, covers).
+
 ## Mission M6, area 1 (auth and onboarding) — 1 Oct 2026
 **Frontend repo, `feature/arena-vnext-mobile-jenny`.**
 

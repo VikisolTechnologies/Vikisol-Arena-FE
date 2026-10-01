@@ -4,7 +4,7 @@
  * Everything else stays on this device — each such field is a row in docs/FE-API-GAPS.md,
  * and the screens say so instead of implying it was saved.
  */
-import { updateMyLocation } from "@/lib/api/profile";
+import { patchProfile, setProfileIntents, updateMyLocation, uploadProfilePhoto } from "@/lib/api/profile";
 
 const DRAFT_KEY = "arena_entry_draft";
 const PENDING_KEY = "arena_entry_pending";
@@ -60,6 +60,10 @@ export interface EntryDraft {
   title: string;
   intro: string;
   availability: Availability[];
+  /** ISO yyyy-mm-dd. Submitted to the backend immediately when the age gate is passed — see
+   * AgeGateStep — not deferred to the final save, so it's set even if the person later picks
+   * "Explore first" and skips the rest of onboarding. */
+  dateOfBirth: string;
 }
 
 export const EMPTY_DRAFT: EntryDraft = {
@@ -72,6 +76,7 @@ export const EMPTY_DRAFT: EntryDraft = {
   title: "",
   intro: "",
   availability: [],
+  dateOfBirth: "",
 };
 
 let cachedRaw: string | null | undefined;
@@ -163,27 +168,39 @@ export function readCurrentPosition(): Promise<{ lat: number; lng: number }> {
   });
 }
 
-/** Answers Arena BE has no field for yet (docs/FE-API-GAPS.md) — they stay on this device. */
-export function localOnlyFields(draft: EntryDraft, accountName: string): string[] {
-  const fields: string[] = [];
-  if (draft.photo) fields.push("photo");
-  if (draft.displayName.trim() && draft.displayName.trim() !== accountName.trim()) fields.push("display name");
-  if (draft.title.trim()) fields.push("title");
-  if (draft.intro.trim()) fields.push("intro");
-  if (draft.interests.length) fields.push("interests");
-  if (draft.availability.length) fields.push("availability");
-  if (draft.intents.length) fields.push("why you're here");
-  return fields;
+/** Answers Arena BE has no field for yet (docs/FE-API-GAPS.md) — they stay on this device.
+ * As of M6 area 2, that's nothing from this step: name, title, intro, interests, availability,
+ * "why you're here" (intents) and photo all persist via PATCH /profile/me /
+ * PUT /profile/me/intents / POST /profile/me/photo. Kept as an empty-returning function (not
+ * deleted) so IdentityStep's "what's local-only" note degrades honestly if a future field is
+ * added here without its backend counterpart yet. */
+export function localOnlyFields(_draft: EntryDraft, _accountName: string): string[] {
+  return [];
 }
 
-/** Saves what Arena BE can store today. Returns the answers that stayed on this device. */
+/** Saves everything Arena BE can store today — area/location, name/title/bio, intents,
+ * interests, availability and photo. Returns the answers that stayed on this device (should be
+ * none in real mode; see localOnlyFields). Runs the independent writes in parallel; if one
+ * fails the caller's catch still has the others' results in the draft to retry from. */
 export async function saveOnboarding(draft: EntryDraft, accountName: string): Promise<{ localOnly: string[] }> {
+  const writes: Promise<unknown>[] = [
+    patchProfile({
+      name: draft.displayName.trim() || accountName,
+      title: draft.title.trim(),
+      bio: draft.intro.trim(),
+      availability: draft.availability,
+      interests: draft.interests,
+    }),
+    setProfileIntents(draft.intents),
+  ];
   if (draft.useCurrentLocation) {
     const pos = lastPosition ?? (await readCurrentPosition());
-    await updateMyLocation({ consent: "precise", lat: pos.lat, lng: pos.lng });
+    writes.push(updateMyLocation({ consent: "precise", lat: pos.lat, lng: pos.lng }));
   } else if (draft.area) {
-    await updateMyLocation({ consent: "city", city: draft.area });
+    writes.push(updateMyLocation({ consent: "city", city: draft.area }));
   }
+  if (draft.photo) writes.push(uploadProfilePhoto(draft.photo));
 
+  await Promise.all(writes);
   return { localOnly: localOnlyFields(draft, accountName) };
 }

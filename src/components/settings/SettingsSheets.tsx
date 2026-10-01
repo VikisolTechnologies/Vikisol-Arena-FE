@@ -9,7 +9,7 @@ import { BottomSheet } from "@/components/bplus/BottomSheet";
 import { Button } from "@/components/bplus/Button";
 import { Avatar } from "@/components/bplus/Avatar";
 import { PaperInput } from "@/components/needs/PaperFields";
-import { updateMyAutonomy, updateMyConsent, updateMyLocation } from "@/lib/api/profile";
+import { getMyVisibility, setMyVisibility, updateMyAutonomy, updateMyConsent, updateMyLocation, type ProfileVisibility } from "@/lib/api/profile";
 import { confirmPhoneOtp, getVerificationStatus, requestPhoneOtp, setDateOfBirth } from "@/lib/api/verification";
 import { changeEmail, changePassword } from "@/lib/api/auth";
 import { getMyBlocks, unblockUser } from "@/lib/api/blocks";
@@ -175,6 +175,48 @@ export function CareerSheet({ open, onClose, profile, onProfile }: SheetProps) {
       <Heading detail="Your community side and your work side stay separate unless you choose.">Career visibility</Heading>
       <div className="mt-4 divide-y divide-paper-ink/10">
         <PaperSwitch label="Visible to employers" detail="Show up when verified companies search for talent." checked={profile.consent.searchableByEnterprises} onChange={() => toggle("searchableByEnterprises")} disabled={busy} />
+      </div>
+      <Err>{error}</Err>
+    </BottomSheet>
+  );
+}
+
+/* ── Profile visibility (FE-API-GAPS #60): who can find and open your community profile. ── */
+const VISIBILITY: { value: ProfileVisibility; label: string; detail: string }[] = [
+  { value: "everyone", label: "Everyone", detail: "Anyone can find and open your profile, signed in or not." },
+  { value: "nearby", label: "Signed-in neighbors", detail: "Only people signed in to Arena can open your profile." },
+  { value: "hidden", label: "Hidden", detail: "Your profile doesn't open for anyone. You can still use Arena normally." },
+];
+export function VisibilitySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [value, setValue] = useState<ProfileVisibility | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    getMyVisibility()
+      .then(setValue)
+      .catch(() => setError("Your current setting didn't load."));
+  }, [open]);
+  const change = async (v: ProfileVisibility) => {
+    setBusy(true);
+    setError(null);
+    try {
+      setValue(await setMyVisibility(v));
+    } catch {
+      setError("That didn't save. Nothing changed.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <BottomSheet open={open} onClose={onClose} title="Profile visibility">
+      <Heading detail="Who can find and open your community profile (separate from career visibility to employers).">Profile visibility</Heading>
+      <div className="mt-5">
+        {value === null && !error ? (
+          <p className="text-[14px] text-paper-ink-muted">Loading…</p>
+        ) : (
+          <PaperRadios legend="Who can see your profile" options={VISIBILITY} value={value ?? "everyone"} onChange={change} disabled={busy} />
+        )}
       </div>
       <Err>{error}</Err>
     </BottomSheet>

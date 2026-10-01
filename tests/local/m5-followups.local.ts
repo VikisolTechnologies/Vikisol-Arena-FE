@@ -40,7 +40,11 @@ test("industry pickers offer the live list, not retired ones, and keep a retired
 });
 
 for (const [status, message, shown] of [
-  [400, "You can't report yourself, or you already have an open report", "You've already reported this person — we're looking at it"],
+  // M6 area 2: a 400 means two different things (self-report vs. a duplicate open report) with
+  // the backend's own wording for each (ModerationService.fileUserReport) — the FE passes that
+  // message straight through instead of guessing which one it was with one hardcoded string.
+  [400, "You can't report yourself", "You can't report yourself"],
+  [400, "You've already reported this person; Arena's team is looking at it", "You've already reported this person; Arena's team is looking at it"],
   [404, "Not found", "This profile isn't available"],
   [200, "Report submitted", "Thanks for telling us"],
 ] as const) {

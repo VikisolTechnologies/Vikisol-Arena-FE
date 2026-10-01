@@ -15,13 +15,11 @@ COPY . .
 # be passed as Docker build-args (see railway.toml) so the deployed build actually points at the
 # right API. --max-old-space-size matches the local memory-constraint finding in DECISIONS.md;
 # harmless headroom to set even on a build machine that doesn't need it.
-ARG NEXT_PUBLIC_API_MODE
 ARG NEXT_PUBLIC_ARENA_DATA
 ARG NEXT_PUBLIC_API_BASE_URL
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ARG NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-ENV NEXT_PUBLIC_API_MODE=$NEXT_PUBLIC_API_MODE
 ENV NEXT_PUBLIC_ARENA_DATA=$NEXT_PUBLIC_ARENA_DATA
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN

@@ -114,8 +114,17 @@ test("sign up → why → local life → identity → all set → feed, without 
   // First visit compiles /onboarding on the dev server; give that navigation time.
   await expect(page).toHaveURL(/\/onboarding\?step=1/, { timeout: 15_000 });
   expect(calls.find((c) => c.path.endsWith("/auth/signup"))?.body).toMatchObject({ name: "Priya Sharma", email: "priya@example.com", role: "talent" });
+
+  // Step 1: the age gate. Mandatory, no skip, runs before everything else.
+  await expect(page.getByRole("heading", { name: "When's your birthday?" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Skip" })).toHaveCount(0);
+  await page.getByLabel("Date of birth").fill("1990-01-01");
+  await noSeriousA11y(page);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  expect(calls.find((c) => c.path.endsWith("/verification/date-of-birth"))?.body).toEqual({ dateOfBirth: "1990-01-01" });
+
   await expect(page.getByRole("heading", { name: "Why are you here?" })).toBeVisible();
-  await expect(page.getByText("Step 1 of 4")).toBeAttached();
+  await expect(page.getByText("Step 2 of 5")).toBeAttached();
   const find = page.getByRole("button", { name: /Find activities/ });
   await find.click();
   await expect(find).toHaveAttribute("aria-pressed", "true");
@@ -134,7 +143,8 @@ test("sign up → why → local life → identity → all set → feed, without 
   await expect(page.getByLabel("Display name *")).toHaveValue("Priya Sharma");
   await expect(page.getByLabel("Professional title (optional)")).toHaveValue("");
   await page.getByLabel("Short intro (optional)").fill("Runner and weekend volunteer.");
-  await expect(page.getByText(/stay on this device/)).toBeVisible();
+  // M6 area 2: nothing from this step stays local-only any more — it all saves for real.
+  await expect(page.getByText(/stay on this device/)).toHaveCount(0);
   await noSeriousA11y(page);
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
@@ -146,12 +156,16 @@ test("sign up → why → local life → identity → all set → feed, without 
   expect(location?.body).toEqual({ consent: "city", city: "Kondapur" });
   // No invented title/industry: the details endpoint is never called by onboarding.
   expect(calls.some((c) => c.path.endsWith("/profile/me/details"))).toBe(false);
+  const basics = calls.find((c) => c.method === "PATCH" && c.path.endsWith("/profile/me"));
+  expect(basics?.body).toMatchObject({ name: "Priya Sharma", title: "", bio: "Runner and weekend volunteer." });
+  const intents = calls.find((c) => c.method === "PUT" && c.path.endsWith("/profile/me/intents"));
+  expect(intents?.body).toEqual({ intents: ["activities"] });
 
   await page.getByRole("link", { name: "Go to Arena" }).click();
   await expect(page).toHaveURL(/\/home/);
 });
 
-test("Explore first goes straight to the feed; Skip always works", async ({ page }) => {
+test("The age gate runs first and can't be skipped; Explore first goes straight to the feed after it; Skip works on the steps after", async ({ page }) => {
   const calls: Call[] = [];
   await stubApi(page, calls);
   await goto(page, "/auth");
@@ -161,6 +175,23 @@ test("Explore first goes straight to the feed; Skip always works", async ({ page
   });
   await goto(page, "/onboarding?step=1");
   await dismissCookies(page);
+  // Step 1 (age gate): mandatory, no Skip button at all.
+  await expect(page.getByRole("heading", { name: "When's your birthday?" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Skip" })).toHaveCount(0);
+  await page.getByLabel("Date of birth").fill("1990-01-01");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "Why are you here?" })).toBeVisible();
+  await page.getByRole("button", { name: /Explore first/ }).click();
+  await page.getByRole("button", { name: "Go to Arena" }).click();
+  await expect(page).toHaveURL(/\/home/);
+  // The age gate already saved for real on this path too — it doesn't wait for the rest of
+  // onboarding, which "Explore first" skips entirely.
+  expect(calls.find((c) => c.path.endsWith("/verification/date-of-birth"))?.body).toEqual({ dateOfBirth: "1990-01-01" });
+
+  // Back in onboarding (age gate already done this session): Skip works on steps 2 and 3.
+  await goto(page, "/onboarding?step=2");
+  await expect(page.getByRole("heading", { name: "Why are you here?" })).toBeVisible();
   await page.getByRole("button", { name: "Skip" }).click();
   await expect(page.getByRole("heading", { name: "Set up your local life" })).toBeVisible();
   await page.goBack();
@@ -169,11 +200,29 @@ test("Explore first goes straight to the feed; Skip always works", async ({ page
   await page.getByRole("button", { name: /Explore first/ }).click();
   // Exclusive: choosing Explore first clears the others.
   await expect(page.getByRole("button", { name: /Find activities/ })).toHaveAttribute("aria-pressed", "false");
-  await page.getByRole("button", { name: "Go to Arena" }).click();
-  await expect(page).toHaveURL(/\/home/);
   // "You're all set" is never reachable by URL without a real save.
-  await goto(page, "/onboarding?step=4");
+  await goto(page, "/onboarding?step=5");
   await expect(page.getByRole("heading", { name: "Your identity" })).toBeVisible();
+});
+
+test("Under 18 gets a kind refusal, not the app", async ({ page }) => {
+  const calls: Call[] = [];
+  await stubApi(page, calls);
+  await goto(page, "/auth");
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem("arena_session", JSON.stringify({ role: "talent", name: "Priya Sharma", email: "priya@example.com" }));
+  });
+  await goto(page, "/onboarding?step=1");
+  await dismissCookies(page);
+  const fifteenYearsAgo = new Date();
+  fifteenYearsAgo.setFullYear(fifteenYearsAgo.getFullYear() - 15);
+  await page.getByLabel("Date of birth").fill(fifteenYearsAgo.toISOString().slice(0, 10));
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Arena is for people 18 and older" })).toBeVisible();
+  // Refused, not saved — the under-18 date never reaches the backend.
+  expect(calls.some((c) => c.path.endsWith("/verification/date-of-birth"))).toBe(false);
+  await noSeriousA11y(page);
 });
 
 test("sign in, forgot password, expired reset and session notice", async ({ page }) => {

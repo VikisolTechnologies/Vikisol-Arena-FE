@@ -2,7 +2,7 @@
  * Performance pass (docs/reviews/performance.md). Against a PRODUCTION build in production data
  * mode, served next to the stand-in API (scripts/dev/perf-api.mjs):
  *   node scripts/dev/perf-api.mjs &
- *   NEXT_PUBLIC_API_MODE=real NEXT_PUBLIC_ARENA_DATA=api NEXT_PUBLIC_API_BASE_URL=http://localhost:3199/api/v1 \
+ *   NEXT_PUBLIC_ARENA_DATA=api NEXT_PUBLIC_API_BASE_URL=http://localhost:3199/api/v1 \
  *     ARENA_NEXT_DIST_DIR=.next-perf VERCEL=1 npx next build
  *   ARENA_NEXT_DIST_DIR=.next-perf npx next start -p 3200 &
  *   node scripts/dev/perf.mjs [--lighthouse] [--out file.json]

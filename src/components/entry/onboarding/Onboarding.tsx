@@ -17,17 +17,19 @@ import {
   writeEntryDraft,
   type EntryDraft,
 } from "@/lib/data/onboarding";
-import { IdentityStep, IntentStep, LocalLifeStep, ReadyStep } from "./Steps";
+import { AgeGateStep, IdentityStep, IntentStep, LocalLifeStep, ReadyStep } from "./Steps";
 
-const TOTAL = 4;
+const TOTAL = 5;
 const SAVED_KEY = "arena_entry_saved";
 
 function subscribeNothing() {
   return () => {};
 }
 
-/** Why → Local life → Identity → Ready. The step lives in the URL (`?step=`), so the browser's
- *  back button and a reload both land on the right step; answers live in the local draft. */
+/** Age gate → Why → Local life → Identity → Ready. The step lives in the URL (`?step=`), so the
+ *  browser's back button and a reload both land on the right step; answers live in the local
+ *  draft. The age gate is mandatory and un-skippable — it runs before everything else so it
+ *  also covers the "Explore first" path, which otherwise jumps straight to the feed. */
 export function Onboarding() {
   const router = useRouter();
   const params = useSearchParams();
@@ -40,7 +42,7 @@ export function Onboarding() {
 
   const requested = Math.min(TOTAL, Math.max(1, Number(params.get("step")) || 1));
   // "You're all set" only after a real save in this session — never reached by URL alone.
-  const step = requested === 4 && !saved ? 3 : requested;
+  const step = requested === TOTAL && !saved ? TOTAL - 1 : requested;
   const direction = useDirection(step);
 
   useEffect(() => {
@@ -69,7 +71,7 @@ export function Onboarding() {
       sessionStorage.setItem(SAVED_KEY, "1");
       setOnboarded();
       clearEntryPending();
-      go(4);
+      go(TOTAL);
     } catch (err) {
       const offline = typeof navigator !== "undefined" && !navigator.onLine;
       setSaveError(
@@ -85,9 +87,10 @@ export function Onboarding() {
   return (
     <Screen>
       <TopBar
-        onBack={step > 1 && step < 4 ? () => go(step - 1) : step === 1 ? () => (window.history.length > 1 ? router.back() : router.push("/auth")) : undefined}
+        onBack={step > 1 && step < TOTAL ? () => go(step - 1) : step === 1 ? () => (window.history.length > 1 ? router.back() : router.push("/auth")) : undefined}
         center={<StepperDots step={step} total={TOTAL} />}
-        onSkip={step === 1 || step === 2 ? () => go(step + 1) : step === 3 && !saving ? () => void save() : undefined}
+        // Step 1 (age gate) is mandatory — no skip. Steps 2 and 3 can be skipped forward; step 4 saves.
+        onSkip={step === 2 || step === 3 ? () => go(step + 1) : step === 4 && !saving ? () => void save() : undefined}
       />
       <AnimatePresence mode="wait" initial={false} custom={direction}>
         <m.div
@@ -99,10 +102,11 @@ export function Onboarding() {
           exit="exit"
           className="flex flex-1 flex-col"
         >
-          {step === 1 && <IntentStep draft={draft} update={update} onContinue={() => (draft.intents.includes("explore") ? finishToFeed() : go(2))} />}
-          {step === 2 && <LocalLifeStep draft={draft} update={update} onContinue={() => go(3)} />}
-          {step === 3 && <IdentityStep draft={draft} update={update} accountName={accountName} onSave={save} saving={saving} saveError={saveError} />}
-          {step === 4 && <ReadyStep draft={draft} accountName={accountName} onEdit={() => go(3)} />}
+          {step === 1 && <AgeGateStep draft={draft} update={update} onContinue={() => go(2)} />}
+          {step === 2 && <IntentStep draft={draft} update={update} onContinue={() => (draft.intents.includes("explore") ? finishToFeed() : go(3))} />}
+          {step === 3 && <LocalLifeStep draft={draft} update={update} onContinue={() => go(4)} />}
+          {step === 4 && <IdentityStep draft={draft} update={update} accountName={accountName} onSave={save} saving={saving} saveError={saveError} />}
+          {step === 5 && <ReadyStep draft={draft} accountName={accountName} onEdit={() => go(4)} />}
         </m.div>
       </AnimatePresence>
     </Screen>

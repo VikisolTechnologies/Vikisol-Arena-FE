@@ -14,7 +14,7 @@ import { Avatar } from "@/components/bplus/Avatar";
 import { Button } from "@/components/bplus/Button";
 import { Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { Toggle } from "@/components/bplus/Controls";
-import { AccountSheet, CareerSheet, JennySheet, LocationSheet, VerificationSheet } from "@/components/settings/SettingsSheets";
+import { AccountSheet, CareerSheet, JennySheet, LocationSheet, VerificationSheet, VisibilitySheet } from "@/components/settings/SettingsSheets";
 import { getMyProfile } from "@/lib/api/profile";
 import { signOut } from "@/lib/api/auth";
 import { getSession } from "@/lib/session";
@@ -23,7 +23,7 @@ import { requireOnboarded } from "@/lib/auth-guard";
 import type { CandidateProfile } from "@/lib/types";
 
 type Glyph = typeof PinSolid;
-type Sheet = "location" | "career" | "jenny" | "verification" | "account" | null;
+type Sheet = "location" | "career" | "visibility" | "jenny" | "verification" | "account" | null;
 const subscribeNothing = () => () => {};
 
 function Row({ icon, tone, title, detail, onClick, href, danger }: { icon: Glyph; tone: IconBadgeTone; title: string; detail?: string; onClick?: () => void; href?: string; danger?: boolean }) {
@@ -108,6 +108,7 @@ export function SettingsScreen() {
           <Group title="Privacy & visibility" index={1}>
             <Row icon={PinSolid} tone="blue" title="Location" detail={locationDetail} onClick={() => setSheet("location")} />
             <Row icon={BriefcaseSolid} tone="brown" title="Career visibility" detail={profile.consent.searchableByEnterprises ? "Visible to employers" : "Hidden from employers"} onClick={() => setSheet("career")} />
+            <Row icon={ShieldSolid} tone="blue" title="Profile visibility" detail="Who can find and open your profile" onClick={() => setSheet("visibility")} />
             <Row icon={SparkleSolid} tone="jenny" title="Jenny's permissions" detail={profile.autonomy === "manual" ? "Only when I ask · you approve" : "Jenny prepares, you approve"} onClick={() => setSheet("jenny")} />
             <Row icon={ShieldSolid} tone="green" title="Verification & safety" detail="Date of birth, phone" onClick={() => setSheet("verification")} />
             <Row icon={ShareSolid} tone="jenny" title="Share profile" detail="Send a link to your public profile" href="/account/share" />
@@ -153,6 +154,7 @@ export function SettingsScreen() {
 
           <LocationSheet open={sheet === "location"} onClose={() => setSheet(null)} profile={profile} onProfile={setProfile} />
           <CareerSheet open={sheet === "career"} onClose={() => setSheet(null)} profile={profile} onProfile={setProfile} />
+          <VisibilitySheet open={sheet === "visibility"} onClose={() => setSheet(null)} />
           <JennySheet open={sheet === "jenny"} onClose={() => setSheet(null)} profile={profile} onProfile={setProfile} />
           <VerificationSheet open={sheet === "verification"} onClose={() => setSheet(null)} />
           <AccountSheet open={sheet === "account"} onClose={() => setSheet(null)} email={email} onEmail={setEmailOverride} />

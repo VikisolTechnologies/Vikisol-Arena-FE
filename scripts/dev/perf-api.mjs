@@ -1,6 +1,6 @@
 /**
  * A tiny stand-in API for the performance pass (docs/reviews/performance.md): lets a PRODUCTION
- * build (NEXT_PUBLIC_API_MODE=real, NEXT_PUBLIC_ARENA_DATA=api) render real-looking screens
+ * build (NEXT_PUBLIC_ARENA_DATA=api) render real-looking screens
  * without any preview fixtures in its bundle. Photos are served the way production delivers
  * uploads — Cloudinary-style URLs (…/res.cloudinary.com/…/upload/…), resized and re-encoded per
  * the `w_` transformation the app asks for (mediaDisplayUrl). Local measurement only.
