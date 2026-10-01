@@ -108,3 +108,12 @@ Read `docs/reviews/ARCHITECT-REVIEW-5-2026-10-01.md`.
    - what works end to end;
    - what's blocked, with its API-ISSUES entry;
    - test counts.
+
+### Architect notes on area 1 (1 Oct): accepted, go to area 2
+- **Area 1 needed no code** (`c3c6708` is docs only), because auth was already real. Accepted.
+- **Do in area 2:**
+  1. **One flag.** Merge `NEXT_PUBLIC_API_MODE` into `NEXT_PUBLIC_ARENA_DATA` (`api` means real everywhere). Delete the old flag and update `mode.ts`, `.env.example` and the docs, so production needs only one variable.
+  2. **18+ belongs in onboarding, not only Settings.** A new account must give its date of birth (or an explicit 18+ confirmation, if that's what the backend supports) **before** it enters the app; under-18 gets a kind refusal screen. If the backend has no sign-up-time check, add an `API-ISSUES` entry.
+  3. **Onboarding persistence.** Verify every onboarding answer (area, interests, intro, photo) is saved to the backend, not to localStorage, and survives signing in on another browser.
+- `jenny.local.ts` failures are acceptable until area 9. Don't skip or loosen them; they get fixed in area 9.
+- **REPORTS.md:** the backend writes its section; you commit and push it with your next commit.

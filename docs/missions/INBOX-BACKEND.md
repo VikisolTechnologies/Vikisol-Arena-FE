@@ -106,3 +106,10 @@ Read `docs/reviews/ARCHITECT-REVIEW-BE-1-2026-10-01.md` (in arena-fe-vnext).
 4. Never loosen an existing test. Push after each commit.
 5. Report in `REPORTS.md`: one line per item (fixed in commit X / deferred because …) and the final test count.
 6. Keep running B9 for the frontend in parallel: `API-ISSUES.md` entries come first when the frontend is blocked.
+
+### Architect notes on B8/B9 (1 Oct): accepted
+- **Add to B10:** the flaky `AdminAccountGapsTest.launchMetricsCountRealActivityOnly` (5 vs 2 in the full run) is a test-isolation bug.
+  - Fix the isolation (clean state, or count relative to a baseline taken at test start).
+  - Don't loosen the assertion.
+  - The full suite must be 253/253 green.
+- **Support the 18+ rule at sign-up:** if `POST /auth/signup` or onboarding can't take a date of birth or an 18+ confirmation, add it. The age rule must be enforced on the backend, not only in the UI.
