@@ -1,6 +1,94 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## Mission B10 — 1 Oct 2026
+**Backend repo, `feature/admin-account-gaps`**, 9 commits (`d57f165`..`10733f4`..`48a9a4f`), pushed.
+Full suite **259/259 green** (started at 253; +6 new tests). Nothing merged to `main`. No test
+loosened — every change to an existing assertion was to match corrected behavior (stage-pipeline
+tests reworked to walk the real flow; availability-casing test updated to the fixed casing).
+
+**1. All 7 BLOCKERS fixed, one commit each with a test:**
+| # | Issue | Commit | Test |
+|---|---|---|---|
+| 1 | Nearby people search let a caller triangulate anyone's location | `d57f165` | `PeopleAppTest.peopleSearchFollowsProfileVisibilityDistanceAndBlocks` |
+| 2 | Only `GET /profile/{id}` checked visibility/block/ban | `5c8b122` | `PeopleAppTest.hiddenBlockedAndBannedProfilesAreInvisibleEverywhereNotJustGetProfile` |
+| 3 | Unlinked employers could message any talent (fail-open) | `2cf965f` | `PeopleAppTest.unlinkedEmployersCannotMessageTalent` |
+| 4 | Any application stage → any stage (revive WITHDRAWN, skip to HIRED) | `aa832b3` | `ApplicationLifecycleTest.companyCanOnlyMoveStagesForwardAndNeverReviveATerminalStage` |
+| 5 | Unverified company could reopen a job (CLOSED/PAUSED→OPEN skipped the check) | `cff7402` | `BusinessVerificationTest.withTheFlagOnJobsStayDraftsUntilTheCompanyIsVerified` (extended) |
+| 6 | Erasure kept the real email/phone/handle/password hash; `issueSession` didn't check `deletedAt` | `e7e6c51` | `AdminAccountGapsTest.erasureTombstonesTheRealIdentityAndTheOldCredentialsStopWorking` |
+| 7 | `DB_PASSWORD` had a committed default | `ab7df1b` | n/a (config) — local Postgres role password also rotated, see below |
+
+**2. Migration safety (`10733f4`):** V40 trigram indexes now `SET LOCAL search_path TO public,
+pg_catalog` and the three `CREATE INDEX`es moved inside the same exception handler as the
+extension creation (a search_path-related operator-class failure used to fail the whole
+migration instead of degrading gracefully). V44's three new foreign keys are now `NOT VALID` +
+a separate `VALIDATE CONSTRAINT` (no `ACCESS EXCLUSIVE` table lock for a full scan on a
+production table with real data). Industry converter: confirmed `IndustryConverter` is already
+`@Converter(autoApply = true)` — applies to `CandidateProfile`/`EnterpriseProfile`/`JobPosting`
+alike, no change needed; round-trip already covered by `IndustryListTest.staffAddAnIndustryAndPeopleCanPickIt`.
+**Before deploy:** still need to run `SELECT DISTINCT industry` on production across the three
+tables and confirm `flyway_schema_history` stops at V20 — I don't have production DB access,
+flagging for whoever runs the Railway deploy.
+
+**3. Other SHOULD-FIX, done (`10733f4`):** `JobPostingService.setStatus`'s
+`findByJobPosting(...).isEmpty()` → `existsByJobPostingId(...)`. NO_SHOW `outcomeRecordedAt`:
+confirmed `PostService.recordOutcome` already stamps it unconditionally (the only place NO_SHOW
+is ever set) — added a direct assertion so it can't regress silently
+(`PostJoinSafetyTest.hostRecordsAttendanceOnlyAfterStartAndOnlyOnTheirPost`).
+
+**Deferred SHOULD-FIX items** (not done, with reasons — B10 said "as many as are quick"):
+- **Waitlist promotion / check-in race / `ReminderService` `SKIP LOCKED`:** each needs its own
+  concurrency test (two parallel requests under a row lock) — not a quick pass, needs its own
+  session.
+- **Withdrawn-application exclusion from company-side search/pipeline, `GET /needs/{id}`
+  audience filter, `OutcomeView` dropping postId/title for others' outcomes, erasure scrubbing
+  notification text, people-search banned/block exclusion:** each is its own access-control
+  surface needing its own test like the 7 blockers got — didn't want to rush these given how
+  blocker #1/#2 turned out to have sharper edges than they first looked.
+- **Needs respond/withdraw rate limit, `evidenceUrls` size/origin validation, `PostService.update`
+  autoFlag on title changes:** small, but genuinely untouched this pass — next session.
+- **Force sign-out `isAfter` comparison, Jenny service-token force-sign-out check, audit-log CSV
+  export auditing itself:** same - untouched, next session.
+- **Domain-verification public-suffix rejection (Guava `InternetDomainName`), unlock-credit
+  atomic decrement/lock + test:** these need a new dependency (Guava, if not already present) or
+  a concurrency test respectively — deferred.
+
+**4. Architect notes on B8/B9, both done:**
+- **Flaky `AdminAccountGapsTest.launchMetricsCountRealActivityOnly`** (`50ea099`): was a
+  test-isolation bug, not a real bug — the test asserted an absolute `signUps` count that only
+  ever matched running the class alone; in the full suite, other classes' non-demo users are
+  already in the shared embedded Postgres by the time this test runs. Now captures a baseline for
+  all four since-EPOCH counts (`signUps`, `activitiesCreated`, `activitiesJoined`, `reportsTotal`)
+  at test start and asserts baseline + however many the test itself creates. No assertion
+  loosened.
+- **18+ enforced on the backend** (`50ea099`): `SignUpRequest` now requires `dateOfBirth`;
+  `AuthService.signUp()` rejects underage/future/malformed dates.
+  `VerificationService.setDateOfBirth` (the onboarding path a Google/phone signup uses instead,
+  since it has no password form to carry a `SignUpRequest`) got the same 18+ check, not just its
+  existing "not in the future" one. `DemoContentService`'s two `SignUpRequest` call sites updated
+  with synthetic adult DOBs so seeding still works.
+
+**5. API-ISSUES.md, both entries FIXED (`48a9a4f`):**
+- **18+ at signup/onboarding** — fixed above (same commit as the architect-note item, `50ea099`).
+- **`PATCH /profile/me` lowercased `availability`** — `CandidateProfileService.vocabulary()` now
+  validates case-insensitively but stores/echoes the caller's own casing, so `"Weekends"` round-trips
+  as `"Weekends"`, not `"weekends"`. Also added the `dateOfBirthSet` boolean the FE asked for on
+  `GET /verification`, so it can skip re-asking the age gate on a second device.
+
+**6. B9 continuity:** backend restarted on the final commit (`SEED_ENABLED=false`, local Postgres
++ Redis, platform admin bootstrapped, `DB_PASSWORD` now required and set) — confirmed live:
+`POST /auth/signup` with a 2015 DOB → 400 "You must be 18 or older to join Arena"; with a 1995
+DOB → 200 with a real session. Still running at `http://localhost:8081/api/v1` for the frontend.
+Also rotated this Mac's local Postgres role password (blocker #7's note) — it was only ever used
+locally on this machine, created fresh this session, never on a real/deployed database, so no
+production rotation is needed.
+
+**Rules followed:** nothing merged to `main`; no test loosened (existing assertions changed only
+to match corrected behavior, each with a comment saying why); no secrets committed, logged or
+pasted here; pushed after every commit.
+
+
+
 ## Mission M6, area 2 (You, profile and settings) — 1 Oct 2026
 **Frontend repo, `feature/arena-vnext-mobile-jenny`.** Also did the architect's three area-2
 asks (one flag, 18+ in onboarding, onboarding persistence) and verified report-a-person.
