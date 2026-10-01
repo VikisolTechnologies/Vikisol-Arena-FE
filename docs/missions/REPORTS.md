@@ -1,6 +1,52 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## Mission M6 area 3 — Feed, Discover, Map, activities, covers — 1 Oct 2026
+**Frontend repo, `feature/arena-vnext-mobile-jenny`**, commits `947de0c` (inbox sync) and
+`d5aa331` (API-ISSUES). Tested live against the local backend (`http://localhost:8081/api/v1`,
+`.env.local` already set to `NEXT_PUBLIC_ARENA_DATA=api` from area 2).
+
+**No frontend code changed in this area.** `src/lib/api/feed.ts`, `posts.ts`, `search.ts` and
+`src/lib/data/feed.ts` already had `isRealMode()` branches for every call this area needs
+(feed, nearby, trending, search, create/cancel/join/approve/decide/withdraw/outcome, save,
+react, comment), and `FeedScreen`, `DiscoverScreen` and `DiscoverMap` already have designed
+empty states ("Nothing within 5 km yet" + Create/Widen, "No activities nearby yet" + Post
+something, "Nothing posted within 6 km yet"). This looks like it was built real-API-first from
+the start rather than added for M6 — area 3's actual work was verifying it against a live
+backend, not writing it.
+
+**What works end to end (verified live, not just read from source):**
+- Signed up a host + guest account against the real backend, created an activity
+  (`POST /posts`), guest requested to join (auto-approved, public visibility,
+  `POST /posts/{id}/joins`), host listed join requests (`GET /posts/{id}/joins`), host recorded
+  check-in/outcome after the start time (`PUT /posts/{id}/joins/{id}/outcome`), host cancelled
+  (`PUT /posts/{id}/cancel`). All matched the FE's types exactly. Erased both accounts after.
+- `GET /posts/nearby`, `GET /feed`, `GET /posts/trending`, `GET /search` all return real,
+  correctly-shaped data (confirmed against the backend's own seeded activity/project rows).
+- Covers: the procedural cover (`ProceduralCover`, client-side only, no endpoint) renders with
+  no backend dependency — verified via `/dev/covers`, which isn't fixture-dependent so it doesn't
+  need deleting per M6 step 3.
+- `/dev/covers` apart, Discover's two fixture-gated sections (people/skills previews) already
+  check `FIXTURES_ALLOWED` from `src/lib/data/mode.ts`, so they don't render in `api` mode —
+  nothing to remove there either.
+
+**Blocked, both written to `API-ISSUES.md`:**
+- Joiner-side attendance confirm/dispute (A13) and private feedback (A14) —
+  `POST /posts/{id}/attendance/confirm` and `POST /posts/{id}/feedback` both 404 live (same shape
+  as a made-up path). Only the host's check-in exists on the backend today. Not built in the FE,
+  per M6's rule against building screens for endpoints that don't exist.
+- `POST /media/upload-signature` returns 400 "Photo and video uploads aren't set up yet" on this
+  local backend — couldn't verify the photo-cover upload path end to end locally (Cloudinary env
+  vars likely missing on this instance; flagging for whoever owns local backend config).
+
+**Tests.** `npx tsc --noEmit`: clean. Targeted run first
+(`feed-nearby.local.ts`, `map.local.ts`, `host.local.ts`, `join.local.ts`, desktop project): 7/7
+passed. Full local suite run once (`playwright.local.config.ts`, desktop project): **45 passed, 7
+failed** — same `jenny.local.ts` failures as every report so far (area 9, expected per the
+architect's note). Nothing in this area's own tests failed or was loosened.
+
+**Not touched:** needs/offers, projects, Jenny — out of area 3's scope (areas 4 and 9).
+
 ## Mission M6 — sign-up date-of-birth fix (B10 follow-up) — 1 Oct 2026
 **Frontend repo, `feature/arena-vnext-mobile-jenny`.** The architect's first-before-area-3 ask:
 the backend now requires `dateOfBirth` on `POST /auth/signup` (B10, `50ea099`/`48a9a4f`) and
