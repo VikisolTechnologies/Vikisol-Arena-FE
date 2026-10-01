@@ -31,3 +31,29 @@ One entry per mismatch: endpoint, what the frontend expects, what the backend re
   highlight the right chip. Not reproduced yet from a real read-back screen — area 2 only writes
   this field today — but will bite the first screen that reads `GET /me/basics` and renders these
   chips. Not worked around in the FE; the backend should keep the casing it's given.
+
+## `POST /posts/{id}/attendance/confirm` and `POST /posts/{id}/feedback` don't exist (OPEN)
+- **Endpoint:** `POST /posts/{id}/attendance/confirm`, `POST /posts/{id}/feedback`.
+- **FE expects:** the joiner side of the activity after-care flow (A13/A14, `ARENA-APP-FLOW.md`
+  §3) — confirm attendance or raise a 72h dispute, then private "would you join again?" feedback.
+  Documented as FE-API-GAPS.md row 25.
+- **BE returns:** `404 Not found` for both, verified live against the local backend
+  (`curl -X POST http://localhost:8081/api/v1/posts/{id}/attendance/confirm -d '{"attended":true}'`
+  with a real joiner token on a real activity, after the host's own check-in/outcome call on the
+  same join succeeded) — same 404 shape as a deliberately made-up path, so this isn't a
+  not-yet-reachable route, the endpoints aren't implemented.
+- **What the FE does instead:** only the host side exists (`CheckInSheet.tsx` →
+  `recordJoinOutcome` → `PUT /posts/{id}/joins/{id}/outcome`, already real-mode and verified
+  live). No joiner-side "confirm attendance / dispute" or feedback UI was added — per M6's rule,
+  the frontend doesn't build screens for endpoints that don't exist yet.
+
+## `POST /media/upload-signature` isn't configured on this backend (OPEN, local-only so far)
+- **Endpoint:** `POST /media/upload-signature`.
+- **FE expects:** a Cloudinary signature so activity/post cover photos and videos can upload
+  (`src/lib/api/media.ts`).
+- **BE returns:** `400 { "message": "Photo and video uploads aren't set up yet." }`, verified live
+  with a real token against `http://localhost:8081/api/v1/media/upload-signature`.
+- **Why it matters:** blocks verifying the photo-cover path (as opposed to the procedural cover,
+  which is drawn client-side and needs no endpoint, and was verified) end to end against this
+  backend instance. Likely just missing Cloudinary env vars on this local server rather than a
+  code gap — flagging so whoever owns local backend config (B9) can confirm.
