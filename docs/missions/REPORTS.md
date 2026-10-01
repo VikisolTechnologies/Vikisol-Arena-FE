@@ -1,6 +1,67 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## Mission M6, area 1 (auth and onboarding) — 1 Oct 2026
+**Frontend repo, `feature/arena-vnext-mobile-jenny`.**
+
+**1. Real mode by default.** `.env.local` (gitignored, not committed) now sets:
+```
+NEXT_PUBLIC_API_MODE=real
+NEXT_PUBLIC_ARENA_DATA=api
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8081/api/v1
+```
+Two env flags exist for historical reasons — `NEXT_PUBLIC_API_MODE` (`src/lib/api/mode.ts`,
+per-function mock/real switch, used by `auth.ts`/`verification.ts`/etc.) and
+`NEXT_PUBLIC_ARENA_DATA` (`src/lib/data/mode.ts`, fixtures-allowed + the production build guard
+in `next.config.ts`). Both need to be set for a true "real by default" local run; the inbox only
+named the second one. Didn't merge them into one flag — that's a cross-area refactor, flagged
+here rather than done silently mid-area-1.
+
+**2. Backend.** Ran `Vikisol-Arena-BE` locally (`./mvnw spring-boot:run`, Postgres already up on
+this Mac from B9) — 44 Flyway migrations applied clean, `/actuator/health` → `UP`.
+
+**3. Verified against the real backend (curl, then the actual screens).**
+- `POST /auth/signup` → `201`-equivalent `ApiResponse{success,data}` with `token`, `role`,
+  `candidateId`, `name`, `email`, `mfaRequired` — every field `src/lib/api/auth.ts` reads is
+  present, nothing invented on the frontend side.
+- `POST /auth/signin`, `POST /auth/refresh`, `POST /auth/signout` — all round-tripped correctly
+  (signout revokes the refresh cookie and denylists the access token server-side, confirmed by a
+  second signin working right after).
+- **No API mismatches found for this area.** `docs/missions/API-ISSUES.md` gets no new rows.
+- 18+ gating: the actual date-of-birth field lives in Settings
+  (`src/components/settings/SettingsSheets.tsx` → `verification.ts`), not in sign-up/onboarding
+  itself — it already branches on `isRealMode()` and posts to the real
+  `PUT /verification/date-of-birth`; no change needed.
+
+**4. Dummy data in this area.** `grep -rln "lib/mock|preview-off|fixtures" src/app/auth
+src/app/onboarding src/components/entry src/components/auth src/components/onboarding` returns
+only `SkillPicker.tsx` (`SKILLS_BY_INDUSTRY` — a static autocomplete taxonomy, not fake
+people/accounts). Left it; flagging for area 6 (career) since skills-by-industry is really a
+career-profile concern, not an auth one.
+
+**5. "Preview data" bar.** Already conditional on `isRealMode()`
+(`src/components/bplus/Primitives.tsx`'s `PreviewBar`) — gone now that real mode is the default,
+no code change needed.
+
+**6. Tests (full local suite run once, as required before reporting).**
+`npx playwright test --config=playwright.local.config.ts --project=desktop`: **42 passed, 7
+failed.** All 7 failures are in `jenny.local.ts` (area 9, Jenny) — they assert the Jenny preview
+fixtures that `JENNY_PREVIEW = FIXTURES_ALLOWED` (`src/lib/data/jenny.ts`) now hides globally,
+since `NEXT_PUBLIC_ARENA_DATA=api` turns `FIXTURES_ALLOWED` off everywhere, not just for area 1.
+This is expected fallout of step 1's global flag flip, not an area-1 regression — area 9's own
+mission work (v2 rows show "Jenny can't do this yet") will replace those fixtures with real
+states. Didn't touch `jenny.local.ts` to keep this area's diff scoped; the architect should know
+those 7 are expected-red until area 9.
+`entry-journey.local.ts` (sign up → onboarding → feed, sign in, forgot password, session
+expired, a11y/viewport) — **4/4 pass** on its own.
+Production build (`next build` with the real-mode env) succeeds; no `/dev` routes compile in,
+matching `next.config.ts`'s `PREVIEW_OFF` guard.
+
+**What's blocked:** nothing in area 1 itself. Google sign-in stays config-gated
+(`NEXT_PUBLIC_GOOGLE_CLIENT_ID` unset locally) — unrelated to this mission, pre-existing.
+
+**Next:** area 2 (You, profile and settings).
+
 ## Mission B9 — 1 Oct 2026
 **Backend repo, pushed to `feature/admin-account-gaps`** (commit `7469cab`, README only — no app
 code changed, nothing merged to `main`).

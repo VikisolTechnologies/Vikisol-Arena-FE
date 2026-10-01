@@ -95,3 +95,14 @@ The founder wants a working prototype on real data. The frontend (M6) will call 
 
    The architect is reviewing PR #2 → #3 → #4 in parallel. After approval, the founder merges and Railway deploys.
 5. **Report** in `../arena-fe-vnext/docs/missions/REPORTS.md` (newest first).
+
+---
+
+## Mission B10 (OPEN, 1 Oct 2026, TOP PRIORITY after B9 step 1): fix the release blockers
+Read `docs/reviews/ARCHITECT-REVIEW-BE-1-2026-10-01.md` (in arena-fe-vnext).
+1. Fix all **7 BLOCKERS**, one commit each with a test that would have caught it, on `feature/admin-account-gaps`.
+2. Then the **migration items** under SHOULD-FIX (V40 and V44 safety, the industry converter check).
+3. Then as many of the other SHOULD-FIX items as are quick. List any you defer, with the reason.
+4. Never loosen an existing test. Push after each commit.
+5. Report in `REPORTS.md`: one line per item (fixed in commit X / deferred because …) and the final test count.
+6. Keep running B9 for the frontend in parallel: `API-ISSUES.md` entries come first when the frontend is blocked.
