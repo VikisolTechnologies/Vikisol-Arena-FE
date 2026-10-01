@@ -137,3 +137,6 @@ Do these items from `ARCHITECT-REVIEW-BE-1` SHOULD-FIX, in this order, one commi
 16. **Unlock credits:** atomic, with a race test.
 
 **Before then:** keep serving `API-ISSUES.md`. Don't merge anything.
+17. **Phone and Google sign-ups have no date of birth** until onboarding's age gate.
+    - Every write action (post, join, message, apply, connect) must refuse an account whose `dateOfBirth` is null: "Add your date of birth to continue".
+    - Reads stay allowed.

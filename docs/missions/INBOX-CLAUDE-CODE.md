@@ -124,3 +124,7 @@ Read `docs/reviews/ARCHITECT-REVIEW-5-2026-10-01.md`.
   - Keep the onboarding age gate **only** for accounts without a DOB (Google or phone sign-up), using `dateOfBirthSet` from `GET /verification/status`. Don't ask twice.
   - Test: new email sign-up → straight past the age gate; under-18 sign-up → refused.
 - Then do **area 3** (Feed, Discover, Map, activities, covers).
+
+### Architect notes on `bce5681` (1 Oct): ACCEPTED. Go to area 3.
+- Remember for the final clean-up: `mockNameFor` and the mock branches in `src/lib/api/auth.ts` (and the other `api/*` files) go when the mocks are deleted.
+- **Area 3 tip:** the area is big, so split the commits (feed → discover/map → activity lifecycle → covers) and report once at the end.
