@@ -1,7 +1,7 @@
 # API issues (frontend → backend)
 One entry per mismatch: endpoint, what the frontend expects, what the backend returns, status (OPEN / FIXED <commit>).
 
-## 18+ isn't enforced at sign-up or by `PUT /verification/date-of-birth` (OPEN)
+## 18+ isn't enforced at sign-up or by `PUT /verification/date-of-birth` (FIXED 50ea099, dateOfBirthSet in 48a9a4f)
 - **Endpoint:** `POST /auth/signup`, `PUT /verification/date-of-birth`.
 - **FE expects:** an account's date of birth to be rejected (or sign-up itself to refuse) when it
   makes the person under 18 — the age rule enforced at the point it's collected, not only later.
@@ -19,7 +19,7 @@ One entry per mismatch: endpoint, what the frontend expects, what the backend re
   on a second device — not blocking, just worth a boolean (`dateOfBirthSet`) if it's cheap to add
   while this is being worked on.
 
-## `PATCH /profile/me` lowercases `availability` (OPEN)
+## `PATCH /profile/me` lowercases `availability` (FIXED 48a9a4f)
 - **Endpoint:** `PATCH /profile/me`.
 - **FE sends:** `availability: ["Weekends"]` — the exact labels in `AVAILABILITY`
   (`src/lib/data/onboarding.ts`: `"Weekdays" | "Weekends" | "Evenings"`, Title Case, shown as-is
