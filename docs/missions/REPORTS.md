@@ -1,6 +1,71 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## Mission B12 — 1 Oct 2026
+**Backend repo, `feature/admin-account-gaps`**, 3 commits (`892eecb`, `4086f8c`), pushed. Full
+suite **267/267 green** (was 259; +8 new tests). Nothing merged to `main`.
+
+**1. Local photo uploads (`892eecb`).** `POST /media/upload-signature` now has a dev-only
+fallback: with `SPRING_PROFILES_ACTIVE=local` set and Cloudinary still unconfigured, it points
+arena-web's existing `uploadMedia()` (raw XHR, not `ApiResponse`-wrapped - checked the frontend
+code first) at this server's own new `POST /media/local-upload` instead of refusing outright -
+same multipart fields, same `{"secure_url": "..."}` response shape, so the frontend needs zero
+changes to use either path. Images only (`png`/`jpg`/`jpeg`/`webp`/`gif` -
+`LocalDiskFileStorageService`/`MagicByteValidator` have no video support yet).
+- `CloudinaryService.isLocalFallbackActive()`: Cloudinary unconfigured **and** the `local` Spring
+  profile active. Never true otherwise.
+- The signature verifies against a dev-only, non-secret HMAC this server itself issues (there's
+  no third party to keep a real secret from here, unlike Cloudinary's).
+- **Important correctness point:** the uploaded file's URL is stored **bare/unsigned** - never
+  signed at upload time. `GET /files/**` rejects an expired signature outright
+  (`FileController`), so signing once at upload time would have made the photo 404 forever once
+  the 10-minute TTL passed. `PostMapper` now signs a local-fallback media URL fresh on every read
+  instead (the same pattern `CandidateProfileMapper` already uses for profile photos/CVs) - real
+  Cloudinary URLs are left untouched.
+- **Never active outside `local`:** `CloudinaryService` logs a loud `@PostConstruct` warning at
+  startup if Cloudinary is unconfigured and the `local` profile isn't active either (a real
+  deployment missing Cloudinary), so that can't go unnoticed the way a quiet per-upload 400 could.
+- README: `SPRING_PROFILES_ACTIVE=local` added to the start command, new "Photo uploads locally"
+  section.
+- Tests: `CloudinaryServiceTest` (5 new cases) and a new `LocalMediaUploadTest` (end-to-end:
+  signature → upload → attach to a post → read back signed → signature verifies against the
+  exact path `FileController` serves at; tampered signature rejected over HTTP; a foreign URL
+  still refused even in local-fallback mode).
+
+**2. Demo content in the local database despite `SEED_ENABLED=false` (`4086f8c`, docs only).**
+Found the exact rows the frontend saw: 5 realistic posts ("Badminton at 6pm today, Gachibowli...",
+"Weekend trek to Ananthagiri Hills...", etc.) matching literal strings in `DataSeeder.java`, plus
+~40 `DataSeeder`-shaped users (`demo.talent@vikisol.dev`, `demo.enterprise@vikisol.dev`, nine
+`hr@*.example.com` companies, ...) all created in one burst.
+- **Root cause: an earlier seed run, not a migration.** `app.seed.enabled` defaults to `true`
+  (`@ConditionalOnProperty(..., matchIfMissing = true)`) - the app had been started at some point
+  today (a process already running when I started this mission, not started by me, PID/timestamp
+  no longer relevant once reset) **without** `SEED_ENABLED=false` set, so `DataSeeder` ran with
+  its default.
+- **Why it stuck around:** `DataSeeder`'s own skip-guard only checks whether an
+  `EnterpriseProfile` already exists - not `SEED_ENABLED` - so once it has run once, every later
+  restart (even with `SEED_ENABLED=false` correctly set) just *skips reseeding*, it doesn't undo
+  what's already there.
+- **A real gap worth its own ticket, not fixed here (out of B12's scope as asked - "report...
+  and give a one-line reset", not "fix DataSeeder"):** `DataSeeder` never sets
+  `demo_content = true` on anything it creates, unlike the separate, intentional
+  `DemoContentService` overlay which does. So once `DataSeeder` has run, its output is
+  permanently indistinguishable from real content via the `demo_content` flag anywhere that
+  filters on it (e.g. `GET /admin/metrics/launch`'s `signUps`/etc. counts from B10).
+- **One-line reset** (already documented, now also explained *why* it's needed every time
+  someone forgets `SEED_ENABLED=false`): `dropdb -U postgres -h localhost vikisol_arena &&
+  createdb -U postgres -h localhost vikisol_arena`, then restart with `SEED_ENABLED=false`.
+- Killed the stale/seeded running instance, reset the database, rebuilt and restarted clean on
+  the final commit (`SPRING_PROFILES_ACTIVE=local` now also on) - confirmed: 1 user (the platform
+  admin), 0 posts, 0 enterprise profiles. Also live-smoke-tested the new local-upload flow
+  end-to-end via curl (signup → signature → upload → real `secure_url` back). Still running at
+  `http://localhost:8081/api/v1` for the frontend.
+
+**Rules followed:** nothing merged to `main`; no test loosened; no secrets committed, logged or
+pasted here; pushed after every commit.
+
+
+
 ## Mission M6 area 3 — Feed, Discover, Map, activities, covers — 1 Oct 2026
 **Frontend repo, `feature/arena-vnext-mobile-jenny`**, commits `947de0c` (inbox sync) and
 `d5aa331` (API-ISSUES). Tested live against the local backend (`http://localhost:8081/api/v1`,
