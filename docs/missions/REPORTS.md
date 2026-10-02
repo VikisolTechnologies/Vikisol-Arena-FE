@@ -1,6 +1,35 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## MARATHON-FE, Step 1 — safety net — 2 Oct 2026
+**Decision (screens.json doesn't give real routes):** `src/lib/dev/screens.json`'s `route` field
+always points at a `/dev/*` preview-harness URL, and `/dev/*` doesn't exist at all in `api` mode
+(`next.config.ts`'s `PREVIEW_OFF` drops every `*.dev.tsx` page from the build). Crawling those
+routes in `api` mode would just crawl 404s by design. Crawled the real route tree instead — every
+`page.tsx` under `src/app` except `/dev/*` (97 routes: ~78 static, ~19 dynamic with a
+syntactically-plausible nonexistent id) — since that's what a real visitor can actually reach.
+
+**New:** `tests/local/safety-net.local.ts` — visits every route, fails on a 5xx, an uncaught
+page error, a console error, or the text "Application error"; a dynamic route's nonexistent id
+is expected to produce an honest not-found/empty state, not a crash.
+
+**Found and fixed a real bug:** `GET /companies/{id}/jobs` had no `.catch()` in
+`src/lib/api/companies.ts`'s `getCompanyJobs()` — unlike `getCompany()` right next to it, which
+already catches and returns `undefined`. A malformed or retired company id (400/404) became an
+unhandled promise rejection, so `/companies/[id]` for a bad id never resolved its loading state
+and threw rather than showing the honest "This company isn't available anymore" the page already
+has code for. Fixed: returns an empty jobs page on any error, same spirit as `getCompany`.
+
+**Run against the real local backend** (not the unreachable mock address
+`playwright.local.config.ts` otherwise points at, which would have reported 4 unrelated "can't
+reach the backend" page errors as if they were route bugs): **97/97 pass** after the fix.
+
+**Then:** `VERCEL_ENV=production NEXT_PUBLIC_ARENA_DATA=api NEXT_PUBLIC_API_BASE_URL=https://api-arena.vikisol.in/api/v1 npm run build` —
+compiled successfully, full route manifest, no errors. The branch is production-buildable from
+here on, per this step's own standing rule.
+
+**Next:** Steps 2–7 (areas 4–9), per `MARATHON-FE.md`.
+
 ## MARATHON-FE, Step 0 — area 3b complete — 2 Oct 2026
 **Frontend repo, `feature/arena-vnext-mobile-jenny`.** Finished the in-progress area 3b work
 (the architect's "Architect review of area 3" table, all 16 `/activities/*` endpoints).

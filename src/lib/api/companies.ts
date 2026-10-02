@@ -49,8 +49,13 @@ export async function getCompany(id: string): Promise<Company | undefined> {
   return delay(company ? withFollowState(company) : undefined, 200);
 }
 
+const EMPTY_JOBS_PAGE = { content: [], page: 0, size: 0, totalElements: 0, totalPages: 0, last: true };
+
 export async function getCompanyJobs(id: string, page = 0, size = 20): Promise<PagedResponse<Job>> {
-  if (isRealMode()) return apiFetch<PagedResponse<Job>>(`/companies/${id}/jobs`, { query: { page, size } });
+  // Safety net (MARATHON-FE Step 1): a bad/retired id 400s or 404s here same as GET /companies/{id}
+  // does - without a catch this was an unhandled rejection (and the page stuck on its loading
+  // spinner forever) instead of the honest "not available" state getCompany already shows.
+  if (isRealMode()) return apiFetch<PagedResponse<Job>>(`/companies/${id}/jobs`, { query: { page, size } }).catch(() => EMPTY_JOBS_PAGE);
   const company = getCompanyById(id);
   const jobs = company ? MOCK_JOBS.filter((j) => j.company === company.name) : [];
   return delay({
