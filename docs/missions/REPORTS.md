@@ -1,6 +1,44 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## MARATHON-FE final report — 2 Oct 2026 — NOT "FE RELEASE CANDIDATE READY"
+**Exactly what's not done, and why**, per the mission's own instruction to say so plainly rather
+than claim more than happened:
+
+1. **`git push` failed on every attempt, the entire run** ("Failed to connect to github.com port
+   443"), re-checked before each of the 8 commits below and again just now via `gh auth status`
+   (also times out). Every commit this run is **local only**. Nothing reaches `main`, a PR, or
+   even the remote feature branch until this is resolved — that is the single blocking fact for
+   calling this release-ready, independent of everything else.
+2. **Step 8 (remove all dummy data) wasn't attempted** — a deliberate scope decision, written up
+   in `RELEASE-CHECKLIST.md`, not an oversight: mechanically stripping `src/lib/mock/*` and every
+   `isRealMode()` branch across dozens of files, without the remaining budget in this run to
+   verify each one afterward, risked leaving the branch broken rather than in its current fully
+   buildable state.
+3. **Area 7 (Arena for Business) is partial** — the pipeline-move bug (two buttons that always
+   failed) is fixed, but company domain verification has no frontend code at all, and most of the
+   area (full onboarding, interviews, messages, connect requests, unlock credits, billing) was
+   not re-audited or re-verified this run.
+4. **Area 8 (Admin)** was audited by reading the controller and FE code side by side, not
+   re-verified live with a real account this run.
+5. **Career's offer accept/decline (area 6)** is wired and shape-verified against the controller,
+   but never exercised live end to end — there are no seeded jobs in the local database and
+   reaching the `offer` stage needs a full company-side pipeline first.
+
+**What did get done, to real depth, verified live where the scope allowed:** Step 0 (area 3b, the
+full `/activities/*` lifecycle, two real accounts, a genuine bug found and fixed in `istToIso`),
+Step 1 (a real route-crawl safety net, one real bug found and fixed in `getCompanyJobs`), area 4
+(needs/offers — found and fixed a severe, previously-silent bug: need/offer interactions were
+non-functional against the real backend), area 5 (real people/skills search), half of area 6, half
+of area 7, and area 9 (all 7 `jenny.local.ts` tests fixed for the right reason, not loosened).
+Every commit kept `npx tsc --noEmit`, `eslint`, and a `VERCEL_ENV=production
+NEXT_PUBLIC_ARENA_DATA=api` build green, per the mission's own standing rule.
+
+**Immediate next steps for whoever picks this up:** (1) get `git push` working and push these 8
+commits; (2) read `RELEASE-CHECKLIST.md` for the exact state; (3) either continue areas 7–8's
+remaining scope or call what's here release-ready for a first real-backend preview, the
+architect's call to make once the commits are actually visible on GitHub.
+
 ## MARATHON-FE, Step 7 (area 9: Jenny) — 2 Oct 2026
 **The 7 failing `jenny.local.ts` tests, fixed properly — not deleted, not loosened.** Root cause:
 every one of them exercised a v2 fixture flow (`docs/FE-API-GAPS.md` rows 42–47, all marked
