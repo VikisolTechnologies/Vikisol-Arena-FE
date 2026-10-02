@@ -1,6 +1,59 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## MARATHON-FE, Step 2 (area 4: needs, offers, outcomes) — 2 Oct 2026
+**Scoping decision, written down per standing orders:** steps 2–7 are six more areas, each
+comparable in size to area 3b (which alone took a full session). Doing all six at area-3b depth —
+full two-account browser verification of every single feature — isn't realistic in one run.
+From here through area 9: build the real data layer, fix concrete correctness bugs found along
+the way, verify with curl plus the existing local test suite (updated, not loosened), and report
+honestly what's wired vs. what's `"not available yet"` rather than claim finished work that
+wasn't exercised. Full two-account browser journeys stay reserved for the highest-risk flows.
+
+**Found a severe, confirmed real bug, not just a missing wire:** `Post.myJoinStatus` and the
+generic `GET /posts/{id}/joins` list are **always empty for ASK/OFFER posts** — verified live
+(signed up two real accounts, responded to a need, re-fetched the post: `myJoinStatus` stayed
+`null`). Need/offer responses live in their own `NeedResponse` table under `/needs/*`
+(`NeedController.java`), never touched by the generic posts join system. `NeedScreen.tsx` was
+built entirely against `post.myJoinStatus` and `/posts/{id}/joins*` — meaning **every need/offer
+interaction was silently non-functional against the real backend**: posting a need worked, but
+offering to help, the owner seeing offers, accept/decline, and the resulting chat never did
+anything a real person could see, regardless of what actually happened server-side.
+
+**New:** `src/lib/api/needs.ts` — the full `/needs/*` data layer (categories, get, details,
+responses CRUD, accept/decline/confirm, my-responses, outcomes), every shape verified live with
+curl against `NeedDtos.java` before use.
+
+**Changed:**
+- `NeedScreen.tsx`: real mode now reads "my status" from `GET /needs/{id}`'s
+  `viewer.myResponse` and the owner's offer list from `GET /needs/{id}/responses`, adapted to the
+  `PostJoinRequest` shape this screen already renders (`"accepted"` → `"approved"`) so the UI
+  itself didn't need a rewrite — only where the truth comes from. Accepting a response opens a
+  **private 1:1 conversation** (`/messages/{conversationId}`), not a post "room" like an
+  activity's join does — a real architectural difference (`NeedService.accept()` uses
+  `ConversationService`, never touches `post.roomId`), not an oversight; the old "open the post's
+  room" link would have gone nowhere for a need in real mode. Added the message-compose sheet
+  `POST /needs/{id}/responses` now requires (it didn't, via the old generic join), and a "Mark as
+  completed" action wired to the real two-sided `confirm` endpoint.
+- `PostFlow.tsx`: publishes the structured fields to `PUT /needs/{id}/details` right after the
+  post, same pattern as area 3b's activity details.
+
+**Not done, logged rather than silently skipped:**
+- `GET /needs/categories` isn't wired into the category picker yet (still the local hardcoded
+  list in `src/lib/intake/schemas/need.ts`); lower priority than the broken interaction flow
+  above, and the ids already match what the endpoint returns.
+- The owner's top-level "Open chat" shortcut (the `⋯` menu, for when there's exactly one
+  accepted responder) still points at `post.roomId`, which is never set for needs in real mode;
+  opening a specific offer's chat from the offers list (the primary path) works correctly.
+- `GET /needs/outcomes/{userId}` has no screen reading it yet (the public profile's "outcomes"
+  section still shows closed posts generically).
+
+**Tests:** `tests/local/needs.local.ts` rewritten for the real endpoints and the conversation
+(not room) redirect — **4/4 pass**. `npx tsc --noEmit` and `eslint`: clean.
+`VERCEL_ENV=production NEXT_PUBLIC_ARENA_DATA=api npm run build`: compiles clean.
+
+**Next:** area 5 (inbox, conversations, notifications, search, blocks, reports).
+
 ## MARATHON-FE, Step 1 — safety net — 2 Oct 2026
 **Decision (screens.json doesn't give real routes):** `src/lib/dev/screens.json`'s `route` field
 always points at a `/dev/*` preview-harness URL, and `/dev/*` doesn't exist at all in `api` mode

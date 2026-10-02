@@ -16,13 +16,48 @@ import { ReportSheet } from "@/components/trust/ReportSheet";
 import { useGuest } from "@/hooks/use-arena-session";
 import { getSession } from "@/lib/session";
 import { cancelPost, decideJoin, getJoinRequests, getPost, getUserPosts, requestJoin, withdrawJoin } from "@/lib/api/posts";
+import {
+  acceptNeedResponse,
+  confirmNeedResponse,
+  declineNeedResponse,
+  getNeed,
+  getNeedResponses,
+  respondToNeed,
+  withdrawNeedResponse,
+  type NeedResponse,
+  type NeedResponseCompletion,
+} from "@/lib/api/needs";
+import { isRealMode } from "@/lib/api/mode";
 import { EMPTY_DRAFT, readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
 import { Cover } from "@/components/covers/Cover";
 import { getMyProfile, getPublicProfile } from "@/lib/api/profile";
 import { distanceKm, formatKm } from "@/lib/data/feed";
 import { needWhen } from "@/lib/data/needs";
 import { shortDate, timeAgo } from "@/lib/data/time";
+import { TextArea } from "@/components/bplus/TextField";
 import type { Post, PostJoinRequest, PublicCandidateProfile } from "@/lib/types";
+
+/** `/needs/{id}` is the real source of truth for ASK/OFFER posts (MARATHON-FE area 4) —
+ * `Post.myJoinStatus` and the generic `/posts/{id}/joins` list are ALWAYS empty for these posts
+ * (verified live: they're a different table entirely, `NeedResponse`, not `PostJoinRequest`).
+ * This adapts a `NeedResponse` to the `PostJoinRequest` shape the rest of this screen already
+ * renders, so the UI itself didn't need a rewrite — only where the data comes from. "accepted"
+ * maps to "approved" since that's the word this screen's own branches already check for. */
+type NeedOfferShape = PostJoinRequest & { conversationId?: string; completion?: NeedResponseCompletion };
+
+function toJoinRequestShape(r: NeedResponse): NeedOfferShape {
+  return {
+    id: r.id,
+    postId: r.postId,
+    userId: r.userId,
+    userName: r.name,
+    userEmoji: r.avatarEmoji,
+    status: r.status === "accepted" ? "approved" : (r.status as PostJoinRequest["status"]),
+    createdAt: r.createdAt,
+    conversationId: r.conversationId,
+    completion: r.completion,
+  };
+}
 
 const STATUS: Record<Post["status"], { label: string; cls: string }> = {
   open: { label: "Open", cls: "bg-primary/10 text-primary-on-paper" },
@@ -53,20 +88,43 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
   const guest = useGuest();
   const [post, setPost] = useState(initial);
   const [me, setMe] = useState<{ lat?: number; lng?: number } | null>(null);
-  const [offers, setOffers] = useState<PostJoinRequest[] | null>(specimen?.offers ?? null);
-  const [open, setOpen] = useState<PostJoinRequest | null>(specimen?.offers.find((o) => o.id === specimen.openOfferId) ?? null);
+  const [offers, setOffers] = useState<NeedOfferShape[] | null>(specimen?.offers ?? null);
+  const [open, setOpen] = useState<NeedOfferShape | null>(specimen?.offers.find((o) => o.id === specimen.openOfferId) ?? null);
   const [menu, setMenu] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  // Real mode only - see toJoinRequestShape's comment. undefined = not loaded yet.
+  const [myResponse, setMyResponse] = useState<NeedOfferShape | null | undefined>(specimen ? null : undefined);
+  const [myConversationId, setMyConversationId] = useState<string | undefined>(undefined);
+  const [respondOpen, setRespondOpen] = useState(false);
+  const [message, setMessage] = useState("");
 
   const reload = useCallback(() => getPost(post.id).then((p) => p && setPost(p)), [post.id]);
+  const reloadMyResponse = useCallback(() => {
+    if (!isRealMode() || specimen) return;
+    getNeed(post.id)
+      .then((n) => {
+        setMyResponse(n?.viewer?.myResponse ? toJoinRequestShape(n.viewer.myResponse) : null);
+        setMyConversationId(n?.viewer?.myResponse?.conversationId);
+      })
+      .catch(() => setMyResponse(null));
+  }, [post.id, specimen]);
   useEffect(() => {
     if (getSession()) getMyProfile().then((p) => setMe({ lat: p.approxLat, lng: p.approxLng })).catch(() => {});
   }, []);
   useEffect(() => {
+    void reloadMyResponse();
+  }, [reloadMyResponse]);
+  useEffect(() => {
     if (!post.mine || specimen) return;
+    if (isRealMode()) {
+      getNeedResponses(post.id)
+        .then((r) => setOffers(r.map(toJoinRequestShape)))
+        .catch((err: unknown) => setError(err instanceof Error ? err.message : "Offers didn't load."));
+      return;
+    }
     getJoinRequests(post.id)
       .then((r) => setOffers(Array.isArray(r) ? r : []))
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Offers didn't load."));
@@ -79,9 +137,17 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
   const status = STATUS[post.status] ?? STATUS.open;
   const visibleOffers = (offers ?? []).filter((o) => o.status === "pending" || o.status === "approved");
   const helping = post.spotsFilled;
+  // Real mode reads this from GET /needs/{id}'s viewer.myResponse (post.myJoinStatus is always
+  // empty for ASK/OFFER posts - verified live, a different table entirely); mock mode keeps
+  // reading the generic field it was built against.
+  const myJoinStatus = isRealMode() ? myResponse?.status : post.myJoinStatus;
 
   const offerHelp = async () => {
     if (!getSession()) return router.push("/auth?mode=signin");
+    if (isRealMode()) {
+      setRespondOpen(true);
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -94,12 +160,30 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
       setBusy(false);
     }
   };
+  const sendResponse = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await respondToNeed(post.id, message.trim());
+      vibrate();
+      setRespondOpen(false);
+      setMessage("");
+      await reload();
+      await reloadMyResponse();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : c.sendFail);
+    } finally {
+      setBusy(false);
+    }
+  };
   const withdraw = async () => {
     setBusy(true);
     setError("");
     try {
-      await withdrawJoin(post.id);
+      if (isRealMode()) await withdrawNeedResponse(post.id);
+      else await withdrawJoin(post.id);
       await reload();
+      await reloadMyResponse();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't withdraw. Your offer still stands.");
     } finally {
@@ -142,7 +226,17 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
   if (open) {
     return (
       <AppShell>
-        <OfferDetails offer={open} post={post} onBack={closeOffer} onDecided={decided} specimenProfile={specimen?.profile} />
+        <OfferDetails
+          offer={open}
+          post={post}
+          onBack={closeOffer}
+          onDecided={decided}
+          onConfirmed={(updated) => {
+            setOpen(updated);
+            setOffers((cur) => (cur ?? []).map((o) => (o.id === updated.id ? updated : o)));
+          }}
+          specimenProfile={specimen?.profile}
+        />
       </AppShell>
     );
   }
@@ -252,14 +346,20 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
               </>
             ) : !active ? (
               <p className="rounded-tile bg-paper-muted p-4 text-center text-[15px]">This {c.noun.toLowerCase()} is {status.label.toLowerCase()}.</p>
-            ) : post.myJoinStatus === "approved" ? (
-              post.roomId ? <ButtonLink href={`/rooms/${post.roomId}`}>Open chat</ButtonLink> : <p className="text-center text-[15px]">You&apos;re helping. The chat opens shortly.</p>
-            ) : post.myJoinStatus === "pending" ? (
+            ) : myJoinStatus === "approved" ? (
+              isRealMode() ? (
+                myConversationId ? <ButtonLink href={`/messages/${myConversationId}`}>Open chat</ButtonLink> : <p className="text-center text-[15px]">You&apos;re helping. The chat opens shortly.</p>
+              ) : post.roomId ? (
+                <ButtonLink href={`/rooms/${post.roomId}`}>Open chat</ButtonLink>
+              ) : (
+                <p className="text-center text-[15px]">You&apos;re helping. The chat opens shortly.</p>
+              )
+            ) : myJoinStatus === "pending" ? (
               <div className="space-y-2">
                 <p role="status" className="flex items-center justify-center gap-2 text-[15px] font-semibold"><HandHeart className="size-5 text-primary-on-paper" aria-hidden /> {c.sent} — {post.authorName.split(" ")[0]} will review it</p>
                 <Button variant="outline" className="border-paper-ink/55 text-paper-ink" onClick={withdraw} loading={busy}>{c.withdraw}</Button>
               </div>
-            ) : post.myJoinStatus === "declined" ? (
+            ) : myJoinStatus === "declined" ? (
               <p className="rounded-tile bg-paper-muted p-4 text-center text-[15px]">{post.authorName.split(" ")[0]} {c.declined}</p>
             ) : (
               <Button onClick={offerHelp} loading={busy}>{guest ? c.guestCta : c.cta}</Button>
@@ -269,6 +369,17 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
       </div>
 
       <ReportSheet open={reportOpen} onClose={() => setReportOpen(false)} target={{ kind: "post", id: post.id }} person={{ userId: post.authorUserId || undefined, name: post.authorName, detail: title }} />
+
+      {/* POST /needs/{id}/responses requires a message - real mode only; mock mode's generic
+       * requestJoin() still needs none, so it skips straight to offerHelp(). */}
+      <BottomSheet open={respondOpen} onClose={() => setRespondOpen(false)} title={c.sheet}>
+        <h2 className="mt-3 pr-12 font-display-serif text-[24px] font-medium">{post.authorName.split(" ")[0]} will see this</h2>
+        <div className="mt-4">
+          <TextArea label="Your message" value={message} onChange={setMessage} maxLength={500} placeholder={post.intentType === "offer" ? "Why you'd like this…" : "How you can help…"} />
+        </div>
+        {error && <p role="alert" className="mt-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
+        <Button className="mt-5" loading={busy} disabled={!message.trim()} onClick={sendResponse}>Send</Button>
+      </BottomSheet>
 
       <BottomSheet open={menu} onClose={() => setMenu(false)} title="More">
         <ul className="mt-6 space-y-1">
@@ -314,12 +425,14 @@ function OfferDetails({
   post,
   onBack,
   onDecided,
+  onConfirmed,
   specimenProfile,
 }: {
-  offer: PostJoinRequest;
+  offer: NeedOfferShape;
   post: Post;
   onBack: () => void;
-  onDecided: (o: PostJoinRequest) => void;
+  onDecided: (o: NeedOfferShape) => void;
+  onConfirmed: (o: NeedOfferShape) => void;
   specimenProfile?: PublicCandidateProfile;
 }) {
   const router = useRouter();
@@ -349,6 +462,19 @@ function OfferDetails({
     setBusy(approve ? "accept" : "decline");
     setError("");
     try {
+      // Accepting a need/offer response opens a private 1:1 conversation
+      // (ConversationService), not a post "room" like an activity's join does - a real
+      // difference, not an oversight (verified reading NeedService.accept()).
+      if (isRealMode()) {
+        const updated = approve ? await acceptNeedResponse(post.id, offer.id) : await declineNeedResponse(post.id, offer.id);
+        if (!updated) throw new Error("That didn't save. Nothing changed.");
+        if (approve) {
+          vibrate();
+          if (updated.conversationId) return router.push(`/messages/${updated.conversationId}`);
+        }
+        onDecided(toJoinRequestShape(updated));
+        return;
+      }
       const updated = await decideJoin(post.id, offer.id, approve);
       if (approve) {
         vibrate();
@@ -445,6 +571,31 @@ function OfferDetails({
         </p>
 
         {error && <p role="alert" className="mt-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
+        {isRealMode() && offer.status === "approved" && !offer.completion?.ownerConfirmedAt && (
+          <Button
+            className="mt-5"
+            loading={busy === "accept"}
+            onClick={async () => {
+              setBusy("accept");
+              setError("");
+              try {
+                const updated = await confirmNeedResponse(post.id, offer.id);
+                if (updated) onConfirmed(toJoinRequestShape(updated));
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "That didn't save.");
+              } finally {
+                setBusy(null);
+              }
+            }}
+          >
+            Mark as completed
+          </Button>
+        )}
+        {isRealMode() && offer.completion?.ownerConfirmedAt && (
+          <p className="mt-5 rounded-tile bg-success/15 p-4 text-center text-[15px] text-success-on-paper">
+            Marked completed{offer.completion.responderConfirmedAt ? " — both sides confirmed." : " — waiting for the other side to confirm too."}
+          </p>
+        )}
         {offer.status === "pending" ? (
           <>
             <div className="mt-5 grid grid-cols-[auto_1fr] gap-3">
@@ -455,7 +606,9 @@ function OfferDetails({
             </div>
             <p className="mt-2 text-center text-[13px] text-paper-ink-muted">This opens a private coordination room for the two of you.</p>
           </>
-        ) : post.roomId ? (
+        ) : isRealMode() && offer.conversationId ? (
+          <ButtonLink href={`/messages/${offer.conversationId}`} className="mt-5">Open chat</ButtonLink>
+        ) : !isRealMode() && post.roomId ? (
           <ButtonLink href={`/rooms/${post.roomId}`} className="mt-5">Open chat</ButtonLink>
         ) : null}
       </m.article>
