@@ -1,6 +1,36 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## MARATHON-FE, Step 3 (area 5: inbox, search, notifications, blocks, reports) — 2 Oct 2026
+**Audit result:** conversations/messages (`src/lib/api/messages.ts`), notifications
+(`notifications.ts`, wired in M6 area 2), reports and blocks (`blocks.ts`) already call the right
+real paths — checked every one against its controller (`MessageController`, `BlockController`),
+all match exactly. The one real gap was search.
+
+**Wired:** `GET /search?type=people|skills` (`near=true`/`radiusKm`, signed-in only,
+`distanceBand` not an exact distance — `ARCHITECT-REVIEW-BE-1` blocker #1). `src/lib/api/search.ts`
+had no `people` field at all and never sent `near`; `SearchScreen.tsx` hardcoded "People search is
+coming" / "Skill search is coming" for real mode regardless, even though the backend has carried
+this endpoint since before this mission. Added `SearchPerson`/`people` to `SearchResults`,
+`near`/`radiusKm` params, and wired `SearchScreen.tsx`'s people/skills scope to call it for real
+(mock mode keeps using the existing preview-neighbour fixture search, unchanged — no real
+endpoint to call there). `distanceBand` renders in the row's place text, same slot a post's
+`locationText` already uses.
+
+**Verified live:** `GET /search?type=people&near=true` (and as a guest) — response shape matches
+the new FE types exactly field-for-field.
+
+**Tests:** `tests/local/messages.local.ts` (inbox, conversation, notifications, search, blocks) —
+**5/5 pass**, no regressions. `npx tsc --noEmit` and `eslint`: clean.
+`VERCEL_ENV=production NEXT_PUBLIC_ARENA_DATA=api npm run build`: compiles clean.
+
+**Not done:** no screen currently lets someone *search by typing specific skills as chips* the
+way the old preview fixture implied — the real endpoint is a single free-text `q`, same as every
+other search type. Logging as a design question for the architect rather than inventing UI for
+it: `q` already matches names/interests/skills together, which may be enough.
+
+**Next:** area 6 (Work and career: profile, resume, jobs, apply, track, offer decisions).
+
 ## MARATHON-FE, Step 2 (area 4: needs, offers, outcomes) — 2 Oct 2026
 **Scoping decision, written down per standing orders:** steps 2–7 are six more areas, each
 comparable in size to area 3b (which alone took a full session). Doing all six at area-3b depth —

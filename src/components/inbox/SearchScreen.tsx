@@ -34,9 +34,10 @@ const SCOPES = [
 ] as const;
 type Scope = (typeof SCOPES)[number]["id"];
 const SCOPE_ICONS: Partial<Record<Scope, LucideIcon>> = { people: UserRound, activities: Users, needs: HeartHandshake, jobs: Briefcase, skills: Sparkles };
-/** "Needs" are asks inside the API's discussions results. People and Skills have no API search yet
- *  (FE-API-GAPS #17): preview mode searches the preview neighbours; real mode says so. */
-const API_TYPE: Record<Scope, SearchType | null> = { all: "all", people: null, activities: "activities", needs: "discussions", jobs: "jobs", skills: null };
+/** "Needs" are asks inside the API's discussions results. People and Skills now have a real
+ *  endpoint too (MARATHON-FE area 5, `GET /search?type=people|skills`, signed-in only); preview
+ *  mode keeps searching the preview neighbours (FE-API-GAPS #17 was never a preview-mode gap). */
+const API_TYPE: Record<Scope, SearchType | null> = { all: "all", people: "people", activities: "activities", needs: "discussions", jobs: "jobs", skills: "skills" };
 const RADII = [2, 5, 10, 0] as const; // 0 = any distance
 type Sort = "recent" | "nearest";
 
@@ -81,6 +82,12 @@ export function toRows(data: SearchResults, scope: Scope, origin?: Origin): Row[
     for (const p of data.projects) rows.push({ key: `p-${p.id}`, href: `/marketplace/${p.id}`, title: p.title, kind: "Project", icon: Layers, meta: `₹${p.budgetMin.toLocaleString("en-IN")}–${p.budgetMax.toLocaleString("en-IN")} · ${p.durationWeeks} weeks` });
   if (scope === "all")
     for (const c of data.companies) rows.push({ key: `c-${c.id}`, href: `/companies/${c.id}`, title: c.name, kind: "Company", icon: Building2, meta: `${c.openJobCount} open ${c.openJobCount === 1 ? "job" : "jobs"}` });
+  // MARATHON-FE area 5: GET /search?type=people|skills, signed-in only. distanceBand is a coarse
+  // band ("within 2 km"), never an exact distance - shown as the row's place text, same slot a
+  // post's locationText uses.
+  if (scope === "people" || scope === "skills")
+    for (const p of data.people)
+      rows.push({ key: `u-${p.userId}`, href: `/people/${p.userId}`, title: p.name, kind: scope === "skills" ? "Skills" : "Person", icon: UserRound, meta: (scope === "skills" ? p.skills : p.interests).join(", ") || p.title || "", place: p.distanceBand, person: p.name });
   // Dated rows newest first; undated (projects, companies) keep the API's order after them.
   return rows.map((r, i) => ({ r, i })).sort((a, b) => (b.r.at ?? -Infinity) - (a.r.at ?? -Infinity) || a.i - b.i).map(({ r }) => r);
 }
@@ -137,9 +144,12 @@ export function SearchScreen() {
     else url.searchParams.delete("scope");
     window.history.replaceState(null, "", url);
     if (trimmed.length < 2 || !apiType) return;
+    // Mock mode has no real people/skills search to call - previewPeopleRows() below handles it.
+    if ((scope === "people" || scope === "skills") && !isRealMode()) return;
     let cancelled = false;
     const timer = window.setTimeout(() => {
-      search(trimmed, apiType, scope === "all" ? 20 : 50)
+      const peopleOpts = scope === "people" || scope === "skills" ? { near: true, radiusKm: radius || undefined } : undefined;
+      search(trimmed, apiType, scope === "all" ? 20 : 50, peopleOpts)
         .then((data) => !cancelled && setResult({ key, data }))
         .catch(() => !cancelled && setResult({ key, data: null }));
     }, 250);
@@ -147,16 +157,18 @@ export function SearchScreen() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [trimmed, scope, key, apiType]);
+  }, [trimmed, scope, key, apiType, radius]);
 
   const peopleScope = scope === "people" || scope === "skills";
   const current = result?.key === key ? result : null;
   let rows: Row[] = [];
-  if (peopleScope) rows = FIXTURES_ALLOWED && !isRealMode() ? previewPeopleRows(trimmed, scope === "skills") : [];
-  else if (trimmed.length >= 2) rows = current?.data ? toRows(current.data, scope, origin) : [];
+  if (peopleScope) {
+    if (isRealMode()) rows = trimmed.length >= 2 && current?.data ? toRows(current.data, scope, origin) : [];
+    else if (FIXTURES_ALLOWED) rows = previewPeopleRows(trimmed, scope === "skills");
+  } else if (trimmed.length >= 2) rows = current?.data ? toRows(current.data, scope, origin) : [];
   else if (nearby) {
     // Nothing typed yet: the newest things nearby, as results.
-    const asResults: SearchResults = { query: "", activities: [], discussions: [], jobs: [], projects: [], companies: [] };
+    const asResults: SearchResults = { query: "", activities: [], discussions: [], jobs: [], projects: [], companies: [], people: [] };
     for (const i of nearby) {
       const post = { ...i, intentType: i.itemType, audience: "global", visibility: i.visibility ?? "public", spotsFilled: i.spotsFilled ?? 0, joinable: !!i.joinable, commentCount: 0, reactionCount: 0, authorJoinCount: 0, authorAccountAgeDays: 0, authorUserId: i.authorUserId ?? "", authorName: i.authorName ?? "", authorEmoji: "" } as unknown as Post;
       if (i.itemType === "activity") asResults.activities.push(post);
@@ -167,7 +179,8 @@ export function SearchScreen() {
   // Radius: items with a point outside it drop out; items without one stay, marked "distance unknown".
   if (radius) rows = rows.filter((r) => r.km == null || r.km <= radius);
   if (sort === "nearest" || peopleScope) rows = [...rows].sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
-  const waiting = !peopleScope && (trimmed.length >= 2 ? !current : !nearby);
+  const peopleWaiting = peopleScope && isRealMode() && trimmed.length >= 2 && !current;
+  const waiting = peopleWaiting || (!peopleScope && (trimmed.length >= 2 ? !current : !nearby));
 
   const toggleSave = async (postId: string) => {
     const next = !saved[postId];
@@ -220,13 +233,13 @@ export function SearchScreen() {
       </div>
 
       <div className="mt-5 flex-1">
-        {peopleScope && (isRealMode() || !FIXTURES_ALLOWED) ? (
-          <StateCard kind="empty" title={scope === "people" ? "People search is coming" : "Skill search is coming"} detail="For now, find neighbours through activities and needs you join." />
+        {peopleScope && !isRealMode() && !FIXTURES_ALLOWED ? (
+          <StateCard kind="empty" title={scope === "people" ? "People search needs a moment" : "Skill search needs a moment"} detail="For now, find neighbours through activities and needs you join." />
         ) : waiting ? (
           <div className="space-y-3" aria-busy="true" aria-label="Searching">
             {[0, 1, 2].map((i) => <Skeleton key={i} className="h-[92px] w-full" />)}
           </div>
-        ) : trimmed.length >= 2 && !peopleScope && !current?.data ? (
+        ) : trimmed.length >= 2 && !current?.data && (isRealMode() || !peopleScope) ? (
           <StateCard kind="error" title="Search isn't responding" detail="Try again in a moment." />
         ) : rows.length === 0 ? (
           <StateCard kind="empty" title={trimmed ? `Nothing matches “${trimmed}”` : `Nothing within ${radius || "any"} km yet`} detail={radius && radius < 10 ? "Try a wider distance or fewer words." : scope !== "all" ? "Try fewer words, or search everything." : "Try fewer or different words."} action={radius && radius < 10 ? <button type="button" onClick={() => setRadius(10)} className="min-h-11 text-[15px] font-semibold text-primary underline underline-offset-4">Widen to 10 km</button> : scope !== "all" ? <button type="button" onClick={() => setScope("all")} className="min-h-11 text-[15px] font-semibold text-primary underline underline-offset-4">Search everything</button> : undefined} />
