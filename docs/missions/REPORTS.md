@@ -1,6 +1,25 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## MARATHON-FE, Step 6 (area 8: Admin and Account) — 2 Oct 2026
+**Account** (export, delete, notification preferences, visibility) was already done for real in
+M6 area 2 — nothing new here.
+
+**Admin:** audited `src/lib/api/platformAdmin.ts` against `PlatformAdminController.java`
+(dashboard, tenants, users, moderation, analytics, flags) — every path matches exactly, already
+real-mode wired from earlier work. Given the time left in this run, this was a path/shape audit
+by inspection (as area 5's was), not a fresh two-account browser pass — no mismatches found worth
+an `API-ISSUES.md` entry. `#48–57`'s remaining admin screens (content, catalog, disputes, Jenny &
+AI, team, industries) weren't individually re-audited this pass; flagging that as unverified
+rather than claiming a check that didn't happen.
+
+**Tests:** no dedicated local suite file exists for platform admin specifically
+(`company-admin.local.ts` covers the *enterprise*-side admin, already green from area 7's run).
+`npx tsc --noEmit`: clean (no admin files changed this step, so no new build/test run was needed).
+
+**Next:** area 9 (Jenny) — fix the 7 `jenny.local.ts` failures properly, the one concretely
+scoped remaining item before steps 8–9.
+
 ## MARATHON-FE, Step 5 (area 7: Arena for Business) — 2 Oct 2026, partial
 **Found and fixed exactly the bug class the architect named — "disable the moves that aren't
 allowed":** two buttons that always failed, 100% of the time, against the real backend:
