@@ -17,7 +17,7 @@ import { getApplicant, getCandidateDetail, getMyEnterpriseProfile, getPosting, m
 import { assignHiringManager, getInterviewForApplication, proposeInterview } from "@/lib/api/interviews";
 import { getHiringManagersForTeam, type TeamMember } from "@/lib/api/companyAdmin";
 import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
-import { STAGES, STAGE_LABEL, STAGE_TONE, jobParts, type Applicant } from "@/lib/data/business";
+import { ALLOWED_COMPANY_MOVES, STAGE_LABEL, STAGE_TONE, jobParts, type Applicant } from "@/lib/data/business";
 import { shortDate, timeAgo } from "@/lib/data/time";
 import type { Application, ApplicationStage, CandidateProfile, EnterpriseProfile, Interview, JobPosting } from "@/lib/types";
 
@@ -149,8 +149,11 @@ export default function EnterpriseInterviewPage() {
         <aside className="space-y-5">
           <Panel tone="paper" title="Update status">
             <label htmlFor="stage" className="sr-only">New status</label>
+            {/* MARATHON-FE area 7: only the current stage plus the moves the backend actually
+             *  allows from here (ALLOWED_COMPANY_MOVES) - picking anything else always failed. */}
             <select id="stage" value={target || app.stage} onChange={(e) => setTarget(e.target.value as ApplicationStage)} className="min-h-12 w-full rounded-xl border border-field-line bg-transparent px-3 text-[15px] [&>option]:text-paper-ink">
-              {STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+              <option value={app.stage}>{STAGE_LABEL[app.stage]}</option>
+              {(ALLOWED_COMPANY_MOVES[app.stage] ?? []).map((s) => <option key={s} value={s}>{STAGE_LABEL[s]}</option>)}
             </select>
             <div className="mt-3"><DashButton onClick={update} disabled={busy || !target || target === app.stage}>Update</DashButton></div>
           </Panel>
@@ -158,10 +161,12 @@ export default function EnterpriseInterviewPage() {
             <Panel tone="paper" title="Offer & close">
               <div className="flex flex-wrap gap-2">
                 {app.stage !== "offer" && <DashButton onClick={() => move("offer").catch(() => {})} disabled={busy}>Send offer</DashButton>}
-                {app.stage === "offer" && <DashButton onClick={() => move("hired").catch(() => {})} disabled={busy}>Mark as hired</DashButton>}
                 <DashButton variant="outline" onClick={() => setRejecting(true)} disabled={busy}>Not selected</DashButton>
               </div>
-              <p className="mt-3 text-[13px] text-faint">&ldquo;Send offer&rdquo; moves them to Offer and Arena tells them; &ldquo;Mark as hired&rdquo; closes it once they accept. Offer letters aren&apos;t in Arena yet.</p>
+              {/* "Mark as hired" removed (MARATHON-FE area 7): only the candidate's own offer
+               *  accept sets Hired - a company move straight to "hired" always failed
+               *  ("Only the candidate can accept an offer"). */}
+              <p className="mt-3 text-[13px] text-faint">&ldquo;Send offer&rdquo; moves them to Offer and Arena tells them; they accept or decline it themselves. Offer letters aren&apos;t in Arena yet.</p>
             </Panel>
           )}
           {managers.length > 0 && (

@@ -123,7 +123,10 @@ test("candidate profile: evidence, private note, Not selected shows the kind mes
   await sheet.getByRole("button", { name: "Mark not selected" }).click();
   await expect(sheet).toBeHidden();
   expect(calls.find((c) => c.method === "PUT" && c.path === "/enterprise/applicants/a1/stage")?.body).toEqual({ stage: "rejected" });
-  await expect(page.getByRole("button", { name: "Reconsider" }).first()).toBeVisible();
+  // MARATHON-FE area 7: "Reconsider" (rejected -> screening) is gone - REJECTED is terminal for
+  // the company (ApplicationService.ALLOWED_COMPANY_TRANSITIONS has no entry for it), so this
+  // button always failed. Not selected and the forward-only "Start reviewing" are what remain.
+  await expect(page.getByRole("button", { name: "Reconsider" })).toHaveCount(0);
 });
 
 test("desktop board: drag a card to Interview moves it (the menu does the same)", async ({ page }, info) => {

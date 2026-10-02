@@ -1,6 +1,42 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## MARATHON-FE, Step 5 (area 7: Arena for Business) — 2 Oct 2026, partial
+**Found and fixed exactly the bug class the architect named — "disable the moves that aren't
+allowed":** two buttons that always failed, 100% of the time, against the real backend:
+- "Mark as hired" (`interviews/[applicationId]/page.tsx`) tried `OFFER → HIRED` from the company
+  side. `ApplicationService.ALLOWED_COMPANY_TRANSITIONS` has no such entry —
+  `advanceStageAsEnterprise` explicitly throws `"Only the candidate can accept an offer"`
+  (`ARCHITECT-REVIEW-BE-1` blocker #4: HIRED is set only by the candidate's own
+  `acceptOffer()`, area 6). Removed the button; added a line explaining the application is
+  waiting on the candidate.
+- "Reconsider" (`candidates/[applicationId]/page.tsx`) tried `REJECTED → SCREENING`. REJECTED is
+  terminal for the company (no entry in the transitions map either) — this always failed too.
+  Removed it.
+- The same page's free-form stage `<select>` offered every stage regardless of where the
+  application actually was, so picking most of them failed after the fact. Added
+  `ALLOWED_COMPANY_MOVES` to `src/lib/data/business.ts` (a direct mirror of the backend's
+  transitions map) and restricted the dropdown to the current stage plus its real next moves.
+
+**Found, not fixed — logged rather than silently left wired-wrong:** company domain-email
+verification (`POST/GET /enterprise/verification`, `POST /enterprise/verification/confirm`,
+`BusinessController.java`) **has no frontend code calling it at all** — not a path mismatch,
+genuinely unwired. Building that flow (code request, confirm, status, the resulting badge) is a
+real feature, not a quick fix, and this area alone (company onboarding, verification, jobs,
+pipeline, interviews, messages, connect requests, unlock credits, billing) is too large to
+finish at the depth the earlier areas got. Given the standing order to log what's truly blocked
+and move on rather than loop or rush something unverified: **this area is left partial.**
+Everything else audited (`enterprise.ts`, `companyAdmin.ts` against `BusinessController`,
+`CompanyAdminController`, `JobPostingController`, `ApplicantController`) matched its controller
+by inspection; the pipeline-move bug above is the one place behavior, not just a path, was wrong.
+
+**Tests:** `business.local.ts` updated for the "Reconsider" removal — **7/7 pass** (6 unchanged +
+1 fixed) — `company-admin.local.ts` — **2/2 pass**, no regressions. `npx tsc --noEmit` and
+`eslint`: clean. `VERCEL_ENV=production NEXT_PUBLIC_ARENA_DATA=api npm run build`: compiles clean.
+
+**Next:** area 8 (admin, account) and area 9 (Jenny) — account is already real from M6 area 2;
+area 7's remaining gap (verification) stays logged here for a future session with more room.
+
 ## MARATHON-FE, Step 4 (area 6: Work and career) — 2 Oct 2026
 **Audit:** `jobs.ts`, `applications.ts` (list/exists/create/withdraw), `interviews.ts`, resume
 upload (`profile.ts`'s `updateMyResume`) already call the right real paths. The gap was the two

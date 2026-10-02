@@ -25,11 +25,15 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
 
+// MARATHON-FE area 7: must match ApplicationService.ALLOWED_COMPANY_TRANSITIONS exactly
+// (ARCHITECT-REVIEW-BE-1 blocker #4) - a company can only move an application forward one stage
+// at a time, or reject it; OFFER has no company-side forward move at all. "offer" used to map to
+// "hired" here, which always failed ("Only the candidate can accept an offer") - only the
+// candidate's own accept (src/lib/api/applications.ts's acceptOffer) sets Hired.
 const NEXT: Partial<Record<ApplicationStage, { stage: ApplicationStage; label: string }>> = {
   applied: { stage: "screening", label: "Start reviewing" },
   screening: { stage: "interview", label: "Move to interview" },
   interview: { stage: "offer", label: "Move to offer" },
-  offer: { stage: "hired", label: "Mark as hired" },
 };
 
 function EvidenceList({ items }: { items: Evidence[] }) {
@@ -120,7 +124,9 @@ export default function CandidateProfilePage() {
       {app.stage !== "rejected" && app.stage !== "hired" && <DashButton variant="danger" disabled={busy} onClick={() => setRejecting(true)}>Not selected</DashButton>}
       {app.stage === "interview" && <DashButton href={`/enterprise/interviews/${app.id}`} variant="outline">Open interview</DashButton>}
       {next && <DashButton disabled={busy} onClick={() => move(next.stage).catch(() => {})}>{next.label}</DashButton>}
-      {app.stage === "rejected" && <DashButton variant="outline" disabled={busy} onClick={() => move("screening").catch(() => {})}>Reconsider</DashButton>}
+      {app.stage === "offer" && <p className="w-full text-[13px] text-faint">Waiting on the candidate to accept or decline.</p>}
+      {/* "Reconsider" (rejected -> screening) removed: REJECTED is terminal for the company
+       *  (ALLOWED_COMPANY_TRANSITIONS has no entry for it) - this button always failed. */}
     </div>
   );
 

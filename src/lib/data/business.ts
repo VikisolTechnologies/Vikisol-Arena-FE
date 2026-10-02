@@ -12,6 +12,18 @@ export const STAGES: { id: ApplicationStage; label: string }[] = [
 ];
 export const STAGE_LABEL = Object.fromEntries(STAGES.map((s) => [s.id, s.label])) as Record<ApplicationStage, string>;
 
+/** MARATHON-FE area 7 — mirrors `ApplicationService.ALLOWED_COMPANY_TRANSITIONS` exactly
+ * (ARCHITECT-REVIEW-BE-1 blocker #4): a company can only move an application one step forward,
+ * or reject it from any open stage. WITHDRAWN/REJECTED/HIRED are terminal for the company —
+ * HIRED is set only by the candidate's own offer accept. Used to disable moves the backend
+ * would refuse anyway, instead of letting someone pick one and only finding out after. */
+export const ALLOWED_COMPANY_MOVES: Partial<Record<ApplicationStage, ApplicationStage[]>> = {
+  applied: ["screening", "rejected"],
+  screening: ["interview", "rejected"],
+  interview: ["offer", "rejected"],
+  offer: ["rejected"],
+};
+
 export type Applicant = Awaited<ReturnType<typeof getApplicantsForPosting>>[number] & { posting: JobPosting };
 
 /** Every applicant across these postings (one call per posting; typically few). A posting whose
