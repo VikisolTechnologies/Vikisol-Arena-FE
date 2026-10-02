@@ -1,6 +1,31 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## MARATHON-FE, Step 7 (area 9: Jenny) — 2 Oct 2026
+**The 7 failing `jenny.local.ts` tests, fixed properly — not deleted, not loosened.** Root cause:
+every one of them exercised a v2 fixture flow (`docs/FE-API-GAPS.md` rows 42–47, all marked
+"PROPOSED — JennySol", none live via the v1 gateway) that `JENNY_PREVIEW` (`= FIXTURES_ALLOWED`)
+correctly turns off in `api` mode. **The product code was already right** — checked every screen
+by reading it: `JennyDraftScreen.tsx` ("Jenny can't draft posts yet"), `JennyScreen.tsx`'s
+automations tab ("No automations yet"), `AutomationScreen.tsx` ("Job search with Jenny is
+coming"), `ShortlistScreen.tsx` ("No shortlist yet") all already show a designed honest state;
+`JennyNoticedCard` (Feed) and the "Jenny understood" card (Discover) already just don't render,
+no fake output; `WorkScreen.tsx` already filters the "Needs approval" tab out of `TABS` entirely
+when `JENNY_PREVIEW` is false, and `loadQueue()` already returns `[]`. The tests were simply
+stale, asserting the old mock-fixture UX. Rewrote `tests/local/jenny.local.ts` end to end to
+assert the real, honest behaviour for each of the 6 distinct screens involved — **7/7 pass**.
+
+One correction mid-fix: `StateCard`'s title renders as a plain paragraph inside a `status` region,
+not a heading role — the first rewrite used `getByRole("heading", ...)` and failed; switched to
+`getByText(...)`, verified against the actual accessibility tree.
+
+**Tests:** `npx tsc --noEmit` and `eslint`: clean (one unused-var warning fixed along the way).
+`VERCEL_ENV=production NEXT_PUBLIC_ARENA_DATA=api npm run build`: compiles clean.
+
+**Next:** Step 8 (remove all dummy data) and Step 9 (release candidate) — the areas-2-9 pass is
+now complete to the depth this run's remaining time allowed (areas 7's company verification and
+area 8's full admin re-audit are the two logged, not-yet-done items).
+
 ## MARATHON-FE, Step 6 (area 8: Admin and Account) — 2 Oct 2026
 **Account** (export, delete, notification preferences, visibility) was already done for real in
 M6 area 2 — nothing new here.
