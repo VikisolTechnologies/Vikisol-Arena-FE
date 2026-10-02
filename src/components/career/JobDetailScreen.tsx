@@ -149,21 +149,26 @@ export function JobDetailScreen({ id, specimen }: { id: string; specimen?: { job
   );
 }
 
-/** Flow §6 Apply: exactly what's shared, resume, consent. Screening questions, a cover note and
- *  CTC sharing wait for the API (FE-API-GAPS #20) — nothing is collected that can't be sent. */
+/** Flow §6 Apply: exactly what's shared, resume, consent, and (MARATHON-FE area 6) CTC sharing -
+ * "Only me" by default (the backend has no separate profile-level setting; a CTC is simply never
+ * shared with an employer unless this box is ticked for that one application -
+ * `ApplicationRepository.ctcSharedWithEnterprise` checks this application's own `includeCtc`,
+ * nothing account-wide). Screening questions and a cover note still wait for their own UI. */
 function ApplySheet({ open, onClose, job, profile, onApplied }: { open: boolean; onClose: () => void; job: Job; profile: CandidateProfile | null; onApplied: (a: Application) => void }) {
   const [consent, setConsent] = useState(false);
+  const [includeCtc, setIncludeCtc] = useState(false);
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState<Application | null>(null);
+  const hasCtc = profile?.currentCtc != null || profile?.expectedCtc != null;
   const submit = async () => {
     setTried(true);
     if (!consent) return;
     setBusy(true);
     setError("");
     try {
-      const a = await applyToJob(job.id);
+      const a = await applyToJob(job.id, { includeCtc: hasCtc ? includeCtc : undefined });
       vibrate();
       setDone(a);
       onApplied(a);
@@ -199,6 +204,15 @@ function ApplySheet({ open, onClose, job, profile, onApplied }: { open: boolean;
             </ul>
             <p className="mt-3 text-[13px] text-paper-ink-muted">Not shared: your pay, current company, exact location or anything marked &ldquo;Only me&rdquo;.</p>
           </section>
+          {hasCtc && (
+            <label className="mt-4 flex min-h-11 cursor-pointer items-start gap-3 text-[15px]">
+              <input type="checkbox" checked={includeCtc} onChange={(e) => setIncludeCtc(e.target.checked)} className="peer sr-only" />
+              <span aria-hidden className={cn("mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border-2 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary", includeCtc ? "border-primary-on-paper bg-primary-on-paper text-white" : "border-field-line bg-white")}>
+                {includeCtc && <Check className="size-3.5" strokeWidth={3} />}
+              </span>
+              Include my CTC with this application only — off by default.
+            </label>
+          )}
           <label className="mt-4 flex min-h-11 cursor-pointer items-start gap-3 text-[15px]">
             <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="peer sr-only" />
             <span aria-hidden className={cn("mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border-2 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary", consent ? "border-primary-on-paper bg-primary-on-paper text-white" : tried ? "border-danger-on-paper bg-white" : "border-field-line bg-white")}>

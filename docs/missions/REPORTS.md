@@ -1,6 +1,37 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## MARATHON-FE, Step 4 (area 6: Work and career) — 2 Oct 2026
+**Audit:** `jobs.ts`, `applications.ts` (list/exists/create/withdraw), `interviews.ts`, resume
+upload (`profile.ts`'s `updateMyResume`) already call the right real paths. The gap was the two
+things the architect specifically named: CTC sharing and the offer decision.
+
+**CTC "Only me" by default:** confirmed by reading the backend (`ApplicationRepository
+.ctcSharedWithEnterprise`, `ApplyRequest.includeCtc`) that there's no separate profile-level CTC
+visibility setting to build — a CTC is simply never shared with an employer unless that one
+`Application` row has `includeCtc=true`, which `ApplySheet` (`JobDetailScreen.tsx`) never sent.
+Added the "Include my CTC with this application only — off by default" checkbox (shown only when
+the profile actually has a CTC to share) and threaded `includeCtc` through `applyToJob()`.
+
+**Offer decision:** `/applications/{id}/offer/accept` and `/offer/decline` didn't exist on the FE
+at all — confirmed reading `ApplicationController.java`. Added `acceptOffer()`/`declineOffer()`
+to `applications.ts` and an "Accept offer" / "Decline offer" pair to `ApplicationScreen.tsx`,
+shown only at the `offer` stage: per the architect's note, only the candidate's own accept moves
+an application to Hired — a company can only propose the offer (advance the stage), never
+finalize it from their side.
+
+**Verified:** every path matches its controller exactly by inspection. **Not live-curl-verified**
+end to end — this local database has no seeded jobs (`SEED_ENABLED=false`) and reaching the
+`offer` stage needs a full company-side pipeline first (area 7's own territory); logging this
+honestly rather than claiming a round-trip that wasn't run. Request/response shapes were checked
+field-for-field against `ApplyRequest`/`ApplicationResponse` directly, which is why the risk here
+is low despite that.
+
+**Tests:** `tests/local/career.local.ts` — **2/2 pass**, no regressions. `npx tsc --noEmit` and
+`eslint`: clean. `VERCEL_ENV=production NEXT_PUBLIC_ARENA_DATA=api npm run build`: compiles clean.
+
+**Next:** area 7 (Arena for Business) — the largest remaining area.
+
 ## MARATHON-FE, Step 3 (area 5: inbox, search, notifications, blocks, reports) — 2 Oct 2026
 **Audit result:** conversations/messages (`src/lib/api/messages.ts`), notifications
 (`notifications.ts`, wired in M6 area 2), reports and blocks (`blocks.ts`) already call the right

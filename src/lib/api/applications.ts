@@ -58,9 +58,12 @@ export async function hasAppliedTo(jobId: string): Promise<boolean> {
   return delay(mine().some((a) => a.jobId === jobId), 50);
 }
 
-export async function applyToJob(jobId: string): Promise<Application> {
+/** `includeCtc` (MARATHON-FE area 6): "Only me" is this account's career-profile default
+ * (`CandidateProfile.consent`); this is the per-application override the architect specifically
+ * asked for - share CTC with this one employer without changing the account-wide default. */
+export async function applyToJob(jobId: string, opts: { includeCtc?: boolean; coverNote?: string; answers?: { questionId: string; value?: string }[] } = {}): Promise<Application> {
   if (isRealMode()) {
-    const res = await apiFetch<ApplicationResponse>("/applications", { method: "POST", body: { jobId } });
+    const res = await apiFetch<ApplicationResponse>("/applications", { method: "POST", body: { jobId, includeCtc: opts.includeCtc, coverNote: opts.coverNote, answers: opts.answers } });
     return toApplication(res);
   }
   const all = readApplications();
@@ -87,5 +90,21 @@ export async function withdrawApplication(id: string): Promise<void> {
   }
   writeApplications(readApplications().filter((a) => a.id !== id));
   return delay(undefined, 200);
+}
+
+/** MARATHON-FE area 6: only the candidate ever accepts an offer - a company proposes it
+ * (`AdvanceStageRequest`, stage="offer"), the candidate's own accept is what actually moves them
+ * to Hired. Mock mode had no equivalent (offers were never a distinct action there); this stays
+ * real-mode only since there's nothing to fake safely here. */
+export async function acceptOffer(id: string): Promise<Application | undefined> {
+  if (!isRealMode()) return undefined;
+  const res = await apiFetch<ApplicationResponse>(`/applications/${id}/offer/accept`, { method: "POST" });
+  return toApplication(res);
+}
+
+export async function declineOffer(id: string): Promise<Application | undefined> {
+  if (!isRealMode()) return undefined;
+  const res = await apiFetch<ApplicationResponse>(`/applications/${id}/offer/decline`, { method: "POST" });
+  return toApplication(res);
 }
 

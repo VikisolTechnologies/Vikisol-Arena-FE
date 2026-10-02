@@ -12,7 +12,8 @@ import { BottomSheet } from "@/components/bplus/BottomSheet";
 import { Button, ButtonLink } from "@/components/bplus/Button";
 import { Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { CompanyMark } from "@/components/career/CompanyMark";
-import { getMyApplications, withdrawApplication } from "@/lib/api/applications";
+import { acceptOffer, declineOffer, getMyApplications, withdrawApplication } from "@/lib/api/applications";
+import { isRealMode } from "@/lib/api/mode";
 import { getJob } from "@/lib/api/jobs";
 import { getMyProfile } from "@/lib/api/profile";
 import { requireOnboarded } from "@/lib/auth-guard";
@@ -157,6 +158,50 @@ export function ApplicationScreen({ id, specimen }: { id: string; specimen?: App
 
         {app.stage === "interview" && (
           <ButtonLink href={`/interviews/${app.id}`} className="mt-6"><CalendarCheck2 className="size-5" aria-hidden /> Open interview</ButtonLink>
+        )}
+
+        {/* MARATHON-FE area 6: only the candidate's own accept moves this to Hired - the company
+         *  can only propose the offer (stage "offer"), never finalize it from their side. */}
+        {app.stage === "offer" && isRealMode() && (
+          <div className="mt-6 space-y-2">
+            {error && <p role="alert" className="rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
+            <Button
+              loading={busy}
+              onClick={async () => {
+                setBusy(true);
+                setError("");
+                try {
+                  const updated = await acceptOffer(app.id);
+                  if (updated) setApp(updated);
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : "That didn't save. Nothing changed.");
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              Accept offer
+            </Button>
+            <Button
+              variant="outline"
+              className="border-paper-ink/55 text-paper-ink"
+              loading={busy}
+              onClick={async () => {
+                setBusy(true);
+                setError("");
+                try {
+                  const updated = await declineOffer(app.id);
+                  if (updated) setApp(updated);
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : "That didn't save. Nothing changed.");
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              Decline offer
+            </Button>
+          </div>
         )}
 
         <section className="mt-6 rounded-tile bg-white p-4 ring-1 ring-paper-ink/10" aria-label="What you shared">
