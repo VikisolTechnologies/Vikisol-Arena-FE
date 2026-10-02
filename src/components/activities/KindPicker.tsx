@@ -1,18 +1,34 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { AnimatePresence, m } from "motion/react";
 import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fade, press, rise, spring } from "@/lib/motion";
-import { ALL_SUBTYPES, CATEGORIES, type Category } from "@/lib/activities/taxonomy";
+import { liveCategories, type Category } from "@/lib/activities/taxonomy";
+import { getActivityKinds } from "@/lib/api/activities";
 
 /** Flow §3 A1 — "What kind?": search, category grid, then its types. */
 export function KindPicker({ onPick, onClose, intro }: { onPick: (subtypeId: string) => void; onClose: () => void; /** "Or just tell Jenny" (flow §3 A1). */ intro?: ReactNode }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<Category | null>(null);
+  // M6 area 3b: GET /activities/kinds, not a hardcoded list — see taxonomy.ts's liveCategories.
+  const [kinds, setKinds] = useState<Record<string, string[]> | undefined>(undefined);
+  const [kindsLoaded, setKindsLoaded] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    getActivityKinds()
+      .then((k) => !cancelled && setKinds(k))
+      .catch(() => {})
+      .finally(() => !cancelled && setKindsLoaded(true));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const categories = kindsLoaded ? liveCategories(kinds) : liveCategories(undefined);
+  const subtypes = useMemo(() => categories.flatMap((c) => c.subtypes.map((s) => ({ ...s, category: c }))), [categories]);
   const q = query.trim().toLowerCase();
-  const matches = useMemo(() => (q ? ALL_SUBTYPES.filter((s) => s.label.toLowerCase().includes(q) || s.category.label.toLowerCase().includes(q)) : []), [q]);
+  const matches = useMemo(() => (q ? subtypes.filter((s) => s.label.toLowerCase().includes(q) || s.category.label.toLowerCase().includes(q)) : []), [q, subtypes]);
 
   return (
     <div>
@@ -52,7 +68,7 @@ export function KindPicker({ onPick, onClose, intro }: { onPick: (subtypeId: str
           </m.ul>
         ) : (
           <m.div key="grid" initial="hidden" animate="shown" exit={{ opacity: 0 }} className="mt-5 grid grid-cols-3 gap-2.5">
-            {CATEGORIES.map((c, i) => {
+            {categories.map((c, i) => {
               const on = open?.id === c.id;
               return (
                 <m.button

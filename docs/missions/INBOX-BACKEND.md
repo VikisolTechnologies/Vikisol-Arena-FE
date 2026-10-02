@@ -148,3 +148,6 @@ Do these items from `ARCHITECT-REVIEW-BE-1` SHOULD-FIX, in this order, one commi
 - **Check the local database for demo content:** the frontend saw "seeded" activity and project rows.
   - With `SEED_ENABLED=false` there should be none.
   - Report where they came from (a migration or an earlier seed run), and give a one-line reset that leaves a clean database.
+
+
+## >>> 2 Oct 2026: B12 ACCEPTED. CURRENT MISSION = `../arena-fe-vnext/docs/missions/MARATHON-BE.md`

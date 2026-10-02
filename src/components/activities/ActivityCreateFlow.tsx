@@ -19,10 +19,22 @@ import { CoverStep, type CoverChoice } from "@/components/activities/CoverStep";
 import { ProceduralCover, coverFile as renderCoverFile } from "@/components/covers/ProceduralCover";
 import { useGuest } from "@/hooks/use-arena-session";
 import { createPost } from "@/lib/api/posts";
+import { isRealMode } from "@/lib/api/mode";
 import { getUploadSignature, uploadMedia } from "@/lib/api/media";
+import { setActivityQuestions, updateActivityDetails, uploadActivityCover } from "@/lib/api/activities";
 import { activitySchema } from "@/lib/intake/schemas/activity";
-import { istToIso, toCreatePost } from "@/lib/activities/publish";
+import { istToIso, toActivityDetails, toCreatePost, toHostQuestions } from "@/lib/activities/publish";
 import { findSubtype } from "@/lib/activities/taxonomy";
+
+/** AI cover: already a URL. Mock mode's uploaded/procedural cover: the old generic path, since
+ * POST /activities/{id}/cover doesn't exist there. Real mode never calls this for a file cover
+ * (see onPublish above) — only for the AI case, which is identical in both modes. */
+async function resolveMockCoverUrl(cover: CoverChoice | undefined, file: File | null): Promise<string[]> {
+  if (cover?.mode === "ai") return [cover.url];
+  if (!file) return [];
+  const sig = await getUploadSignature().catch(() => null);
+  return [await uploadMedia(file, sig)];
+}
 import { timeOfDayFor } from "@/lib/covers/procedural";
 import { activityWhen } from "@/components/activity/ActivityParts";
 import { defaultsOf, problem, visibleFields, visibleSteps, type MoneyRange, type Values } from "@/lib/intake/types";
@@ -161,13 +173,21 @@ export function ActivityCreateFlow() {
                 onPublish={async (fileFromPreview) => {
                   const input = toCreatePost(schema, subtypeId, values);
                   const file = coverFile ?? fileFromPreview;
-                  let mediaUrls: string[] = [];
-                  if (cover?.mode === "ai") mediaUrls = [cover.url];
-                  else if (file) {
-                    const sig = await getUploadSignature().catch(() => null);
-                    mediaUrls = [await uploadMedia(file, sig)];
-                  }
+                  // M6 area 3b: an AI cover is already a URL (no file to upload) and still goes
+                  // through the generic post media at create time. An uploaded or client-
+                  // rendered (procedural/plain) cover goes through the real
+                  // POST /activities/{id}/cover instead, once the post (and so its id) exists -
+                  // mock mode keeps the old mediaUrls-at-create-time path, unchanged, since that
+                  // endpoint doesn't exist there.
+                  const real = isRealMode();
+                  const mediaUrls = cover?.mode === "ai" || (!real && file) ? await resolveMockCoverUrl(cover, file) : [];
                   const post = await createPost({ ...input, mediaUrls });
+                  if (real && cover?.mode !== "ai" && file) {
+                    await uploadActivityCover(post.id, file).catch(() => {});
+                  }
+                  await updateActivityDetails(post.id, toActivityDetails(schema, subtypeId, values)).catch(() => {});
+                  const questions = toHostQuestions(values);
+                  if (questions.length) await setActivityQuestions(post.id, questions).catch(() => {});
                   clearIntakeDraft(`activity-${subtypeId}`);
                   [KIND_KEY, SEED_KEY, COVER_KEY].forEach((k) => write(k, null));
                   vibrate();

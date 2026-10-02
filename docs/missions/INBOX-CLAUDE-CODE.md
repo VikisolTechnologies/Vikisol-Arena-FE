@@ -159,3 +159,6 @@ The two "missing" endpoints in `API-ISSUES.md` are not missing; you called the w
 - Add or extend a local test for the full journey: create → details → questions → join with answers → approve → exact point revealed → check-in → confirm or dispute → feedback.
 - Any real mismatch goes in `API-ISSUES.md`. Before logging one, check the backend controller for the right path.
 - Report what you **changed**, file by file, plus the journey test result.
+
+
+## >>> 2 Oct 2026: CURRENT MISSION = `docs/missions/MARATHON-FE.md` (it supersedes the area-by-area "say go" flow)

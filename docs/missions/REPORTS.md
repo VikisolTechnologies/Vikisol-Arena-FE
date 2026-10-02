@@ -1,6 +1,52 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## MARATHON-FE, Step 0 — area 3b complete — 2 Oct 2026
+**Frontend repo, `feature/arena-vnext-mobile-jenny`.** Finished the in-progress area 3b work
+(the architect's "Architect review of area 3" table, all 16 `/activities/*` endpoints).
+
+**New:** `src/lib/api/activities.ts` (the full data layer, every endpoint typed against
+`ActivityDtos.java`, verified live with curl against each one before wiring any UI to it) and
+`src/components/activity/ActivityLifecycle.tsx` (the UI that didn't exist before: answering the
+host's questions to join, the waitlist, self check-in, post-activity confirm/dispute/feedback,
+the host's question editor, host's emergency-contacts panel).
+
+**Changed:** `ActivityCreateFlow.tsx` (kinds from `GET /activities/kinds`, not hardcoded;
+publishes `PUT /activities/{id}/details` + `/questions` right after `POST /posts`; covers upload
+via `POST /activities/{id}/cover`), `KindPicker.tsx` + `taxonomy.ts` (`liveCategories()` filters
+the local design taxonomy down to what the backend's catalogue actually offers), `ActivityScreen.tsx`
+(fetches `GET /activities/{id}` for questions/waitlist/viewer-attendance state; join opens the
+answer sheet when there are questions; waitlist block when full; self check-in and
+confirm/feedback in the approved view; host panel gets the questions editor, answer viewer and
+emergency contacts), `CheckInSheet.tsx` (real mode now uses the attendance endpoints —
+`hostCheckIn`, `getAttendance`, `acceptDispute` — instead of the generic join outcome, so
+disputes show up for the host too).
+
+**A real bug found and fixed, not just a wiring gap:** `istToIso()` (`src/lib/activities/publish.ts`)
+defaulted a missing end time to `"00:00"` on the activity's own date — for any activity hosted in
+the evening with no explicit end, that put `endsAt` *before* `startsAt` and in the past the
+moment it was created, which made `PostService.requireOpenCapacity` refuse every join with
+"This activity has already started or ended." Found while building the journey test (a freshly
+created activity failed to let the joiner in), fixed so a missing end means no `endsAt` at all,
+not a wrong one. This would have silently broken hosting any undated-end evening activity in
+production.
+
+**API-ISSUES.md:** the two entries the architect flagged as path errors are closed (`/activities/...`
+is correct, not `/posts/...`); the media-upload entry is marked fixed per B12's local-disk
+fallback, verified live (cover upload returns a real fetchable URL now).
+
+**Journey test:** two real accounts (host + joiner), against the real local backend, full
+flow — create (real kinds) → details/questions published → join with answers → host reads the
+answer → approve → self check-in → host check-in → confirm attendance → feedback. All green.
+The test itself isn't committed (a throwaway `playwright.real-smoke.config.ts` + spec using a
+localStorage-draft shortcut and a real multi-minute wait for the activity to start — not suited
+to the regular suite); this write-up is the record of it.
+
+**Tests:** `npx tsc --noEmit` and `eslint` on every changed file: clean.
+
+**Next:** Step 1 (safety-net route crawl + production build in api mode), then areas 4–9 per
+`MARATHON-FE.md`.
+
 ## Mission B12 — 1 Oct 2026
 **Backend repo, `feature/admin-account-gaps`**, 3 commits (`892eecb`, `4086f8c`), pushed. Full
 suite **267/267 green** (was 259; +8 new tests). Nothing merged to `main`.

@@ -111,6 +111,21 @@ export const CATEGORIES: Category[] = [
 
 export const ALL_SUBTYPES = CATEGORIES.flatMap((c) => c.subtypes.map((s) => ({ ...s, category: c })));
 
+/** M6 area 3b: GET /activities/kinds is the real source of which categories/subtypes are
+ * currently offered (`ActivityCatalogue.catalogue()`) — this file keeps the design (icons,
+ * colours, labels) locally since the backend only returns plain category→subtype-id strings,
+ * nothing visual. "other" always stays available as the catch-all, same as the backend's own
+ * handling of an unrecognised subtype. Falls back to the full local list if `kinds` is
+ * undefined (mock mode, or the endpoint unreachable) — never a hard failure on this screen. */
+export function liveCategories(kinds: Record<string, string[]> | undefined): Category[] {
+  if (!kinds) return CATEGORIES;
+  return CATEGORIES.map((c) => {
+    if (c.id === "other") return c;
+    const allowed = new Set(kinds[c.id] ?? []);
+    return { ...c, subtypes: c.subtypes.filter((s) => allowed.has(s.id)) };
+  }).filter((c) => c.id === "other" || c.subtypes.length > 0);
+}
+
 export function findSubtype(id: string | undefined) {
   return ALL_SUBTYPES.find((s) => s.id === id);
 }

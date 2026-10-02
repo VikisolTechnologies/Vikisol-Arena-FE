@@ -57,3 +57,4 @@ next-env.d.ts
 .next-founder/
 .next-mock-tests/
 docs/reviews/shots/**/*.png
+.next-real-smoke/

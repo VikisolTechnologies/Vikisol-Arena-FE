@@ -19,6 +19,8 @@ import { DemoBadge, StateCard } from "@/components/bplus/Primitives";
 import { RequirementDialog, requirementFromError, type Requirement } from "@/components/requirements/RequirementForm";
 import { PaperPlane, SaferCommunity, StatusTimeline, SuccessCheck, downloadIcs, activityWhen } from "@/components/activity/ActivityParts";
 import { decideJoin, getJoinRequests, getPost, requestJoin, savePost, unsavePost, withdrawJoin } from "@/lib/api/posts";
+import { getActivity, getJoinerAnswers, joinActivity, type ActivityAnswer, type ActivityDetails, type JoinActivityInput } from "@/lib/api/activities";
+import { isRealMode } from "@/lib/api/mode";
 import { startChat } from "@/lib/api/messages";
 import { getMyProfile } from "@/lib/data/profile";
 import { distanceKm, formatKm } from "@/lib/data/feed";
@@ -28,6 +30,7 @@ import type { Post, PostJoinRequest } from "@/lib/types";
 import { Cover } from "@/components/covers/Cover";
 import { CancelActivitySheet, LeaveActivitySheet, StartingSoon, dayOf } from "@/components/activity/ActivityTools";
 import { CheckInSheet } from "@/components/activity/CheckInSheet";
+import { AnswerQuestionsSheet, ConfirmAndFeedback, EmergencyContactsBlock, HostQuestionsEditor, SelfCheckInButton, WaitlistBlock } from "@/components/activity/ActivityLifecycle";
 
 const JOIN_STEPS = [
   { title: "Request sent", detail: "Just now" },
@@ -51,28 +54,39 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false,
   const [reportOpen, setReportOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const [notice, setNotice] = useState("");
+  const [activity, setActivity] = useState<ActivityDetails | undefined>(undefined);
+  const [answerSheetOpen, setAnswerSheetOpen] = useState(false);
   const signedIn = useGuest() === false;
   const host = post.authorName?.split(" ")[0] ?? "the host";
   const title = post.title?.trim() || post.body.slice(0, 80);
 
   const reload = useCallback(() => getPost(post.id).then((p) => p && setPost(p)), [post.id]);
+  const reloadActivity = useCallback(() => getActivity(post.id).then(setActivity).catch(() => {}), [post.id]);
   useEffect(() => {
     if (getSession()) getMyProfile().then((p) => setMe({ lat: p.approxLat, lng: p.approxLng })).catch(() => {});
   }, []);
+  // M6 area 3b: the activity-specific layer (questions, waitlist/spots, viewer attendance state)
+  // on top of the generic post, from GET /activities/{id}. Guest-readable too.
+  useEffect(() => {
+    void reloadActivity();
+  }, [reloadActivity]);
 
   const km = distanceKm(me, { lat: post.approxLat, lng: post.approxLng });
-  const spots = post.capacity != null ? Math.max(0, post.capacity - post.spotsFilled) : null;
+  const spots = activity?.spotsLeft ?? (post.capacity != null ? Math.max(0, post.capacity - post.spotsFilled) : null);
   const inactive = post.status === "cancelled" || post.status === "expired" || post.status === "closed";
 
-  const join = async () => {
-    if (!getSession()) return router.push(`/auth?mode=signin`);
+  const doJoin = async (input: JoinActivityInput) => {
     setBusy(true);
     setError("");
     try {
-      const req = await requestJoin(post.id);
+      // Real mode: the activity-aware join (answers, emergency contact). Mock mode has no
+      // equivalent endpoint, so it keeps using the generic requestJoin it was already built on.
+      const req = isRealMode() ? await joinActivity(post.id, input) : await requestJoin(post.id);
       await reload();
+      await reloadActivity();
       vibrate();
-      if (req.status === "pending") setSentOpen(true);
+      setAnswerSheetOpen(false);
+      if (req?.status === "pending") setSentOpen(true);
     } catch (err) {
       const missing = requirementFromError(err);
       if (missing) setRequirement(missing);
@@ -80,6 +94,17 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false,
     } finally {
       setBusy(false);
     }
+  };
+
+  const join = async () => {
+    if (!getSession()) return router.push(`/auth?mode=signin`);
+    // Answer the host's questions first if there are any (M6 area 3b) — otherwise join straight
+    // away, same as before.
+    if (isRealMode() && ((activity?.questions.length ?? 0) > 0 || activity?.needsEmergencyContact)) {
+      setAnswerSheetOpen(true);
+      return;
+    }
+    await doJoin({});
   };
 
   const withdraw = async () => {
@@ -129,7 +154,7 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false,
     }
   };
 
-  if (post.myJoinStatus === "approved" && !post.mine) return <ApprovedView post={post} title={title} host={host} onShare={share} onLeft={() => void reload()} leaveOpen={specimen?.open === "leave"} />;
+  if (post.myJoinStatus === "approved" && !post.mine) return <ApprovedView post={post} activity={activity} onActivityChanged={reloadActivity} title={title} host={host} onShare={share} onLeft={() => void reload()} leaveOpen={specimen?.open === "leave"} />;
 
   const facts = [
     spots != null && { icon: Users, text: spots > 0 ? `${spots} ${spots === 1 ? "spot" : "spots"} available` : "This activity is full" },
@@ -217,7 +242,7 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false,
         )}
 
         {post.mine ? (
-          <HostPanel post={post} onChanged={reload} specimen={specimen} />
+          <HostPanel post={post} activity={activity} onChanged={reload} onActivityChanged={reloadActivity} specimen={specimen} />
         ) : (
           <m.div variants={rise} custom={4} className="sticky bottom-[calc(76px+env(safe-area-inset-bottom))] z-10 -mx-5 mt-7 bg-linear-to-t from-paper from-80% to-transparent px-5 pb-2 pt-4">
             {error && <p role="alert" className="mb-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
@@ -231,9 +256,13 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false,
             ) : post.myJoinStatus === "declined" ? (
               <p className="rounded-tile bg-paper-muted p-4 text-center text-[15px]">The host couldn&apos;t fit you in this time.</p>
             ) : spots === 0 ? (
-              <p className="rounded-tile bg-paper-muted p-4 text-center text-[15px]">This activity is full.</p>
+              activity?.waitlist ? (
+                <WaitlistBlock postId={post.id} position={activity.viewer?.waitlistPosition} onChanged={() => void reloadActivity()} />
+              ) : (
+                <p className="rounded-tile bg-paper-muted p-4 text-center text-[15px]">This activity is full.</p>
+              )
             ) : (
-              <Button onClick={join} loading={busy}>{signedIn ? (post.visibility === "public" ? "Join" : "Request to join") : "Sign in to join"}</Button>
+              <Button onClick={join} loading={busy || (isRealMode() && activity === undefined)}>{signedIn ? (post.visibility === "public" ? "Join" : "Request to join") : "Sign in to join"}</Button>
             )}
           </m.div>
         )}
@@ -285,14 +314,43 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false,
 
       <ReportSheet open={reportOpen} onClose={() => setReportOpen(false)} target={{ kind: "post", id: post.id }} person={{ userId: post.authorUserId || undefined, name: post.authorName ?? "The host", detail: title }} />
       <RequirementDialog requirement={requirement} onOpenChange={(open) => !open && setRequirement(null)} onDone={() => { setRequirement(null); void join(); }} />
+      <AnswerQuestionsSheet
+        open={answerSheetOpen}
+        onClose={() => setAnswerSheetOpen(false)}
+        questions={activity?.questions ?? []}
+        needsEmergencyContact={!!activity?.needsEmergencyContact}
+        busy={busy}
+        error={error}
+        onSubmit={(input) => void doJoin(input)}
+      />
     </AppShell>
   );
 }
 
-function ApprovedView({ post, title, host, onShare, onLeft, leaveOpen: leaveInitially = false }: { post: Post; title: string; host: string; onShare: () => void; onLeft: () => void; leaveOpen?: boolean }) {
+function ApprovedView({
+  post,
+  activity,
+  onActivityChanged,
+  title,
+  host,
+  onShare,
+  onLeft,
+  leaveOpen: leaveInitially = false,
+}: {
+  post: Post;
+  activity?: ActivityDetails;
+  onActivityChanged: () => void;
+  title: string;
+  host: string;
+  onShare: () => void;
+  onLeft: () => void;
+  leaveOpen?: boolean;
+}) {
   const router = useRouter();
   const [leaveOpen, setLeaveOpen] = useState(leaveInitially);
   const point = post.exactMeetingPoint || post.locationText;
+  const timing = dayOf(post.startsAt);
+  const viewer = activity?.viewer;
   return (
     <AppShell>
       <div className="-mx-5 -mt-[max(8px,env(safe-area-inset-top))] flex-1 bg-paper px-5 pb-6 pt-[max(12px,env(safe-area-inset-top))] text-paper-ink">
@@ -339,6 +397,21 @@ function ApprovedView({ post, title, host, onShare, onLeft, leaveOpen: leaveInit
           )}
         </section>
 
+        {/* M6 area 3b: self check-in opens an hour before start; confirm + feedback appear
+         *  once the activity has started (the backend enforces both windows too). */}
+        {timing.checkIn && !timing.started && activity && (
+          <SelfCheckInButton postId={post.id} checkedInAt={viewer?.checkedInAt} onChecked={onActivityChanged} />
+        )}
+        {timing.started && activity && viewer?.attendedConfirmed == null && (
+          <ConfirmAndFeedback
+            postId={post.id}
+            hostId={post.authorUserId ?? ""}
+            markedNoShow={viewer?.outcome === "no_show"}
+            alreadyConfirmed={false}
+            onDone={onActivityChanged}
+          />
+        )}
+
         <ul className="mt-2 divide-y divide-paper-ink/10">
           <li>
             <button type="button" onClick={onShare} className="flex min-h-14 w-full items-center gap-3 text-left text-[16px]">
@@ -366,12 +439,14 @@ function ApprovedView({ post, title, host, onShare, onLeft, leaveOpen: leaveInit
 }
 
 /** Host's view: the request queue (approve / decline) and cancel. */
-function HostPanel({ post, onChanged, specimen }: { post: Post; onChanged: () => void; specimen?: ActivitySpecimen }) {
+function HostPanel({ post, activity, onChanged, onActivityChanged, specimen }: { post: Post; activity?: ActivityDetails; onChanged: () => void; onActivityChanged: () => void; specimen?: ActivitySpecimen }) {
   const [requests, setRequests] = useState<PostJoinRequest[] | null>(specimen?.requests ?? null);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [cancelOpen, setCancelOpen] = useState(specimen?.open === "cancel");
   const [checkInOpen, setCheckInOpen] = useState(specimen?.open === "checkin");
+  const [answersFor, setAnswersFor] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<ActivityAnswer[] | null>(null);
   const timing = dayOf(post.startsAt, specimen?.now);
   useEffect(() => {
     if (specimen?.requests) return;
@@ -391,6 +466,15 @@ function HostPanel({ post, onChanged, specimen }: { post: Post; onChanged: () =>
       setBusyId(null);
     }
   };
+  // M6 area 3b, table row 7: the host reads a joiner's answers to the activity's questions.
+  const toggleAnswers = (r: PostJoinRequest) => {
+    if (answersFor === r.id) return setAnswersFor(null);
+    setAnswersFor(r.id);
+    setAnswers(null);
+    getJoinerAnswers(post.id, r.userId)
+      .then(setAnswers)
+      .catch(() => setAnswers([]));
+  };
   return (
     <section className="mt-7" aria-label="Your activity">
       <h2 className="text-[17px] font-semibold">Requests to join</h2>
@@ -399,14 +483,32 @@ function HostPanel({ post, onChanged, specimen }: { post: Post; onChanged: () =>
       {requests && pending.length === 0 && <p className="mt-2 text-[14px] text-paper-ink-muted">No one is waiting. {approved.length} going.</p>}
       <ul className="mt-3 space-y-2.5">
         {pending.map((r) => (
-          <li key={r.id} className="flex items-center gap-3 rounded-tile bg-paper-muted p-3">
-            <Avatar name={r.userName} className="size-10 text-[15px]" />
-            <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{r.userName}</span>
-            <button type="button" disabled={busyId === r.id} onClick={() => decide(r, false)} className="min-h-11 rounded-full border border-paper-ink/55 px-3 text-[14px] font-semibold">Decline</button>
-            <button type="button" disabled={busyId === r.id} onClick={() => decide(r, true)} className={cn("min-h-11 rounded-full bg-primary px-4 text-[14px] font-bold text-paper-ink")}>Approve</button>
+          <li key={r.id} className="rounded-tile bg-paper-muted p-3">
+            <div className="flex items-center gap-3">
+              <Avatar name={r.userName} className="size-10 text-[15px]" />
+              <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{r.userName}</span>
+              <button type="button" disabled={busyId === r.id} onClick={() => decide(r, false)} className="min-h-11 rounded-full border border-paper-ink/55 px-3 text-[14px] font-semibold">Decline</button>
+              <button type="button" disabled={busyId === r.id} onClick={() => decide(r, true)} className={cn("min-h-11 rounded-full bg-primary px-4 text-[14px] font-bold text-paper-ink")}>Approve</button>
+            </div>
+            {(activity?.questions.length ?? 0) > 0 && (
+              <button type="button" onClick={() => toggleAnswers(r)} className="mt-2 text-[13px] font-semibold text-primary-on-paper underline underline-offset-4">
+                {answersFor === r.id ? "Hide answers" : "See their answers"}
+              </button>
+            )}
+            {answersFor === r.id && (
+              <ul className="mt-2 space-y-1">
+                {!answers && <li className="text-[13px] text-paper-ink-muted">Loading…</li>}
+                {answers?.length === 0 && <li className="text-[13px] text-paper-ink-muted">No answers yet.</li>}
+                {answers?.map((a) => (
+                  <li key={a.questionId} className="text-[13px]"><span className="text-paper-ink-muted">{a.question}:</span> {a.answer || "—"}</li>
+                ))}
+              </ul>
+            )}
           </li>
         ))}
       </ul>
+      <HostQuestionsEditor postId={post.id} initial={activity?.questions ?? []} />
+      {activity?.needsEmergencyContact && <EmergencyContactsBlock postId={post.id} />}
       <div className="mt-6 space-y-2">
         {timing.soon && post.status !== "cancelled" && <StartingSoon startsAt={post.startsAt!} point={post.exactMeetingPoint} now={specimen?.now} />}
         {timing.checkIn && approved.length > 0 && post.status !== "cancelled" && <Button onClick={() => setCheckInOpen(true)}>Check people in</Button>}
@@ -417,7 +519,7 @@ function HostPanel({ post, onChanged, specimen }: { post: Post; onChanged: () =>
           </Button>
         )}
       </div>
-      <CheckInSheet postId={checkInOpen ? post.id : null} onClose={() => setCheckInOpen(false)} specimen={specimen?.requests} />
+      <CheckInSheet postId={checkInOpen ? post.id : null} onClose={() => { setCheckInOpen(false); onActivityChanged(); }} specimen={specimen?.requests} />
       <CancelActivitySheet open={cancelOpen} onClose={() => setCancelOpen(false)} postId={post.id} roomId={post.roomId} onCancelled={onChanged} />
     </section>
   );
