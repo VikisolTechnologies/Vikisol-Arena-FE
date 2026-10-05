@@ -92,6 +92,7 @@ function Card({ a, must, canDrag, hrefFor, onMove, onHover, onDrop }: {
         </span>
       </Link>
       {must.length > 0 && <p className="mt-2 text-[12px] text-paper-ink-muted">Shows {shown}/{must.length} must-haves</p>}
+      {a.candidate?.currentCtc != null && <p className="mt-1 text-[12px] text-paper-ink-muted">Current CTC ₹{a.candidate.currentCtc} LPA</p>}
       <MoveTo applicant={a} onMove={onMove} className="mt-2 w-full" onPaper />
     </m.li>
   );

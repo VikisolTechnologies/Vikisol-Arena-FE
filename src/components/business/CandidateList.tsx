@@ -135,6 +135,7 @@ export function CandidateList({ applicants, must, hrefFor, onMove, onBulk, initi
                     <span className="block truncate text-[16px] font-semibold">{name}</span>
                     <span className="block text-[13px] text-paper-ink-muted"><span className={cn("font-semibold", STAGE_TEXT[a.stage])}>{STAGE_LABEL[a.stage]}</span> · Applied {shortDate(a.appliedAt)}</span>
                     {must.length > 0 && <span className="block text-[13px] text-paper-ink-muted">Shows {shown}/{must.length} must-haves</span>}
+                    {a.candidate?.currentCtc != null && <span className="block text-[13px] text-paper-ink-muted">Current CTC ₹{a.candidate.currentCtc} LPA</span>}
                     {(a.candidate?.skills?.length ?? 0) > 0 && (
                       <span className="mt-1.5 flex flex-wrap gap-1.5">
                         {a.candidate!.skills.slice(0, 2).map((s) => <span key={s.name} className="rounded-full bg-paper-ink/8 px-2.5 py-0.5 text-[12px]">{s.name}</span>)}

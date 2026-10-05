@@ -115,6 +115,12 @@ export default function CandidateProfilePage() {
     ...(c.location || c.homeCity ? [[MapPin, `Based in ${c.location || c.homeCity}`] as [typeof MapPin, string]] : []),
     [Wifi, c.remote ? "Open to remote work" : "Open to on-site work"],
     ...(c.experienceYears != null ? [[Briefcase, `${c.experienceYears} year${c.experienceYears === 1 ? "" : "s"} of experience`] as [typeof MapPin, string]] : []),
+    // Step B item 3: currentCtc was never rendered anywhere, even when the candidate ticked
+    // "include my CTC" on applying - CandidateProfileMapper gates both fields on the same
+    // per-application includeCtc flag, but the FE only ever read expectedCtc. Most candidates
+    // only set a current CTC on the Compensation step, so this was silently hiding the one
+    // field recruiters actually need for the "CTC shown only when included" requirement.
+    ...(c.currentCtc ? [[IndianRupee, `Current CTC ₹${c.currentCtc} LPA`] as [typeof MapPin, string]] : []),
     ...(c.expectedCtc ? [[IndianRupee, `Expects ₹${c.expectedCtc} LPA`] as [typeof MapPin, string]] : []),
     ...(c.openTo?.length ? [[CalendarDays, `Open to ${c.openTo.join(", ").replace("full-time", "full time")}`] as [typeof MapPin, string]] : []),
   ];

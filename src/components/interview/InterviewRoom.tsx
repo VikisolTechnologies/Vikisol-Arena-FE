@@ -8,7 +8,7 @@ import { errorIn, rise } from "@/lib/motion";
 import { MeetingEmbed } from "./MeetingEmbed";
 import { Button } from "@/components/bplus/Button";
 import { downloadIcs } from "@/components/activity/ActivityParts";
-import { saveInterviewNotes, submitInterviewFeedback } from "@/lib/api/interviews";
+import { confirmInterviewSlot, saveInterviewNotes, submitInterviewFeedback } from "@/lib/api/interviews";
 import type { ApplicationStage, Interview, InterviewRecommendation } from "@/lib/types";
 
 type Participant = { name: string; avatarEmoji: string };
@@ -65,6 +65,8 @@ export function InterviewRoom({
   const [rec, setRec] = useState<InterviewRecommendation | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [picking, setPicking] = useState<string | null>(null);
+  const [pickError, setPickError] = useState("");
 
   const slot = interview.proposedSlots.find((s) => s.id === interview.confirmedSlotId);
   const first = counterpart.name.split(" ")[0];
@@ -108,6 +110,19 @@ export function InterviewRoom({
 
   const card = "rounded-tile bg-paper p-5 text-paper-ink";
 
+  const pickSlot = async (slotId: string) => {
+    setPicking(slotId);
+    setPickError("");
+    try {
+      const updated = await confirmInterviewSlot(interview.id, slotId);
+      if (updated) onInterviewUpdate(updated);
+    } catch {
+      setPickError("That time didn't save. Try again.");
+    } finally {
+      setPicking(null);
+    }
+  };
+
   if (interview.status === "cancelled") {
     return <p data-surface="paper" className={cn(card, "flex items-center gap-3 text-[15px] text-faint")}><CalendarX2 className="size-5" aria-hidden /> This interview was cancelled.</p>;
   }
@@ -128,10 +143,29 @@ export function InterviewRoom({
   if (interview.status === "proposed") {
     return (
       <div data-surface="paper" className={card}>
-        <p className="flex items-center gap-2 text-[16px] font-semibold"><Clock3 className="size-5 text-warning" aria-hidden /> {canGiveFeedback ? `Waiting for ${first} to pick a time` : "Times offered — pick one from your application"}</p>
-        <ul className="mt-3 space-y-1.5">
-          {interview.proposedSlots.map((s) => <li key={s.id} className="rounded-xl bg-foreground/6 px-3 py-2 text-[15px]">{when(s.start)} · {s.durationMinutes} min</li>)}
-        </ul>
+        <p className="flex items-center gap-2 text-[16px] font-semibold"><Clock3 className="size-5 text-warning" aria-hidden /> {canGiveFeedback ? `Waiting for ${first} to pick a time` : "Pick a time"}</p>
+        {canGiveFeedback ? (
+          <ul className="mt-3 space-y-1.5">
+            {interview.proposedSlots.map((s) => <li key={s.id} className="rounded-xl bg-foreground/6 px-3 py-2 text-[15px]">{when(s.start)} · {s.durationMinutes} min</li>)}
+          </ul>
+        ) : (
+          <ul className="mt-3 space-y-1.5">
+            {interview.proposedSlots.map((s) => (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  disabled={!!picking}
+                  onClick={() => pickSlot(s.id)}
+                  className="flex min-h-12 w-full items-center justify-between rounded-xl border border-field-line px-3 text-left text-[15px] hover:bg-foreground/5 disabled:opacity-60"
+                >
+                  {when(s.start)} · {s.durationMinutes} min
+                  {picking === s.id && <span className="text-[13px] text-faint">Saving…</span>}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {pickError && <p role="alert" className="mt-2 text-[13px] font-semibold text-danger-on-dark">{pickError}</p>}
       </div>
     );
   }
