@@ -151,3 +151,9 @@ Do these items from `ARCHITECT-REVIEW-BE-1` SHOULD-FIX, in this order, one commi
 
 
 ## >>> 2 Oct 2026: B12 ACCEPTED. CURRENT MISSION = `../arena-fe-vnext/docs/missions/MARATHON-BE.md`
+
+
+## >>> 3 Oct 2026: MARATHON-BE received (292 tests). The architect review is pending. Next: only `API-ISSUES.md` / `QA-BUGS.md` entries owned by BE, plus the Guava PSL swap once the network is back.
+
+
+## >>> CURRENT MISSION = `../arena-fe-vnext/docs/missions/MARATHON-BE-2.md`

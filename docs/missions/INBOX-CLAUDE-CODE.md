@@ -162,3 +162,6 @@ The two "missing" endpoints in `API-ISSUES.md` are not missing; you called the w
 
 
 ## >>> 2 Oct 2026: CURRENT MISSION = `docs/missions/MARATHON-FE.md` (it supersedes the area-by-area "say go" flow)
+
+
+## >>> 3 Oct 2026: MARATHON-FE ACCEPTED. CURRENT MISSION = `docs/missions/MARATHON-FE-2.md`
