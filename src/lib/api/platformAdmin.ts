@@ -333,6 +333,28 @@ export async function toggleFeatureFlag(id: string, enabled: boolean): Promise<F
   return delay(updated.find((f) => f.id === id)!, 200);
 }
 
+// ---- Industries (FE-API-GAPS row 62) ----
+// MARATHON-FE-2 Step B item 5: /admin/industries (GET/POST/PUT) was live on the backend with no
+// frontend screen at all - "add one, and it appears in the company's picker" had nothing to test.
+export interface AdminIndustryRow {
+  key: string;
+  label: string;
+  active: boolean;
+  position: number;
+}
+
+export async function listAdminIndustries(): Promise<AdminIndustryRow[]> {
+  return apiFetch<AdminIndustryRow[]>("/admin/industries");
+}
+
+export async function addIndustry(label: string): Promise<AdminIndustryRow> {
+  return apiFetch<AdminIndustryRow>("/admin/industries", { method: "POST", body: { label } });
+}
+
+export async function setIndustryActive(key: string, active: boolean): Promise<AdminIndustryRow> {
+  return apiFetch<AdminIndustryRow>(`/admin/industries/${key}`, { method: "PUT", body: { active } });
+}
+
 // ---- Disputes (PA9 / FE-API-GAPS row 46) ----
 // MARATHON-FE-2 Step B item 5: AdminDisputeController (/admin/disputes) was live on the backend
 // the whole time - this screen said "need a platform-admin endpoint" and never called real mode

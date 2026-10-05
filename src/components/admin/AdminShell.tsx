@@ -15,6 +15,7 @@ import {
   ToggleLeft,
   ScrollText,
   Shield,
+  Factory,
 } from "lucide-react";
 import { DashShell, type DashNavItem } from "@/components/dash/DashShell";
 import NotFound from "@/app/not-found";
@@ -32,6 +33,7 @@ export const ADMIN_NAV: DashNavItem[] = [
   { href: "/admin/jenny", label: "Jenny & AI", icon: Sparkles },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/flags", label: "Feature flags", icon: ToggleLeft },
+  { href: "/admin/industries", label: "Industries", icon: Factory },
   { href: "/admin/audit", label: "Audit log", icon: ScrollText },
   { href: "/admin/team", label: "Admin team", icon: Shield },
 ];
