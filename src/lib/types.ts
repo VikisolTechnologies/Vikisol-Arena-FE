@@ -318,7 +318,10 @@ export interface AuditEvent {
   createdAt: string;
 }
 
-export type PostingStatus = "open" | "paused" | "closed";
+// "draft" added MARATHON-FE-2 Step A: JobPostingService's CreatePostingRequest already supports
+// it (a new posting defaults to "open" otherwise, which 400s for an unverified company - the FE
+// never sent "draft" to ask for the alternative, verified live against the real backend).
+export type PostingStatus = "draft" | "open" | "paused" | "closed";
 
 export interface JobPosting {
   id: string;

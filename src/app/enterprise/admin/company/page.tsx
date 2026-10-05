@@ -11,6 +11,7 @@ import { CompanyMark } from "@/components/career/CompanyMark";
 import { Panel } from "@/components/dash/Parts";
 import { getMyEnterpriseProfile, saveMyEnterpriseProfile } from "@/lib/api/enterprise";
 import { useIndustries } from "@/lib/data/industries";
+import { VerificationPanel } from "@/components/business/VerificationPanel";
 import type { CompanySize, EnterpriseProfile } from "@/lib/types";
 
 const SIZES: CompanySize[] = ["1-10", "11-50", "51-200", "201-1000", "1000+"];
@@ -115,7 +116,8 @@ export default function CompanyProfilePage() {
                 <span><span className="block text-[16px] font-semibold">{profile.companyName || "Your company"}</span><span className="text-[14px] text-faint">{profile.industry} · {profile.size} people</span></span>
               </div>
             </Panel>
-            <p className="flex gap-2 px-1 text-[13px] text-faint"><Info className="mt-0.5 size-4 shrink-0" aria-hidden /> Logo upload, website and the verified badge arrive with company verification.</p>
+            <VerificationPanel />
+            <p className="flex gap-2 px-1 text-[13px] text-faint"><Info className="mt-0.5 size-4 shrink-0" aria-hidden /> Logo upload arrives separately.</p>
           </m.aside>
         </m.div>
       )}

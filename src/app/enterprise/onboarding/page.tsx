@@ -76,7 +76,7 @@ export default function EnterpriseOnboardingPage() {
                 <Info className="mt-0.5 size-5 shrink-0" aria-hidden />
                 <div>
                   <p className="text-[15px] font-semibold">Company verification</p>
-                  <p className="mt-0.5 text-[14px] text-paper-ink-muted">Arena will verify company domains before jobs are marked &ldquo;Verified&rdquo;. That check isn&apos;t open yet — you can set up and post today, and your company won&apos;t show a verified badge until it is.</p>
+                  <p className="mt-0.5 text-[14px] text-paper-ink-muted">Right after this, verify your company&apos;s domain from Company profile — it takes a minute, and a job can&apos;t publish until it&apos;s done.</p>
                 </div>
               </section>
             )}

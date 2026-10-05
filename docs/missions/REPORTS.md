@@ -1,6 +1,69 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## MARATHON-FE-2, Step A — 5 Oct 2026
+**Company verification built from nothing.** Read `BusinessController` (`/enterprise/verification`,
+`/enterprise/verification/confirm`, `/companies/{id}/verification`) and
+`AdminVerificationController` (`/admin/verification*`). New data layer
+`src/lib/api/businessVerification.ts`; new UI `src/components/business/VerificationPanel.tsx`
+(mounted in `/enterprise/admin/company`) covering the five states the mission names: the form,
+the code step, Pending review, Verified (badge), Rejected (reason + retry).
+
+**Verified live end to end with curl against the local backend** before writing the UI: submit →
+got the real code off `NoopEmailProvider`'s log → confirm (`domainConfirmed: true`) → signed in
+as a real platform admin (TOTP 2FA, see below) → GET the admin queue (shape matches
+`VerificationQueueItem` exactly) → approve → public badge GET shows `verified: true`. A verified
+company ("GreenLeaf Labs Pvt Ltd" / `greenleaf.example`) now sits in the local DB from that run.
+
+**Admin side:** rewrote `src/app/admin/verification/page.tsx`, previously 100% fixture-driven with
+a "Verification API not connected" placeholder for real mode. It now calls
+`getVerificationQueue`/`approveVerification`/`rejectVerification` in real mode and keeps the
+fixture path byte-for-byte for mock mode. One naming seam: the backend's wire status is
+`"verified"` (confirmed via curl), but this screen's existing tabs are
+`pending`/`approved`/`rejected` (B+ convention already in `fixtures.ts`'s `VerificationRequest`).
+Mapped `"verified"` and `"verified_legacy"` both onto the `"approved"` tab in the adapter
+(`toRow()`) rather than rename the tabs — smaller diff, same UI. The legacy-company admin screen
+(`getLegacyCompanies`/`endLegacyVerification` — data layer written, no UI) wasn't built: the
+mission's five numbered requirements for Step A don't ask for it, and nothing else in this run
+needs it yet.
+
+**The publish gate.** `JobPostingService.requirePublishAllowed()` 400s a `DRAFT→OPEN` transition
+for an unverified company — but the FE's `PostingStatus` type never had `"draft"` at all, and
+`createPosting()` never sent a `status`, so an unverified company couldn't save a job as a draft
+either (the backend defaults new postings to `OPEN`, which 400s immediately). Fixed: added
+`"draft"` to `PostingStatus` (`src/lib/types.ts`), extended `createPosting()`'s input with
+optional `status`, and `enterprise/postings/new/page.tsx` now checks `getMyVerification()` on
+mount and sends `"draft"` for an unverified company, `"open"` otherwise. The posting detail page
+shows a proactive "Verify your company to publish this job" banner (linking to
+`/enterprise/admin/company`) whenever a posting is sitting in draft, and the onboarding copy on
+`enterprise/onboarding/page.tsx` now tells the company to verify right after onboarding instead of
+the old placeholder claiming that check "isn't open yet."
+
+**Also fixed in passing:** both `enterprise/postings/page.tsx` and `.../[id]/page.tsx` had a bare
+`catch { setError("generic text") }` around their status-change calls that silently discarded the
+real backend message — including the verification-required message above. Both now surface
+`err.message` when present, falling back to the generic text only when there isn't one. Same
+"show the real write-failure message" theme as Step 0's missing-DOB work.
+
+**Platform admin 2FA, for the record:** platform-admin routes require TOTP 2FA server-side
+(`"Turn on two-factor authentication before using platform admin."`). Set up and verified with a
+real secret via `pyotp` (`POST /auth/2fa/setup` → `enable` → sign-in's `mfaRequired`/
+`mfaPendingToken` → `POST /auth/2fa/verify`), against a bootstrapped admin account
+(`PLATFORM_ADMIN_EMAIL` must not equal the retired demo address, or bootstrap silently no-ops).
+No FE change was needed — the existing 2FA UI (from an earlier mission) handled the flow as-is.
+
+**Journey test:** `tests/local/business-verification.local.ts` — stub-based (API intercepted at
+the route level, per this suite's existing convention), covers a company account submitting
+verification, a wrong code, the right code, Pending review, the platform admin approving from
+`/admin/verification`, and the company then seeing Verified. Passes on all three local projects
+(desktop/mobile/mobile-webkit).
+
+**Tests:** `npx tsc --noEmit` and `eslint` on every changed/new file: clean.
+`VERCEL_ENV=production NEXT_PUBLIC_ARENA_DATA=api npm run build`: compiles clean, full route list
+printed, no errors.
+
+**Next:** Step B — live click-through of areas 7 and 8 with real accounts.
+
 ## MARATHON-FE-2, Step 0 — 2 Oct 2026
 **Push:** the 9 MARATHON-FE commits pushed clean on the first try this session (network was back).
 

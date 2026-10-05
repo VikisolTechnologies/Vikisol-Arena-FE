@@ -1,9 +1,10 @@
 "use client";
 
 import { Suspense, useEffect, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, m } from "motion/react";
-import { ArrowLeft, Briefcase, CalendarDays, Check, ChevronRight, Copy, IndianRupee, Link2, ListChecks, MapPin, Rocket, Users } from "lucide-react";
+import { ArrowLeft, Briefcase, CalendarDays, Check, ChevronRight, Copy, IndianRupee, Link2, ListChecks, MapPin, Rocket, ShieldCheck, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { dissolve, rise } from "@/lib/motion";
 import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
@@ -127,8 +128,11 @@ function JobPage() {
     try {
       await setPostingStatus(posting.id, status);
       setPosting({ ...posting, status });
-    } catch {
-      setError("The job status didn't change. Try again.");
+    } catch (err) {
+      // MARATHON-FE-2 Step A: a generic "didn't save" swallowed the one message that actually
+      // matters here - JobPostingService refuses DRAFT->OPEN/PAUSED for an unverified company
+      // ("Your company needs to be verified before jobs go live...") - verified live.
+      setError(err instanceof Error && err.message ? err.message : "The job status didn't change. Try again.");
     } finally {
       setStatusBusy(false);
     }
@@ -185,14 +189,23 @@ function JobPage() {
         </m.div>
         <m.div variants={rise} custom={1} className="flex flex-wrap items-center gap-2">
           <StatusPill status={posting.status} />
-          {posting.status !== "closed" && <DashButton variant="outline" disabled={statusBusy} onClick={() => changeStatus(posting.status === "open" ? "paused" : "open")}>{posting.status === "open" ? "Pause" : "Reopen"}</DashButton>}
-          {posting.status !== "closed" && <DashButton variant="danger" disabled={statusBusy} onClick={() => changeStatus("closed")}>Close job</DashButton>}
+          {posting.status !== "closed" && <DashButton variant="outline" disabled={statusBusy} onClick={() => changeStatus(posting.status === "open" ? "paused" : "open")}>{posting.status === "open" ? "Pause" : posting.status === "draft" ? "Publish" : "Reopen"}</DashButton>}
+          {posting.status !== "closed" && posting.status !== "draft" && <DashButton variant="danger" disabled={statusBusy} onClick={() => changeStatus("closed")}>Close job</DashButton>}
         </m.div>
       </m.header>
 
       {published && (
         <p role="status" className="mt-4 flex items-center gap-2 rounded-tile bg-success/12 p-3.5 text-[15px]">
           <Rocket className="size-5 text-success-on-dark" aria-hidden /> Your job is live. Share the link to reach local people faster.
+        </p>
+      )}
+      {/* MARATHON-FE-2 Step A: a draft only exists because the company isn't verified yet
+       *  (createPosting sends "draft" precisely then) - say so, with the way to fix it. */}
+      {posting.status === "draft" && (
+        <p role="status" className="mt-4 flex items-center gap-2 rounded-tile bg-warning/15 p-3.5 text-[15px]">
+          <ShieldCheck className="size-5 shrink-0" aria-hidden />
+          Verify your company to publish this job.{" "}
+          <Link href="/enterprise/admin/company" className="font-semibold underline underline-offset-2">Verify now</Link>
         </p>
       )}
       {error && <p role="alert" className="mt-4 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}

@@ -6,6 +6,7 @@ import { ShieldCheck } from "lucide-react";
 import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
 import { IntakeForm, clearIntakeDraft } from "@/components/intake/IntakeForm";
 import { createPosting, getMyEnterpriseProfile, PostingLimitError } from "@/lib/api/enterprise";
+import { getMyVerification } from "@/lib/api/businessVerification";
 import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
 import { JOB_SCHEMA } from "@/lib/intake/schemas/job";
 import { saveJobExtras } from "@/lib/data/business";
@@ -17,12 +18,17 @@ import type { MoneyRange, Values } from "@/lib/intake/types";
 export default function NewPostingPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<EnterpriseProfile | null>(null);
+  const [verified, setVerified] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!requireEnterpriseOnboarded(router)) return;
     getMyEnterpriseProfile().then(setProfile).catch(() => setError("Your company profile didn't load."));
+    // MARATHON-FE-2 Step A: an unverified company's posting can only be saved as a draft - the
+    // backend 400s OPEN at creation, not only on publish. Used to decide which status to send,
+    // not to block opening this form at all.
+    getMyVerification().then((v) => setVerified(!!v && (v.status === "verified" || v.legacy))).catch(() => setVerified(false));
   }, [router]);
 
   const publish = async (v: Values) => {
@@ -49,11 +55,12 @@ export default function NewPostingPage() {
         salaryMin: pay.min ?? 0,
         salaryMax: pay.max ?? pay.min ?? 0,
         skills: [...must, ...nice],
+        status: verified ? "open" : "draft",
       });
       const questions = ((v.questions as string[] | undefined) ?? []).filter(Boolean);
       if (v.deadline || questions.length) saveJobExtras(posting.id, { deadline: v.deadline ? String(v.deadline) : undefined, questions });
       clearIntakeDraft("job");
-      router.replace(`/enterprise/postings/${posting.id}?published=1`);
+      router.replace(`/enterprise/postings/${posting.id}?published=${verified ? "1" : "0"}`);
     } catch (e) {
       setError(e instanceof PostingLimitError ? e.message : e instanceof Error && e.message ? e.message : "The job didn't publish. Your answers are kept — try again.");
       setBusy(false);

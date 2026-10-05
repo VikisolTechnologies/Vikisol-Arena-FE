@@ -56,8 +56,9 @@ function Postings() {
     try {
       await setPostingStatus(p.id, status);
       await load();
-    } catch {
-      setError("That didn't change. Try again.");
+    } catch (err) {
+      // MARATHON-FE-2 Step A: see the sibling job page's own note on this same swallow.
+      setError(err instanceof Error && err.message ? err.message : "That didn't change. Try again.");
     } finally {
       setBusyId(null);
     }

@@ -120,7 +120,7 @@ export class PostingLimitError extends Error {}
  * null so the UI can show a real upsell message instead of silently doing nothing. Real mode
  * enforces the same limit server-side (arena-api's JobPostingService); a 400 from there gets
  * re-thrown as the same PostingLimitError so the UI's catch block works in both modes. */
-export async function createPosting(input: Omit<JobPosting, "id" | "status" | "createdAt">): Promise<JobPosting> {
+export async function createPosting(input: Omit<JobPosting, "id" | "status" | "createdAt"> & { status?: "draft" | "open" }): Promise<JobPosting> {
   if (isRealMode()) {
     try {
       return await apiFetch<JobPosting>("/enterprise/postings", { method: "POST", body: input });
@@ -135,7 +135,7 @@ export async function createPosting(input: Omit<JobPosting, "id" | "status" | "c
   if (activeCount >= limit) {
     throw new PostingLimitError(`Your ${profile?.plan ?? "free"} plan allows ${limit} active posting${limit === 1 ? "" : "s"}.`);
   }
-  const posting: JobPosting = { ...input, id: `posting-${Date.now()}`, status: "open", createdAt: new Date().toISOString() };
+  const posting: JobPosting = { ...input, id: `posting-${Date.now()}`, status: input.status ?? "open", createdAt: new Date().toISOString() };
   writePostings([posting, ...readPostings()]);
   seedApplicants(posting.id, posting);
   return delay(posting, 400);

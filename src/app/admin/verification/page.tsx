@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 import { Check, Globe, X } from "lucide-react";
 import { AdminShell, usePlatformAdminGate } from "@/components/admin/AdminShell";
 import { AdminList, AdminLoading, AdminRow, ReasonSheet } from "@/components/admin/parts";
-import { getVerificationQueue, pushPlatformAudit, type VerificationRequest } from "@/components/admin/fixtures";
+import { getVerificationQueue as getFixtureQueue, pushPlatformAudit, type VerificationRequest } from "@/components/admin/fixtures";
+import {
+  approveVerification,
+  getVerificationQueue,
+  rejectVerification,
+  type VerificationQueueItem,
+} from "@/lib/api/businessVerification";
 import { Pills, StateCard } from "@/components/bplus/Primitives";
 import { DashButton, StatusPill } from "@/components/dash/Parts";
 import { formatDateTime } from "@/lib/format";
@@ -16,61 +22,92 @@ const TABS = [
   { id: "rejected" as const, label: "Rejected" },
 ];
 
+/** Real mode's VerificationQueueItem (status: pending/verified/rejected/verified_legacy) ->
+ * this screen's three tabs (verified + verified_legacy both read as "approved" here). */
+function toRow(item: VerificationQueueItem): VerificationRequest {
+  return {
+    id: item.id,
+    companyName: item.companyName,
+    domain: item.domain ?? "",
+    website: item.website ?? "",
+    gstin: item.gstin,
+    cin: item.cin,
+    domainMatch: item.domainMatch,
+    submittedAt: item.submittedAt ?? "",
+    status: item.status === "pending" ? "pending" : item.status === "rejected" ? "rejected" : "approved",
+    rejectReason: item.reviewNote,
+  };
+}
+
 export default function VerificationQueuePage() {
   const gate = usePlatformAdminGate();
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("pending");
   const [items, setItems] = useState<VerificationRequest[] | null>(null);
+  const [error, setError] = useState("");
   const [rejecting, setRejecting] = useState<VerificationRequest | null>(null);
   const [confirmingMismatch, setConfirmingMismatch] = useState<VerificationRequest | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  const load = () => {
+    if (isRealMode()) {
+      getVerificationQueue()
+        .then((q) => setItems(q.map(toRow)))
+        .catch(() => setError("The verification queue didn't load. Refresh to try again."));
+      return;
+    }
+    setItems(getFixtureQueue());
+  };
+
   useEffect(() => {
     if (gate !== "ready") return;
-    // Fixture bootstrap after the same role gate the shell uses.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setItems(isRealMode() ? [] : getVerificationQueue());
+    load();
   }, [gate]);
 
   // A domain mismatch can't be approved in one tap: it needs a written note, kept in the audit log.
   const approve = async (item: VerificationRequest, note?: string) => {
-    if (isRealMode()) return;
     setBusyId(item.id);
-    setItems((prev) =>
-      prev?.map((v) => (v.id === item.id ? { ...v, status: "approved" as const } : v)) ?? null,
-    );
-    pushPlatformAudit({
-      actorName: "Platform Admin",
-      action: "verification.approved",
-      target: item.companyName,
-      metadata: note ? `Domain ${item.domain} did not match the work email; approved after manual review: ${note}` : `Domain ${item.domain}`,
-    });
-    setBusyId(null);
+    setError("");
+    try {
+      if (isRealMode()) {
+        await approveVerification(item.id);
+        load();
+      } else {
+        setItems((prev) => prev?.map((v) => (v.id === item.id ? { ...v, status: "approved" as const } : v)) ?? null);
+        pushPlatformAudit({
+          actorName: "Platform Admin",
+          action: "verification.approved",
+          target: item.companyName,
+          metadata: note ? `Domain ${item.domain} did not match the work email; approved after manual review: ${note}` : `Domain ${item.domain}`,
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : "That didn't save.");
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const reject = async (reason: string) => {
-    if (!rejecting || isRealMode()) return;
-    setItems((prev) =>
-      prev?.map((v) =>
-        v.id === rejecting.id ? { ...v, status: "rejected" as const, rejectReason: reason } : v,
-      ) ?? null,
-    );
-    pushPlatformAudit({
-      actorName: "Platform Admin",
-      action: "verification.rejected",
-      target: rejecting.companyName,
-      metadata: reason,
-    });
+    if (!rejecting) return;
+    setError("");
+    try {
+      if (isRealMode()) {
+        await rejectVerification(rejecting.id, reason);
+        load();
+      } else {
+        setItems((prev) => prev?.map((v) => (v.id === rejecting.id ? { ...v, status: "rejected" as const, rejectReason: reason } : v)) ?? null);
+        pushPlatformAudit({ actorName: "Platform Admin", action: "verification.rejected", target: rejecting.companyName, metadata: reason });
+      }
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : "That didn't save.");
+    }
   };
 
   return (
     <AdminShell title="Verification queue">
-      {isRealMode() ? (
-        <StateCard
-          kind="empty"
-          title="Verification API not connected"
-          detail="Company verification (domain, website, GSTIN/CIN) needs a platform-admin endpoint."
-        />
-      ) : !items ? (
+      {error && <p role="alert" className="mb-4 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
+      {!items ? (
         <AdminLoading />
       ) : (
         <>
