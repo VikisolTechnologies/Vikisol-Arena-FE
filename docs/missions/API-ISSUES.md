@@ -30,6 +30,23 @@ One entry per mismatch: endpoint, what the frontend expects, what the backend re
   Not blocking — the conversation does exist and is reachable from the inbox — but the dedicated
   deep link only works on the same page load where the accept just happened.
 
+## No backend endpoint for a general content browser, an audit log, or an admin team roster (OPEN)
+- **Endpoints:** none exist. Checked `PlatformAdminController` (dashboard/tenants/users/
+  moderation/analytics/flags), `AdminAccountController`, `AdminDisputeController`,
+  `AdminVerificationController`, `ConnectController` and `IndustryController` - the full set of
+  `/admin/**` routes in the backend. Nothing serves a general "browse all content" list, a
+  platform-wide audit log (with or without CSV export), or an admin team/roster.
+- **FE expects:** three screens the mission names directly - `/admin/content` ("Content browse
+  not connected"), `/admin/audit` ("Platform audit log not connected"), `/admin/team` ("Admin
+  team API not connected"). All three already say exactly this in their own UI copy; confirmed
+  by reading every `/admin/**` controller rather than taking the copy's word for it.
+- **Not worked around:** there's nothing to wire these to yet. `AuditService.record(...)` is
+  called from several places (moderation, verification, disputes, account actions) and clearly
+  writes audit rows somewhere, but no controller currently reads them back. Flagging this as the
+  one real, still-open item from Step B's admin sweep - everything else that said "not connected"
+  (moderation's warn/suspend/ban, users' suspend/restore/force-signout, disputes, industries) in
+  fact had a live backend endpoint and just needed wiring; these three genuinely don't yet.
+
 ## `GET /admin/users` (the search list) never includes account status (OPEN, minor)
 - **Endpoint:** `GET /admin/users`.
 - **FE expects:** a way to show suspended/banned accounts in the search results list itself,
