@@ -7,9 +7,12 @@ import { AdminList, AdminLoading, AdminRow, ReasonSheet, SlaTimer } from "@/comp
 import { pushPlatformAudit } from "@/components/admin/fixtures";
 import { Pills, StateCard } from "@/components/bplus/Primitives";
 import { DashButton } from "@/components/dash/Parts";
-import { getModerationQueue, resolveModerationItem } from "@/lib/api/platformAdmin";
+import { banReportedUser, getModerationQueue, resolveModerationItem, suspendReportedUser, warnReportedUser } from "@/lib/api/platformAdmin";
+import { isRealMode } from "@/lib/api/mode";
 import { formatDateTime } from "@/lib/format";
 import type { ModerationItem, ModerationStatus } from "@/lib/types";
+
+const SUSPEND_DAYS = 7;
 
 const TABS: { key: ModerationStatus; label: string }[] = [
   { key: "pending", label: "Pending" },
@@ -49,31 +52,25 @@ export default function ModerationPage() {
     }
   };
 
-  const resolveFixture = async (reason: string) => {
+  const resolveAccountAction = async (reason: string) => {
     if (!pendingAction) return;
     const { item, action } = pendingAction;
-    const auditAction =
-      action === "dismiss"
-        ? "moderation.dismissed"
-        : action === "takedown"
-          ? "moderation.takedown"
-          : action === "warn"
-            ? "moderation.warned"
-            : action === "suspend"
-              ? "moderation.suspended"
-              : "moderation.banned";
-    if (action === "dismiss" || action === "takedown") {
-      await resolveModerationItem(item.id, action);
+    if (action === "warn") await warnReportedUser(item.id, reason);
+    else if (action === "suspend") await suspendReportedUser(item.id, reason, SUSPEND_DAYS);
+    else if (action === "ban") await banReportedUser(item.id, reason);
+    if (isRealMode()) {
+      // warn/suspend/ban don't resolve the moderation item itself (it can still be dismissed or
+      // taken down separately) - just show the note was sent until the next reload.
+      setNotes((n) => ({ ...n, [item.id]: reason }));
     } else {
       setNotes((n) => ({ ...n, [item.id]: reason }));
-      load(status);
+      pushPlatformAudit({
+        actorName: "Platform Admin",
+        action: action === "warn" ? "moderation.warned" : action === "suspend" ? "moderation.suspended" : "moderation.banned",
+        target: item.postingTitle,
+        metadata: reason,
+      });
     }
-    pushPlatformAudit({
-      actorName: "Platform Admin",
-      action: auditAction,
-      target: item.postingTitle,
-      metadata: reason,
-    });
   };
 
   const onAction = (item: ModerationItem, action: ModerationAction) => {
@@ -93,7 +90,7 @@ export default function ModerationPage() {
   return (
     <AdminShell title="Moderation">
       <p className="mb-4 text-[14px] text-faint">
-        Reports queue with context. Pending items show a 24-hour review timer. Warn, suspend and ban are preview-only until the API supports them.
+        Reports queue with context. Pending items show a 24-hour review timer.
       </p>
       <Pills
         options={TABS.map((t) => ({ id: t.key, label: t.label }))}
@@ -172,12 +169,12 @@ export default function ModerationPage() {
               ? "Suspend account"
               : "Ban account"
         }
-        detail={pendingAction ? `"${pendingAction.item.postingTitle}" — reason is required and logged.` : undefined}
+        detail={pendingAction ? `"${pendingAction.item.postingTitle}" — reason is required and logged.${pendingAction.action === "suspend" ? ` Suspends for ${SUSPEND_DAYS} days.` : ""}` : undefined}
         confirmLabel={
           pendingAction?.action === "warn" ? "Send warning" : pendingAction?.action === "suspend" ? "Suspend" : "Ban"
         }
         onClose={() => setPendingAction(null)}
-        onConfirm={resolveFixture}
+        onConfirm={resolveAccountAction}
       />
     </AdminShell>
   );

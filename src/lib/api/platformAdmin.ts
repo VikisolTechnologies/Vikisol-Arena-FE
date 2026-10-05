@@ -213,6 +213,40 @@ export async function resolveModerationItem(itemId: string, action: "dismiss" | 
   return delay(undefined, 250);
 }
 
+// MARATHON-FE-2 Step B item 5: AdminAccountController's warn/suspend/ban ("acting on the account
+// behind a report") were live on the backend all along - this screen's copy said "preview-only
+// until the API supports them" and the fixture path just stashed a local note. Takes the
+// moderation item's own id (not a user id); the backend resolves the reported user server-side.
+export async function warnReportedUser(itemId: string, reason: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch(`/admin/moderation/${itemId}/warn`, { method: "PUT", body: { reason } });
+    return;
+  }
+  const item = readModeration().find((m) => m.id === itemId);
+  if (item) pushActivity({ actorName: "Platform Admin", action: "moderation.warned", target: item.postingTitle, metadata: reason });
+  return delay(undefined, 250);
+}
+
+export async function suspendReportedUser(itemId: string, reason: string, durationDays: number): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch(`/admin/moderation/${itemId}/suspend`, { method: "PUT", body: { reason, durationDays } });
+    return;
+  }
+  const item = readModeration().find((m) => m.id === itemId);
+  if (item) pushActivity({ actorName: "Platform Admin", action: "moderation.suspended", target: item.postingTitle, metadata: reason });
+  return delay(undefined, 250);
+}
+
+export async function banReportedUser(itemId: string, reason: string): Promise<void> {
+  if (isRealMode()) {
+    await apiFetch(`/admin/moderation/${itemId}/ban`, { method: "PUT", body: { reason } });
+    return;
+  }
+  const item = readModeration().find((m) => m.id === itemId);
+  if (item) pushActivity({ actorName: "Platform Admin", action: "moderation.banned", target: item.postingTitle, metadata: reason });
+  return delay(undefined, 250);
+}
+
 // ---- Platform analytics (PA5) ----
 
 export async function getPlatformAnalytics(): Promise<PlatformAnalytics> {
