@@ -1,10 +1,7 @@
 import type { Post, PostIntentType, PostAudience, PostVisibility, PostJoinRequest, PostComment, VerificationLevel } from "@/lib/types";
 import { MOCK_POSTS, MOCK_POST_JOIN_REQUESTS } from "@/lib/mock/posts";
-import { CURRENT_CANDIDATE_ID, getCandidateById } from "@/lib/mock/candidates";
 import { getMockDateOfBirth } from "./verification";
-import { haversineKm, isAdult, jitterCoord } from "@/lib/geo";
-import { delay } from "./shared";
-import { isRealMode } from "./mode";
+import { haversineKm, isAdult } from "@/lib/geo";
 import { apiFetch } from "./httpClient";
 import type { PagedResponse } from "./paged";
 
@@ -103,29 +100,16 @@ function writeSaves(saves: Record<string, boolean>) {
 // PART 6 SAVE - kept under /posts (see PostController's own comment), matching every other
 // post-interaction endpoint in this client.
 export async function savePost(postId: string): Promise<void> {
-  if (isRealMode()) return apiFetch<void>(`/posts/${postId}/save`, { method: "POST" });
-  const saves = readSaves();
-  saves[postId] = true;
-  writeSaves(saves);
-  await delay(undefined, 100);
+  return apiFetch<void>(`/posts/${postId}/save`, { method: "POST" });
 }
 
 export async function unsavePost(postId: string): Promise<void> {
-  if (isRealMode()) return apiFetch<void>(`/posts/${postId}/save`, { method: "DELETE" });
-  const saves = readSaves();
-  delete saves[postId];
-  writeSaves(saves);
-  await delay(undefined, 100);
+  return apiFetch<void>(`/posts/${postId}/save`, { method: "DELETE" });
 }
 
 export async function getSavedPosts(page = 0, size = 20): Promise<Post[]> {
-  if (isRealMode()) {
-    const paged = await apiFetch<PagedResponse<Post>>("/posts/saved", { query: { page, size } });
-    return paged.content;
-  }
-  const saves = readSaves();
-  const saved = readPosts().filter((p) => saves[p.id]);
-  return delay(saved.slice(page * size, page * size + size), 200);
+  const paged = await apiFetch<PagedResponse<Post>>("/posts/saved", { query: { page, size } });
+  return paged.content;
 }
 
 export interface CreatePostInput {
@@ -158,101 +142,42 @@ export interface CreatePostInput {
 // mode (no real "follows" affinity here since mock mode has no persisted follow graph feeding
 // this - recency-only is an honest simplification for the demo path).
 export async function getFeed(page = 0, size = 20): Promise<Post[]> {
-  if (isRealMode()) return apiFetch<Post[]>("/posts/feed", { query: { page, size } });
-  const sorted = [...readPosts()].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  return delay(sorted.slice(page * size, page * size + size), 250);
+  return apiFetch<Post[]>("/posts/feed", { query: { page, size } });
 }
 
 export async function getPost(id: string): Promise<Post | undefined> {
-  if (isRealMode()) return apiFetch<Post>(`/posts/${id}`).catch(() => undefined);
-  return delay(readPosts().find((p) => p.id === id), 200);
+  return apiFetch<Post>(`/posts/${id}`).catch(() => undefined);
 }
 
 export async function getMyPosts(): Promise<Post[]> {
-  if (isRealMode()) {
-    const page = await apiFetch<PagedResponse<Post>>("/posts/mine", { query: { page: 0, size: 100 } });
-    return page.content;
-  }
-  return delay(readPosts().filter((p) => p.mine), 200);
+  const page = await apiFetch<PagedResponse<Post>>("/posts/mine", { query: { page: 0, size: 100 } });
+  return page.content;
 }
 
 export async function getJoinedPosts(): Promise<Post[]> {
-  if (isRealMode()) {
-    const page = await apiFetch<PagedResponse<Post>>("/posts/joined", { query: { page: 0, size: 100 } });
-    return page.content;
-  }
-  return delay(readPosts().filter((p) => p.myJoinStatus === "approved"), 200);
+  const page = await apiFetch<PagedResponse<Post>>("/posts/joined", { query: { page: 0, size: 100 } });
+  return page.content;
 }
 
 export async function closeNeed(postId: string): Promise<Post> {
-  if (isRealMode()) return apiFetch<Post>(`/posts/${postId}/status`, { method: "PUT" });
-  const updated = readPosts().map((post) => (post.id === postId ? { ...post, status: "closed" as const } : post));
-  writePosts(updated);
-  const post = updated.find((item) => item.id === postId);
-  if (!post) throw new Error("Post not found");
-  return delay(post, 200);
+  return apiFetch<Post>(`/posts/${postId}/status`, { method: "PUT" });
 }
 
 export async function createPost(input: CreatePostInput): Promise<Post> {
-  if (isRealMode()) {
-    return apiFetch<Post>("/posts", {
-      method: "POST",
-      body: {
-        intentType: input.intentType, title: input.title, body: input.body, locationText: input.locationText,
-        audience: input.audience ?? "global", visibility: input.visibility ?? "public",
-        capacity: input.capacity, tags: input.tags ?? [], mediaUrls: input.mediaUrls ?? [], communityId: input.communityId, anonymous: input.anonymous,
-        startsAt: input.startsAt, endsAt: input.endsAt, lat: input.lat, lng: input.lng,
-        exactMeetingPoint: input.exactMeetingPoint, requiredVerificationLevel: input.requiredVerificationLevel,
-      },
-    });
-  }
-  requireAdultMock(input.intentType);
-  const me = getCandidateById(CURRENT_CANDIDATE_ID);
-  const approx = input.lat != null && input.lng != null ? jitterCoord(input.lat, input.lng) : undefined;
-  const post: Post = {
-    id: `post-${Date.now()}`,
-    authorUserId: CURRENT_CANDIDATE_ID,
-    authorName: me?.name ?? "You",
-    authorEmoji: me?.avatarEmoji ?? "🧑🏽",
-    intentType: input.intentType,
-    title: input.title,
-    body: input.body,
-    locationText: input.locationText,
-    audience: input.audience ?? "global",
-    visibility: input.visibility ?? "public",
-    capacity: input.capacity,
-    spotsFilled: 0,
-    status: "open",
-    startsAt: input.startsAt,
-    endsAt: input.endsAt,
-    tags: input.tags ?? [],
-    mediaUrls: input.mediaUrls ?? [],
-    joinable: input.intentType === "activity" || input.intentType === "ask",
-    mine: true,
-    createdAt: new Date().toISOString(),
-    approxLat: approx?.lat,
-    approxLng: approx?.lng,
-    exactMeetingPoint: input.exactMeetingPoint,
-    requiredVerificationLevel: input.requiredVerificationLevel,
-    commentCount: 0,
-    reactionCount: 0,
-    myReacted: false,
-    authorJoinCount: 0,
-    authorAccountAgeDays: 30,
-    demoContent: false,
-  };
-  writePosts([post, ...readPosts()]);
-  return delay(post, 300);
+  return apiFetch<Post>("/posts", {
+    method: "POST",
+    body: {
+      intentType: input.intentType, title: input.title, body: input.body, locationText: input.locationText,
+      audience: input.audience ?? "global", visibility: input.visibility ?? "public",
+      capacity: input.capacity, tags: input.tags ?? [], mediaUrls: input.mediaUrls ?? [], communityId: input.communityId, anonymous: input.anonymous,
+      startsAt: input.startsAt, endsAt: input.endsAt, lat: input.lat, lng: input.lng,
+      exactMeetingPoint: input.exactMeetingPoint, requiredVerificationLevel: input.requiredVerificationLevel,
+    },
+  });
 }
 
 export async function cancelPost(postId: string): Promise<Post> {
-  if (isRealMode()) return apiFetch<Post>(`/posts/${postId}/cancel`, { method: "PUT" });
-  const posts = readPosts();
-  const updated = posts.map((p) => (p.id === postId ? { ...p, status: "cancelled" as const } : p));
-  writePosts(updated);
-  const result = updated.find((p) => p.id === postId);
-  if (!result) throw new Error("Post not found");
-  return delay(result, 250);
+  return apiFetch<Post>(`/posts/${postId}/cancel`, { method: "PUT" });
 }
 
 export interface NearbyQuery {
@@ -269,101 +194,33 @@ export interface NearbyQuery {
 // coordinates it's already operating on (see lib/geo.ts).
 export async function getNearby(query: NearbyQuery): Promise<Post[]> {
   const radiusKm = query.radiusKm ?? 5;
-  if (isRealMode()) {
-    const results = await apiFetch<Post[]>("/posts/nearby", {
-      query: { lat: query.lat, lng: query.lng, radiusKm, withinHours: query.withinHours, intentType: query.intentType },
-    });
-    return results.map((p) => ({
-      ...p,
-      distanceKm: p.approxLat != null && p.approxLng != null ? haversineKm(query.lat, query.lng, p.approxLat, p.approxLng) : undefined,
-    }));
-  }
-  const now = Date.now();
-  const withinMs = query.withinHours ? query.withinHours * 3600000 : undefined;
-  return delay(
-    readPosts()
-      .filter((p) => p.joinable && p.status === "open" && p.approxLat != null && p.approxLng != null)
-      .filter((p) => !query.intentType || p.intentType === query.intentType)
-      .filter((p) => !withinMs || !p.startsAt || new Date(p.startsAt).getTime() - now <= withinMs)
-      .map((p) => ({ ...p, distanceKm: haversineKm(query.lat, query.lng, p.approxLat!, p.approxLng!) }))
-      .filter((p) => p.distanceKm! <= radiusKm)
-      .sort((a, b) => a.distanceKm! - b.distanceKm!),
-    300,
-  );
+  const results = await apiFetch<Post[]>("/posts/nearby", {
+    query: { lat: query.lat, lng: query.lng, radiusKm, withinHours: query.withinHours, intentType: query.intentType },
+  });
+  return results.map((p) => ({
+    ...p,
+    distanceKm: p.approxLat != null && p.approxLng != null ? haversineKm(query.lat, query.lng, p.approxLat, p.approxLng) : undefined,
+  }));
 }
 
 export async function requestJoin(postId: string): Promise<PostJoinRequest> {
-  if (isRealMode()) return apiFetch<PostJoinRequest>(`/posts/${postId}/joins`, { method: "POST" });
-  const posts = readPosts();
-  const post = posts.find((p) => p.id === postId);
-  if (!post) throw new Error("Post not found");
-  requireAdultMock(post.intentType);
-  // requiredVerificationLevel gating is left to the real backend only (VerificationService's
-  // full tier comparison) - mock mode's simplified age-gate above already proves the pattern
-  // works end-to-end; re-deriving the same >= comparison against localStorage state here would
-  // duplicate real logic for a demo-only path with no safety stakes.
-  const autoApprove = post.visibility === "public";
-  const me = getCandidateById(CURRENT_CANDIDATE_ID);
-  const joinRequest: PostJoinRequest = {
-    id: `join-${Date.now()}`,
-    postId,
-    userId: CURRENT_CANDIDATE_ID,
-    userName: me?.name ?? "You",
-    userEmoji: me?.avatarEmoji ?? "🧑🏽",
-    status: autoApprove ? "approved" : "pending",
-    createdAt: new Date().toISOString(),
-  };
-  writeJoins([...readJoins(), joinRequest]);
-  writePosts(posts.map((p) => (p.id === postId
-    ? { ...p, myJoinStatus: joinRequest.status, spotsFilled: autoApprove ? p.spotsFilled + 1 : p.spotsFilled }
-    : p)));
-  return delay(joinRequest, 250);
+  return apiFetch<PostJoinRequest>(`/posts/${postId}/joins`, { method: "POST" });
 }
 
 export async function withdrawJoin(postId: string): Promise<PostJoinRequest> {
-  if (isRealMode()) return apiFetch<PostJoinRequest>(`/posts/${postId}/joins/me`, { method: "DELETE" });
-  const joins = readJoins();
-  const mine = joins.find((j) => j.postId === postId && (j.status === "pending" || j.status === "approved"));
-  if (!mine) throw new Error("You haven't requested to join this post");
-  const updated = joins.map((j) => (j.id === mine.id ? { ...j, status: "withdrawn" as const } : j));
-  writeJoins(updated);
-  writePosts(readPosts().map((p) => {
-    if (p.id !== postId) return p;
-    const spotsFilled = mine.status === "approved" ? Math.max(0, p.spotsFilled - 1) : p.spotsFilled;
-    return { ...p, myJoinStatus: undefined, spotsFilled, status: p.status === "full" && spotsFilled < (p.capacity ?? Infinity) ? "open" : p.status };
-  }));
-  return delay({ ...mine, status: "withdrawn" }, 200);
+  return apiFetch<PostJoinRequest>(`/posts/${postId}/joins/me`, { method: "DELETE" });
 }
 
 export async function recordJoinOutcome(postId: string, joinId: string, outcome: "attended" | "no_show"): Promise<PostJoinRequest> {
-  if (isRealMode()) return apiFetch<PostJoinRequest>(`/posts/${postId}/joins/${joinId}/outcome`, { method: "PUT", body: { outcome } });
-  const joins = readJoins();
-  const updated = joins.map((j) => (j.id === joinId ? { ...j, outcome } : j));
-  writeJoins(updated);
-  const result = updated.find((j) => j.id === joinId);
-  if (!result) throw new Error("Join request not found");
-  return delay(result, 200);
+  return apiFetch<PostJoinRequest>(`/posts/${postId}/joins/${joinId}/outcome`, { method: "PUT", body: { outcome } });
 }
 
 export async function getJoinRequests(postId: string): Promise<PostJoinRequest[]> {
-  if (isRealMode()) return apiFetch<PostJoinRequest[]>(`/posts/${postId}/joins`);
-  return delay(readJoins().filter((j) => j.postId === postId), 200);
+  return apiFetch<PostJoinRequest[]>(`/posts/${postId}/joins`);
 }
 
 export async function decideJoin(postId: string, joinId: string, approve: boolean): Promise<PostJoinRequest> {
-  if (isRealMode()) {
-    return apiFetch<PostJoinRequest>(`/posts/${postId}/joins/${joinId}/${approve ? "approve" : "decline"}`, { method: "PUT" });
-  }
-  const joins = readJoins();
-  const newStatus: PostJoinRequest["status"] = approve ? "approved" : "declined";
-  const updated = joins.map((j) => (j.id === joinId ? { ...j, status: newStatus } : j));
-  writeJoins(updated);
-  if (approve) {
-    writePosts(readPosts().map((p) => (p.id === postId ? { ...p, spotsFilled: p.spotsFilled + 1 } : p)));
-  }
-  const result = updated.find((j) => j.id === joinId);
-  if (!result) throw new Error("Join request not found");
-  return delay(result, 250);
+  return apiFetch<PostJoinRequest>(`/posts/${postId}/joins/${joinId}/${approve ? "approve" : "decline"}`, { method: "PUT" });
 }
 
 // ARENA-V2-PRODUCT-ARCHITECTURE.md Phase C - trending posts, reused as a feed sort option
@@ -371,107 +228,39 @@ export async function decideJoin(postId: string, joinId: string, approve: boolea
 // commentCount/reactionCount/spotsFilled fields, recency-decayed - an honest simplification
 // since there's no real engagement-event log in mock mode to replay.
 export async function getTrending(page = 0, size = 20): Promise<Post[]> {
-  if (isRealMode()) return apiFetch<Post[]>("/posts/trending", { query: { page, size } });
-  const now = Date.now();
-  const scored = [...readPosts()]
-    .filter((p) => p.status === "open")
-    .map((p) => {
-      const hoursOld = (now - new Date(p.createdAt).getTime()) / 3600000;
-      const engagement = p.spotsFilled * 3 + p.commentCount * 2 + p.reactionCount;
-      return { post: p, score: engagement * Math.pow(0.5, hoursOld / 48) };
-    })
-    .sort((a, b) => b.score - a.score)
-    .map((s) => s.post);
-  return delay(scored.slice(page * size, page * size + size), 250);
+  return apiFetch<Post[]>("/posts/trending", { query: { page, size } });
 }
 
 // Profile revamp's "activity" tab (Phase C) - a target user's own visible-to-viewer posts,
 // same audience-gate simplification the real backend applies (GLOBAL always visible, FOLLOWERS
 // only if the viewer follows them, self always sees everything, CANCELLED hidden).
 export async function getUserPosts(targetUserId: string, page = 0, size = 20): Promise<PagedResponse<Post>> {
-  if (isRealMode()) return apiFetch<PagedResponse<Post>>(`/posts/by-user/${targetUserId}`, { query: { page, size } });
-  const isSelf = targetUserId === CURRENT_CANDIDATE_ID;
-  const visible = readPosts()
-    .filter((p) => p.authorUserId === targetUserId && p.status !== "cancelled")
-    .filter((p) => isSelf || p.audience === "global")
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  const content = visible.slice(page * size, page * size + size);
-  return delay({
-    content, page, size, totalElements: visible.length,
-    totalPages: Math.ceil(visible.length / size), last: (page + 1) * size >= visible.length,
-  }, 200);
+  return apiFetch<PagedResponse<Post>>(`/posts/by-user/${targetUserId}`, { query: { page, size } });
 }
 
 export async function getComments(postId: string): Promise<PostComment[]> {
-  if (isRealMode()) return apiFetch<PostComment[]>(`/posts/${postId}/comments`);
-  return delay(readComments().filter((c) => c.postId === postId), 200);
+  return apiFetch<PostComment[]>(`/posts/${postId}/comments`);
 }
 
 export async function addComment(postId: string, content: string, parentCommentId?: string, anonymous = false): Promise<PostComment> {
-  if (isRealMode()) return apiFetch<PostComment>(`/posts/${postId}/comments`, { method: "POST", body: { content, parentCommentId, anonymous } });
-  const me = getCandidateById(CURRENT_CANDIDATE_ID);
-  const comment: PostComment = {
-    id: `comment-${Date.now()}`,
-    postId,
-    authorUserId: CURRENT_CANDIDATE_ID,
-    authorName: me?.name ?? "You",
-    authorEmoji: me?.avatarEmoji ?? "🧑🏽",
-    content,
-    createdAt: new Date().toISOString(),
-    parentCommentId: parentCommentId ?? null,
-  };
-  writeComments([...readComments(), comment]);
-  writePosts(readPosts().map((p) => (p.id === postId ? { ...p, commentCount: p.commentCount + 1 } : p)));
-  return delay(comment, 250);
+  return apiFetch<PostComment>(`/posts/${postId}/comments`, { method: "POST", body: { content, parentCommentId, anonymous } });
 }
 
 export async function deleteComment(postId: string, commentId: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>(`/posts/${postId}/comments/${commentId}`, { method: "DELETE" });
-    return;
-  }
-  writeComments(readComments().filter((c) => c.id !== commentId));
-  writePosts(readPosts().map((p) => (p.id === postId ? { ...p, commentCount: Math.max(0, p.commentCount - 1) } : p)));
-  await delay(undefined, 200);
+  await apiFetch<void>(`/posts/${postId}/comments/${commentId}`, { method: "DELETE" });
 }
 
 /** Discuss votes: 1 = up, -1 = down, 0 = clear. */
 export async function votePost(postId: string, value: 1 | -1 | 0): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>(`/posts/${postId}/vote`, { method: "PUT", body: { value } });
-    return;
-  }
-  // Mock mode keeps only the upvote half (its reactions store is a like-set).
-  if (value === 1) await reactToPost(postId);
-  else await unreactToPost(postId);
+  await apiFetch<void>(`/posts/${postId}/vote`, { method: "PUT", body: { value } });
 }
 
 export async function reactToPost(postId: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>(`/posts/${postId}/react`, { method: "POST" });
-    return;
-  }
-  const reactions = readReactions();
-  if (!reactions[postId]) {
-    writeReactions({ ...reactions, [postId]: true });
-    writePosts(readPosts().map((p) => (p.id === postId ? { ...p, reactionCount: p.reactionCount + 1, myReacted: true } : p)));
-  }
-  await delay(undefined, 150);
+  await apiFetch<void>(`/posts/${postId}/react`, { method: "POST" });
 }
 
 export async function unreactToPost(postId: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>(`/posts/${postId}/react`, { method: "DELETE" });
-    return;
-  }
-  const reactions = readReactions();
-  if (reactions[postId]) {
-    const rest = { ...reactions };
-    delete rest[postId];
-    writeReactions(rest);
-    writePosts(readPosts().map((p) => (p.id === postId ? { ...p, reactionCount: Math.max(0, p.reactionCount - 1), myReacted: false } : p)));
-  }
-  await delay(undefined, 150);
+  await apiFetch<void>(`/posts/${postId}/react`, { method: "DELETE" });
 }
 
 // §4 safety-audit fix: "report ... everywhere" - posts are now directly reportable, not just
@@ -479,9 +268,5 @@ export async function unreactToPost(postId: string): Promise<void> {
 // has no moderation backend to write to - same "confirms to the user, nothing durable to
 // persist locally" scope as reportRoom in rooms.ts.
 export async function reportPost(postId: string, reason: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>(`/posts/${postId}/report`, { method: "POST", body: { reason } });
-    return;
-  }
-  await delay(undefined, 200);
+  await apiFetch<void>(`/posts/${postId}/report`, { method: "POST", body: { reason } });
 }

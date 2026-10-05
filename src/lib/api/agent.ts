@@ -1,5 +1,4 @@
 import { apiFetch } from "./httpClient";
-import { isRealMode } from "./mode";
 import type { ChatMessage, AgentAction } from "@/lib/types";
 
 // The old /agent page kept its whole conversation in React state, built with buildReply() - a
@@ -35,39 +34,25 @@ function toChatMessage(m: AgentMessageDto): ChatMessage {
 }
 
 export async function getOrCreateAgentConversation(): Promise<AgentConversationDto> {
-  if (isRealMode()) return apiFetch<AgentConversationDto>("/agent/conversation");
-  const now = new Date().toISOString();
-  return { id: "local-agent-conversation", title: null, createdAt: now, updatedAt: now };
+  return apiFetch<AgentConversationDto>("/agent/conversation");
 }
 
 export async function getAgentMessages(conversationId: string): Promise<ChatMessage[]> {
-  if (isRealMode()) {
-    const messages = await apiFetch<AgentMessageDto[]>(`/agent/conversations/${conversationId}/messages`);
-    return messages.map(toChatMessage);
-  }
-  // Mock/local-dev mode has no backend to persist against - always starts empty, same as a real
-  // brand-new conversation would.
-  return [];
+  const messages = await apiFetch<AgentMessageDto[]>(`/agent/conversations/${conversationId}/messages`);
+  return messages.map(toChatMessage);
 }
 
 export async function sendAgentMessage(conversationId: string, content: string): Promise<ChatMessage> {
-  if (isRealMode()) {
-    const message = await apiFetch<AgentMessageDto>(`/agent/conversations/${conversationId}/messages`, {
-      method: "POST",
-      body: { content },
-      timeoutMs: 65_000,
-    });
-    return toChatMessage(message);
-  }
-  // No real AgentServiceClient exists in any environment yet (see AgentServiceClient's class
-  // doc) - mock mode reports the same honest unavailable state real mode does, rather than a
-  // second fake AI implementation.
-  return { id: `local-${Date.now()}`, role: "agent", content: AGENT_UNAVAILABLE_MESSAGE, timestamp: new Date().toISOString() };
+  const message = await apiFetch<AgentMessageDto>(`/agent/conversations/${conversationId}/messages`, {
+    method: "POST",
+    body: { content },
+    timeoutMs: 65_000,
+  });
+  return toChatMessage(message);
 }
 
 /** Only the backend-owned proposal ID is accepted. The browser never submits executable args. */
 export async function decideAgentAction(actionId: string, approve: boolean): Promise<AgentAction> {
-  if (!isRealMode()) throw new Error("Jenny actions require a connected Arena backend.");
   return apiFetch<AgentAction>(`/agent/actions/${encodeURIComponent(actionId)}`, {
     method: "POST", body: { approve }, timeoutMs: 30_000,
   });

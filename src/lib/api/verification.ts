@@ -1,6 +1,4 @@
 import type { VerificationStatus, VerificationLevel } from "@/lib/types";
-import { delay } from "./shared";
-import { isRealMode } from "./mode";
 import { apiFetch } from "./httpClient";
 
 // ARENA-V2-PRODUCT-ARCHITECTURE.md §4 (Phase B). Mirrors VerificationService's phone-OTP flow:
@@ -50,43 +48,19 @@ function toStatus(s: MockVerificationState): VerificationStatus {
 }
 
 export async function getVerificationStatus(): Promise<VerificationStatus> {
-  if (isRealMode()) return apiFetch<VerificationStatus>("/verification");
-  return delay(toStatus(readState()), 200);
+  return apiFetch<VerificationStatus>("/verification");
 }
 
-/** Mock mode "sends" a fixed demo code (123456) rather than a real SMS - shown inline in the
- * Settings UI so the demo path is self-explanatory with no backend running. */
 export async function requestPhoneOtp(phoneNumber: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>("/verification/phone/request", { method: "POST", body: { phoneNumber } });
-    return;
-  }
-  writeState({ ...readState(), phoneNumber, otpPending: true, pendingCode: MOCK_OTP });
-  await delay(undefined, 300);
+  await apiFetch<void>("/verification/phone/request", { method: "POST", body: { phoneNumber } });
+  return;
 }
 
 export async function confirmPhoneOtp(code: string): Promise<VerificationStatus> {
-  if (isRealMode()) return apiFetch<VerificationStatus>("/verification/phone/confirm", { method: "POST", body: { code } });
-  const state = readState();
-  if (state.pendingCode && code.trim() !== state.pendingCode) {
-    throw new Error("That code doesn't match. Try again.");
-  }
-  const next: MockVerificationState = {
-    ...state,
-    phoneVerified: true,
-    otpPending: false,
-    pendingCode: undefined,
-    verificationLevel: state.verificationLevel === "id" ? "id" : "phone",
-  };
-  writeState(next);
-  return delay(toStatus(next), 250);
+  return apiFetch<VerificationStatus>("/verification/phone/confirm", { method: "POST", body: { code } });
 }
 
 export async function setDateOfBirth(dateOfBirth: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>("/verification/date-of-birth", { method: "PUT", body: { dateOfBirth } });
-    return;
-  }
-  writeState({ ...readState(), dateOfBirth });
-  await delay(undefined, 200);
+  await apiFetch<void>("/verification/date-of-birth", { method: "PUT", body: { dateOfBirth } });
+  return;
 }

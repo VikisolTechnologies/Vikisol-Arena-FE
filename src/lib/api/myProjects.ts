@@ -1,7 +1,4 @@
 import type { Milestone, Project, ProjectRating } from "@/lib/types";
-import { delay } from "./shared";
-import { bumpMyCareerHealth } from "./profile";
-import { isRealMode } from "./mode";
 import { apiFetch } from "./httpClient";
 import type { PagedResponse } from "./paged";
 
@@ -21,39 +18,19 @@ function toMyProject(res: ProjectResponseWire): MyProject {
   return { ...res, status: res.status.toLowerCase() as MyProject["status"], mine: true };
 }
 
-const KEY = "arena_my_projects";
-
-function readAll(): MyProject[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem(KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-function writeAll(projects: MyProject[]) {
-  localStorage.setItem(KEY, JSON.stringify(projects));
-}
-
 export async function getMyProjects(): Promise<MyProject[]> {
-  if (isRealMode()) {
-    const page = await apiFetch<PagedResponse<ProjectResponseWire>>("/marketplace/my-projects", { query: { page: 0, size: 100 } });
-    return page.content.map(toMyProject);
-  }
-  return delay(readAll(), 200);
+  const page = await apiFetch<PagedResponse<ProjectResponseWire>>("/marketplace/my-projects", { query: { page: 0, size: 100 } });
+  return page.content.map(toMyProject);
 }
 
 export async function getMyProject(id: string): Promise<MyProject | undefined> {
-  if (isRealMode()) {
-    // The generic project-by-id endpoint returns every project regardless of ownership - it's
-    // the same one non-owners use to view/bid on it. The server tells us who owns it via `mine`;
-    // trusting that (rather than hardcoding true, which toMyProject() does) is what lets
-    // ProjectDetailPage fall through to the bidder view for projects that aren't ours.
-    return apiFetch<ProjectResponseWire>(`/marketplace/projects/${id}`)
-      .then((res) => (res.mine ? toMyProject(res) : undefined))
-      .catch(() => undefined);
-  }
-  return delay(readAll().find((p) => p.id === id), 150);
+  // The generic project-by-id endpoint returns every project regardless of ownership - it's
+  // the same one non-owners use to view/bid on it. The server tells us who owns it via `mine`;
+  // trusting that (rather than hardcoding true, which toMyProject() does) is what lets
+  // ProjectDetailPage fall through to the bidder view for projects that aren't ours.
+  return apiFetch<ProjectResponseWire>(`/marketplace/projects/${id}`)
+    .then((res) => (res.mine ? toMyProject(res) : undefined))
+    .catch(() => undefined);
 }
 
 export async function createMyProject(input: {
@@ -64,112 +41,40 @@ export async function createMyProject(input: {
   durationWeeks: number;
   skills: string[];
 }): Promise<MyProject> {
-  if (isRealMode()) {
-    return apiFetch<ProjectResponseWire>("/marketplace/projects", { method: "POST", body: input }).then(toMyProject);
-  }
-  const project: MyProject = {
-    id: `myproj-${Date.now()}`,
-    ...input,
-    postedBy: "You",
-    status: "open",
-    endsAt: new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString(),
-    bids: [],
-    mine: true,
-    milestones: [],
-  };
-  writeAll([project, ...readAll()]);
-  return delay(project, 400);
+  return apiFetch<ProjectResponseWire>("/marketplace/projects", { method: "POST", body: input }).then(toMyProject);
 }
 
 export function addBidToMyProject(projectId: string, bid: Project["bids"][number]) {
-  if (isRealMode()) return; // real mode's award/bid data all lives server-side already
-  writeAll(readAll().map((p) => (p.id === projectId ? { ...p, bids: [bid, ...p.bids].sort((a, b) => b.amount - a.amount) } : p)));
+  // real mode's award/bid data all lives server-side already
 }
-
-const MILESTONE_LABELS = ["Kickoff & plan", "Midpoint delivery", "Final delivery"];
-const MILESTONE_SPLIT = [0.3, 0.4, 0.3]; // proportions of the awarded bid, one payment tranche each
 
 export async function awardProject(projectId: string, bidId: string): Promise<MyProject | null> {
-  if (isRealMode()) {
-    return apiFetch<ProjectResponseWire>(`/marketplace/projects/${projectId}/award`, { method: "POST", body: { bidId } }).then(toMyProject);
-  }
-  const all = readAll();
-  const idx = all.findIndex((p) => p.id === projectId);
-  if (idx === -1) return delay(null, 100);
-  const bid = all[idx].bids.find((b) => b.id === bidId);
-  const total = bid?.amount ?? 0;
-  all[idx] = {
-    ...all[idx],
-    status: "awarded",
-    awardedBidId: bidId,
-    milestones: MILESTONE_LABELS.map((label, i) => ({
-      id: `m-${i}`,
-      label,
-      amount: Math.round(total * MILESTONE_SPLIT[i]),
-      done: false,
-    })),
-  };
-  writeAll(all);
-  return delay(all[idx], 300);
+  return apiFetch<ProjectResponseWire>(`/marketplace/projects/${projectId}/award`, { method: "POST", body: { bidId } }).then(toMyProject);
 }
 
-/** Records the deliverable note for a milestone. Mock mode has the poster fill this in on the
- * bidder's behalf, since there's no separate bidder session to submit it themselves - framed
- * honestly in the UI as such. Real mode is a genuine two-party flow: arena-api requires the
- * deliverable to come from the awarded bidder's own session (see submitMyDeliverable in
- * market.ts, used from the project detail page's winner view), so this poster-invoked path is
- * only ever hit here in mock mode or if the poster edits an already-submitted note. */
+/** Records the deliverable note for a milestone. arena-api requires the deliverable to come
+ * from the awarded bidder's own session (see submitMyDeliverable in market.ts, used from the
+ * project detail page's winner view), so this poster-invoked path is only ever hit here if the
+ * poster edits an already-submitted note. */
 export async function submitMilestoneDeliverable(projectId: string, milestoneId: string, note: string): Promise<MyProject | null> {
-  if (isRealMode()) {
-    await apiFetch(`/marketplace/milestones/${milestoneId}/deliverables`, { method: "POST", body: { note } });
-    return (await getMyProject(projectId)) ?? null;
-  }
-  const all = readAll();
-  const idx = all.findIndex((p) => p.id === projectId);
-  if (idx === -1) return delay(null, 100);
-  const milestones = all[idx].milestones.map((m) =>
-    m.id === milestoneId ? { ...m, deliverable: { note, submittedAt: new Date().toISOString() } } : m,
-  );
-  all[idx] = { ...all[idx], milestones };
-  writeAll(all);
-  return delay(all[idx], 200);
+  await apiFetch(`/marketplace/milestones/${milestoneId}/deliverables`, { method: "POST", body: { note } });
+  return (await getMyProject(projectId)) ?? null;
 }
 
 /** Accepting a deliverable marks its milestone done and releases that tranche. Once every
  * milestone is accepted the project closes — completion is a real state, not a checkbox that
  * happens to be all-true. */
 export async function acceptMilestone(projectId: string, milestoneId: string): Promise<MyProject | null> {
-  if (isRealMode()) {
-    await apiFetch(`/marketplace/milestones/${milestoneId}/accept`, { method: "PUT" });
-    return (await getMyProject(projectId)) ?? null;
-  }
-  const all = readAll();
-  const idx = all.findIndex((p) => p.id === projectId);
-  if (idx === -1) return delay(null, 100);
-  const milestones = all[idx].milestones.map((m) => (m.id === milestoneId ? { ...m, done: true } : m));
-  const allDone = milestones.length > 0 && milestones.every((m) => m.done);
-  all[idx] = { ...all[idx], milestones, status: allDone ? "closed" : "awarded" };
-  writeAll(all);
-  if (allDone) bumpMyCareerHealth(1);
-  return delay(all[idx], 250);
+  await apiFetch(`/marketplace/milestones/${milestoneId}/accept`, { method: "PUT" });
+  return (await getMyProject(projectId)) ?? null;
 }
 
 export async function submitProjectRating(
   projectId: string,
   rating: Omit<ProjectRating, "submittedAt">,
 ): Promise<MyProject | null> {
-  if (isRealMode()) {
-    // arena-api's RateRequest is {score, comment} - it derives who's rating whom from the
-    // authenticated session/award record server-side, so fromRole never gets sent.
-    await apiFetch(`/marketplace/projects/${projectId}/ratings`, { method: "POST", body: { score: rating.rating, comment: rating.comment } });
-    return (await getMyProject(projectId)) ?? null;
-  }
-  const all = readAll();
-  const idx = all.findIndex((p) => p.id === projectId);
-  if (idx === -1) return delay(null, 100);
-  const full: ProjectRating = { ...rating, submittedAt: new Date().toISOString() };
-  const ratings = [...(all[idx].ratings ?? []), full];
-  all[idx] = { ...all[idx], ratings };
-  writeAll(all);
-  return delay(all[idx], 250);
+  // arena-api's RateRequest is {score, comment} - it derives who's rating whom from the
+  // authenticated session/award record server-side, so fromRole never gets sent.
+  await apiFetch(`/marketplace/projects/${projectId}/ratings`, { method: "POST", body: { score: rating.rating, comment: rating.comment } });
+  return (await getMyProject(projectId)) ?? null;
 }

@@ -1,4 +1,3 @@
-import { isRealMode } from "./mode";
 import { apiFetch } from "./httpClient";
 
 /**
@@ -25,7 +24,6 @@ export interface ConnectView {
 
 /** Employer side: send a connect request to a talent-search candidate. */
 export async function sendConnectRequest(candidateId: string, note: string, jobId?: string): Promise<ConnectView | undefined> {
-  if (!isRealMode()) return undefined;
   return apiFetch<ConnectView>(`/enterprise/talent/${candidateId}/connect`, { method: "POST", body: { jobId, note } });
 }
 
@@ -33,16 +31,13 @@ export async function sendConnectRequest(candidateId: string, note: string, jobI
  * a PagedResponse - its paging state travels in X-Total-Count/X-Has-More headers instead, which
  * this call site doesn't need yet. */
 export async function getMyConnectRequests(page = 0, size = 20): Promise<ConnectView[]> {
-  if (!isRealMode()) return [];
   return apiFetch<ConnectView[]>("/connect-requests", { query: { page, size } });
 }
 
 export async function acceptConnectRequest(id: string): Promise<ConnectView | undefined> {
-  if (!isRealMode()) return undefined;
   return apiFetch<ConnectView>(`/connect-requests/${id}/accept`, { method: "POST" });
 }
 
 export async function declineConnectRequest(id: string): Promise<ConnectView | undefined> {
-  if (!isRealMode()) return undefined;
   return apiFetch<ConnectView>(`/connect-requests/${id}/decline`, { method: "POST" });
 }

@@ -2,8 +2,6 @@ import type {
   AuditEvent, FeatureFlag, ModerationItem, ModerationStatus, PlatformAnalytics,
   PlatformDashboard, PlatformUser, Role, TenantStatus, TenantSummary,
 } from "@/lib/types";
-import { delay } from "./shared";
-import { isRealMode } from "./mode";
 import { apiFetch } from "./httpClient";
 import type { PagedResponse } from "./paged";
 
@@ -122,38 +120,18 @@ function pushActivity(entry: Omit<AuditEvent, "id" | "createdAt">) {
 // ---- Dashboard (PA1 landing) ----
 
 export async function getPlatformDashboard(): Promise<PlatformDashboard> {
-  if (isRealMode()) return apiFetch<PlatformDashboard>("/admin/dashboard");
-  const tenants = readTenants();
-  return delay({
-    tenantsTotal: tenants.length,
-    tenantsSuspended: tenants.filter((t) => t.status === "suspended").length,
-    usersTotal: readUsers().length,
-    moderationPending: readModeration().filter((m) => m.status === "pending").length,
-    recentActivity: readActivity().slice(0, 15),
-  }, 250);
+  return apiFetch<PlatformDashboard>("/admin/dashboard");
 }
 
 // ---- Tenants (PA1) + Subscriptions (PA2) ----
 
 export async function listTenants(query?: string): Promise<TenantSummary[]> {
-  if (isRealMode()) {
-    const page = await apiFetch<PagedResponse<TenantSummary>>("/admin/tenants", { query: { query, size: 100 } });
-    return page.content;
-  }
-  const q = (query || "").toLowerCase();
-  const tenants = readTenants().filter((t) => !q || t.companyName.toLowerCase().includes(q));
-  return delay(tenants, 250);
+  const page = await apiFetch<PagedResponse<TenantSummary>>("/admin/tenants", { query: { query, size: 100 } });
+  return page.content;
 }
 
 export async function setTenantSuspended(tenantId: string, suspended: boolean): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch(`/admin/tenants/${tenantId}/${suspended ? "suspend" : "reactivate"}`, { method: "PUT" });
-    return;
-  }
-  const tenant = readTenants().find((t) => t.id === tenantId);
-  writeTenants(readTenants().map((t) => (t.id === tenantId ? { ...t, status: (suspended ? "suspended" : "active") as TenantStatus } : t)));
-  if (tenant) pushActivity({ actorName: "Platform Admin", action: suspended ? "tenant.suspended" : "tenant.reactivated", target: tenant.companyName });
-  return delay(undefined, 250);
+  await apiFetch(`/admin/tenants/${tenantId}/${suspended ? "suspend" : "reactivate"}`, { method: "PUT" });
 }
 
 export interface AdjustSubscriptionInput {
@@ -164,32 +142,14 @@ export interface AdjustSubscriptionInput {
 }
 
 export async function adjustSubscription(tenantId: string, input: AdjustSubscriptionInput): Promise<TenantSummary> {
-  if (isRealMode()) return apiFetch<TenantSummary>(`/admin/tenants/${tenantId}/subscription`, { method: "PUT", body: input });
-  const tenants = readTenants();
-  const tenant = tenants.find((t) => t.id === tenantId);
-  if (!tenant) throw new Error("Tenant not found");
-  const updated: TenantSummary = {
-    ...tenant,
-    plan: input.plan ?? tenant.plan,
-    seatsTotal: input.seatsTotal ?? tenant.seatsTotal,
-    unlockCreditsTotal: tenant.unlockCreditsTotal + (input.creditDelta ?? 0),
-  };
-  writeTenants(tenants.map((t) => (t.id === tenantId ? updated : t)));
-  pushActivity({ actorName: "Platform Admin", action: "subscription.adjusted", target: `${tenant.companyName} (${input.reason})` });
-  return delay(updated, 300);
+  return apiFetch<TenantSummary>(`/admin/tenants/${tenantId}/subscription`, { method: "PUT", body: input });
 }
 
 // ---- Global user search (PA3) ----
 
 export async function searchPlatformUsers(query?: string, role?: Role): Promise<PlatformUser[]> {
-  if (isRealMode()) {
-    const page = await apiFetch<PagedResponse<PlatformUser>>("/admin/users", { query: { query, role, size: 100 } });
-    return page.content;
-  }
-  const q = (query || "").toLowerCase();
-  const users = readUsers().filter((u) =>
-    (!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) && (!role || u.role === role));
-  return delay(users, 250);
+  const page = await apiFetch<PagedResponse<PlatformUser>>("/admin/users", { query: { query, role, size: 100 } });
+  return page.content;
 }
 
 // MARATHON-FE-2 Step B item 5: AdminAccountController's account-level actions (row 51) were
@@ -231,22 +191,12 @@ export async function forceSignOutUser(userId: string, reason?: string): Promise
 // ---- Moderation queue (PA4) ----
 
 export async function getModerationQueue(status: ModerationStatus = "pending"): Promise<ModerationItem[]> {
-  if (isRealMode()) {
-    const page = await apiFetch<PagedResponse<ModerationItem>>("/admin/moderation", { query: { status, size: 100 } });
-    return page.content;
-  }
-  return delay(readModeration().filter((m) => m.status === status), 200);
+  const page = await apiFetch<PagedResponse<ModerationItem>>("/admin/moderation", { query: { status, size: 100 } });
+  return page.content;
 }
 
 export async function resolveModerationItem(itemId: string, action: "dismiss" | "takedown"): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch(`/admin/moderation/${itemId}/${action}`, { method: "PUT" });
-    return;
-  }
-  const item = readModeration().find((m) => m.id === itemId);
-  writeModeration(readModeration().map((m) => (m.id === itemId ? { ...m, status: (action === "dismiss" ? "dismissed" : "taken_down") as ModerationStatus } : m)));
-  if (item) pushActivity({ actorName: "Platform Admin", action: action === "dismiss" ? "moderation.dismissed" : "moderation.takedown", target: item.postingTitle });
-  return delay(undefined, 250);
+  await apiFetch(`/admin/moderation/${itemId}/${action}`, { method: "PUT" });
 }
 
 // MARATHON-FE-2 Step B item 5: AdminAccountController's warn/suspend/ban ("acting on the account
@@ -254,83 +204,35 @@ export async function resolveModerationItem(itemId: string, action: "dismiss" | 
 // until the API supports them" and the fixture path just stashed a local note. Takes the
 // moderation item's own id (not a user id); the backend resolves the reported user server-side.
 export async function warnReportedUser(itemId: string, reason: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch(`/admin/moderation/${itemId}/warn`, { method: "PUT", body: { reason } });
-    return;
-  }
-  const item = readModeration().find((m) => m.id === itemId);
-  if (item) pushActivity({ actorName: "Platform Admin", action: "moderation.warned", target: item.postingTitle, metadata: reason });
-  return delay(undefined, 250);
+  await apiFetch(`/admin/moderation/${itemId}/warn`, { method: "PUT", body: { reason } });
 }
 
 export async function suspendReportedUser(itemId: string, reason: string, durationDays: number): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch(`/admin/moderation/${itemId}/suspend`, { method: "PUT", body: { reason, durationDays } });
-    return;
-  }
-  const item = readModeration().find((m) => m.id === itemId);
-  if (item) pushActivity({ actorName: "Platform Admin", action: "moderation.suspended", target: item.postingTitle, metadata: reason });
-  return delay(undefined, 250);
+  await apiFetch(`/admin/moderation/${itemId}/suspend`, { method: "PUT", body: { reason, durationDays } });
 }
 
 export async function banReportedUser(itemId: string, reason: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch(`/admin/moderation/${itemId}/ban`, { method: "PUT", body: { reason } });
-    return;
-  }
-  const item = readModeration().find((m) => m.id === itemId);
-  if (item) pushActivity({ actorName: "Platform Admin", action: "moderation.banned", target: item.postingTitle, metadata: reason });
-  return delay(undefined, 250);
+  await apiFetch(`/admin/moderation/${itemId}/ban`, { method: "PUT", body: { reason } });
 }
 
 // ---- Platform analytics (PA5) ----
 
 export async function getPlatformAnalytics(): Promise<PlatformAnalytics> {
-  if (isRealMode()) return apiFetch<PlatformAnalytics>("/admin/analytics");
-  const tenants = readTenants();
-  const users = readUsers();
-  const tenantsByPlan: Record<string, number> = {};
-  for (const t of tenants) tenantsByPlan[t.plan] = (tenantsByPlan[t.plan] ?? 0) + 1;
-  const usersByRole: Record<string, number> = {};
-  for (const u of users) usersByRole[u.role] = (usersByRole[u.role] ?? 0) + 1;
-  return delay({
-    tenantsTotal: tenants.length,
-    tenantsSuspended: tenants.filter((t) => t.status === "suspended").length,
-    tenantsByPlan,
-    usersTotal: users.length,
-    usersByRole,
-    postingsTotal: 18,
-    postingsOpen: 11,
-    applicationsTotal: 64,
-    interviewsTotal: 22,
-    newTenantsLast7d: 1,
-    newUsersLast7d: 3,
-  }, 250);
+  return apiFetch<PlatformAnalytics>("/admin/analytics");
 }
 
 // ---- Feature flags / demo tools (PA6) ----
 
 export async function listFeatureFlags(): Promise<FeatureFlag[]> {
-  if (isRealMode()) return apiFetch<FeatureFlag[]>("/admin/flags");
-  return delay(readFlags(), 200);
+  return apiFetch<FeatureFlag[]>("/admin/flags");
 }
 
 export async function createFeatureFlag(input: { key: string; label: string; description?: string; enabled: boolean }): Promise<FeatureFlag> {
-  if (isRealMode()) return apiFetch<FeatureFlag>("/admin/flags", { method: "POST", body: input });
-  const flag: FeatureFlag = { id: `flag-${Date.now()}`, ...input };
-  writeFlags([...readFlags(), flag]);
-  pushActivity({ actorName: "Platform Admin", action: "flag.toggled", target: `${flag.key} created (enabled=${flag.enabled})` });
-  return delay(flag, 250);
+  return apiFetch<FeatureFlag>("/admin/flags", { method: "POST", body: input });
 }
 
 export async function toggleFeatureFlag(id: string, enabled: boolean): Promise<FeatureFlag> {
-  if (isRealMode()) return apiFetch<FeatureFlag>(`/admin/flags/${id}`, { method: "PUT", body: { enabled } });
-  const flags = readFlags();
-  const flag = flags.find((f) => f.id === id);
-  const updated = flags.map((f) => (f.id === id ? { ...f, enabled } : f));
-  writeFlags(updated);
-  if (flag) pushActivity({ actorName: "Platform Admin", action: "flag.toggled", target: `${flag.key} -> ${enabled}` });
-  return delay(updated.find((f) => f.id === id)!, 200);
+  return apiFetch<FeatureFlag>(`/admin/flags/${id}`, { method: "PUT", body: { enabled } });
 }
 
 // ---- Industries (FE-API-GAPS row 62) ----
@@ -357,9 +259,8 @@ export async function setIndustryActive(key: string, active: boolean): Promise<A
 
 // ---- Disputes (PA9 / FE-API-GAPS row 46) ----
 // MARATHON-FE-2 Step B item 5: AdminDisputeController (/admin/disputes) was live on the backend
-// the whole time - this screen said "need a platform-admin endpoint" and never called real mode
-// at all (isRealMode() -> empty array, buttons hidden). Real only - mock mode keeps reading its
-// own fixtures module directly, unchanged.
+// the whole time - this screen said "need a platform-admin endpoint" and never called it. Real
+// only.
 export interface DisputeView {
   id: string;
   activityTitle: string;

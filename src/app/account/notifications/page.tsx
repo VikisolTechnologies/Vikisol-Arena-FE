@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { AccountPage } from "@/components/account/AccountPage";
-import { getDefaultNotifPrefs, readNotifPrefs, writeNotifPrefs, type NotifPref } from "@/components/account/fixtures";
+import { getDefaultNotifPrefs, type NotifPref } from "@/components/account/fixtures";
 import { getNotificationPreferences, setNotificationPreferences } from "@/lib/api/notifications";
 import { Toggle } from "@/components/bplus/Controls";
 import { StateCard } from "@/components/bplus/Primitives";
-import { isRealMode } from "@/lib/api/mode";
 
 function toPrefs(server: { messages: boolean; activities: boolean; needs: boolean; jobs: boolean; jenny: boolean; marketing: boolean }): NotifPref[] {
   return getDefaultNotifPrefs().map((p) => ({ ...p, enabled: server[p.id as keyof typeof server] ?? p.enabled }));
@@ -17,10 +16,6 @@ export default function NotificationPrefsPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!isRealMode()) {
-      setPrefs(readNotifPrefs());
-      return;
-    }
     getNotificationPreferences()
       .then((p) => setPrefs(toPrefs(p)))
       .catch(() => setError("Couldn't load your preferences. Showing the defaults."));
@@ -30,12 +25,8 @@ export default function NotificationPrefsPage() {
     setPrefs((cur) => {
       if (!cur) return cur;
       const next = cur.map((p) => (p.id === id ? { ...p, enabled } : p));
-      if (isRealMode()) {
-        const server = Object.fromEntries(next.map((p) => [p.id, p.enabled])) as Record<string, boolean>;
-        setNotificationPreferences(server as never).catch(() => setError("Couldn't save that change — try again."));
-      } else {
-        writeNotifPrefs(next);
-      }
+      const server = Object.fromEntries(next.map((p) => [p.id, p.enabled])) as Record<string, boolean>;
+      setNotificationPreferences(server as never).catch(() => setError("Couldn't save that change — try again."));
       return next;
     });
   };
@@ -55,7 +46,7 @@ export default function NotificationPrefsPage() {
             <li key={p.id} className="px-4 py-3">
               <Toggle
                 label={p.label}
-                description={<span className="text-[13px] text-paper-ink-muted">{p.detail}{p.deviceOnly && !isRealMode() ? " · on this device" : ""}</span>}
+                description={<span className="text-[13px] text-paper-ink-muted">{p.detail}</span>}
                 checked={p.enabled}
                 onChange={(v) => toggle(p.id, v)}
               />

@@ -1,10 +1,5 @@
-import { CURRENT_CANDIDATE_ID, getCandidateById } from "@/lib/mock/candidates";
 import { getOnboardingProfile, saveOnboardingProfile } from "@/lib/session";
 import type { AutonomyLevel, CandidateProfile, ConsentSettings, Industry, LocationConsent, OpenTo, PublicCandidateProfile } from "@/lib/types";
-import { jitterCoord } from "@/lib/geo";
-import { getCounts } from "./follows";
-import { delay } from "./shared";
-import { isRealMode } from "./mode";
 import { ApiError, apiFetch } from "./httpClient";
 
 interface CandidateProfileResponse {
@@ -116,43 +111,18 @@ export function clearMyProfileCache() {
 
 /** Merges the static seed candidate with whatever the user entered during onboarding. */
 export async function getMyProfile(): Promise<CandidateProfile> {
-  if (isRealMode()) {
-    if (cachedProfile && cachedProfile.expiresAt > Date.now()) return cachedProfile.value;
-    if (profileRequest) return profileRequest;
-    profileRequest = apiFetch<CandidateProfileResponse>("/profile/me")
-      .then(toCandidateProfile)
-      .then((profile) => {
-        setProfileCache(profile);
-        return profile;
-      })
-      .finally(() => {
-        profileRequest = null;
-      });
-    return profileRequest;
-  }
-  const base = getCandidateById(CURRENT_CANDIDATE_ID)!;
-  const onboarding = getOnboardingProfile();
-  const merged: CandidateProfile = onboarding
-    ? {
-        ...base,
-        name: onboarding.name || base.name,
-        title: onboarding.title || base.title,
-        industry: onboarding.industry,
-        skills: onboarding.skills.length
-          ? onboarding.skills.map((name) => ({ name, verified: false }))
-          : base.skills,
-        experienceYears: onboarding.experienceYears,
-        rateFloor: onboarding.rateFloor,
-        openTo: onboarding.openTo.length ? onboarding.openTo : base.openTo,
-        consent: onboarding.consent,
-        autonomy: onboarding.autonomy ?? base.autonomy,
-        resumeFileName: onboarding.resumeFileName,
-        resumeUploadedAt: onboarding.resumeUploadedAt,
-        careerHealth: onboarding.careerHealth ?? base.careerHealth,
-      }
-    : base;
-  const location = readMockLocation();
-  return delay({ ...merged, ...location }, 300);
+  if (cachedProfile && cachedProfile.expiresAt > Date.now()) return cachedProfile.value;
+  if (profileRequest) return profileRequest;
+  profileRequest = apiFetch<CandidateProfileResponse>("/profile/me")
+    .then(toCandidateProfile)
+    .then((profile) => {
+      setProfileCache(profile);
+      return profile;
+    })
+    .finally(() => {
+      profileRequest = null;
+    });
+  return profileRequest;
 }
 
 async function patchOnboardingProfile(
@@ -200,30 +170,21 @@ export async function updateMyProfileDetails(details: {
   expectedCtc?: number;
   preferredLocation?: string;
 }): Promise<CandidateProfile> {
-  if (isRealMode()) {
-    return apiFetch<CandidateProfileResponse>("/profile/me/details", { method: "PUT", body: details })
-      .then(toCandidateProfile)
-      .then((p) => { setProfileCache(p); return p; });
-  }
-  return getMyProfile();
+  return apiFetch<CandidateProfileResponse>("/profile/me/details", { method: "PUT", body: details })
+    .then(toCandidateProfile)
+    .then((p) => { setProfileCache(p); return p; });
 }
 
 export async function updateMySkills(skills: string[]): Promise<CandidateProfile> {
-  if (isRealMode()) {
-    return apiFetch<CandidateProfileResponse>("/profile/me/skills", { method: "PUT", body: { skills } })
-      .then(toCandidateProfile)
-      .then((p) => { setProfileCache(p); return p; });
-  }
-  return patchOnboardingProfile({ skills });
+  return apiFetch<CandidateProfileResponse>("/profile/me/skills", { method: "PUT", body: { skills } })
+    .then(toCandidateProfile)
+    .then((p) => { setProfileCache(p); return p; });
 }
 
 export async function updateMyConsent(consent: ConsentSettings): Promise<CandidateProfile> {
-  if (isRealMode()) {
-    return apiFetch<CandidateProfileResponse>("/profile/me/consent", { method: "PUT", body: consent })
-      .then(toCandidateProfile)
-      .then((p) => { setProfileCache(p); return p; });
-  }
-  return patchOnboardingProfile({ consent });
+  return apiFetch<CandidateProfileResponse>("/profile/me/consent", { method: "PUT", body: consent })
+    .then(toCandidateProfile)
+    .then((p) => { setProfileCache(p); return p; });
 }
 
 // ARENA-V2-PRODUCT-ARCHITECTURE.md §5 (Phase B). "precise" sends a real one-shot browser
@@ -232,46 +193,25 @@ export async function updateMyConsent(consent: ConsentSettings): Promise<Candida
 // is responsible for gathering lat/lng via navigator.geolocation before calling this with
 // consent="precise".
 export async function updateMyLocation(input: { consent: LocationConsent; lat?: number; lng?: number; city?: string }): Promise<CandidateProfile> {
-  if (isRealMode()) {
-    return apiFetch<CandidateProfileResponse>("/profile/me/location", { method: "PUT", body: input })
-      .then(toCandidateProfile)
-      .then((p) => { setProfileCache(p); return p; });
-  }
-  if (input.consent === "off") {
-    writeMockLocation({ locationConsent: "off" });
-  } else if (input.consent === "city") {
-    writeMockLocation({ locationConsent: "city", homeCity: input.city });
-  } else {
-    const approx = input.lat != null && input.lng != null ? jitterCoord(input.lat, input.lng) : undefined;
-    writeMockLocation({ locationConsent: "precise", approxLat: approx?.lat, approxLng: approx?.lng });
-  }
-  return getMyProfile();
+  return apiFetch<CandidateProfileResponse>("/profile/me/location", { method: "PUT", body: input })
+    .then(toCandidateProfile)
+    .then((p) => { setProfileCache(p); return p; });
 }
 
 export async function updateMyAutonomy(autonomy: AutonomyLevel): Promise<CandidateProfile> {
-  if (isRealMode()) {
-    return apiFetch<CandidateProfileResponse>("/profile/me/autonomy", { method: "PUT", body: { autonomy } })
-      .then(toCandidateProfile)
-      .then((p) => { setProfileCache(p); return p; });
-  }
-  return patchOnboardingProfile({ autonomy });
+  return apiFetch<CandidateProfileResponse>("/profile/me/autonomy", { method: "PUT", body: { autonomy } })
+    .then(toCandidateProfile)
+    .then((p) => { setProfileCache(p); return p; });
 }
 
 /** Records a resume upload + whatever structured fields the (simulated, mock-only) parse
  * confirmed. Real mode actually uploads the file; mock mode only ever needed its name. */
 export async function updateMyResume(input: { file: File; skills?: string[] }): Promise<CandidateProfile> {
-  if (isRealMode()) {
-    const formData = new FormData();
-    formData.append("file", input.file);
-    return apiFetch<CandidateProfileResponse>("/profile/me/cv", { method: "POST", formData })
-      .then(toCandidateProfile)
-      .then((p) => { setProfileCache(p); return p; });
-  }
-  return patchOnboardingProfile({
-    resumeFileName: input.file.name,
-    resumeUploadedAt: new Date().toISOString(),
-    skills: input.skills,
-  });
+  const formData = new FormData();
+  formData.append("file", input.file);
+  return apiFetch<CandidateProfileResponse>("/profile/me/cv", { method: "POST", formData })
+    .then(toCandidateProfile)
+    .then((p) => { setProfileCache(p); return p; });
 }
 
 // ARENA-V2-PRODUCT-ARCHITECTURE.md Phase C profile revamp - the public/other-user view
@@ -285,31 +225,13 @@ export const HIDDEN_PREVIEW_ID = "cand-hidden";
 export const NEARBY_ONLY_PREVIEW_IDS = ["cand-7"];
 
 export async function getPublicProfile(userId: string): Promise<PublicCandidateProfile | undefined> {
-  if (isRealMode()) return apiFetch<PublicCandidateProfile>(`/profile/${userId}`).catch(() => undefined);
-  // Preview visibility rules: one neighbour is Nearby-only (signed-in people), one is Hidden.
-  if (userId === HIDDEN_PREVIEW_ID) {
-    return delay({ id: userId, name: "Hidden neighbour", avatarEmoji: "?", title: "", industry: "Sales", location: "", remote: false, skills: [], experienceYears: 0, openTo: [], careerHealth: 0, verificationLevel: "basic", phoneVerified: false, followerCount: 0, followingCount: 0, visibility: "hidden" }, 200);
-  }
-  const c = getCandidateById(userId);
-  if (!c) return undefined;
-  const counts = await getCounts(userId);
-  return delay({
-    visibility: NEARBY_ONLY_PREVIEW_IDS.includes(userId) ? "nearby" : "everyone",
-    id: c.id, name: c.name, avatarEmoji: c.avatarEmoji, title: c.title, industry: c.industry,
-    location: c.location, remote: c.remote, skills: c.skills, experienceYears: c.experienceYears,
-    openTo: c.openTo, careerHealth: c.careerHealth, bio: c.bio,
-    verificationLevel: "basic", phoneVerified: false,
-    homeCity: c.homeCity,
-    followerCount: counts.followerCount, followingCount: counts.followingCount, viewerFollows: counts.viewerFollows,
-  }, 200);
+  return apiFetch<PublicCandidateProfile>(`/profile/${userId}`).catch(() => undefined);
 }
 
 /** Small, capped nudge to Career Health when verified work completes — a won bid, an accepted
  * milestone. Mock-only: real mode's careerHealth is computed server-side from actual activity. */
 export async function bumpMyCareerHealth(delta: number): Promise<CandidateProfile> {
-  if (isRealMode()) return getMyProfile();
-  const current = await getMyProfile();
-  return patchOnboardingProfile({ careerHealth: Math.max(0, Math.min(100, current.careerHealth + delta)) });
+  return getMyProfile();
 }
 
 // ---- DPDP self-service data rights (ARENA-SHIP-IT.md #5) ----
@@ -325,9 +247,7 @@ export interface DataExport {
  * no server-side record to export, so it reconstructs the same shape from local state instead
  * of pretending the button does nothing. */
 export async function exportMyData(): Promise<DataExport> {
-  if (isRealMode()) return apiFetch<DataExport>("/profile/me/export");
-  const profile = await getMyProfile();
-  return { email: "you@example.com", profile, applications: [], exportedAt: new Date().toISOString() };
+  return apiFetch<DataExport>("/profile/me/export");
 }
 
 /** Right-to-erasure. Real mode calls the backend (anonymizes the profile, disables the
@@ -335,20 +255,12 @@ export async function exportMyData(): Promise<DataExport> {
  * is responsible for clearing the local session/token afterward. Mock mode just clears local
  * state directly since there's no server record to erase. */
 export async function deleteMyAccount(): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>("/profile/me", { method: "DELETE" });
-    clearMyProfileCache();
-    return;
-  }
-  return delay(undefined, 300);
+  await apiFetch<void>("/profile/me", { method: "DELETE" });
+  clearMyProfileCache();
 }
 
 /** Report a person (POST /profile/{id}/report). Preview mode records nothing. */
 export async function reportPerson(id: string, body: { reason: string; evidenceUrls?: string[] }): Promise<void> {
-  if (!isRealMode()) {
-    await delay(undefined, 300);
-    return;
-  }
   try {
     await apiFetch<void>(`/profile/${id}/report`, { method: "POST", body });
   } catch (err) {
@@ -377,25 +289,16 @@ export interface ProfileBasics {
 }
 
 export async function getProfileBasics(): Promise<ProfileBasics | undefined> {
-  if (!isRealMode()) return undefined;
   return apiFetch<ProfileBasics>("/profile/me/basics");
 }
 
 /** PATCH /profile/me — every field optional, only what's passed changes. Mock mode no-ops;
  * the onboarding draft already holds these fields on this device. */
 export async function patchProfile(patch: { name?: string; title?: string; bio?: string; availability?: string[]; interests?: string[]; photoUrl?: string }): Promise<void> {
-  if (!isRealMode()) {
-    await delay(undefined, 200);
-    return;
-  }
   await apiFetch<void>("/profile/me", { method: "PATCH", body: patch });
 }
 
 export async function setProfileIntents(intents: string[]): Promise<void> {
-  if (!isRealMode()) {
-    await delay(undefined, 200);
-    return;
-  }
   await apiFetch<void>("/profile/me/intents", { method: "PUT", body: { intents } });
 }
 
@@ -404,7 +307,6 @@ export async function setProfileIntents(intents: string[]): Promise<void> {
  * changing what the picker returns. Returns the stored photoUrl, or undefined in mock mode
  * (the data URL already in the draft is the "stored" value there). */
 export async function uploadProfilePhoto(dataUrl: string): Promise<string | undefined> {
-  if (!isRealMode()) return undefined;
   const blob = await fetch(dataUrl).then((r) => r.blob());
   const formData = new FormData();
   formData.append("file", blob, "photo.jpg");
@@ -415,16 +317,11 @@ export async function uploadProfilePhoto(dataUrl: string): Promise<string | unde
 export type ProfileVisibility = "nearby" | "everyone" | "hidden";
 
 export async function getMyVisibility(): Promise<ProfileVisibility> {
-  if (!isRealMode()) return "everyone";
   const res = await apiFetch<{ profile: ProfileVisibility }>("/profile/me/visibility");
   return res.profile;
 }
 
 export async function setMyVisibility(profile: ProfileVisibility): Promise<ProfileVisibility> {
-  if (!isRealMode()) {
-    await delay(undefined, 200);
-    return profile;
-  }
   const res = await apiFetch<{ profile: ProfileVisibility }>("/profile/me/visibility", { method: "PUT", body: { profile } });
   return res.profile;
 }

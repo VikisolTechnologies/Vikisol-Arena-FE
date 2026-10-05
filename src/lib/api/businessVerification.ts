@@ -5,7 +5,6 @@
  * backend. Real mode only — mock mode has no equivalent (company verification is a real-backend
  * feature from the start, no fixture work per M6's rules).
  */
-import { isRealMode } from "./mode";
 import { apiFetch } from "./httpClient";
 
 export const SUBMITTER_ROLES = [
@@ -45,17 +44,14 @@ export interface VerificationView {
 }
 
 export async function submitVerification(input: SubmitVerificationInput): Promise<VerificationView | undefined> {
-  if (!isRealMode()) return undefined;
   return apiFetch<VerificationView>("/enterprise/verification", { method: "POST", body: input });
 }
 
 export async function confirmVerification(code: string): Promise<VerificationView | undefined> {
-  if (!isRealMode()) return undefined;
   return apiFetch<VerificationView>("/enterprise/verification/confirm", { method: "POST", body: { code } });
 }
 
 export async function getMyVerification(): Promise<VerificationView | undefined> {
-  if (!isRealMode()) return undefined;
   return apiFetch<VerificationView>("/enterprise/verification");
 }
 
@@ -66,7 +62,6 @@ export interface PublicBadge {
 }
 
 export async function getCompanyVerificationBadge(companyId: string): Promise<PublicBadge | undefined> {
-  if (!isRealMode()) return undefined;
   return apiFetch<PublicBadge>(`/companies/${companyId}/verification`, { auth: false });
 }
 
@@ -93,17 +88,14 @@ export interface VerificationQueueItem {
 }
 
 export async function getVerificationQueue(status?: string, page = 0, size = 50): Promise<VerificationQueueItem[]> {
-  if (!isRealMode()) return [];
   return apiFetch<VerificationQueueItem[]>("/admin/verification", { query: { status, page, size } });
 }
 
 export async function approveVerification(id: string): Promise<VerificationQueueItem | undefined> {
-  if (!isRealMode()) return undefined;
   return apiFetch<VerificationQueueItem>(`/admin/verification/${id}/approve`, { method: "PUT" });
 }
 
 export async function rejectVerification(id: string, note: string): Promise<VerificationQueueItem | undefined> {
-  if (!isRealMode()) return undefined;
   return apiFetch<VerificationQueueItem>(`/admin/verification/${id}/reject`, { method: "PUT", body: { note } });
 }
 
@@ -116,11 +108,9 @@ export interface LegacyCompany {
 }
 
 export async function getLegacyCompanies(page = 0, size = 50): Promise<LegacyCompany[]> {
-  if (!isRealMode()) return [];
   return apiFetch<LegacyCompany[]>("/admin/verification/legacy", { query: { page, size } });
 }
 
 export async function endLegacyVerification(companyId: string): Promise<void> {
-  if (!isRealMode()) return;
   await apiFetch<void>(`/admin/verification/legacy/${companyId}/end`, { method: "PUT" });
 }

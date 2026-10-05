@@ -8,15 +8,12 @@ import { cn } from "@/lib/utils";
 import { press, spring } from "@/lib/motion";
 import { Avatar } from "@/components/bplus/Avatar";
 import { StateCard } from "@/components/bplus/Primitives";
-import { getConversations, getOrCreateConversation, getThreadMessages, receiveThreadReply, sendThreadMessage } from "@/lib/api/messages";
-import { isRealMode } from "@/lib/api/mode";
+import { getConversations, getOrCreateConversation, getThreadMessages, sendThreadMessage } from "@/lib/api/messages";
 import { timeAgo } from "@/lib/data/time";
-import { getCandidateById } from "@/lib/mock/candidates";
 import type { Conversation, ThreadMessage } from "@/lib/types";
 
 /** Plain quick replies (typed by us, not generated) — tapping one only fills the box. */
 const QUICK = ["Thanks for applying — could we talk this week?", "What times work for you?", "Thanks, I'll get back to you by tomorrow."];
-const AUTO_REPLIES = ["Sounds good, talk soon!", "Got it, thank you for the quick response.", "Appreciate the update."];
 
 /**
  * Arena for Business — Messages (flow §8; no board — designed in B+). Same messages API calls.
@@ -41,8 +38,7 @@ export function MessagesInbox() {
     (async () => {
       try {
         if (withParam) {
-          const candidate = getCandidateById(withParam);
-          const conv = await getOrCreateConversation(withParam, candidate?.name ?? "New contact", candidate?.avatarEmoji ?? "", candidate ? "From Talent" : undefined);
+          const conv = await getOrCreateConversation(withParam, "New contact", "", "From Talent");
           await loadConversations();
           setActiveId(conv.id);
           setShowThread(true);
@@ -66,19 +62,6 @@ export function MessagesInbox() {
   useEffect(() => {
     end.current?.scrollIntoView({ block: "end" });
   }, [thread]);
-
-  // Mock mode only: an occasional reply so the demo feels alive. Real threads show server data.
-  useEffect(() => {
-    if (!activeId || isRealMode()) return;
-    const id = setInterval(() => {
-      if (Math.random() < 0.4) {
-        receiveThreadReply(activeId, AUTO_REPLIES[Math.floor(Math.random() * AUTO_REPLIES.length)]);
-        getThreadMessages(activeId).then(setThread);
-        getConversations().then(setConversations);
-      }
-    }, 14000);
-    return () => clearInterval(id);
-  }, [activeId]);
 
   const active = conversations?.find((c) => c.id === activeId);
   const filtered = (conversations ?? []).filter((c) => c.participantName.toLowerCase().includes(search.toLowerCase()));
