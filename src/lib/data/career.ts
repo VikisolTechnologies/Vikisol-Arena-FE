@@ -34,15 +34,23 @@ export function openToFor(intent: CareerIntent | null): OpenTo[] {
   return ["full-time"];
 }
 
-/** Answers Arena BE can store today (FE-API-GAPS #19 lists the rest, with visibility). */
+/** Answers Arena BE can store today (FE-API-GAPS #19 lists the rest, with visibility).
+ *  currentCtc/expectedCtc round-trip through `PUT /profile/me/details` (confirmed against
+ *  `UpdateProfileDetailsRequest`) - storing them is what lets the Apply sheet's "Include my CTC"
+ *  toggle (JobDetailScreen.tsx's `hasCtc`) ever appear; without this it could never render for
+ *  any real candidate, since it only reads `profile.currentCtc`/`expectedCtc` from the backend. */
 export function apiFieldsFrom(v: Values) {
   const skills = ((v.skills as SkillEntry[] | undefined) ?? []).map((s) => s.name);
+  const currentCtc = (v.currentCtc as { min?: number } | undefined)?.min;
+  const expectedCtc = (v.expected as { min?: number } | undefined)?.min;
   return {
     title: String(v.title ?? "").trim(),
     experienceYears: Number(v.years ?? 0),
     skills,
     preferredLocation: ((v.locations as string[] | undefined) ?? []).join(", ") || undefined,
     resume: typeof File !== "undefined" && v.resume instanceof File ? v.resume : null,
+    currentCtc,
+    expectedCtc,
   };
 }
 

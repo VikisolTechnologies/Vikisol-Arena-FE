@@ -224,6 +224,8 @@ function PrivacyStep({ meta, setMeta, profile, answers, onPublished }: { meta: C
         openTo: openToFor(meta.intent),
         cameForJob: true,
         preferredLocation: api.preferredLocation ?? profile.preferredLocation,
+        currentCtc: api.currentCtc ?? profile.currentCtc,
+        expectedCtc: api.expectedCtc ?? profile.expectedCtc,
       });
       if (api.skills.length) p = await updateMySkills(api.skills);
       if (api.resume) p = await updateMyResume({ file: api.resume });
