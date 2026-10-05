@@ -9,9 +9,11 @@ import { Skeleton } from "@/components/bplus/Primitives";
 import { DashButton, Panel, Row, Stat, StatusPill } from "@/components/dash/Parts";
 import { getMyEnterpriseProfile, getMyPostings, getCandidateDetail } from "@/lib/api/enterprise";
 import { getShortlistIds } from "@/lib/api/shortlist";
+import { getMyVerification, type VerificationView } from "@/lib/api/businessVerification";
 import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
 import { STAGE_LABEL, loadApplicants, waitingTooLong, type Applicant } from "@/lib/data/business";
 import { timeAgo } from "@/lib/data/time";
+import Link from "next/link";
 import type { CandidateProfile, EnterpriseProfile, JobPosting } from "@/lib/types";
 
 /** Arena for Business — Home (flow §8): what needs you today, then your roles and shortlist. */
@@ -22,10 +24,12 @@ export default function EnterpriseDashboardPage() {
   const [applicants, setApplicants] = useState<Applicant[] | null>(null);
   const [shortlistIds, setShortlistIds] = useState<string[]>([]);
   const [shortlist, setShortlist] = useState<(CandidateProfile & { fullAccess: boolean })[]>([]);
+  const [verification, setVerification] = useState<VerificationView | undefined | null>(null);
 
   useEffect(() => {
     if (!requireEnterpriseOnboarded(router)) return;
     getMyEnterpriseProfile().then(setProfile).catch(() => {});
+    getMyVerification().then((v) => setVerification(v ?? undefined)).catch(() => setVerification(undefined));
     getShortlistIds()
       .then((ids) => {
         setShortlistIds(ids);
@@ -53,10 +57,19 @@ export default function EnterpriseDashboardPage() {
 
   return (
     <EnterpriseAppShell title={profile ? `Good to see you, ${profile.companyName}` : "Home"} profile={profile} actions={<DashButton href="/enterprise/postings?new=1"><Plus className="size-4" aria-hidden /> Post a job</DashButton>}>
-      <p className="mb-5 flex items-start gap-2.5 rounded-tile border border-line bg-surface p-4 text-[14px] text-foreground/85">
-        <Info className="mt-0.5 size-4 shrink-0 text-info-on-dark" aria-hidden />
-        Company verification isn&apos;t open yet. Your jobs publish as usual; the &ldquo;Verified company&rdquo; badge appears once Arena can check your domain.
-      </p>
+      {verification?.status !== "verified" && verification?.status !== "verified_legacy" && (
+        <p className="mb-5 flex items-start gap-2.5 rounded-tile border border-line bg-surface p-4 text-[14px] text-foreground/85">
+          <Info className="mt-0.5 size-4 shrink-0 text-info-on-dark" aria-hidden />
+          {verification?.status === "pending"
+            ? "Your company verification is pending review. "
+            : verification?.status === "rejected"
+              ? "Your company verification was rejected. "
+              : "Verify your company to publish jobs. "}
+          <Link href="/enterprise/admin/company" className="font-semibold underline underline-offset-2">
+            {verification?.status === "rejected" ? "See the reason and retry" : "Go to Company verification"}
+          </Link>
+        </p>
+      )}
       {!postings ? (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-32" />)}</div>
       ) : (
