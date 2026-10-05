@@ -1,6 +1,71 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## MARATHON-FE-2, Step B — 5 Oct 2026
+**Verified live by clicking through with real accounts against the real local backend** (not by
+reading code), per the mission's own instruction. Data created through the app: Company A
+(BrightPeak Robotics) onboarded, verified (platform-admin approved), posted a job with a pay
+range, opened it; two real candidates (Rahul with CTC included, Meera without) built career
+profiles and applied; a third (Kabir) applied via a minimal path for the withdraw test.
+
+**1. Company onboard → verify → post → open:** clean, no bugs.
+
+**2. Candidate career profile, resume, apply (with/without CTC):** real bug found and fixed —
+the "Include my CTC" toggle's underlying data (`currentCtc`/`expectedCtc`) was captured in the
+Compensation step but never sent on publish (`CareerFlow.tsx`'s `PrivacyStep.publish()` dropped
+it; `src/lib/data/career.ts`'s `apiFieldsFrom` fixed to extract it). The toggle could never
+render for any real candidate before this.
+
+**3. Pipeline through Hired, reject, withdraw:** real bug found and fixed — the interview
+"proposed" slots rendered as a read-only list for everyone; `confirmInterviewSlot()` already
+existed correctly in the data layer but nothing in `InterviewRoom.tsx` ever called it, so a
+candidate had no way to actually pick a time. Fixed; verified live end to end: slot pick → offer
+→ accept → Hired, plus reject (kind message) and withdraw (disappears from the company's list).
+Second bug: the applicant list never showed CTC anywhere, even when included — the backend gates
+both `currentCtc`/`expectedCtc` on the same consent flag, but the FE only ever read `expectedCtc`
+(almost never set). Added `currentCtc` to both the candidate-detail panel and the Kanban board
+card (`PipelineBoard.tsx` — the desktop default view, a separate component from the list view).
+
+**4. Messages, connect requests, unlock credits, billing:** `ConnectController` had zero frontend
+code — messaging someone found through talent search who hadn't applied always 400s
+("message them once they apply or accept your connect request") with no way to even try. Built
+`src/lib/api/connect.ts`, a candidate-side `/connect-requests` screen, and a Connect/Message
+gating UI on the company's talent profile. Caught one bug before it shipped: `GET
+/connect-requests` returns a bare array (`PageLimits.ok`), not a `PagedResponse` like most list
+endpoints — would have been a silent `.content is undefined`. Two minor backend gaps logged, not
+blocking (no employer-side "check status" GET; the list never carries `conversationId`). Unlock
+credits and billing (built in an earlier mission) verified still correct against real data.
+
+**5. Admin, every screen against real data:** verification queue was Step A's work, re-confirmed
+live. Found the same real gap three more times — **moderation's warn/suspend/ban, the users
+screen's suspend/restore/force-signout, and the disputes queue all had live backend endpoints
+(`AdminAccountController`, `AdminDisputeController`) the frontend simply never called**, each one
+saying "preview-only" or "not connected" in its own copy. Wired all three to the real API;
+verified live: filed a real report, warned then suspended the reported account, confirmed it
+can no longer sign in; viewed a real user profile, suspended and restored it; raised a real
+attendance dispute (hosted a past-dated activity, marked a joiner no-show, had her dispute it)
+and resolved it in her favor from the admin queue. The disputes fix also caught a genuine field
+mixup: the wire field named `status` is the *raw* enum (open/accepted/rejected), while the admin
+screen's own tab vocabulary (open/resolved_host/resolved_joiner/expired) lives in a second field
+named `state` — reading the wrong one would have made every resolved dispute vanish from every
+tab instead of moving to the right one. **Industries** had no frontend screen at all despite a
+live, complete backend (`IndustryController`) — built one; verified "add one, and it appears in
+the company's picker" exactly as the mission names it. **Feature flags and companies (tenants)**
+were already correctly wired; spot-checked against real data, no changes needed.
+
+**Three genuine gaps, not another unwired-endpoint case — logged in `API-ISSUES.md`, not
+worked around:** a general content browser, a platform audit log (with CSV), and an admin team
+roster have no backend endpoint at all. Checked every `/admin/**` controller to be sure before
+concluding that, rather than trusting the existing "not connected" UI copy at face value — which
+in five other cases on this same sweep turned out to be stale/wrong.
+
+**Tests:** `npx tsc --noEmit` and `eslint` clean after every change. Each throwaway
+`tests/stepb/*.spec.ts` + `playwright.stepb.config.ts` (real backend, real FE, per-item live
+verification) passed before its commit; both deleted in this final Step B commit per the
+mission's own instruction — nothing in `tests/stepb/` is meant to be kept.
+
+**Next:** Step C — remove the dummy data.
+
 ## MARATHON-FE-2, Step A — 5 Oct 2026
 **Company verification built from nothing.** Read `BusinessController` (`/enterprise/verification`,
 `/enterprise/verification/confirm`, `/companies/{id}/verification`) and
