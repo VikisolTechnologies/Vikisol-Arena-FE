@@ -30,6 +30,18 @@ One entry per mismatch: endpoint, what the frontend expects, what the backend re
   Not blocking — the conversation does exist and is reachable from the inbox — but the dedicated
   deep link only works on the same page load where the accept just happened.
 
+## `GET /admin/users` (the search list) never includes account status (OPEN, minor)
+- **Endpoint:** `GET /admin/users`.
+- **FE expects:** a way to show suspended/banned accounts in the search results list itself,
+  without opening every profile one at a time.
+- **BE returns:** `PlatformUserResponse` has only `id, name, email, role, tenantId, tenantName,
+  createdAt` — no status field. Only `GET /admin/users/{id}` (the single-account detail,
+  `AdminAccountService.AccountDetail`) carries `status`/`suspendedUntil`/`bannedAt`.
+- **What the FE does instead:** `src/app/admin/users/page.tsx` shows every row as "active" until
+  the admin opens that one profile or acts on it in the current session (tracked in local state,
+  not persisted). Not blocking — suspend/restore/force-signout all work correctly against the
+  real account — just means a cold page load can't show who's already suspended across the board.
+
 ## 18+ isn't enforced at sign-up or by `PUT /verification/date-of-birth` (FIXED 50ea099, dateOfBirthSet in 48a9a4f)
 - **Endpoint:** `POST /auth/signup`, `PUT /verification/date-of-birth`.
 - **FE expects:** an account's date of birth to be rejected (or sign-up itself to refuse) when it

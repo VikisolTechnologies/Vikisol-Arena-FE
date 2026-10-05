@@ -192,6 +192,42 @@ export async function searchPlatformUsers(query?: string, role?: Role): Promise<
   return delay(users, 250);
 }
 
+// MARATHON-FE-2 Step B item 5: AdminAccountController's account-level actions (row 51) were
+// live on the backend the whole time - this screen hid Suspend/Restore/Force sign-out entirely
+// in real mode and the profile sheet showed a hardcoded "suspended: false" stub, same
+// "preview-only" gap pattern as moderation's warn/suspend/ban had.
+export interface AdminAccountDetail {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  createdAt: string;
+  lastActiveAt?: string;
+  suspendedUntil?: string;
+  suspensionReason?: string;
+  bannedAt?: string;
+  posts: number;
+  reportsAgainst: number;
+  reportsFiled: number;
+}
+
+export async function getAdminAccountDetail(userId: string): Promise<AdminAccountDetail> {
+  return apiFetch<AdminAccountDetail>(`/admin/users/${userId}`);
+}
+
+export async function suspendUser(userId: string, reason: string, durationDays: number): Promise<AdminAccountDetail> {
+  return apiFetch<AdminAccountDetail>(`/admin/users/${userId}/suspend`, { method: "PUT", body: { reason, durationDays } });
+}
+
+export async function restoreUser(userId: string, reason?: string): Promise<AdminAccountDetail> {
+  return apiFetch<AdminAccountDetail>(`/admin/users/${userId}/restore`, { method: "PUT", body: reason ? { reason } : undefined });
+}
+
+export async function forceSignOutUser(userId: string, reason?: string): Promise<void> {
+  await apiFetch(`/admin/users/${userId}/force-signout`, { method: "POST", body: reason ? { reason } : undefined });
+}
+
 // ---- Moderation queue (PA4) ----
 
 export async function getModerationQueue(status: ModerationStatus = "pending"): Promise<ModerationItem[]> {
