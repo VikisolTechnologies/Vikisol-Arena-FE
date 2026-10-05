@@ -6,6 +6,7 @@ import { AdminList, AdminLoading, AdminRow, ReasonSheet, SlaTimer } from "@/comp
 import { getDisputes, pushPlatformAudit, type AttendanceDispute } from "@/components/admin/fixtures";
 import { Pills, StateCard } from "@/components/bplus/Primitives";
 import { DashButton, StatusPill } from "@/components/dash/Parts";
+import { getDisputeQueue, resolveDispute, type DisputeView } from "@/lib/api/platformAdmin";
 import { formatDateTime } from "@/lib/format";
 import { isRealMode } from "@/lib/api/mode";
 
@@ -19,18 +20,38 @@ const TABS = [
 export default function DisputesPage() {
   const gate = usePlatformAdminGate();
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("open");
-  const [items, setItems] = useState<AttendanceDispute[] | null>(null);
-  const [resolving, setResolving] = useState<{ item: AttendanceDispute; side: "host" | "joiner" } | null>(null);
+  const [items, setItems] = useState<(AttendanceDispute | DisputeView)[] | null>(null);
+  const [resolving, setResolving] = useState<{ item: AttendanceDispute | DisputeView; side: "host" | "joiner" } | null>(null);
+
+  const [error, setError] = useState("");
+
+  const load = () => {
+    if (isRealMode()) {
+      setItems(null);
+      getDisputeQueue(tab).catch(() => {
+        setError("The dispute queue didn't load. Refresh to try again.");
+        return [];
+      }).then(setItems);
+      return;
+    }
+    setItems(getDisputes());
+  };
 
   useEffect(() => {
     if (gate !== "ready") return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setItems(isRealMode() ? [] : getDisputes());
-  }, [gate]);
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gate, tab]);
 
   const resolve = async (reason: string) => {
-    if (!resolving || isRealMode()) return;
+    if (!resolving) return;
     const status = resolving.side === "host" ? "resolved_host" : "resolved_joiner";
+    if (isRealMode()) {
+      await resolveDispute(resolving.item.id, resolving.side, reason);
+      load();
+      return;
+    }
     setItems((prev) =>
       prev?.map((d) => (d.id === resolving.item.id ? { ...d, status, note: reason } : d)) ?? null,
     );
@@ -42,17 +63,13 @@ export default function DisputesPage() {
     });
   };
 
-  const filtered = items?.filter((d) => d.status === tab) ?? [];
+  const statusOf = (d: AttendanceDispute | DisputeView) => ("state" in d ? d.state : d.status);
+  const filtered = isRealMode() ? items ?? [] : items?.filter((d) => statusOf(d) === tab) ?? [];
 
   return (
     <AdminShell title="Disputes">
-      {isRealMode() ? (
-        <StateCard
-          kind="empty"
-          title="Dispute queue not connected"
-          detail="Attendance disputes (72h window) need a platform-admin endpoint."
-        />
-      ) : !items ? (
+      {error && <p role="alert" className="mb-4 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
+      {!items ? (
         <AdminLoading />
       ) : (
         <>
@@ -77,11 +94,11 @@ export default function DisputesPage() {
                         <p className="mt-2 text-[12px] text-faint">Opened {formatDateTime(item.openedAt)}</p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        {item.status === "open" && <SlaTimer deadlineAt={item.deadlineAt} label="72h left" />}
-                        <StatusPill status={item.status === "open" ? "paused" : "active"} />
+                        {statusOf(item) === "open" && <SlaTimer deadlineAt={item.deadlineAt} label="72h left" />}
+                        <StatusPill status={statusOf(item) === "open" ? "paused" : "active"} />
                       </div>
                     </div>
-                    {item.status === "open" && (
+                    {statusOf(item) === "open" && (
                       <div className="mt-3 flex flex-wrap gap-2">
                         <DashButton variant="outline" onClick={() => setResolving({ item, side: "host" })}>
                           Uphold host…

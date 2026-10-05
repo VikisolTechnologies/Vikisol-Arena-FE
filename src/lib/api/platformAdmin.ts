@@ -332,3 +332,34 @@ export async function toggleFeatureFlag(id: string, enabled: boolean): Promise<F
   if (flag) pushActivity({ actorName: "Platform Admin", action: "flag.toggled", target: `${flag.key} -> ${enabled}` });
   return delay(updated.find((f) => f.id === id)!, 200);
 }
+
+// ---- Disputes (PA9 / FE-API-GAPS row 46) ----
+// MARATHON-FE-2 Step B item 5: AdminDisputeController (/admin/disputes) was live on the backend
+// the whole time - this screen said "need a platform-admin endpoint" and never called real mode
+// at all (isRealMode() -> empty array, buttons hidden). Real only - mock mode keeps reading its
+// own fixtures module directly, unchanged.
+export interface DisputeView {
+  id: string;
+  activityTitle: string;
+  hostName: string;
+  joinerName: string;
+  openedAt: string;
+  deadlineAt: string;
+  // The wire field named "status" is the raw DisputeStatus enum (open/accepted/rejected/none) -
+  // "state" is the row-46 admin-screen vocabulary (open/resolved_host/resolved_joiner/expired)
+  // this UI actually filters tabs on. Reading the wrong one was caught live: every resolved
+  // dispute vanished from every tab instead of moving to "Host/Joiner upheld".
+  state: "open" | "resolved_host" | "resolved_joiner" | "expired";
+  note?: string;
+}
+
+// The backend has no "all statuses" query - queue() defaults to OPEN only and otherwise filters
+// to exactly one status (it accepts this screen's own tab vocabulary as aliases). Fetch per tab
+// rather than fetch-once-and-filter-client-side.
+export async function getDisputeQueue(status: "open" | "resolved_host" | "resolved_joiner" | "expired" = "open"): Promise<DisputeView[]> {
+  return apiFetch<DisputeView[]>("/admin/disputes", { query: { status, size: 100 } });
+}
+
+export async function resolveDispute(attendanceId: string, side: "host" | "joiner", reason: string): Promise<DisputeView> {
+  return apiFetch<DisputeView>(`/admin/disputes/${attendanceId}/resolve`, { method: "PUT", body: { side, reason } });
+}
