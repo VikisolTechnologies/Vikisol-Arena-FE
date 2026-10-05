@@ -10,6 +10,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { RouteTransition } from "@/components/RouteTransition";
 import { DeferredCommandPalette } from "@/components/vnext/DeferredCommandPalette";
 import { DeferredSessionExpired } from "@/components/account/DeferredSessionExpired";
+import { DeferredMissingDob } from "@/components/account/DeferredMissingDob";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 
 // Self-hosted (src/app/fonts, OFL - licences alongside) rather than next/font/google: the
@@ -106,6 +107,7 @@ export default function RootLayout({
         </MotionProvider>
         <DeferredCommandPalette />
         <DeferredSessionExpired />
+        <DeferredMissingDob />
         <CookieConsentBanner />
         <WebVitalsReporter />
         <BuildStamp />

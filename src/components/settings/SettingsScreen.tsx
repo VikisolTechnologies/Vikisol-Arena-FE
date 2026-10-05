@@ -58,9 +58,14 @@ export function SettingsScreen() {
   const [error, setError] = useState(false);
   const [sheet, setSheet] = useState<Sheet>(null);
   // `?sheet=jenny` — Jenny's "Permissions & data" opens straight on her permissions.
+  // `?sheet=verification` (MARATHON-FE-2 Step 0) — the "Add your date of birth" link any write
+  // action's error can show opens straight on Verification & safety, where that field lives.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads the URL once after hydration
-    if (new URLSearchParams(window.location.search).get("sheet") === "jenny") setSheet("jenny");
+    const requested = new URLSearchParams(window.location.search).get("sheet");
+    if (requested === "jenny" || requested === "verification") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reads the URL once after hydration
+      setSheet(requested);
+    }
   }, []);
   const sessionEmail = useSyncExternalStore(subscribeNothing, () => getSession()?.email ?? "", () => "");
   const [emailOverride, setEmailOverride] = useState<string | null>(null);

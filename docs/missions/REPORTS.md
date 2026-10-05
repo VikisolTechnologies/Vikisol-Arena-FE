@@ -1,6 +1,35 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## MARATHON-FE-2, Step 0 — 2 Oct 2026
+**Push:** the 9 MARATHON-FE commits pushed clean on the first try this session (network was back).
+
+**Missing-DOB write message:** `AgeUtil.requireDateOfBirth()` refuses any write (post, join,
+message, apply, connect) for a phone/Google account with no date of birth, with the exact
+message "Add your date of birth to continue" — and it can come from dozens of call sites.
+Rather than teach every one a link, added the same global-signal pattern `sessionExpired.ts`
+already uses: `src/lib/api/missingDob.ts` + `MissingDobSheet`/`MissingDobMount`
+(`src/components/account/`), mounted once in the root layout. `httpClient.ts` recognises the
+exact message on any response and reports it; the original `ApiError` is still thrown too, so
+each screen's own local error text is unaffected. The sheet links to `/settings?sheet=verification`
+(extended `SettingsScreen.tsx`'s existing `?sheet=jenny` pattern to also accept `verification`).
+
+**Verified live:** signed up via the real phone-OTP flow (no DOB on that path), confirmed the
+backend's exact message with curl on `POST /posts`. The sheet itself (render, the link's href,
+and that it actually opens Settings on the right sheet) was verified with a throwaway
+stubbed-response test — deleted before this commit, not kept.
+
+**Noticed in passing, not acted on:** the local backend logged "Cloudinary isn't configured, but
+the 'local' profile is active — photo/video uploads will use local disk storage (POST
+`/media/local-upload`) instead" — a different path from B12's `/media/upload-signature` fallback
+mentioned in the last report. Worth checking `src/lib/api/media.ts` still matches during Step C
+or D's pass through that file; not touched here to stay inside Step 0's scope.
+
+**Tests:** `npx tsc --noEmit` and `eslint`: clean.
+`VERCEL_ENV=production NEXT_PUBLIC_ARENA_DATA=api npm run build`: compiles clean.
+
+**Next:** Step A (company verification).
+
 ## MARATHON-FE final report — 2 Oct 2026 — NOT "FE RELEASE CANDIDATE READY"
 **Exactly what's not done, and why**, per the mission's own instruction to say so plainly rather
 than claim more than happened:
