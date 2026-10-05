@@ -1,6 +1,35 @@
 # API issues (frontend → backend)
 One entry per mismatch: endpoint, what the frontend expects, what the backend returns, status (OPEN / FIXED <commit>).
 
+## `GET /connect-requests/{employer-side}` doesn't exist — no way to check prior connect status for one candidate (OPEN, minor)
+- **Endpoint:** none exists. `ConnectController` only has `POST /enterprise/talent/{candidateId}/connect`
+  (employer, idempotent — returns the existing row if one's already there), `GET /connect-requests`
+  (candidate's own "mine" list), and `POST /connect-requests/{id}/accept|decline` (candidate).
+- **FE expects:** when an employer reopens a talent profile they already sent (or got accepted/
+  declined on) a connect request for, a way to show that status without re-sending.
+- **BE returns:** nothing — there's no employer-side "my connect status with this candidate" GET.
+  The only way to learn the current status is to call the idempotent `POST .../connect` again
+  (which requires a non-blank note even though it won't create a duplicate) and read its response.
+- **What the FE does instead:** `src/app/enterprise/talent/[id]/page.tsx` shows a "Connect" button
+  on every page load regardless of prior history; clicking it (with a note) surfaces the real
+  status via the idempotent response. Functionally correct — verified live (send, then re-send,
+  returns the existing `accepted` row with its `conversationId`, no duplicate created) — just a
+  rougher UX than a dedicated status check would give. Not blocking; worth a cheap backend GET if
+  this screen gets more traffic.
+
+## `GET /connect-requests` (the candidate's "mine" list) never includes `conversationId`, even for accepted requests (OPEN, minor)
+- **Endpoint:** `GET /connect-requests`.
+- **FE expects:** the same `conversationId` the `POST /connect-requests/{id}/accept` response
+  includes, so a candidate revisiting this list later can jump straight to the right thread.
+- **BE returns:** `ConnectController.mine()` → `ConnectService.mine()` maps every row through
+  `view(r, null)` — the second argument (`conversationId`) is hardcoded `null` in the list path;
+  only `decide()` (the accept/decline call itself) ever passes the real one. Confirmed live: list
+  an already-accepted request, `conversationId` is absent from the JSON.
+- **What the FE does instead:** `src/app/connect-requests/page.tsx`'s Message link falls back to
+  the general `/messages` inbox when `conversationId` is missing, instead of a dead/wrong link.
+  Not blocking — the conversation does exist and is reachable from the inbox — but the dedicated
+  deep link only works on the same page load where the accept just happened.
+
 ## 18+ isn't enforced at sign-up or by `PUT /verification/date-of-birth` (FIXED 50ea099, dateOfBirthSet in 48a9a4f)
 - **Endpoint:** `POST /auth/signup`, `PUT /verification/date-of-birth`.
 - **FE expects:** an account's date of birth to be rejected (or sign-up itself to refuse) when it

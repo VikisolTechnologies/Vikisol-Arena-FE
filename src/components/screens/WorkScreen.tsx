@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { m } from "motion/react";
-import { Briefcase, Check, ChevronRight, CircleCheck, MessageSquare, Sprout } from "lucide-react";
+import { Briefcase, Check, ChevronRight, CircleCheck, MessageSquare, Sprout, UserPlus } from "lucide-react";
 import { press, rise, spring } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
 import { BottomSheet } from "@/components/bplus/BottomSheet";
@@ -83,9 +83,14 @@ export function WorkScreen() {
           <h1 className="font-display-serif text-[34px] font-medium leading-tight">Work</h1>
           <p className="mt-1 text-[15px] text-faint">From chats to real progress.</p>
         </div>
-        <Link href="/jobs" className="mt-2 inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-field-line px-4 text-[15px] font-semibold">
-          <Briefcase className="size-4" aria-hidden /> Jobs
-        </Link>
+        <div className="mt-2 flex shrink-0 items-center gap-2">
+          <Link href="/connect-requests" className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-field-line px-4 text-[15px] font-semibold">
+            <UserPlus className="size-4" aria-hidden /> Connect requests
+          </Link>
+          <Link href="/jobs" className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-field-line px-4 text-[15px] font-semibold">
+            <Briefcase className="size-4" aria-hidden /> Jobs
+          </Link>
+        </div>
       </header>
       {projectDraft && (
         <p role="status" className="mt-4 rounded-tile bg-paper p-4 text-[15px] text-paper-ink">

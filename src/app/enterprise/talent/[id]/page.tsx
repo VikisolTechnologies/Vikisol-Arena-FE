@@ -3,16 +3,18 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { m } from "motion/react";
-import { ArrowLeft, Bookmark, Briefcase, IndianRupee, Lock, MapPin, MessageCircle, ShieldCheck, Unlock } from "lucide-react";
+import { ArrowLeft, Bookmark, Briefcase, IndianRupee, Lock, MapPin, MessageCircle, Send, ShieldCheck, Unlock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { press, rise, spring } from "@/lib/motion";
 import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
 import { Avatar } from "@/components/bplus/Avatar";
+import { BottomSheet } from "@/components/bplus/BottomSheet";
 import { Button } from "@/components/bplus/Button";
 import { Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { DashButton, Panel } from "@/components/dash/Parts";
 import { getCandidateDetail, getMyEnterpriseProfile, hasDirectlyApplied, unlockCandidate } from "@/lib/api/enterprise";
 import { getShortlistIds, toggleShortlist } from "@/lib/api/shortlist";
+import { sendConnectRequest, type ConnectView } from "@/lib/api/connect";
 import { ApiError } from "@/lib/api/httpClient";
 import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
 import type { CandidateProfile, EnterpriseProfile } from "@/lib/types";
@@ -29,6 +31,11 @@ export default function TalentProfilePage() {
   const [unlocking, setUnlocking] = useState(false);
   const [unlockError, setUnlockError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [connect, setConnect] = useState<ConnectView | null>(null);
+  const [connecting, setConnecting] = useState(false);
+  const [connectOpen, setConnectOpen] = useState(false);
+  const [connectNote, setConnectNote] = useState("");
+  const [connectError, setConnectError] = useState("");
 
   useEffect(() => {
     if (!requireEnterpriseOnboarded(router)) return;
@@ -62,6 +69,24 @@ export default function TalentProfilePage() {
     }
   };
   const name = c.fullAccess ? c.name : c.name.split(" ")[0];
+  // Messaging is only unlocked by an application to this company or an accepted connect
+  // request (MessagingPolicy.mayStartChat, backend) - unlocking contact with credits doesn't
+  // grant it. freeUnlock means they already applied, so Message already works for them.
+  const canMessage = freeUnlock || connect?.status === "accepted";
+  const sendConnect = async () => {
+    setConnecting(true);
+    setConnectError("");
+    try {
+      const view = await sendConnectRequest(c.id, connectNote.trim());
+      if (view) setConnect(view);
+      setConnectOpen(false);
+      setConnectNote("");
+    } catch (err) {
+      setConnectError(err instanceof ApiError ? err.message : "That didn't send. Try again.");
+    } finally {
+      setConnecting(false);
+    }
+  };
 
   return shell(
     <>
@@ -101,7 +126,19 @@ export default function TalentProfilePage() {
               <p className="flex items-center gap-2 text-[15px] font-semibold text-success-on-dark"><Unlock className="size-4" aria-hidden /> Unlocked</p>
               {freeUnlock && <p className="mt-2 text-[14px] text-faint">They applied to one of your jobs, so this was free. Credits are only for people you find here.</p>}
               <p className="mt-2 text-[14px] text-faint">{name} hasn&apos;t shared an email or phone through Arena — message them here.</p>
-              <div className="mt-4"><DashButton href={`/enterprise/messages?with=${c.id}`}><MessageCircle className="size-4" aria-hidden /> Message</DashButton></div>
+              {connectError && <p role="alert" className="mt-3 text-[14px] font-semibold text-danger-on-dark">{connectError}</p>}
+              {canMessage ? (
+                <div className="mt-4"><DashButton href={`/enterprise/messages?with=${c.id}`}><MessageCircle className="size-4" aria-hidden /> Message</DashButton></div>
+              ) : connect?.status === "pending" ? (
+                <p className="mt-4 text-[14px] font-semibold">Connect request sent — messaging opens once {name.split(" ")[0]} accepts.</p>
+              ) : connect?.status === "declined" ? (
+                <p className="mt-4 text-[14px] text-faint">They declined this request.</p>
+              ) : (
+                <div className="mt-4">
+                  <DashButton onClick={() => setConnectOpen(true)}><Send className="size-4" aria-hidden /> Connect</DashButton>
+                  <p className="mt-2 text-[13px] text-faint">Messaging opens once they accept, or once they apply to one of your jobs.</p>
+                </div>
+              )}
             </Panel>
           ) : (
             <section className="rounded-tile bg-paper p-5 text-paper-ink" aria-label="Contact">
@@ -113,6 +150,15 @@ export default function TalentProfilePage() {
           )}
         </m.aside>
       </m.div>
+
+      <BottomSheet open={connectOpen} onClose={() => setConnectOpen(false)} title={`Connect with ${name}`}>
+        <h2 className="mt-3 pr-12 font-display-serif text-[24px] font-medium">Connect with {name}</h2>
+        <p className="mt-2 text-[15px] text-paper-ink-muted">Say why you&apos;re reaching out. {name.split(" ")[0]} sees this before deciding.</p>
+        <label htmlFor="connect-note" className="sr-only">Note</label>
+        <textarea id="connect-note" value={connectNote} onChange={(e) => setConnectNote(e.target.value)} rows={3} maxLength={300} placeholder="What's the role, and why them?" className="mt-3 w-full rounded-xl border border-paper-ink/25 bg-white p-3 text-[15px] text-paper-ink outline-none" />
+        {connectError && <p role="alert" className="mt-2 text-[14px] font-semibold text-danger-on-paper">{connectError}</p>}
+        <Button className="mt-4" loading={connecting} disabled={!connectNote.trim()} onClick={sendConnect}>Send request</Button>
+      </BottomSheet>
     </>,
   );
 }
