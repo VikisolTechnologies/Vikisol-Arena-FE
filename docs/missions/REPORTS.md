@@ -1,6 +1,113 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+# FE RELEASE CANDIDATE READY
+
+MARATHON-FE-2 (2–6 Oct 2026) ran every step, 0 through D, without stopping. Full local suite
+green (420 passed, 2 skipped, 0 failed, all three browser projects), `npx tsc --noEmit` clean,
+full-tree `eslint` clean (0 errors), api-mode production build clean. Zero OPEN entries in
+`QA-BUGS.md`. Six OPEN entries in `API-ISSUES.md`, all backend-owned, none frontend-blocking
+(see `RELEASE-CHECKLIST.md` for the full list). Dummy data fully removed — `grep -rn
+"lib/mock\|preview-off\|fixtures\|isRealMode\|FIXTURES_ALLOWED" src` returns nothing. Never
+merged to `main`; every commit pushed to `feature/arena-vnext-mobile-jenny`. See
+`RELEASE-CHECKLIST.md` for the full state and every entry below for how it got there.
+
+## MARATHON-FE-2, Step D — 6 Oct 2026
+**"All green" means genuinely all green, not "all green except these pre-existing ones."** Step
+C and Step D0's own reports had each flagged 8 test failures as pre-existing and out of their
+scope (career.local.ts, host.local.ts ×2, join.local.ts, 4 safety-net.local.ts routes). Step D is
+exactly the point to stop deferring them, so investigated and fixed every one instead of
+re-flagging them a third time.
+
+**Two area-3b test-stub gaps**, both from M6's migration from generic post-join endpoints to
+activity-specific ones, where the test stubs were never updated to match: `join.local.ts` never
+stubbed `GET /activities/{id}` or `POST /activities/{id}/join` (the real endpoints `doJoin()` and
+the answer-sheet gate actually use), so the click silently no-opped against the generic
+empty-array fallback. `host.local.ts`'s check-in test never stubbed `GET /activities/{id}/
+attendance` or `PUT .../attendance/{id}/check-in` (CheckInSheet's real endpoints), and its button
+name was stale ("Attended" — the real button says "Mark present"). Both fixed by adding the
+correct stubs and assertions, not by weakening anything.
+
+**One real bug, caught purely by chasing a test failure**: `host.local.ts`'s "host a cricket
+match" test couldn't find "Cricket" after searching "crick" — traced to `KindPicker.tsx`'s
+`!kinds` check treating the test's generic unmatched-route fallback (`data: []`, which is
+truthy) as a *real but empty* kinds map, filtering every category's subtypes to nothing. Fixed
+the test (stubbed `GET /activities/kinds` to `null`, which is falsy — matching what an
+uncaught/failed real request already produces), and separately found the same test never stubbed
+the procedural cover's real upload path (`POST /activities/{id}/cover` — different from the
+generic Cloudinary flow used for real photo uploads) once the kinds fix let the test run far
+enough to reach it.
+
+**One stale assertion that encoded a bug this mission's own Step B had already fixed**:
+`career.local.ts` asserted `currentCtc` should *not* reach `PUT /profile/me/details` — that was
+the original bug Step B fixed (CareerFlow's `publish()` silently dropped it, so "Include my CTC"
+could never work for a real candidate). Flipped the assertion to the now-correct expectation
+rather than leave it quietly checking for the bug's return.
+
+**Four pages with no error handling on a real API call**, found via a genuine local CORS gap
+(the dedicated test port, 3107, isn't in the backend's default CORS allowlist, 3000 — confirmed
+with a direct `curl -X OPTIONS` call) but fixed the way it should be fixed regardless of cause: a
+real user hitting any network failure on `src/app/companies/page.tsx`,
+`src/app/marketplace/page.tsx`, or `src/app/invite/[token]/page.tsx` (covers
+`src/app/auth/invite/[token]/page.tsx` too, a re-export of the same file) used to see an infinite
+spinner or an uncaught exception instead of an honest error state. All three now catch and show
+the real failure message.
+
+**Verification:** `npx tsc --noEmit` clean. `npx eslint src` (full tree): 0 errors (two warnings
+introduced by the fixes were cleaned up to match this codebase's existing disable-comment
+conventions, same as everywhere else). Full `tests/local/*` suite, all three browser projects:
+**420 passed, 2 skipped, 0 failed.** `VERCEL_ENV=production NEXT_PUBLIC_ARENA_DATA=api npx next
+build`: compiles clean.
+
+`RELEASE-CHECKLIST.md` rewritten from scratch (the previous version predated Steps A through D0
+entirely) and `REPORTS.md`'s "FE RELEASE CANDIDATE READY" banner added above, per the mission's
+own instruction.
+
+## MARATHON-FE-2, Step D0 — 6 Oct 2026
+**Independent QA, three fresh-context rounds (the mission's cap), each one: read
+`docs/missions/MARATHON-QA.md`, run one full cycle, report only — never touched `src/`, never ran
+git.** Every OPEN BLOCKER/MAJOR it found got fixed by this session between rounds; 0 BLOCKER was
+open at every round's start after the first, so three rounds (not more) were run per the
+mission's own exit condition.
+
+**Round 1** built the QA harness from scratch (`playwright.qa.config.ts`, `tests/qa/`) and ran
+Journey 1 (Onboarding) live with real sign-up accounts at all four screen sizes: clean pass, plus
+2 MINOR bugs. **QA-1** (sign-up form's ToS/Privacy links discarded all typed fields on back-nav)
+fixed — both links now open in a new tab. **QA-2** (onboarding's `?step=` URL param one behind
+the on-screen label) closed as **not a bug** after reading the actual skip logic:
+`Onboarding.tsx` deliberately skips the age-gate step for any account whose DOB was already
+collected at sign-up, and the on-screen label is driven by that same adjusted step value, not the
+raw URL param — they're consistent by design for exactly the case the QA account hit.
+
+**Round 2** re-verified Round 1 clean, then tested Journey 2 (Profile) and found **QA-3**
+[MAJOR]: Profile's own "Edit" button opened a dead legacy screen
+(`src/app/identity/edit/page.tsx` — a different design system entirely, skills/resume only, no
+name/bio/photo/interests fields) instead of the real, maintained editor
+(`src/app/account/edit/page.tsx`). Fixed: repointed the button to `/account/edit`; since
+`/identity/edit`'s skills-and-resume functionality has no equivalent at the real editor, added a
+small "Edit" link next to Profile's own Skills row instead of retiring that screen outright. The
+other half of QA-3 — no server-side photo storage exists anywhere (`CandidateProfile` has no
+`photoUrl` field) — isn't a frontend bug to fix; logged in `API-ISSUES.md`.
+
+**Round 3 (final)** re-verified QA-3's fix live, finished Journey 2's remaining items
+(notifications, report, block/unblock), and found two more MAJOR bugs. **QA-4**: the
+cookie-consent banner (`z-[900]`) sat above every `BottomSheet` (`z-50`), blocking any sheet's
+bottom-anchored button until the banner was dismissed — fixed by raising `BottomSheet` to
+`z-[950]`, matching the exact precedent already set for this bug class in `ui/dialog.tsx` and
+`ui/sheet.tsx` (this B+ sheet component was evidently missed in that earlier pass). **QA-5**: the
+notification-preference toggle fired its save `PUT` twice from one click (introduced by this
+mission's own Step C, which moved `setNotificationPreferences` inside a `setPrefs()` state
+updater during the `isRealMode()` cleanup) — the duplicate 409'd with a nonsensical conflict
+message and showed a false "Couldn't save" error over a change that already saved. Fixed by
+moving the API call back out to a plain side effect, called once.
+
+**Final state after three rounds:** 0 BLOCKER, 0 MAJOR, 0 MINOR open. QA-1/QA-3/QA-4/QA-5 fixed
+and (QA-3) re-verified live; QA-2 closed as not-a-bug. Full `tests/local/*` suite reconfirmed
+green after each fix (no regressions). Not reached in three rounds: Journeys 3–12 (Host, Join,
+Needs/offers, Inbox, Job seeker, Company, Admin, Account beyond what's listed, Discover/Map) —
+honestly unreached, not claimed otherwise; most of that ground was already covered live in this
+mission's own Step B, just not through this specific QA harness.
+
 ## MARATHON-FE-2, Step C — 6 Oct 2026
 **Removed the dummy data entirely, in the order the mission named, verified with
 `npx tsc --noEmit` + eslint + an api-mode production build after each coordinated batch.**

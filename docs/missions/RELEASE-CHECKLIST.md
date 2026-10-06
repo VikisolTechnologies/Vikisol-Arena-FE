@@ -1,14 +1,13 @@
 # Release checklist — Arena B+, real backend
 
-**Status: NOT release-ready.** See "What's not done" below. This is the honest state after
-`MARATHON-FE` (2 Oct 2026), written so the next session can pick up exactly where this one
-stopped rather than re-deriving it.
+**Status: FE RELEASE CANDIDATE READY.** Current as of MARATHON-FE-2 (2–6 Oct 2026, Steps 0 → D).
+Supersedes every earlier version of this file — the "Step 8 not attempted" / "full area 7 and 8
+not re-verified" caveats from the original `MARATHON-FE` run are resolved; see below.
 
 ## Branch
-`feature/arena-vnext-mobile-jenny` → `main` (frontend `Vikisol-Arena-FE`). Commits made this run
-are **local only** — `git push` failed on every attempt (`Failed to connect to github.com port
-443`), checked repeatedly across the whole run, never looping on it per the mission's own rule.
-**The branch must be pushed before anything below matters** — ask whoever has network back first.
+`feature/arena-vnext-mobile-jenny` → `main` (frontend `Vikisol-Arena-FE`). Every commit this run
+pushed successfully. **Never merged to main** — per the mission's own standing rule, that decision
+is the architect's/founder's, not this run's.
 
 ## Vercel Production env vars (when the architect says release-ready and the founder gives the OK)
 | Variable | Value |
@@ -16,73 +15,93 @@ are **local only** — `git push` failed on every attempt (`Failed to connect to
 | `NEXT_PUBLIC_ARENA_DATA` | `api` |
 | `NEXT_PUBLIC_API_BASE_URL` | `https://api-arena.vikisol.in/api/v1` |
 
-No other variable changes `api` vs `mixed` behaviour; Google Sign-In/Maps keys are independent
-and already documented in `.env.local.example`. The backend goes first, then the frontend, per
-the inbox's release rule — the architect confirms the backend deploy before either env var is set.
+No other variable changes behavior now — `isRealMode()`/`FIXTURES_ALLOWED`/mock mode no longer
+exist at all (Step C removed them entirely; "api" is the only data mode). Google Sign-In/Maps
+keys are independent and already documented in `.env.local.example`. The backend goes first,
+then the frontend, per the inbox's release rule.
 
-## What works end to end (verified this run, mostly live against the local backend, not just by
-reading source)
-- **Auth & onboarding (area 1):** sign up (now collects date of birth, backend-enforced 18+),
-  sign in, refresh, sign out, the onboarding age gate (skips itself when sign-up already
-  collected a DOB), full onboarding answers persisting for real.
-- **Profile & settings (area 2):** visibility, notification preferences, report a person, account
-  export/delete.
-- **Activities (area 3b):** the full `/activities/*` lifecycle — create (real kinds), structured
-  details, cover upload, host questions, join with answers, approve, self/host check-in,
-  attendance, confirm/dispute, feedback. Verified live with two real accounts end to end.
-- **Needs & offers (area 4):** respond, accept/decline (opens a real private conversation, not a
-  post room), withdraw, mark completed. **This area was silently broken against the real backend
-  before this run** (`post.myJoinStatus` is always empty for ASK/OFFER posts) — now fixed.
-- **Search (area 5):** people/skills search now calls the real endpoint instead of a hardcoded
-  "coming soon".
-- **Career (area 6):** CTC per-application sharing (off by default), offer accept/decline wired
-  (shapes verified against the controller, not live-tested — no seeded jobs in the local DB to
-  reach the `offer` stage through a full pipeline).
-- **Business pipeline (area 7, partial):** the two always-failing moves ("Mark as hired" from the
-  company side, "Reconsider" on a rejected application) are removed; the stage dropdown now only
-  offers real moves.
-- **Admin & account (area 8):** account was already real (area 2); platform admin paths audited
-  by inspection against the controller, not re-verified live this run.
-- **Jenny (area 9):** every v2 feature (rows 42–47) already showed, or now provably shows, its
-  own honest "can't do this yet" state — confirmed by rewriting the 7 tests that used to assert
-  the old fixture behaviour.
+## What works end to end, verified live against the real local backend this run
+- **Auth & onboarding:** sign up (DOB collected, backend-enforced 18+), sign in, refresh, sign
+  out, the age gate's DOB-skip, full onboarding persistence.
+- **Profile & account:** visibility (hidden → "not available" to others, confirmed with two real
+  accounts), notification preferences (now fires exactly one save per toggle — was firing two and
+  showing a false error, fixed this run), report, block/unblock, export, delete, edit (now opens
+  the real editor — was opening a dead legacy screen with no name/bio/photo fields, fixed this
+  run), share.
+- **Activities:** full `/activities/*` lifecycle — create (real kinds, search works for every
+  category after a test-stub fix this run surfaced it was never broken in the real app, only in
+  the test), structured details, cover upload (real photo and the procedural-card fallback),
+  host questions, join with answers, host approve, self/host check-in, attendance, confirm/
+  dispute, feedback.
+- **Needs & offers:** respond, accept/decline, withdraw, mark completed.
+- **Search:** people/skills search calls the real endpoint.
+- **Career:** CTC per-application sharing (off by default, now actually reaches the backend —
+  was silently dropped on publish, fixed in Step B), resume upload, apply with/without CTC,
+  offer accept/decline live-verified through a full company pipeline (screening → interview →
+  offer → candidate accepts → Hired), reject with the kind message, withdraw.
+- **Company (Arena for Business):** onboarding, domain-email verification (built from nothing in
+  Step A — had zero frontend code before this run), post a job (draft when unverified, open once
+  verified), applicant list (CTC shown only when included — was never shown at all before Step
+  B), screening/interview/offer/Hired, messages, connect requests (built from nothing in Step B —
+  had zero frontend code), unlock credits, billing.
+- **Admin:** sign-in with real TOTP 2FA; verification queue approve/reject; moderation warn/
+  suspend/ban (were "preview-only" placeholders despite the backend already supporting them —
+  wired to the real API in Step B); users suspend/restore/force-signout (same gap, same fix);
+  disputes raise-and-resolve (same gap, same fix, plus a real wire-field mixup caught before it
+  shipped); industries add/activate (built from nothing); audit, feature flags, companies
+  (tenants) already worked and were spot-checked against real data.
+- **Full independent QA pass (Step D0, 3 rounds, the mission's cap):** 5 bugs found across
+  Onboarding/Profile/Account journeys, all fixed or closed as not-a-bug (details in
+  `QA-BUGS.md`). 0 open.
 
-## What's "not available yet" (by design, per M6's own rule — no fake data in its place)
-- Jenny's v2 features (sentence-to-filters, the approval queue, smart match, job-search
-  automation, shortlist) — the JennySol v1 gateway doesn't expose them; each screen says so.
-- Company domain-email verification (`POST/GET /enterprise/verification`) — **no frontend code
-  calls it at all**. This is a real feature to build, not a quick fix; logged here rather than
-  rushed.
-- Full area 7 (company onboarding end-to-end, interviews, messages, connect requests, unlock
-  credits, billing) and area 8's admin screens beyond what's listed above weren't re-verified
-  live this run — audited by reading the controllers and FE code side by side, not clicked
-  through with two real accounts.
+## What's deliberately not built yet (by design — no fake data in its place, each screen says so honestly)
+- Jenny's v2 features (sentence-to-filters, approval queue, smart match, job-search automation,
+  shortlist) — the JennySol v1 gateway doesn't expose them yet; `JENNY_PREVIEW` is permanently
+  `false` now that mock/preview mode is gone, so every gated screen shows its own honest
+  "can't do this yet" state.
+- A general admin content browser, a platform audit log, and an admin team roster — confirmed by
+  reading every `/admin/**` controller that no backend endpoint exists for any of the three (not
+  another case of an unwired-but-real endpoint, which is what most of this mission's other admin
+  gaps turned out to be).
+- Server-side profile-photo storage — `CandidateProfile` has no `photoUrl` field anywhere; a
+  user's own uploaded photo is device-local only and can't survive a cleared browser or a second
+  device. Found via Step D0's QA-3; logged in `API-ISSUES.md`, needs a backend field + endpoint.
 
-## What's not done (Step 8, dummy-data removal)
-**Not attempted this run.** `src/lib/mock/*`, `src/lib/preview-off/*`, `src/lib/data/fixtures.ts`,
-the mock branches in `src/lib/api/*` (`mockNameFor` etc.), the `/dev/*` fixture routes and the
-people fixtures in `public/fixtures/` are all still in the tree. Removing them mechanically,
-across dozens of files, without the remaining time in this run to verify each one still builds
-and behaves correctly afterward, risked leaving the branch in a worse state than it's in now —
-fully buildable, with mock mode cleanly gated behind `isRealMode()`/`FIXTURES_ALLOWED` (the same
-flag `next.config.ts`'s production guard already refuses to ship fixtures under). Deliberate
-decision, not an oversight: a focused future session should do this as its own pass, verifying
-`grep -rn "lib/mock\|preview-off\|fixtures\|isRealMode" src` down to nothing (or the single
-data-mode guard) and a full suite + build run at the end, not partway through.
+## Dummy data: fully removed (Step C)
+Mock mode, every `isRealMode()` branch, `src/lib/mock/*`, `src/lib/preview-off/*`,
+`src/lib/data/fixtures.ts`/`FIXTURES_ALLOWED`, the three fixture-only `/dev/*` account-preview
+pages, the people/photo fixtures in `public/fixtures/`, and the mock Playwright suite are all
+gone. `grep -rn "lib/mock\|preview-off\|fixtures\|isRealMode\|FIXTURES_ALLOWED" src` returns
+nothing. Three real, user-facing bugs were caught in the removal itself (a hardcoded sample
+profile shown to every new user on Edit Profile, hardcoded fake numbers on the admin overview
+page, a fake periodic "agent activity" animation running in every real build) — see
+`REPORTS.md`'s Step C entry for the full account.
 
 ## Open `API-ISSUES.md` entries
-**None.** All four entries on file are marked FIXED or CLOSED (closed ones were FE path errors,
-not backend gaps).
+**6 open, all backend-owned, none frontend-blocking:**
+1. No server-side profile-photo storage (see above) — needs a backend field + endpoint.
+2. No employer-side GET for "my connect status with one candidate" — minor UX rougher edge, not
+   broken (the idempotent POST reveals the real status on retry, verified live).
+3. `GET /connect-requests` never includes `conversationId` for accepted rows — FE falls back to
+   the general inbox instead of a dead deep link.
+4. No backend endpoint for admin content browser / audit log / admin team (see above).
+5. `GET /admin/users` never includes account status in the list — FE can't show who's suspended
+   without opening each profile individually; the actions themselves all work.
+6. `PUT /notifications/preferences`'s 409 conflict message text doesn't fit a boolean-preference
+   endpoint — cosmetic, surfaced by a frontend bug (now fixed) that doesn't reach it anymore.
 
 ## Verified this run (every step)
-`npx tsc --noEmit`, `eslint` on every changed file, and
-`VERCEL_ENV=production NEXT_PUBLIC_ARENA_DATA=api NEXT_PUBLIC_API_BASE_URL=https://api-arena.vikisol.in/api/v1 npm run build`
-all green after every commit, per the mission's own "stay production-buildable" rule. Full local
-suite not run as one single pass at the very end (budget); every area's own targeted tests were
-run and are green as of their commit (see `REPORTS.md`'s step-by-step entries).
+`npx tsc --noEmit`, full-tree `eslint`, and
+`VERCEL_ENV=production NEXT_PUBLIC_ARENA_DATA=api NEXT_PUBLIC_API_BASE_URL=https://api-arena.vikisol.in/api/v1 npx next build`
+all green after every commit. **Full local suite run as one pass at the end of Step D: 420
+passed, 2 skipped, 0 failed, across all three browser projects** — every failure that existed at
+the start of this run (8 of them, flagged honestly as pre-existing and out-of-scope in Step C's
+and Step D0's own reports) was investigated and fixed rather than left as a known gap, since Step
+D is exactly the point to stop deferring them.
 
 ## Draft PR
-Not opened this run — `git push` never succeeded (see above), and a PR can't be opened for
-commits GitHub doesn't have yet. **Next step once push succeeds:** open a draft PR
-`feature/arena-vnext-mobile-jenny` → `main` titled "Arena B+ — first real-backend release" (do
-not merge), listing this file as the review starting point.
+Not opened this run (never asked for, and the mission's standing rule is never to merge to
+`main` without the architect/founder's explicit say). Every commit is on
+`feature/arena-vnext-mobile-jenny`, pushed. **Next step, when the architect is ready:** open a
+draft PR `feature/arena-vnext-mobile-jenny` → `main`, listing this file and `REPORTS.md`'s Step
+0 → D entries as the review starting point.
