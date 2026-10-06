@@ -30,6 +30,7 @@ import { isAdult } from "@/lib/geo";
 import { setDateOfBirth } from "@/lib/api/verification";
 import { signOut } from "@/lib/api/auth";
 import { useRouter } from "next/navigation";
+import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 
 type Glyph = typeof RunnerSolid;
 type StepProps = { draft: EntryDraft; update: (patch: Partial<EntryDraft>) => void };
@@ -47,7 +48,8 @@ const INTENT_LOOK: Record<EntryIntent, { icon: Glyph; tone: IconBadgeTone }> = {
 };
 
 function Footer({ children }: { children: ReactNode }) {
-  return <div className="mt-auto pt-8">{children}</div>;
+  const keyboard = useKeyboardInset();
+  return <div className="pt-8" style={{ paddingBottom: keyboard || undefined }}>{children}</div>;
 }
 
 function SectionLabel({ children, hint }: { children: ReactNode; hint?: string }) {

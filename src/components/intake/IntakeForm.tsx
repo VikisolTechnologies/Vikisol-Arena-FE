@@ -9,6 +9,7 @@ import { Button } from "@/components/bplus/Button";
 import { IntakeField, type PhotoValue } from "@/components/intake/IntakeField";
 import { defaultsOf, problem, summarize, visibleFields, visibleSteps, type Schema, type Values } from "@/lib/intake/types";
 import { readJennyFilled, writeJennyFilled } from "@/lib/jenny/filled";
+import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 
 /** Files and object URLs can't be saved as a draft; everything else can. */
 function serializable(v: Values): Values {
@@ -73,12 +74,13 @@ export function IntakeForm({
   intro?: ReactNode;
   /** The final button's label when it depends on the answers (default: schema.submitLabel). */
   submitText?: (values: Values) => string;
-  /** False where there's no bottom tab bar (business setup): sticky buttons sit at the bottom. */
+  /** Kept for callers. The button sits in the page flow, under the questions, so the shell's
+   *  own padding is what keeps it clear of the tab bar. */
   tabBar?: boolean;
   /** Open on this step id (or "review") — Jenny's "Preview & approve" lands on what's missing. */
   startAt?: string;
 }) {
-  const stick = tabBar ? "bottom-[calc(76px+env(safe-area-inset-bottom))]" : "bottom-0";
+  const keyboard = useKeyboardInset();
   const [values, setValues] = useState<Values>(() => ({ ...defaultsOf(schema), ...(initial ?? {}), ...(readIntakeDraft(draftKey) ?? {}) }));
   // Fields Jenny pre-filled stay marked across visits until the person touches them.
   const [jenny, setJenny] = useState<Set<string>>(() => new Set([...jennyFilled, ...readJennyFilled(draftKey)]));
@@ -189,7 +191,7 @@ export function IntakeForm({
               </div>
               {reviewExtra?.(values)}
               {submitError && <p role="alert" className="mt-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{submitError}</p>}
-              <div className={cn("sticky z-10 -mx-5 mt-6 bg-linear-to-t", stick, " from-paper from-80% to-transparent px-5 pb-2 pt-3")}>
+              <div className={cn("mt-6", tabBar && "scroll-mb-2")} style={{ paddingBottom: keyboard || undefined }}>
                 <Button loading={busy} onClick={() => onSubmit(values)}>{submitText?.(values) ?? schema.submitLabel}</Button>
               </div>
             </div>
@@ -226,7 +228,7 @@ export function IntakeForm({
                   </div>
                 )}
               </div>
-              <div className={cn("sticky z-10 -mx-5 mt-8 bg-linear-to-t from-paper from-80% to-transparent px-5 pb-2 pt-3", stick)}>
+              <div className={cn("mt-8", tabBar && "scroll-mb-2")} style={{ paddingBottom: keyboard || undefined }}>
                 <Button type="submit">{stepIndex === steps.length - 1 ? "Review" : "Continue"}</Button>
               </div>
             </form>
