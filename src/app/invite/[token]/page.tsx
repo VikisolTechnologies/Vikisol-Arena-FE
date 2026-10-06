@@ -24,7 +24,9 @@ export default function AcceptInvitePage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    previewInvitation(params.token).then(setPreview);
+    previewInvitation(params.token)
+      .then(setPreview)
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Couldn't load this invite."));
   }, [params.token]);
 
   const submit = async (e: React.FormEvent) => {
@@ -51,7 +53,13 @@ export default function AcceptInvitePage() {
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-6 flex justify-center"><div className="scale-50"><AgentOrb /></div></div>
         <div className="rounded-[24px] border border-border bg-white/5 p-7 backdrop-blur-[18px]">
-          {!preview ? (
+          {!preview && error ? (
+            <div className="text-center">
+              <h1 className="font-display text-lg font-bold">Couldn&apos;t load this invite</h1>
+              <p className="mt-2 text-sm text-muted-foreground">{error}</p>
+              <Button variant="ghost-glass" size="sm" className="mt-4" onClick={() => router.push("/auth")}>Go to sign in</Button>
+            </div>
+          ) : !preview ? (
             <div className="flex justify-center py-8"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
           ) : !preview.valid ? (
             <div className="text-center">

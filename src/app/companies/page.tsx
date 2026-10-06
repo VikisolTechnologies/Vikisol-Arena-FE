@@ -20,16 +20,26 @@ export default function CompaniesPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [companies, setCompanies] = useState<Company[] | null>(null);
+  const [error, setError] = useState("");
   const [query, setQuery] = useState("");
 
-  const load = () => { listCompanies(query).then((p) => setCompanies(p.content)); };
+  const load = () => {
+    setError("");
+    listCompanies(query)
+      .then((p) => setCompanies(p.content))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Companies didn't load."));
+  };
 
   useEffect(() => {
     if (!allowGuestBrowsing(router)) return;
     if (getSession()) getMyProfile().then(setProfile);
   }, [router]);
 
-  useEffect(load, [query]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
 
   if (!companies) {
     return (
@@ -46,7 +56,9 @@ export default function CompaniesPage() {
         <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search companies..." className="border-border bg-card pl-9" />
       </div>
 
-      {!companies ? (
+      {error ? (
+        <EmptyState title="Companies didn't load" description={error} className="py-16" />
+      ) : !companies ? (
         <OrbLoader className="h-64" />
       ) : companies.length === 0 ? (
         <EmptyState title="No companies found" className="py-16" />

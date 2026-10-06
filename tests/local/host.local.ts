@@ -21,6 +21,20 @@ async function setup(page: Page, calls: Call[]) {
     calls.push({ method: req.method(), path, body });
     let data: unknown = [];
     if (path === "/media/upload-signature") data = { apiKey: "k", timestamp: 1, folder: "f", allowedFormats: "webp", signature: "s", uploadUrl: "https://upload.example.test/image" };
+    // Missing before: the generic unmatched-route fallback (`data: []`) was truthy, so
+    // KindPicker's `!kinds` check treated it as a *real but empty* kinds map and filtered every
+    // category's subtypes down to nothing - "Cricket" could never match any search. `null` is
+    // falsy, matching what an uncaught/failed real request already does (kinds stays undefined).
+    else if (path === "/activities/kinds") data = null;
+    // Missing before: a procedural cover's file goes through uploadActivityCover()
+    // (POST /activities/{id}/cover, multipart, area 3b's own endpoint) - never through the
+    // generic /media/upload-signature + Cloudinary flow this stub already handles for real
+    // photo uploads. The post itself is created with an empty mediaUrls for a procedural cover
+    // (aiCoverUrl() only returns a URL for Jenny-generated covers); the real cover arrives from
+    // this separate call afterward.
+    else if (path === "/activities/act-new/cover" && req.method() === "POST") {
+      data = { postId: "act-new", typeAnswers: {}, bring: [], waitlist: false, womenOnly: false, needsEmergencyContact: false, questions: [], waitlistCount: 0, coverUrl: "https://cdn.example.test/cover.webp" };
+    }
     else if (path === "/posts" && req.method() === "POST") data = { ...(body as object), id: "act-new", authorUserId: "me", authorName: "Priya", authorEmoji: "p", spotsFilled: 0, status: "open", joinable: true, mine: true, createdAt: new Date().toISOString(), commentCount: 0, reactionCount: 0, authorJoinCount: 0, authorAccountAgeDays: 1, demoContent: false };
     else if (path.startsWith("/profile/me")) data = { id: "me", name: "Priya Sharma", avatarEmoji: "p", title: "", industry: "Design", location: "", remote: false, skills: [], experienceYears: 0, rateFloor: 0, openTo: [], careerHealth: 0, consent: { autoApply: false, searchableByEnterprises: false }, autonomy: "manual" };
     await route.fulfill({ json: { success: true, data } });
@@ -88,7 +102,9 @@ test("host a cricket match: type questions, cover card, publish with the cover s
   await expect(page.getByRole("heading", { name: "It's live!" })).toBeVisible();
 
   const post = calls.find((c) => c.method === "POST" && c.path === "/posts")!.body as Record<string, unknown>;
-  expect(post).toMatchObject({ intentType: "activity", title: "Sunday tennis-ball cricket", visibility: "approval", capacity: 16, locationText: "Gachibowli", exactMeetingPoint: "Box arena gate 2", mediaUrls: ["https://cdn.example.test/cover.webp"] });
+  expect(post).toMatchObject({ intentType: "activity", title: "Sunday tennis-ball cricket", visibility: "approval", capacity: 16, locationText: "Gachibowli", exactMeetingPoint: "Box arena gate 2" });
+  // A procedural cover's file goes up separately, after the post exists (POST /activities/{id}/cover).
+  expect(calls.some((c) => c.method === "POST" && c.path === "/activities/act-new/cover")).toBe(true);
   expect(post.tags).toEqual(expect.arrayContaining(["Sports", "Cricket", "All levels"]));
   expect(post.startsAt).toBe(new Date("2026-10-18T07:00:00+05:30").toISOString());
   expect(String(post.body)).toContain("Format: Tennis-ball");
@@ -107,7 +123,14 @@ test("manage: starting soon, check people in, cancel needs a reason posted to th
     let data: unknown = [];
     if (path === "/posts/act-9" && req.method() === "GET") data = { id: "act-9", authorUserId: "me", authorName: "Priya", authorEmoji: "p", intentType: "activity", title: "Evening badminton", body: "Doubles", locationText: "Gachibowli", audience: "global", visibility: "approval", capacity: 8, spotsFilled: 1, status: "open", startsAt, tags: ["Badminton"], mediaUrls: [], joinable: true, mine: true, roomId: "room-9", exactMeetingPoint: "Court 3", createdAt: new Date().toISOString(), commentCount: 0, reactionCount: 0, authorJoinCount: 2, authorAccountAgeDays: 40, demoContent: false };
     else if (path === "/posts/act-9/joins") data = [{ id: "j1", postId: "act-9", userId: "u1", userName: "Rohit Kumar", userEmoji: "r", status: "approved", createdAt: new Date().toISOString() }];
-    else if (path === "/posts/act-9/joins/j1/outcome") data = { id: "j1", postId: "act-9", userId: "u1", userName: "Rohit Kumar", userEmoji: "r", status: "approved", outcome: "attended", createdAt: new Date().toISOString() };
+    // CheckInSheet reads/writes the activity-specific attendance endpoints (area 3b), not the
+    // generic /posts/{id}/joins/{joinId}/outcome this stub used to assume - missing before, so
+    // the sheet always showed "Nobody joined this one." and the "Attended" button never existed.
+    else if (path === "/activities/act-9/attendance" && req.method() === "GET") {
+      data = [{ joinId: "j1", userId: "u1", name: "Rohit Kumar" }];
+    } else if (path === "/activities/act-9/attendance/j1/check-in" && req.method() === "PUT") {
+      data = [{ joinId: "j1", userId: "u1", name: "Rohit Kumar", checkedInAt: new Date().toISOString(), outcome: "attended" }];
+    }
     else if (path.startsWith("/profile/me")) data = { id: "me", name: "Priya Sharma", avatarEmoji: "p", title: "", industry: "Design", location: "", remote: false, skills: [], experienceYears: 0, rateFloor: 0, openTo: [], careerHealth: 0, consent: { autoApply: false, searchableByEnterprises: false }, autonomy: "manual" };
     else if (path === "/rooms/room-9/messages") data = { id: "m1", roomId: "room-9", senderUserId: "me", senderName: "Priya", senderEmoji: "p", fromMe: true, content: "x", createdAt: new Date().toISOString() };
     await route.fulfill({ json: { success: true, data } });
@@ -123,9 +146,9 @@ test("manage: starting soon, check people in, cancel needs a reason posted to th
   await noSeriousA11y(page);
   await page.getByRole("button", { name: "Check people in" }).click();
   const sheet = page.getByRole("dialog", { name: "Check in" });
-  await sheet.getByRole("button", { name: "Attended" }).click();
+  await sheet.getByRole("button", { name: "Mark present" }).click();
   await expect(sheet.getByText("Attended")).toBeVisible();
-  expect(calls.find((c) => c.path === "/posts/act-9/joins/j1/outcome")?.body).toEqual({ outcome: "attended" });
+  expect(calls.some((c) => c.path === "/activities/act-9/attendance/j1/check-in" && c.method === "PUT")).toBe(true);
   await page.keyboard.press("Escape");
 
   await page.getByRole("button", { name: "Cancel activity" }).click();

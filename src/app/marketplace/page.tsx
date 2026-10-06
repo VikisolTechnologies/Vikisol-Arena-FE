@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Clock3, Plus, Users } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { OrbLoader } from "@/components/ui/orb-loader";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,11 +61,14 @@ export default function MarketplacePage() {
   };
   const [publishing, setPublishing] = useState(false);
   const [signInPromptOpen, setSignInPromptOpen] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
   // "Enter as guest" - a signed-out visitor sees every open project, just none of their own
   // postings (there aren't any) layered on top; getMyProjects() is a "my stuff" call that would
   // 401 without a session, so it's skipped entirely rather than treated as a load failure.
   const load = () => {
+    setLoadError("");
+    const onError = (err: unknown) => setLoadError(err instanceof Error ? err.message : "Projects didn't load.");
     if (getSession()) {
       Promise.all([getProjects(), getMyProjects()]).then(([all, mine]) => {
         // Real mode's /marketplace/projects already includes the caller's own postings, so `all`
@@ -73,23 +77,24 @@ export default function MarketplacePage() {
         const mineIds = new Set(mine.map((p) => p.id));
         setProjects([...mine, ...all.filter((p) => !mineIds.has(p.id))]);
         setLoaded(true);
-      });
+      }).catch(onError);
     } else {
       getProjects().then((all) => {
         setProjects(all);
         setLoaded(true);
-      });
+      }).catch(onError);
     }
   };
 
   useEffect(() => {
     if (!allowGuestBrowsing(router)) return;
     if (getSession()) getMyProfile().then(setProfile);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
     // Work > Bidding > "Post a project" lands here with ?post=1 - open the form directly.
     // Client-only URL + localStorage reads.
     if (getSession() && new URLSearchParams(window.location.search).get("post") === "1") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only localStorage read
+      // client-only localStorage read
       setDraftState(readProjectDraft());
       setPosting(true);
     }
@@ -131,6 +136,14 @@ export default function MarketplacePage() {
       setPublishing(false);
     }
   };
+
+  if (loadError) {
+    return (
+      <AppShell title="Marketplace">
+        <EmptyState title="Projects didn't load" description={loadError} className="py-16" />
+      </AppShell>
+    );
+  }
 
   if (!loaded) {
     return (

@@ -39,9 +39,27 @@ async function setup(page: Page, post: Record<string, unknown>, calls: string[])
     calls.push(`${req.method()} ${path}`);
     let data: unknown = [];
     if (path === "/posts/act-1" && req.method() === "GET") data = current;
+    // Missing before: ActivityScreen's join() reads `activity?.questions.length` to decide
+    // whether to show the answer sheet first - with no stub here, the route's generic empty-
+    // array fallback made `activity` resolve to `[]`, and `[].questions` is `undefined`, so
+    // `.length` threw inside the click handler before the "Request to join" click ever reached
+    // requestJoin(). Real activities always come back with a `questions` array (confirmed live
+    // against the real backend), so this is a test-completeness gap, not a product bug.
+    else if (path === "/activities/act-1" && req.method() === "GET") {
+      data = { postId: "act-1", typeAnswers: {}, bring: [], waitlist: false, repeat: "once", womenOnly: false, needsEmergencyContact: false, questions: [], waitlistCount: 0 };
+    }
     else if (path === "/posts/act-1/joins" && req.method() === "POST") {
       current = { ...current, myJoinStatus: "pending" };
       data = { id: "j1", postId: "act-1", userId: "me", userName: "Priya", userEmoji: "p", status: "pending", createdAt: new Date().toISOString() };
+    }
+    // Missing before: ActivityScreen's join() calls joinActivity() (POST /activities/{id}/join),
+    // not the generic requestJoin() (POST /posts/{id}/joins) this stub already handled above -
+    // area 3b wired every real activity to the activities-specific endpoint, but this test's stub
+    // was never updated to match, so the real click silently no-opped against the unmatched-path
+    // fallback and the app's own post state never advanced to "pending".
+    else if (path === "/activities/act-1/join" && req.method() === "POST") {
+      current = { ...current, myJoinStatus: "pending" };
+      data = { id: "j1", status: "pending" };
     } else if (path === "/posts/act-1/joins/me" && req.method() === "DELETE") {
       current = { ...current, myJoinStatus: undefined };
       data = { id: "j1", postId: "act-1", userId: "me", userName: "Priya", userEmoji: "p", status: "withdrawn", createdAt: new Date().toISOString() };
@@ -74,7 +92,7 @@ test("request to join → sent sheet with status → cancel request", async ({ p
   await expect(sheet.getByRole("heading", { name: "Join request sent!" })).toBeVisible();
   await expect(sheet.getByText("Host will review")).toBeVisible();
   await noSeriousA11y(page);
-  expect(calls).toContain("POST /posts/act-1/joins");
+  expect(calls).toContain("POST /activities/act-1/join");
   await sheet.getByRole("button", { name: "Cancel request" }).click();
   await expect(sheet).toHaveCount(0);
   expect(calls).toContain("DELETE /posts/act-1/joins/me");

@@ -89,7 +89,12 @@ test("career: intent → intake → visibility → publish sends only what the A
   const details = calls.find((c) => c.path === "/profile/me/details")?.body as Record<string, unknown>;
   expect(details).toMatchObject({ title: "Product Designer", cameForJob: true, openTo: ["full-time"], experienceYears: 4 });
   expect(JSON.stringify(details)).not.toContain("Secret Co");
-  expect(details).not.toHaveProperty("currentCtc", 18);
+  // MARATHON-FE-2 Step B: currentCtc going to the backend is correct, not a leak - this
+  // assertion used to expect the opposite, encoding the bug it fixed (CareerFlow.tsx's
+  // publish() silently dropped the Compensation step's answer, so the "Include my CTC" toggle
+  // could never render for any real candidate; UpdateProfileDetailsRequest has always accepted
+  // this field).
+  expect(details).toHaveProperty("currentCtc", 18);
   expect(calls.find((c) => c.path === "/profile/me/skills")?.body).toEqual({ skills: ["Figma", "UX research"] });
   expect(calls.find((c) => c.path === "/profile/me/consent")?.body).toMatchObject({ searchableByEnterprises: true });
   await expect(page.getByText("Your career profile is published.")).toBeVisible();
