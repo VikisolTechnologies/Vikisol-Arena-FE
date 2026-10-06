@@ -454,7 +454,7 @@ export type PostIntentType = "activity" | "ask" | "update" | "company" | "offer"
 
 export type PostAudience = "global" | "followers" | "local"; // "local" not selectable yet (needs Phase B geo)
 export type PostVisibility = "public" | "approval"; // drives the join/approve flow; ignored for "update"
-export type PostStatus = "open" | "full" | "closed" | "cancelled" | "expired";
+export type PostStatus = "open" | "full" | "paused" | "closed" | "cancelled" | "expired";
 export type PostJoinStatus = "pending" | "approved" | "declined" | "withdrawn";
 
 export interface Post {

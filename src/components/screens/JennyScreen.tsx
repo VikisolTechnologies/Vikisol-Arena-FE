@@ -180,6 +180,7 @@ export function JennyScreen() {
         </AnimatePresence>
       </div>
 
+      <div aria-hidden className="h-[calc(72px+76px+env(safe-area-inset-bottom))]" />
       <div className="sticky bottom-0 -mx-5 mt-6 border-t border-line bg-background/95 px-5 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
         {guest ? (
           <ButtonLink href="/auth?mode=signin" variant="outline">Sign in to talk to Jenny</ButtonLink>

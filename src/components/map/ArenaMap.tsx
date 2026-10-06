@@ -37,6 +37,12 @@ function circle(lat: number, lng: number, km: number) {
   return { type: "Feature" as const, properties: {}, geometry: { type: "Polygon" as const, coordinates: [pts] } };
 }
 
+/** Zoom that fits a circle of this radius in the phone-sized map. */
+function zoomForKm(km: number) {
+  const clamped = Math.min(50, Math.max(2, km));
+  return Math.min(15, Math.max(8, Math.log2(40000 / clamped) - 0.2));
+}
+
 function webglAvailable() {
   try {
     const c = document.createElement("canvas");
@@ -72,6 +78,7 @@ export function ArenaMap({
 }) {
   const box = useRef<HTMLDivElement>(null);
   const map = useRef<MLMap | null>(null);
+  const ringRef = useRef(ringKm);
   const markers = useRef<{ marker: Marker; root: Root }[]>([]);
   const [ready, setReady] = useState(false);
   const failRef = useRef(onFail);
@@ -105,8 +112,8 @@ export function ArenaMap({
           container: box.current,
           style: OPENFREEMAP_STYLE,
           center: [center.lng, center.lat],
-          zoom: 12.2,
-          minZoom: 10,
+          zoom: zoomForKm(ringRef.current),
+          minZoom: 8,
           maxZoom: 16,
           attributionControl: false,
           cooperativeGestures: true,
@@ -133,7 +140,7 @@ export function ArenaMap({
             const rule = PAINT.find((r) => r.match(layer.id));
             if (rule) for (const [k, v] of Object.entries(rule.props)) m.setPaintProperty(layer.id, k as never, v as never);
           }
-          m.addSource("you", { type: "geojson", data: circle(center.lat, center.lng, ringKm) });
+          m.addSource("you", { type: "geojson", data: circle(center.lat, center.lng, ringRef.current) });
           m.addLayer({ id: "you-fill", type: "fill", source: "you", paint: { "fill-color": "#3b82f6", "fill-opacity": 0.16 } });
           m.addLayer({ id: "you-line", type: "line", source: "you", paint: { "line-color": "#7aa7ff", "line-opacity": 0.5, "line-width": 1 } });
         });
@@ -156,8 +163,19 @@ export function ArenaMap({
       instance?.remove();
       map.current = null;
     };
-    // The map is created once per centre; pins update below.
-  }, [center.lat, center.lng, ringKm]);
+    // The map is created once per centre; the distance circle updates below.
+  }, [center.lat, center.lng]);
+
+  // The selected distance is the circle, and the camera fits that circle.
+  useEffect(() => {
+    ringRef.current = ringKm;
+    const m = map.current;
+    if (!m || !ready) return;
+    const src = m.getSource("you") as { setData?: (data: ReturnType<typeof circle>) => void } | undefined;
+    src?.setData?.(circle(center.lat, center.lng, ringKm));
+    const zoom = zoomForKm(ringKm);
+    if (Math.abs(m.getZoom() - zoom) > 0.05) m.jumpTo({ center: [center.lng, center.lat], zoom });
+  }, [ready, ringKm, center.lat, center.lng]);
 
   // "You" marker + pins, redrawn when the list or selection changes.
   useEffect(() => {

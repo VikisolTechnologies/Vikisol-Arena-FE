@@ -122,7 +122,7 @@ export function DiscoverMap() {
         />
       </label>
 
-      <div className="relative mt-4 overflow-hidden rounded-[var(--radius-card)] border border-line">
+      <div className="relative mt-4 overflow-hidden rounded-[var(--radius-card)] border border-line" data-radius-km={radiusKm}>
         {posts === null && !error ? (
           <Skeleton className="aspect-[3/4] w-full rounded-none" />
         ) : !center ? (
@@ -133,7 +133,7 @@ export function DiscoverMap() {
         ) : error ? (
           <div className="p-4"><StateCard kind="error" title="Nearby didn't load" detail={error} /></div>
         ) : !tilesFailed ? (
-          <ArenaMap center={center} you={center.approximate} ringKm={APPROX_RING_KM} posts={shown} selected={pick?.id ?? null} onSelect={setSelected} onFail={() => setTilesFailed(true)} />
+          <ArenaMap center={center} you={center.approximate} ringKm={radiusKm} posts={shown} selected={pick?.id ?? null} onSelect={setSelected} onFail={() => setTilesFailed(true)} />
         ) : onBasemap(center.lat, center.lng) ? (
           <TileMap center={center} you={center.approximate} posts={shown} selected={pick?.id ?? null} onSelect={setSelected} />
         ) : (

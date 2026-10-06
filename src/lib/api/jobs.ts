@@ -24,6 +24,19 @@ export async function getJob(id: string): Promise<Job | undefined> {
   return apiFetch<Job>(`/jobs/${id}`).catch(() => undefined);
 }
 
+export async function getSavedJobIds(): Promise<string[]> {
+  const page = await apiFetch<PagedResponse<Job>>("/jobs/saved", { query: { page: 0, size: 100 } });
+  return page.content.map((j) => j.id);
+}
+
+export async function saveJob(id: string): Promise<void> {
+  await apiFetch<void>(`/jobs/${id}/save`, { method: "POST" });
+}
+
+export async function unsaveJob(id: string): Promise<void> {
+  await apiFetch<void>(`/jobs/${id}/save`, { method: "DELETE" });
+}
+
 const PASSED_KEY = "arena_passed_jobs";
 
 // No backend concept of "passed" jobs exists yet (JobController has no such endpoint) - kept

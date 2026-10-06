@@ -241,7 +241,9 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false,
         {post.mine ? (
           <HostPanel post={post} activity={activity} onChanged={reload} onActivityChanged={reloadActivity} specimen={specimen} />
         ) : (
-          <m.div variants={rise} custom={4} className="sticky bottom-[calc(76px+env(safe-area-inset-bottom))] z-10 -mx-5 mt-7 bg-linear-to-t from-paper from-80% to-transparent px-5 pb-2 pt-4">
+          <>
+          <div aria-hidden className="h-[calc(88px+76px+env(safe-area-inset-bottom))]" />
+          <m.div variants={rise} custom={4} className="sticky bottom-0 z-10 -mx-5 mt-7 bg-linear-to-t from-paper from-80% to-transparent px-5 pb-2 pt-4">
             {error && <p role="alert" className="mb-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
             {inactive ? (
               <p className="rounded-tile bg-paper-muted p-4 text-center text-[15px]">This activity has {post.status === "cancelled" ? "been cancelled" : "ended"}.</p>
@@ -262,6 +264,7 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false,
               <Button onClick={join} loading={busy || activity === undefined}>{signedIn ? (post.visibility === "public" ? "Join" : "Request to join") : "Sign in to join"}</Button>
             )}
           </m.div>
+          </>
         )}
         {notice && <p role="status" className="mt-3 text-center text-[14px] text-paper-ink-muted">{notice}</p>}
       </m.article>

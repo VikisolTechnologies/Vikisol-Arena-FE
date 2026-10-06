@@ -118,7 +118,8 @@ function Tell({ profile, onYes }: { profile: CandidateProfile; onYes: () => void
           </m.div>
         )}
       </div>
-      <form onSubmit={send} className="sticky bottom-[calc(84px+env(safe-area-inset-bottom))] mt-6 flex items-center gap-2">
+      <div aria-hidden className="h-[calc(64px+76px+env(safe-area-inset-bottom))]" />
+      <form onSubmit={send} className="sticky bottom-0 mt-6 flex items-center gap-2 bg-background py-2">
         <div className="flex h-12 min-w-0 flex-1 items-center rounded-full border border-field-line bg-surface pl-4 pr-0.5 focus-within:border-primary">
           <label className="sr-only" htmlFor="tell-jenny-job">What are you looking for?</label>
           <input id="tell-jenny-job" value={text} onChange={(e) => setText(e.target.value)} className="h-full min-w-0 flex-1 bg-transparent text-[16px] outline-none" />

@@ -38,7 +38,7 @@ const GROUPS: { id: WorkGroup; label: string }[] = [
   { id: "completed", label: "Completed" },
 ];
 
-export function WorkScreen() {
+export function WorkScreen({ embedded = false }: { embedded?: boolean }) {
   const guest = useGuest();
   const role = useSessionRole();
   const params = useSearchParams();
@@ -76,14 +76,14 @@ export function WorkScreen() {
     [rows, tab, side],
   );
 
-  return (
-    <AppShell>
-      <header className="flex items-start justify-between gap-3 pt-3">
+  const body = (
+    <>
+      <header className="flex flex-wrap items-start justify-between gap-3 pt-3">
         <div>
-          <h1 className="font-display-serif text-[34px] font-medium leading-tight">Work</h1>
-          <p className="mt-1 text-[15px] text-faint">From chats to real progress.</p>
+          <h1 className="font-display-serif text-[34px] font-medium leading-tight">{embedded ? "My activity" : "Work"}</h1>
+          <p className="mt-1 text-[15px] text-faint">Needs, offers and the things you joined.</p>
         </div>
-        <div className="mt-2 flex shrink-0 items-center gap-2">
+        <div className="mt-2 flex flex-wrap items-center gap-2">
           <Link href="/connect-requests" className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-field-line px-4 text-[15px] font-semibold">
             <UserPlus className="size-4" aria-hidden /> Connect requests
           </Link>
@@ -94,7 +94,7 @@ export function WorkScreen() {
       </header>
       {projectDraft && (
         <p role="status" className="mt-4 rounded-tile bg-paper p-4 text-[15px] text-paper-ink">
-          Your project is saved on this device. It publishes as soon as Arena supports collaborative projects.{" "}
+          Your project draft is saved. Open it to finish and publish.{" "}
           <Link href="/projects/new" className="font-semibold text-primary-on-paper underline underline-offset-4">Keep editing</Link>
         </p>
       )}
@@ -105,7 +105,6 @@ export function WorkScreen() {
         <Pills
           label="Whose"
           tone="cream"
-          segmented
           options={[
             { id: "all", label: "Everything" },
             { id: "need", label: "My needs" },
@@ -175,8 +174,9 @@ export function WorkScreen() {
 
       <ResolveSheet postId={resolveId} onClose={() => setResolveId(null)} onDone={() => setReload((n) => n + 1)} />
       <CheckInSheet postId={attendanceId} onClose={() => setAttendanceId(null)} />
-    </AppShell>
+    </>
   );
+  return embedded ? body : <AppShell>{body}</AppShell>;
 }
 
 function WorkRowCard({ row, onAction }: { row: WorkRow; onAction: () => void }) {

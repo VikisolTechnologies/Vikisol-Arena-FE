@@ -13,7 +13,7 @@ import { DashButton, Panel, StatusPill } from "@/components/dash/Parts";
 import { CandidateList } from "@/components/business/CandidateList";
 import { NotSelectedSheet } from "@/components/business/NotSelectedSheet";
 import { PipelineBoard, PopCount, useCanDrag } from "@/components/business/PipelineBoard";
-import { getApplicantsForPosting, getMyEnterpriseProfile, getPosting, moveApplicantStage, setPostingStatus } from "@/lib/api/enterprise";
+import { getApplicantsForPosting, getMyEnterpriseProfile, getPosting, moveApplicantStage, setPostingStatus, updatePosting } from "@/lib/api/enterprise";
 import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
 import { STAGES, STAGE_TONE, jobParts, readJobExtras, type Applicant, type JobExtras } from "@/lib/data/business";
 import { shortDate, timeAgo } from "@/lib/data/time";
@@ -241,7 +241,7 @@ function JobPage() {
                     ))}
                   </ul>
                   {parts.about && <p className="mt-4 whitespace-pre-line border-t border-line pt-4 text-[15px] leading-relaxed text-foreground/85">{parts.about}</p>}
-                  <p className="mt-4 text-[13px] text-faint">Editing a published job isn&apos;t available yet — close it and post again to change it.</p>
+                  <JobEdit posting={posting} onSaved={setPosting} />
                 </Panel>
               </div>
               <div className="space-y-5">
@@ -273,7 +273,7 @@ function JobPage() {
                 {extras?.questions?.length ? (
                   <Panel tone="paper" title="Application questions">
                     <ol className="list-decimal space-y-1.5 pl-5 text-[15px]">{extras.questions.map((q) => <li key={q}>{q}</li>)}</ol>
-                    <p className="mt-3 text-[13px] text-faint">Saved on this device. Candidates aren&apos;t asked these until Arena supports questions.</p>
+                    <p className="mt-3 text-[13px] text-faint">Saved with the job. Candidates aren&apos;t asked these in the app yet.</p>
                   </Panel>
                 ) : null}
               </div>
@@ -326,6 +326,40 @@ function JobPage() {
         }}
       />
     </>,
+  );
+}
+
+function JobEdit({ posting, onSaved }: { posting: JobPosting; onSaved: (p: JobPosting) => void }) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState(posting.title);
+  const [description, setDescription] = useState(posting.description);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  if (!open) {
+    return <button type="button" onClick={() => { setTitle(posting.title); setDescription(posting.description); setOpen(true); }} className="mt-4 inline-flex min-h-11 items-center text-[14px] font-semibold underline underline-offset-4">Edit this job</button>;
+  }
+  return (
+    <form
+      className="mt-4 space-y-2"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setBusy(true);
+        setError("");
+        try {
+          onSaved(await updatePosting(posting.id, { title: title.trim(), description: description.trim() }));
+          setOpen(false);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "That didn't save.");
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      <input value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Job title" className="h-12 w-full rounded-button border border-line bg-white px-3 text-[16px]" />
+      <textarea value={description} onChange={(e) => setDescription(e.target.value)} aria-label="Job description" rows={4} className="w-full rounded-button border border-line bg-white px-3 py-2 text-[16px]" />
+      {error && <p role="alert" className="text-[13px] text-danger">{error}</p>}
+      <button type="submit" disabled={busy} className="inline-flex h-11 items-center rounded-full bg-primary px-4 text-[15px] font-semibold text-white disabled:opacity-60">{busy ? "Saving" : "Save"}</button>
+    </form>
   );
 }
 
