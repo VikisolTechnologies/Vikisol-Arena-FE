@@ -6,16 +6,7 @@
 // pointer-events-none is load-bearing: every shell (AppShell, Enterprise/HiringManager/
 // CompanyAdmin/PlatformAdmin) fixes a bottom tab bar or side nav across the full viewport, so
 // this must be provably unable to swallow a tap regardless of which shell is underneath it.
+/** Version stays on `/version`. A missing commit used to render the word "unknown" over the product. */
 export function BuildStamp() {
-  const commit = process.env.NEXT_PUBLIC_BUILD_COMMIT ?? "unknown";
-  const short = commit === "unknown" || commit === "local" ? commit : commit.slice(0, 7);
-
-  return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none fixed top-2 right-2 z-[999] select-none font-mono text-[9px] leading-none tracking-tight text-muted-foreground"
-    >
-      {short}
-    </div>
-  );
+  return null;
 }

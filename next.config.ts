@@ -1,6 +1,28 @@
 import type { NextConfig } from "next";
 
+// FE-BPLUS-BUILD §6: fixture data must never reach production. A production build that isn't
+// in "api" data mode fails here, before anything is compiled. Mock/mixed data mode no longer
+// exists at all (MARATHON-FE-2 Step C) - "api" is the only mode - but this guard stays as a
+// cheap safety net against a misconfigured env var.
+if (process.env.VERCEL_ENV === "production" && process.env.NEXT_PUBLIC_ARENA_DATA !== "api") {
+  throw new Error('Refusing to build production with NEXT_PUBLIC_ARENA_DATA unset: set it to "api".');
+}
+
 const nextConfig: NextConfig = {
+  // /dev (build tracker, compare pages, specimens) uses `*.dev.tsx` page files, kept out of the
+  // real production bundle - a production build has no /dev routes at all, not just 404 ones.
+  // Tied to VERCEL_ENV (not the old data-mode flag, which no longer exists) so local dev and any
+  // preview/staging deploy still get the dev tooling.
+  pageExtensions: process.env.VERCEL_ENV === "production" ? ["tsx", "ts", "jsx", "js"] : ["dev.tsx", "tsx", "ts", "jsx", "js"],
+  // Performance pass only (scripts/dev/perf.mjs): attribute shipped bytes to their sources.
+  productionBrowserSourceMaps: process.env.ARENA_SOURCEMAPS === "1",
+  // The dev tools badge is not part of the product. Preview screenshots must not show it.
+  devIndicators: false,
+  // The founder watches the dev preview from a phone on the LAN. Next blocks dev-only assets
+  // (HMR, RSC dev chunks) from origins that aren't localhost unless listed here - without this
+  // the page rendered its server shell and never hydrated (the "blank feed", 29 Sep). Dev only;
+  // ignored by production builds.
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "*.local"],
   // Keep isolated browser-test compilation separate from a developer's running Next server.
   distDir: process.env.ARENA_NEXT_DIST_DIR || ".next",
   // ARENA-PHASE-1-BUILD.md §2 "Imagery" - real licensed Unsplash photography for the new v3
@@ -43,7 +65,9 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "X-Frame-Options", value: "DENY" },
+          // Production: DENY. Dev/preview: SAMEORIGIN, so /dev/compare can show the live screen
+          // next to its board; other origins still can't frame the app.
+          { key: "X-Frame-Options", value: process.env.VERCEL_ENV === "production" ? "DENY" : "SAMEORIGIN" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
         ],
@@ -70,13 +94,17 @@ const nextConfig: NextConfig = {
   // recruiter/company_admin-facing list, only HM's own /interviews/mine) - real, scoped
   // follow-up work, not something to improvise in a bug-fix pass. Redirecting to where each
   // role already sees interview-stage info today satisfies "no route may 404" without that.
-  // See DECISIONS.md.
+  // See DECISIONS.md. 29 Sep: /enterprise/interviews is now a real page (P7/P9 interview index),
+  // so its redirect is gone - it was silently sending the Interviews nav item to Jobs.
   async redirects() {
     return [
       { source: "/feed", destination: "/home", permanent: false },
       { source: "/dashboard", destination: "/home", permanent: false },
       { source: "/interviews", destination: "/applications", permanent: false },
-      { source: "/enterprise/interviews", destination: "/enterprise/postings", permanent: false },
+      // Architect call (30 Sep, merging P11): the public profile's canonical URL is
+      // /people/[id] (existing follow/block/posts functionality); /neighbour/[id]'s B+ page
+      // (feature/arena-account-bplus) redirects here rather than the reverse.
+      { source: "/neighbour/:id", destination: "/people/:id", permanent: true },
     ];
   },
 };

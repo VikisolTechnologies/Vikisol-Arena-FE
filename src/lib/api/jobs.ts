@@ -1,7 +1,4 @@
 import type { Job } from "@/lib/types";
-import { MOCK_JOBS, getJobById } from "@/lib/mock/jobs";
-import { delay } from "./shared";
-import { isRealMode } from "./mode";
 import { apiFetch } from "./httpClient";
 import type { PagedResponse } from "./paged";
 
@@ -20,15 +17,11 @@ async function fetchAllJobs(): Promise<Job[]> {
 }
 
 export async function getJobs(): Promise<Job[]> {
-  if (isRealMode()) return fetchAllJobs();
-  return delay(MOCK_JOBS, 300);
+  return fetchAllJobs();
 }
 
 export async function getJob(id: string): Promise<Job | undefined> {
-  if (isRealMode()) {
-    return apiFetch<Job>(`/jobs/${id}`).catch(() => undefined);
-  }
-  return delay(getJobById(id), 250);
+  return apiFetch<Job>(`/jobs/${id}`).catch(() => undefined);
 }
 
 const PASSED_KEY = "arena_passed_jobs";

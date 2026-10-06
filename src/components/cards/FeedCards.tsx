@@ -1,0 +1,154 @@
+"use client";
+
+import Link from "next/link";
+import { m } from "motion/react";
+import { CalendarClock, ChevronRight, MapPin, MessageCircle, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { press, spring } from "@/lib/motion";
+import { ButtonLink } from "@/components/bplus/Button";
+import { DemoBadge, KindChip } from "@/components/bplus/Primitives";
+import { formatKm, goingLabel, hrefFor, isDemo, spotsLeft, whenLabel, type FeedItem } from "@/lib/data/feed";
+import { Cover } from "@/components/covers/Cover";
+import { AvatarStack } from "@/components/bplus/Avatar";
+
+/** Faces for a count — the API doesn't return who's going on feed items, so this is always empty. */
+function facesFor(_item: FeedItem, _n: number) {
+  return [] as string[];
+}
+
+/** A photo that reserves its box before it loads (no layout shift); without one, a unique
+ *  procedural cover for activities/projects, or a warm gradient — never a stock image. */
+function Photo({ item, className, layoutId, priority }: { item: FeedItem; className?: string; layoutId?: string; priority?: boolean }) {
+  return (
+    <m.div layoutId={layoutId} className={cn("relative overflow-hidden", className)}>
+      <Cover source={{ id: item.id, kind: item.itemType, media: item.mediaUrls[0], tags: item.tags, title: item.title, body: item.body, startsAt: item.startsAt, company: item.authorCompanyName ?? item.authorName }} className="absolute inset-0" priority={priority} />
+    </m.div>
+  );
+}
+
+function titleOf(item: FeedItem) {
+  return item.title?.trim() || item.body.trim().slice(0, 80);
+}
+
+/** Board: the big "Sunrise Run at Durgam Lake" card. One primary action (Join / View). */
+export function HeroActivityCard({ item, km }: { item: FeedItem; km: number | null }) {
+  const when = whenLabel(item.startsAt);
+  const going = goingLabel(item);
+  const href = hrefFor(item);
+  return (
+    <article className="overflow-hidden rounded-[var(--radius-card)] bg-surface">
+      <Link href={href} className="block outline-none focus-visible:outline-2 focus-visible:outline-primary" aria-label={titleOf(item)}>
+        <div className="relative aspect-[4/3]">
+          <Photo item={item} className="absolute inset-0" layoutId={`media-${item.id}`} priority />
+          <div aria-hidden className="absolute inset-0 bg-linear-to-t from-surface via-surface/30 to-transparent" />
+          <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2 pr-16">
+            {when && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-paper px-2.5 py-1 text-[13px] font-semibold text-success-on-paper">
+                <CalendarClock className="size-4" strokeWidth={2} aria-hidden />
+                {when}
+              </span>
+            )}
+            {isDemo(item) && <DemoBadge onPhoto />}
+          </div>
+          <div className="absolute inset-x-4 bottom-3">
+            {km != null && (
+              <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-background/70 px-2.5 py-1 text-[13px] text-foreground backdrop-blur">
+                <MapPin className="size-3.5" strokeWidth={2} aria-hidden />
+                {formatKm(km)}
+              </span>
+            )}
+            <h3 className="line-clamp-2 font-display-serif text-[22px] font-medium leading-tight text-foreground">{titleOf(item)}</h3>
+          </div>
+        </div>
+      </Link>
+      <div className="px-4 pb-4">
+        {item.title && item.body && <p className="line-clamp-2 text-[15px] leading-snug text-foreground/85">{item.body}</p>}
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <p className="flex min-w-0 items-center gap-1.5 text-[14px] text-faint">
+            {going ? (
+              facesFor(item, item.spotsFilled ?? 0).length ? (
+                <AvatarStack names={facesFor(item, item.spotsFilled ?? 0)} total={item.spotsFilled ?? 0} label="going" className="text-foreground/85" />
+              ) : (
+                <>
+                  <Users className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+                  {going}
+                </>
+              )
+            ) : item.locationText ? (
+              <>
+                <MapPin className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+                <span className="truncate">{item.locationText}</span>
+              </>
+            ) : null}
+          </p>
+          <ButtonLink href={href} className="h-11 w-auto shrink-0 px-5">
+            {item.myJoinStatus === "approved" ? "View" : item.joinable ? "Join activity" : "View details"}
+          </ButtonLink>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+/** Board: the two-up cream "Need" cards. */
+export function NeedCard({ item }: { item: FeedItem }) {
+  const replies = item.commentCount ?? 0;
+  // Board: "3 offers" with faces. Only when the feed says how many offers there are (gap #38);
+  // otherwise the honest reply count.
+  const offers = item.offerCount;
+  return (
+    <m.div whileTap={press} transition={spring.snappy} className="h-full">
+      <Link href={hrefFor(item)} className="flex h-full flex-col rounded-tile bg-paper p-3.5 text-paper-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+        <div className="flex items-center justify-between gap-2">
+          <KindChip kind={item.itemType} />
+          {isDemo(item) && <DemoBadge />}
+        </div>
+        <h3 className="mt-2 line-clamp-2 text-[16px] font-semibold leading-snug">{titleOf(item)}</h3>
+        <p className="mt-1 line-clamp-2 text-[13px] leading-snug text-paper-ink-muted">
+          {[item.locationText, whenLabel(item.startsAt ?? undefined)].filter(Boolean).join(" · ") || "Nearby"}
+        </p>
+        {offers != null ? (
+          offers > 0 && (
+            <p className="mt-auto flex items-center gap-1 pt-3 text-[13px] font-semibold text-success-on-paper">
+              <AvatarStack names={(item.offerNames ?? []).slice(0, 3)} total={offers} label={offers === 1 ? "offer" : "offers"} ring="ring-paper" />
+            </p>
+          )
+        ) : replies > 0 && (
+          <p className="mt-auto flex items-center gap-1 pt-3 text-[13px] font-semibold text-success-on-paper">
+            {facesFor(item, replies).length ? (
+              <AvatarStack names={facesFor(item, replies)} total={replies} label={replies === 1 ? "reply" : "replies"} ring="ring-paper" />
+            ) : (
+              <>
+                <MessageCircle className="size-4" strokeWidth={2} aria-hidden />
+                {replies} {replies === 1 ? "reply" : "replies"}
+              </>
+            )}
+          </p>
+        )}
+      </Link>
+    </m.div>
+  );
+}
+
+/** Board: the wide cream "Offer" card with a photo on the left. Also used for other kinds. */
+export function RowCard({ item }: { item: FeedItem }) {
+  const meta = [item.locationText, whenLabel(item.startsAt)].filter(Boolean).join(" · ");
+  const left = spotsLeft(item);
+  return (
+    <m.div whileTap={press} transition={spring.snappy}>
+      <Link href={hrefFor(item)} className="flex items-stretch gap-3 overflow-hidden rounded-tile bg-paper p-2.5 text-paper-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+        <Photo item={item} className="w-28 shrink-0 rounded-xl" layoutId={`media-${item.id}`} />
+        <div className="min-w-0 flex-1 py-1">
+          <div className="flex items-center gap-2">
+            <KindChip kind={item.itemType} />
+            {isDemo(item) && <DemoBadge />}
+          </div>
+          <h3 className="mt-1 line-clamp-2 text-[16px] font-semibold leading-snug">{titleOf(item)}</h3>
+          {meta && <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-paper-ink-muted">{meta}</p>}
+          {left && <p className="mt-1 text-[13px] font-semibold text-success-on-paper">{left}</p>}
+        </div>
+        <ChevronRight className="size-5 shrink-0 self-center text-paper-ink-muted" strokeWidth={1.75} aria-hidden />
+      </Link>
+    </m.div>
+  );
+}

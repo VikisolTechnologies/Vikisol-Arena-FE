@@ -1,11 +1,4 @@
 import type { Application, ApplicationStage, CandidateProfile, EnterpriseProfile, JobPosting } from "@/lib/types";
-import { getEnterpriseProfile, saveEnterpriseProfile } from "@/lib/session";
-import { MOCK_CANDIDATES, getCandidateById } from "@/lib/mock/candidates";
-import { pick, pickN } from "@/lib/mock/seed";
-import { POSTING_LIMITS } from "@/lib/plan";
-import { readApplications, writeApplications } from "./applicationsStore";
-import { delay } from "./shared";
-import { isRealMode } from "./mode";
 import { apiFetch, ApiError } from "./httpClient";
 import type { PagedResponse } from "./paged";
 
@@ -30,78 +23,35 @@ export function clearMyEnterpriseProfileCache() {
 }
 
 export async function getMyEnterpriseProfile(): Promise<EnterpriseProfile | null> {
-  if (isRealMode()) {
-    if (cachedEnterpriseProfile && cachedEnterpriseProfile.expiresAt > Date.now()) return cachedEnterpriseProfile.value;
-    if (enterpriseProfileRequest) return enterpriseProfileRequest;
-    enterpriseProfileRequest = apiFetch<EnterpriseProfile>("/enterprise/profile/me")
-      .then((profile) => {
-        setEnterpriseProfileCache(profile);
-        return profile;
-      })
-      .finally(() => {
-        enterpriseProfileRequest = null;
-      });
-    return enterpriseProfileRequest;
-  }
-  return delay(getEnterpriseProfile(), 200);
+  if (cachedEnterpriseProfile && cachedEnterpriseProfile.expiresAt > Date.now()) return cachedEnterpriseProfile.value;
+  if (enterpriseProfileRequest) return enterpriseProfileRequest;
+  enterpriseProfileRequest = apiFetch<EnterpriseProfile>("/enterprise/profile/me")
+    .then((profile) => {
+      setEnterpriseProfileCache(profile);
+      return profile;
+    })
+    .finally(() => {
+      enterpriseProfileRequest = null;
+    });
+  return enterpriseProfileRequest;
 }
 
 export async function saveMyEnterpriseProfile(profile: EnterpriseProfile): Promise<EnterpriseProfile> {
-  if (isRealMode()) {
-    return apiFetch<EnterpriseProfile>("/enterprise/profile/me", { method: "PUT", body: profile }).then((p) => {
-      setEnterpriseProfileCache(p);
-      return p;
-    });
-  }
-  saveEnterpriseProfile(profile);
-  return delay(profile, 300);
+  return apiFetch<EnterpriseProfile>("/enterprise/profile/me", { method: "PUT", body: profile }).then((p) => {
+    setEnterpriseProfileCache(p);
+    return p;
+  });
 }
 
 // ---- Job postings ----
 
-const POSTINGS_KEY = "arena_enterprise_postings";
-
-function readPostings(): JobPosting[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem(POSTINGS_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-function writePostings(postings: JobPosting[]) {
-  localStorage.setItem(POSTINGS_KEY, JSON.stringify(postings));
-}
-
 export async function getMyPostings(): Promise<JobPosting[]> {
-  if (isRealMode()) {
-    const page = await apiFetch<PagedResponse<JobPosting>>("/enterprise/postings", { query: { page: 0, size: 100 } });
-    return page.content;
-  }
-  return delay(readPostings(), 250);
+  const page = await apiFetch<PagedResponse<JobPosting>>("/enterprise/postings", { query: { page: 0, size: 100 } });
+  return page.content;
 }
 
 export async function getPosting(id: string): Promise<JobPosting | undefined> {
-  if (isRealMode()) return apiFetch<JobPosting>(`/enterprise/postings/${id}`).catch(() => undefined);
-  return delay(readPostings().find((p) => p.id === id), 150);
-}
-
-/** Seeds 3-6 realistic applicants from the candidate pool so a fresh posting isn't empty —
- * written into the same unified applications store the candidate side reads, just with
- * postingId set instead of jobId. Mock-only: arena-api seeds its own demo data server-side. */
-function seedApplicants(postingId: string, industry: JobPosting["industry"]) {
-  const pool = MOCK_CANDIDATES.filter((c) => c.industry === industry);
-  const chosen = pickN(pool.length >= 3 ? pool : MOCK_CANDIDATES, Math.min(6, Math.max(3, pool.length)));
-  const stages: ApplicationStage[] = ["applied", "applied", "screening", "screening", "interview", "offer"];
-  const applications: Application[] = chosen.map((c, i) => ({
-    id: `applicant-${postingId}-${i}`,
-    candidateId: c.id,
-    postingId,
-    stage: pick(stages),
-    appliedAt: new Date(Date.now() - (i + 1) * 6 * 3600 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - (i + 1) * 6 * 3600 * 1000).toISOString(),
-  }));
-  writeApplications([...applications, ...readApplications()]);
+  return apiFetch<JobPosting>(`/enterprise/postings/${id}`).catch(() => undefined);
 }
 
 export class PostingLimitError extends Error {}
@@ -111,46 +61,26 @@ export class PostingLimitError extends Error {}
  * null so the UI can show a real upsell message instead of silently doing nothing. Real mode
  * enforces the same limit server-side (arena-api's JobPostingService); a 400 from there gets
  * re-thrown as the same PostingLimitError so the UI's catch block works in both modes. */
-export async function createPosting(input: Omit<JobPosting, "id" | "status" | "createdAt">): Promise<JobPosting> {
-  if (isRealMode()) {
-    try {
-      return await apiFetch<JobPosting>("/enterprise/postings", { method: "POST", body: input });
-    } catch (err) {
-      if (err instanceof ApiError) throw new PostingLimitError(err.message);
-      throw err;
-    }
+export async function createPosting(input: Omit<JobPosting, "id" | "status" | "createdAt"> & { status?: "draft" | "open" }): Promise<JobPosting> {
+  try {
+    return await apiFetch<JobPosting>("/enterprise/postings", { method: "POST", body: input });
+  } catch (err) {
+    if (err instanceof ApiError) throw new PostingLimitError(err.message);
+    throw err;
   }
-  const profile = getEnterpriseProfile();
-  const limit = POSTING_LIMITS[profile?.plan ?? "free"];
-  const activeCount = readPostings().filter((p) => p.status !== "closed").length;
-  if (activeCount >= limit) {
-    throw new PostingLimitError(`Your ${profile?.plan ?? "free"} plan allows ${limit} active posting${limit === 1 ? "" : "s"}.`);
-  }
-  const posting: JobPosting = { ...input, id: `posting-${Date.now()}`, status: "open", createdAt: new Date().toISOString() };
-  writePostings([posting, ...readPostings()]);
-  seedApplicants(posting.id, posting.industry);
-  return delay(posting, 400);
 }
 
 export async function setPostingStatus(id: string, status: JobPosting["status"]): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>(`/enterprise/postings/${id}/status`, { method: "PUT", body: { status } });
-    return;
-  }
-  writePostings(readPostings().map((p) => (p.id === id ? { ...p, status } : p)));
-  return delay(undefined, 200);
+  await apiFetch<void>(`/enterprise/postings/${id}/status`, { method: "PUT", body: { status } });
+  return;
 }
 
-export async function getApplicantsForPosting(postingId: string): Promise<(Application & { candidate: ReturnType<typeof getCandidateById> })[]> {
-  if (isRealMode()) {
-    const page = await apiFetch<PagedResponse<Application & { candidate: ReturnType<typeof getCandidateById> }>>(
-      `/enterprise/postings/${postingId}/applicants`,
-      { query: { page: 0, size: 100 } },
-    );
-    return page.content;
-  }
-  const applicants = readApplications().filter((a) => a.postingId === postingId);
-  return delay(applicants.map((a) => ({ ...a, candidate: getCandidateById(a.candidateId) })), 250);
+export async function getApplicantsForPosting(postingId: string): Promise<(Application & { candidate: CandidateProfile | undefined })[]> {
+  const page = await apiFetch<PagedResponse<Application & { candidate: CandidateProfile | undefined }>>(
+    `/enterprise/postings/${postingId}/applicants`,
+    { query: { page: 0, size: 100 } },
+  );
+  return page.content;
 }
 
 interface ApplicantResponseWire {
@@ -169,130 +99,66 @@ interface ApplicantResponseWire {
  * jobPostingId -> postingId (the backend's ApplicantResponse field name, unlike
  * getApplicantsForPosting() above which trusts the shape matches Application 1:1 and doesn't). */
 export async function getApplicant(applicationId: string): Promise<Application | null> {
-  if (isRealMode()) {
-    return apiFetch<ApplicantResponseWire>(`/enterprise/applicants/${applicationId}`)
-      .then((res) => ({
-        id: res.id, candidateId: res.candidateId, postingId: res.jobPostingId,
-        stage: res.stage as ApplicationStage, appliedAt: res.appliedAt, updatedAt: res.appliedAt,
-      }))
-      .catch(() => null);
-  }
-  return delay(readApplications().find((a) => a.id === applicationId) ?? null, 150);
+  return apiFetch<ApplicantResponseWire>(`/enterprise/applicants/${applicationId}`)
+    .then((res) => ({
+      id: res.id, candidateId: res.candidateId, postingId: res.jobPostingId,
+      stage: res.stage as ApplicationStage, appliedAt: res.appliedAt, updatedAt: res.appliedAt,
+    }))
+    .catch(() => null);
 }
 
 export async function moveApplicantStage(applicationId: string, stage: ApplicationStage): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>(`/enterprise/applicants/${applicationId}/stage`, { method: "PUT", body: { stage } });
-    return;
-  }
-  writeApplications(
-    readApplications().map((a) => (a.id === applicationId ? { ...a, stage, updatedAt: new Date().toISOString() } : a)),
-  );
-  return delay(undefined, 200);
+  await apiFetch<void>(`/enterprise/applicants/${applicationId}/stage`, { method: "PUT", body: { stage } });
+  return;
 }
 
 /** No dedicated count endpoint exists server-side — fans out over (typically few) postings and
  * sums each page's totalElements rather than fetching every applicant row. Bounded by posting
  * count, not applicant count, so this stays cheap even for a busy pipeline. */
 export async function getAllApplicantCounts(): Promise<number> {
-  if (isRealMode()) {
-    const postings = await getMyPostings();
-    const counts = await Promise.all(
-      postings.map((p) =>
-        apiFetch<PagedResponse<unknown>>(`/enterprise/postings/${p.id}/applicants`, { query: { page: 0, size: 1 } }).then(
-          (page) => page.totalElements,
-        ),
+  const postings = await getMyPostings();
+  const counts = await Promise.all(
+    postings.map((p) =>
+      apiFetch<PagedResponse<unknown>>(`/enterprise/postings/${p.id}/applicants`, { query: { page: 0, size: 1 } }).then(
+        (page) => page.totalElements,
       ),
-    );
-    return counts.reduce((sum, c) => sum + c, 0);
-  }
-  return delay(readApplications().filter((a) => a.postingId).length, 100);
+    ),
+  );
+  return counts.reduce((sum, c) => sum + c, 0);
 }
 
 // ---- Talent Universe search ----
-
-const FIT_BLURBS = [
-  "Strong overlap with what you're hiring for, verified skills to back it up.",
-  "Comes up frequently in searches like this one — high signal, low noise.",
-  "A slightly non-obvious pick, but the skill graph lines up well.",
-  "Recently active, open to new roles, and priced within typical range.",
-];
 
 export async function searchTalent(query: {
   text?: string;
   industry?: string;
   remoteOnly?: boolean;
-}): Promise<{ candidate: ReturnType<typeof getCandidateById>; matchPercentage: number; fitBlurb: string; availability: string }[]> {
-  if (isRealMode()) {
-    const page = await apiFetch<
-      PagedResponse<{ candidate: ReturnType<typeof getCandidateById>; matchPercentage: number; fitBlurb: string; availability: string }>
-    >("/enterprise/talent/search", {
-      // text must always be sent as an explicit string, never omitted - arena-api has a known
-      // JDBC null-parameter type-inference bug ("operator does not exist: text ~~ bytea") when
-      // this query param is absent entirely.
-      query: { text: query.text ?? "", industry: query.industry, remoteOnly: query.remoteOnly, page: 0, size: 50 },
-    });
-    return page.content;
-  }
-  const q = (query.text || "").toLowerCase();
-  const results = MOCK_CANDIDATES.filter((c) => {
-    if (query.industry && query.industry !== "All" && c.industry !== query.industry) return false;
-    if (query.remoteOnly && !c.remote) return false;
-    if (!c.consent.searchableByEnterprises) return false;
-    if (!q) return true;
-    return (
-      c.title.toLowerCase().includes(q) ||
-      c.skills.some((s) => s.name.toLowerCase().includes(q)) ||
-      c.location.toLowerCase().includes(q)
-    );
-  }).map((c) => ({
-    candidate: c,
-    matchPercentage: 70 + Math.round((c.careerHealth / 100) * 28),
-    fitBlurb: pick(FIT_BLURBS),
-    availability: c.openTo.join(", "),
-  }));
-  return delay(results.sort((a, b) => b.matchPercentage - a.matchPercentage), 350);
+}): Promise<{ candidate: CandidateProfile | undefined; matchPercentage: number; fitBlurb: string; availability: string }[]> {
+  const page = await apiFetch<
+    PagedResponse<{ candidate: CandidateProfile | undefined; matchPercentage: number; fitBlurb: string; availability: string }>
+  >("/enterprise/talent/search", {
+    // text must always be sent as an explicit string, never omitted - arena-api has a known
+    // JDBC null-parameter type-inference bug ("operator does not exist: text ~~ bytea") when
+    // this query param is absent entirely.
+    query: { text: query.text ?? "", industry: query.industry, remoteOnly: query.remoteOnly, page: 0, size: 50 },
+  });
+  return page.content;
 }
 
-/** `fullAccess` mirrors arena-api's `CandidateProfileResponse.fullAccess` (real mode) - whether
- * *this* enterprise has already unlocked this candidate (or the candidate applied to one of
- * their postings directly). Real mode reads this straight off the server response instead of
- * inferring it from a nullable field or a client-side cache. Mock mode has no server-side unlock
- * ledger, so it's synthesized here from the same localStorage-backed simulation the rest of
- * mock mode already uses (see UNLOCKED_KEY below) - fine for a local-only demo, never the
- * source of truth in real mode. */
+/** `fullAccess` mirrors arena-api's `CandidateProfileResponse.fullAccess` - whether this
+ * enterprise has already unlocked this candidate (or the candidate applied to one of their
+ * postings directly). Read straight off the server response. */
 export async function getCandidateDetail(id: string): Promise<(CandidateProfile & { fullAccess: boolean }) | null> {
-  if (isRealMode()) {
-    return apiFetch<CandidateProfile & { fullAccess: boolean }>(`/enterprise/talent/${id}`).catch(() => null);
-  }
-  const candidate = getCandidateById(id);
-  if (!candidate) return delay(null, 200);
-  const fullAccess = (await hasDirectlyApplied(id)) || getUnlockedCandidateIds().includes(id);
-  return delay({ ...candidate, fullAccess }, 200);
+  return apiFetch<CandidateProfile & { fullAccess: boolean }>(`/enterprise/talent/${id}`).catch(() => null);
 }
 
 /** True when this candidate directly applied to one of *my* postings — direct applicants are
- * visible for free (they reached out first), unlike a cold Talent Universe search result,
- * which still costs an unlock credit. Mock-only for now: arena-api doesn't yet expose this
- * distinction (a real backend addition, not implemented here), so real mode conservatively
- * treats every candidate as requiring a credit unlock, same as a cold search result. */
-export async function hasDirectlyApplied(candidateId: string): Promise<boolean> {
-  if (isRealMode()) return false;
-  const myPostingIds = new Set(readPostings().map((p) => p.id));
-  const applied = readApplications().some((a) => a.candidateId === candidateId && a.postingId && myPostingIds.has(a.postingId));
-  return delay(applied, 100);
-}
-
-// Mock-mode-only unlock ledger (no server-side ledger exists to ask in mock mode). Real mode
-// never reads this - see getCandidateDetail's `fullAccess`, sourced from the server response.
-const UNLOCKED_KEY = "arena_unlocked_candidates";
-export function getUnlockedCandidateIds(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem(UNLOCKED_KEY) || "[]");
-  } catch {
-    return [];
-  }
+ * visible for free (they reached out first), unlike a cold Talent Universe search result, which
+ * still costs an unlock credit. arena-api doesn't yet expose this distinction, so this
+ * conservatively treats every candidate as requiring a credit unlock, same as a cold search
+ * result - see API-ISSUES.md. */
+export async function hasDirectlyApplied(_candidateId: string): Promise<boolean> {
+  return false;
 }
 
 /** Was fire-and-forget in real mode (`apiFetch(...).catch(() => {})`) - the caller had no way to
@@ -301,10 +167,6 @@ export function getUnlockedCandidateIds(): string[] {
  * click. Now genuinely awaited and errors propagate to the caller, who must confirm success
  * before updating any "unlocked" UI state. */
 export async function unlockCandidate(id: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch(`/enterprise/talent/${id}/unlock`, { method: "POST" });
-    return;
-  }
-  const unlocked = getUnlockedCandidateIds();
-  if (!unlocked.includes(id)) localStorage.setItem(UNLOCKED_KEY, JSON.stringify([...unlocked, id]));
+  await apiFetch(`/enterprise/talent/${id}/unlock`, { method: "POST" });
+  return;
 }

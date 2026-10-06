@@ -41,9 +41,51 @@ async function resolveAuthPageRedirect(request: NextRequest): Promise<NextRespon
   return NextResponse.redirect(new URL(landingRouteForRole(claims.role), request.url));
 }
 
+// GOLIVE-PROXY.md F-PROXY: the production path for every browser call to /api/v1/*. The app
+// calls a same-origin relative path (NEXT_PUBLIC_API_BASE_URL=/api/v1) so cookies stay
+// first-party on arena.vikisol.in and no CORS is needed - this rewrites that call to the real
+// backend behind the Cloudflare Tunnel, adding the header arena-api's trusted-proxy filter
+// requires. A rewrite (not a route handler) because it streams the request/response body
+// instead of buffering it, so it isn't limited by Vercel's 4.5 MB function body cap (the old
+// src/app/api/v1/[...path]/route.ts, which does buffer, stays only as a local-only dev
+// convenience - see that file).
+//
+// Dormant whenever ARENA_API_ORIGIN/ARENA_PROXY_SECRET aren't both set (local dev): returns
+// null and the request falls through to that dev route handler instead.
+function proxyApiRequest(request: NextRequest): NextResponse | null {
+  if (!request.nextUrl.pathname.startsWith("/api/v1/")) return null;
+
+  const origin = process.env.ARENA_API_ORIGIN;
+  const secret = process.env.ARENA_PROXY_SECRET;
+  if (!origin || !secret) return null;
+
+  const headers = new Headers(request.headers);
+  // Never forward anything the client itself set under this prefix - a spoofed
+  // X-Arena-Client-Ip or X-Arena-Proxy-Secret must never reach the backend as if it came from
+  // us. Strip first, then set our own values below.
+  for (const key of Array.from(headers.keys())) {
+    if (key.toLowerCase().startsWith("x-arena-")) headers.delete(key);
+  }
+  headers.set("X-Arena-Proxy-Secret", secret);
+
+  // Vercel's own edge-assigned client IP - never trust anything the client itself sent.
+  const forwardedFor = request.headers.get("x-vercel-forwarded-for");
+  const clientIp = request.headers.get("x-real-ip") ?? forwardedFor?.split(",")[0]?.trim();
+  if (clientIp) headers.set("X-Arena-Client-Ip", clientIp);
+
+  const target = new URL(request.nextUrl.pathname + request.nextUrl.search, origin);
+  const res = NextResponse.rewrite(target, { request: { headers } });
+  // API responses are per-request/per-session - never let a CDN or the browser cache one.
+  res.headers.set("Cache-Control", "no-store");
+  return res;
+}
+
 export async function middleware(request: NextRequest) {
   const gated = checkStagingGate(request);
   if (gated) return gated;
+
+  const apiProxy = proxyApiRequest(request);
+  if (apiProxy) return apiProxy;
 
   const authRedirect = await resolveAuthPageRedirect(request);
   if (authRedirect) return authRedirect;
@@ -56,6 +98,8 @@ export async function middleware(request: NextRequest) {
 export const config = {
   // Excludes Next's own static assets (no sensitive content, gating them just breaks image/font
   // loading behind the auth prompt) and /api/health (Railway's healthcheck prober can't present
-  // a Basic Auth credential - see api/health/route.ts).
+  // a Basic Auth credential - see api/health/route.ts). /api/v1/:path* (proxyApiRequest's own
+  // target) is already included by this same catch-all - GOLIVE-PROXY.md F-PROXY's matcher
+  // requirement needs no separate entry.
   matcher: ["/((?!_next/static|_next/image|favicon.ico|api/health).*)"],
 };

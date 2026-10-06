@@ -38,6 +38,7 @@ yarn-error.log*
 # playwright
 /test-results/
 /playwright-report/
+/tests/qa/.artifacts/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
@@ -54,3 +55,9 @@ next-env.d.ts
 
 # Isolated local browser tests
 .next-local-tests/
+.next-founder/
+.next-mock-tests/
+docs/reviews/shots/**/*.png
+.next-real-smoke/
+.next-safety-net/
+.next-proxy-tests/

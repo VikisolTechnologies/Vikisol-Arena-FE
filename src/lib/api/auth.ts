@@ -1,8 +1,5 @@
 import type { Role, Session } from "@/lib/types";
-import { CURRENT_CANDIDATE_ID, getCandidateById } from "@/lib/mock/candidates";
-import { getSession, setSession, clearSession, setOnboarded, setEnterpriseOnboarded } from "@/lib/session";
-import { delay } from "./shared";
-import { isRealMode } from "./mode";
+import { setSession, clearSession, setOnboarded, setEnterpriseOnboarded } from "@/lib/session";
 import { apiFetch, setToken, clearToken } from "./httpClient";
 import { getMyProfile, clearMyProfileCache } from "./profile";
 import { getMyEnterpriseProfile, clearMyEnterpriseProfileCache } from "./enterprise";
@@ -15,8 +12,6 @@ interface SessionResponse {
   token: string | null;
   mfaRequired: boolean;
   mfaPendingToken: string | null;
-  mfaEnrollmentRequired?: boolean;
-  totpEnabled?: boolean;
 }
 
 function toSession(res: SessionResponse): Session {
@@ -57,22 +52,15 @@ async function syncOnboardedFromProfile(role: Role) {
 }
 
 export async function signIn(email: string, password: string, role: Role): Promise<SignInResult> {
-  if (isRealMode()) {
-    const res = await apiFetch<SessionResponse>("/auth/signin", { method: "POST", auth: false, body: { email, password } });
-    if (res.mfaRequired) {
-      return { status: "mfa_required", pendingToken: res.mfaPendingToken as string };
-    }
-    setToken(res.token as string);
-    const session = toSession(res);
-    setSession(session);
-    await syncOnboardedFromProfile(session.role);
-    return { status: "success", session };
+  const res = await apiFetch<SessionResponse>("/auth/signin", { method: "POST", auth: false, body: { email, password } });
+  if (res.mfaRequired) {
+    return { status: "mfa_required", pendingToken: res.mfaPendingToken as string };
   }
-  // Mock mode has no 2FA concept - every seeded demo account in real mode starts without it
-  // enabled too (enrollment is opt-in, see DECISIONS.md), so this branch is unreachable there.
-  const session: Session = { role, name: mockNameFor(role), email, candidateId: role === "talent" ? CURRENT_CANDIDATE_ID : undefined };
+  setToken(res.token as string);
+  const session = toSession(res);
   setSession(session);
-  return { status: "success", session: await delay(session, 600) };
+  await syncOnboardedFromProfile(session.role);
+  return { status: "success", session };
 }
 
 // Second step of the 2FA flow (see DECISIONS.md) - only reachable after signIn() returned
@@ -87,199 +75,119 @@ export async function verifyMfa(pendingToken: string, code: string): Promise<Ses
   return session;
 }
 
-function mockNameFor(role: Role): string {
-  switch (role) {
-    case "talent": return getCandidateById(CURRENT_CANDIDATE_ID)?.name ?? "You";
-    case "company_admin": return "Enterprise Admin";
-    case "recruiter": return "Priyanka Rao";
-    case "hiring_manager": return "Karthik Iyer";
-    case "platform_admin": return "Vikisol Platform Admin";
-  }
-}
-
-export async function signUp(name: string, email: string, password: string, role: Role): Promise<Session> {
-  if (isRealMode()) {
-    const res = await apiFetch<SessionResponse>("/auth/signup", { method: "POST", auth: false, body: { name, email, password, role } });
-    setToken(res.token as string);
-    const session = toSession(res);
-    setSession(session);
-    return session;
-  }
-  const session: Session = { role, name, email, candidateId: role === "talent" ? CURRENT_CANDIDATE_ID : undefined };
+// dateOfBirth (ISO yyyy-mm-dd): required by the real backend as of B10 (architect notes on
+// area 2, 1 Oct 2026) - SignUpRequest.dateOfBirth, enforced server-side (AgeUtil.isAdult) so
+// sign-up itself refuses anyone under 18, not only the onboarding age gate. Only this email
+// sign-up path collects it; phone and Google sign-up don't ask for one (AuthService never
+// requires it on those paths) - they still go through onboarding's AgeGateStep.
+export async function signUp(name: string, email: string, password: string, role: Role, dateOfBirth: string): Promise<Session> {
+  const res = await apiFetch<SessionResponse>("/auth/signup", { method: "POST", auth: false, body: { name, email, password, role, dateOfBirth } });
+  setToken(res.token as string);
+  const session = toSession(res);
   setSession(session);
-  return delay(session, 600);
-}
-
-export async function getAccount(): Promise<{ totpEnabled: boolean }> {
-  const res = await apiFetch<SessionResponse>("/auth/me");
-  return { totpEnabled: Boolean(res.totpEnabled) };
-}
-
-export async function setupTotp(): Promise<{ secret: string; otpAuthUri: string }> {
-  return apiFetch("/auth/2fa/setup", { method: "POST" });
-}
-
-export async function enableTotp(code: string): Promise<void> {
-  await apiFetch("/auth/2fa/enable", { method: "POST", body: { code } });
+  return session;
 }
 
 // --- Phone number sign-in (existing, already-verified accounts) ---
 
 export async function requestPhoneSigninOtp(phoneNumber: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>("/auth/phone/signin/request-otp", { method: "POST", auth: false, body: { phoneNumber } });
-    return;
-  }
-  await delay(undefined, 400);
+  await apiFetch<void>("/auth/phone/signin/request-otp", { method: "POST", auth: false, body: { phoneNumber } });
 }
 
 export async function verifyPhoneSigninOtp(phoneNumber: string, code: string): Promise<SignInResult> {
-  if (isRealMode()) {
-    const res = await apiFetch<SessionResponse>("/auth/phone/signin/verify-otp", { method: "POST", auth: false, body: { phoneNumber, code } });
-    if (res.mfaRequired) {
-      return { status: "mfa_required", pendingToken: res.mfaPendingToken as string };
-    }
-    setToken(res.token as string);
-    const session = toSession(res);
-    setSession(session);
-    await syncOnboardedFromProfile(session.role);
-    return { status: "success", session };
+  const res = await apiFetch<SessionResponse>("/auth/phone/signin/verify-otp", { method: "POST", auth: false, body: { phoneNumber, code } });
+  if (res.mfaRequired) {
+    return { status: "mfa_required", pendingToken: res.mfaPendingToken as string };
   }
-  const session: Session = { role: "talent", name: mockNameFor("talent"), email: "", candidateId: CURRENT_CANDIDATE_ID };
+  setToken(res.token as string);
+  const session = toSession(res);
   setSession(session);
-  return { status: "success", session: await delay(session, 400) };
+  await syncOnboardedFromProfile(session.role);
+  return { status: "success", session };
 }
 
 // --- Phone number signup (brand-new TALENT account) ---
 
 export async function requestPhoneSignupOtp(phoneNumber: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>("/auth/phone/signup/request-otp", { method: "POST", auth: false, body: { phoneNumber } });
-    return;
-  }
-  await delay(undefined, 400);
+  await apiFetch<void>("/auth/phone/signup/request-otp", { method: "POST", auth: false, body: { phoneNumber } });
 }
 
 export async function verifyPhoneSignupOtp(phoneNumber: string, code: string, name: string): Promise<Session> {
-  if (isRealMode()) {
-    const res = await apiFetch<SessionResponse>("/auth/phone/signup/verify-otp", { method: "POST", auth: false, body: { phoneNumber, code, name } });
-    setToken(res.token as string);
-    const session = toSession(res);
-    setSession(session);
-    return session;
-  }
-  const session: Session = { role: "talent", name, email: "", candidateId: CURRENT_CANDIDATE_ID };
+  const res = await apiFetch<SessionResponse>("/auth/phone/signup/verify-otp", { method: "POST", auth: false, body: { phoneNumber, code, name } });
+  setToken(res.token as string);
+  const session = toSession(res);
   setSession(session);
-  return delay(session, 400);
+  return session;
 }
 
 // --- Email OTP sign-in (existing accounts, any role) ---
 
 export async function requestEmailSigninOtp(email: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>("/auth/email/signin/request-otp", { method: "POST", auth: false, body: { email } });
-    return;
-  }
-  await delay(undefined, 400);
+  await apiFetch<void>("/auth/email/signin/request-otp", { method: "POST", auth: false, body: { email } });
 }
 
 export async function verifyEmailSigninOtp(email: string, code: string): Promise<SignInResult> {
-  if (isRealMode()) {
-    const res = await apiFetch<SessionResponse>("/auth/email/signin/verify-otp", { method: "POST", auth: false, body: { email, code } });
-    if (res.mfaRequired) {
-      return { status: "mfa_required", pendingToken: res.mfaPendingToken as string };
-    }
-    setToken(res.token as string);
-    const session = toSession(res);
-    setSession(session);
-    await syncOnboardedFromProfile(session.role);
-    return { status: "success", session };
+  const res = await apiFetch<SessionResponse>("/auth/email/signin/verify-otp", { method: "POST", auth: false, body: { email, code } });
+  if (res.mfaRequired) {
+    return { status: "mfa_required", pendingToken: res.mfaPendingToken as string };
   }
-  const session: Session = { role: "talent", name: mockNameFor("talent"), email, candidateId: CURRENT_CANDIDATE_ID };
+  setToken(res.token as string);
+  const session = toSession(res);
   setSession(session);
-  return { status: "success", session: await delay(session, 400) };
+  await syncOnboardedFromProfile(session.role);
+  return { status: "success", session };
 }
 
 // --- Google sign-in/signup (find-or-create) ---
 
 export async function signInWithGoogle(idToken: string): Promise<SignInResult> {
-  if (isRealMode()) {
-    const res = await apiFetch<SessionResponse>("/auth/google", { method: "POST", auth: false, body: { idToken } });
-    if (res.mfaRequired) {
-      return { status: "mfa_required", pendingToken: res.mfaPendingToken as string };
-    }
-    setToken(res.token as string);
-    const session = toSession(res);
-    setSession(session);
-    await syncOnboardedFromProfile(session.role);
-    return { status: "success", session };
+  const res = await apiFetch<SessionResponse>("/auth/google", { method: "POST", auth: false, body: { idToken } });
+  if (res.mfaRequired) {
+    return { status: "mfa_required", pendingToken: res.mfaPendingToken as string };
   }
-  const session: Session = { role: "talent", name: mockNameFor("talent"), email: "", candidateId: CURRENT_CANDIDATE_ID };
+  setToken(res.token as string);
+  const session = toSession(res);
   setSession(session);
-  return { status: "success", session: await delay(session, 400) };
+  await syncOnboardedFromProfile(session.role);
+  return { status: "success", session };
 }
 
 // --- Account settings ---
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>("/auth/change-password", { method: "POST", body: { currentPassword, newPassword } });
-    return;
-  }
-  await delay(undefined, 400);
+  await apiFetch<void>("/auth/change-password", { method: "POST", body: { currentPassword, newPassword } });
 }
 
 export async function changeEmail(newEmail: string, currentPassword: string): Promise<Session> {
-  if (isRealMode()) {
-    const res = await apiFetch<SessionResponse>("/auth/change-email", { method: "POST", body: { newEmail, currentPassword } });
-    setToken(res.token as string);
-    const session = toSession(res);
-    setSession(session);
-    return session;
-  }
-  await delay(undefined, 400);
-  const session = getSession();
-  if (!session) throw new Error("Not signed in");
-  const updated = { ...session, email: newEmail };
-  setSession(updated);
-  return updated;
+  const res = await apiFetch<SessionResponse>("/auth/change-email", { method: "POST", body: { newEmail, currentPassword } });
+  setToken(res.token as string);
+  const session = toSession(res);
+  setSession(session);
+  return session;
 }
 
 // --- Forgot password ---
 
 export async function forgotPassword(email: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>("/auth/forgot-password", { method: "POST", auth: false, body: { email } });
-    return;
-  }
-  await delay(undefined, 400);
+  await apiFetch<void>("/auth/forgot-password", { method: "POST", auth: false, body: { email } });
 }
 
 export async function resetPassword(email: string, token: string, newPassword: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>("/auth/reset-password", { method: "POST", auth: false, body: { email, token, newPassword } });
-    return;
-  }
-  await delay(undefined, 400);
+  await apiFetch<void>("/auth/reset-password", { method: "POST", auth: false, body: { email, token, newPassword } });
 }
 
 export async function signOut(): Promise<void> {
   // PERF-REPORT.md Pass 4 - getMyProfile() now caches in-memory across navigations (see
   // profile.ts); must be cleared here so a second account signing in on the same tab can never
   // read the previous account's cached profile.
-  if (isRealMode()) {
-    // Was client-discard-only - the access token stayed valid server-side until its natural
-    // 15min expiry even after "signing out." POST /auth/signout denylists it immediately and
-    // revokes the refresh cookie (see AuthController) - the actual point of building a
-    // server-side denylist in the first place.
-    await apiFetch<void>("/auth/signout", { method: "POST" }).catch(() => {});
-    clearToken();
-    clearSession();
-    clearMyProfileCache();
-    clearMyEnterpriseProfileCache();
-    return;
-  }
+  // Was client-discard-only - the access token stayed valid server-side until its natural
+  // 15min expiry even after "signing out." POST /auth/signout denylists it immediately and
+  // revokes the refresh cookie (see AuthController) - the actual point of building a
+  // server-side denylist in the first place.
+  await apiFetch<void>("/auth/signout", { method: "POST" }).catch(() => {});
+  clearToken();
   clearSession();
-  return delay(undefined, 150);
+  clearMyProfileCache();
+  clearMyEnterpriseProfileCache();
 }
 

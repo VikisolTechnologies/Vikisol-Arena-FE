@@ -1,6 +1,7 @@
 /**
- * The five seeded demo accounts this app already ships for exactly this purpose - see
- * TEST-LOGINS.md for what each one has pre-seeded. Credentials come from .env.test only; nothing
+ * The five seeded demo accounts this app already ships for exactly this purpose - ask the team
+ * for what each one has pre-seeded (the doc that used to list this was deleted in the 28 Sep
+ * 2026 docs cleanup since it held real passwords). Credentials come from .env.test only; nothing
  * here is a literal secret (see .env.test.example for the expected variable names).
  */
 
@@ -22,7 +23,7 @@ function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
     throw new Error(
-      `Missing ${name}. Copy .env.test.example to .env.test and fill in real values - see TEST-LOGINS.md for the actual demo-account credentials.`,
+      `Missing ${name}. Copy .env.test.example to .env.test and fill in real values - ask the team for the actual demo-account credentials.`,
     );
   }
   return value;

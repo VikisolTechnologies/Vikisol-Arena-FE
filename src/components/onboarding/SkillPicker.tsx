@@ -3,7 +3,7 @@
 import { X } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
-import { SKILLS_BY_INDUSTRY } from "@/lib/mock/seed";
+import { SKILLS_BY_INDUSTRY } from "@/lib/data/skills";
 
 const ALL_SKILLS = Array.from(new Set(Object.values(SKILLS_BY_INDUSTRY).flat())).sort();
 

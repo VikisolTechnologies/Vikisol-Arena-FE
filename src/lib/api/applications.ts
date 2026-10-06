@@ -1,8 +1,4 @@
 import type { Application, ApplicationStage } from "@/lib/types";
-import { CURRENT_CANDIDATE_ID } from "@/lib/mock/candidates";
-import { readApplications, writeApplications } from "./applicationsStore";
-import { delay } from "./shared";
-import { isRealMode } from "./mode";
 import { apiFetch } from "./httpClient";
 import { getSession } from "@/lib/session";
 import type { PagedResponse } from "./paged";
@@ -26,16 +22,9 @@ function toApplication(res: ApplicationResponse): Application {
   };
 }
 
-function mine(): Application[] {
-  return readApplications().filter((a) => a.candidateId === CURRENT_CANDIDATE_ID && a.jobId);
-}
-
 export async function getMyApplications(): Promise<Application[]> {
-  if (isRealMode()) {
-    const page = await apiFetch<PagedResponse<ApplicationResponse>>("/applications", { query: { page: 0, size: 100 } });
-    return page.content.map(toApplication);
-  }
-  return delay(mine(), 250);
+  const page = await apiFetch<PagedResponse<ApplicationResponse>>("/applications", { query: { page: 0, size: 100 } });
+  return page.content.map(toApplication);
 }
 
 /** Any application by id — used by the interview room, which both a candidate and an
@@ -44,48 +33,38 @@ export async function getMyApplications(): Promise<Application[]> {
  * candidate's own list; the enterprise side resolves via the enterprise-scoped applicant
  * endpoints instead (see api/enterprise.ts), never this function. */
 export async function getApplicationById(id: string): Promise<Application | null> {
-  if (isRealMode()) {
-    const all = await getMyApplications();
-    return all.find((a) => a.id === id) ?? null;
-  }
-  return delay(readApplications().find((a) => a.id === id) ?? null, 150);
+  const all = await getMyApplications();
+  return all.find((a) => a.id === id) ?? null;
 }
 
 export async function hasAppliedTo(jobId: string): Promise<boolean> {
-  if (isRealMode()) {
-    return apiFetch<boolean>("/applications/exists", { query: { jobId } });
-  }
-  return delay(mine().some((a) => a.jobId === jobId), 50);
+  return apiFetch<boolean>("/applications/exists", { query: { jobId } });
 }
 
-export async function applyToJob(jobId: string): Promise<Application> {
-  if (isRealMode()) {
-    const res = await apiFetch<ApplicationResponse>("/applications", { method: "POST", body: { jobId } });
-    return toApplication(res);
-  }
-  const all = readApplications();
-  const existing = all.find((a) => a.candidateId === CURRENT_CANDIDATE_ID && a.jobId === jobId);
-  if (existing) return delay(existing, 200);
-
-  const now = new Date().toISOString();
-  const app: Application = {
-    id: `app-${Date.now()}-${jobId}`,
-    candidateId: CURRENT_CANDIDATE_ID,
-    jobId,
-    stage: "applied",
-    appliedAt: now,
-    updatedAt: now,
-  };
-  writeApplications([app, ...all]);
-  return delay(app, 400);
+/** `includeCtc` (MARATHON-FE area 6): "Only me" is this account's career-profile default
+ * (`CandidateProfile.consent`); this is the per-application override the architect specifically
+ * asked for - share CTC with this one employer without changing the account-wide default. */
+export async function applyToJob(jobId: string, opts: { includeCtc?: boolean; coverNote?: string; answers?: { questionId: string; value?: string }[] } = {}): Promise<Application> {
+  const res = await apiFetch<ApplicationResponse>("/applications", { method: "POST", body: { jobId, includeCtc: opts.includeCtc, coverNote: opts.coverNote, answers: opts.answers } });
+  return toApplication(res);
 }
 
 export async function withdrawApplication(id: string): Promise<void> {
-  if (isRealMode()) {
-    await apiFetch<void>(`/applications/${id}`, { method: "DELETE" });
-    return;
-  }
-  writeApplications(readApplications().filter((a) => a.id !== id));
-  return delay(undefined, 200);
+  await apiFetch<void>(`/applications/${id}`, { method: "DELETE" });
+  return;
+}
+
+/** MARATHON-FE area 6: only the candidate ever accepts an offer - a company proposes it
+ * (`AdvanceStageRequest`, stage="offer"), the candidate's own accept is what actually moves them
+ * to Hired. Mock mode had no equivalent (offers were never a distinct action there); this stays
+ * real-mode only since there's nothing to fake safely here. */
+export async function acceptOffer(id: string): Promise<Application | undefined> {
+  const res = await apiFetch<ApplicationResponse>(`/applications/${id}/offer/accept`, { method: "POST" });
+  return toApplication(res);
+}
+
+export async function declineOffer(id: string): Promise<Application | undefined> {
+  const res = await apiFetch<ApplicationResponse>(`/applications/${id}/offer/decline`, { method: "POST" });
+  return toApplication(res);
 }
 

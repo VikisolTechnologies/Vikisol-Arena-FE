@@ -1,111 +1,125 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { m } from "motion/react";
 import { Download } from "lucide-react";
+import { rise } from "@/lib/motion";
 import { CompanyAdminShell } from "@/components/app/CompanyAdminShell";
-import { OrbLoader } from "@/components/ui/orb-loader";
-import { Button } from "@/components/ui/button";
-import { searchAudit, auditExportUrl, type AuditEvent } from "@/lib/api/companyAdmin";
-import { isRealMode } from "@/lib/api/mode";
+import { Pills, Skeleton, StateCard } from "@/components/bplus/Primitives";
+import { DashButton } from "@/components/dash/Parts";
+import { auditExportUrl, searchAudit, type AuditEvent } from "@/lib/api/companyAdmin";
 import { getToken } from "@/lib/api/httpClient";
-import { formatDateTime } from "@/lib/format";
 
-const ACTIONS = [
-  "", "posting.created", "posting.closed", "candidate.unlocked", "credit.spent", "stage.moved",
-  "interview.scheduled", "feedback.submitted", "message.sent", "member.invited", "member.removed",
-  "member.role_changed", "plan.changed",
-];
+/** Plain-language names for the audit actions (the codes stay what the API filters on). */
+const ACTIONS: Record<string, string> = {
+  "posting.created": "Posted a job",
+  "posting.closed": "Closed a job",
+  "candidate.unlocked": "Unlocked a profile",
+  "credit.spent": "Spent a credit",
+  "stage.moved": "Moved a candidate",
+  "interview.scheduled": "Scheduled an interview",
+  "feedback.submitted": "Sent interview feedback",
+  "message.sent": "Sent a message",
+  "member.invited": "Invited a teammate",
+  "member.removed": "Removed a teammate",
+  "member.role_changed": "Changed a role",
+  "plan.changed": "Changed the plan",
+};
+const SINCE = [
+  { id: "all", label: "All time" },
+  { id: "7", label: "7 days" },
+  { id: "30", label: "30 days" },
+  { id: "90", label: "90 days" },
+] as const;
+type Since = (typeof SINCE)[number]["id"];
 
+const at = (iso: string) => new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
+
+function download(blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "audit-log.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Company settings — Audit log (flow §8; no board — designed in B+). Same searchAudit + export. */
 export default function AuditLogPage() {
   const [events, setEvents] = useState<AuditEvent[] | null>(null);
   const [action, setAction] = useState("");
-  const [sinceDays, setSinceDays] = useState<number | undefined>(undefined);
+  const [since, setSince] = useState<Since>("all");
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [error, setError] = useState("");
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
-    searchAudit({ action: action || undefined, sinceDays, page, size: 20 }).then((res) => {
-      setEvents(res.content);
-      setTotalPages(res.totalPages);
-    });
-  }, [action, sinceDays, page]);
+    let live = true;
+    searchAudit({ action: action || undefined, sinceDays: since === "all" ? undefined : Number(since), page, size: 20 })
+      .then((res) => {
+        if (!live) return;
+        setError("");
+        setEvents(res.content);
+        setTotalPages(res.totalPages);
+      })
+      .catch(() => {
+        if (!live) return;
+        setEvents([]);
+        setError("The audit log didn't load. Try again.");
+      });
+    return () => {
+      live = false;
+    };
+  }, [action, since, page]);
 
   const exportCsv = async () => {
-    if (!isRealMode()) {
-      const rows = events ?? [];
-      const csv = "Time,Actor,Action,Target\n" + rows.map((e) => `"${e.createdAt}","${e.actorName}","${e.action}","${e.target ?? ""}"`).join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = "audit-log.csv"; a.click();
-      URL.revokeObjectURL(url);
-      return;
+    setExporting(true);
+    try {
+      const res = await fetch(auditExportUrl(), { headers: { Authorization: `Bearer ${getToken()}` } });
+      if (!res.ok) throw new Error("export failed");
+      download(await res.blob());
+    } catch {
+      setError("The export didn't download. Try again.");
+    } finally {
+      setExporting(false);
     }
-    const res = await fetch(auditExportUrl(), { headers: { Authorization: `Bearer ${getToken()}` } });
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "audit-log.csv"; a.click();
-    URL.revokeObjectURL(url);
   };
 
   return (
-    <CompanyAdminShell
-      title="Audit log"
-      actions={
-        <Button variant="ghost-glass" size="sm" className="gap-1.5" onClick={exportCsv}>
-          <Download className="size-3.5" /> Export CSV
-        </Button>
-      }
-    >
-      <div className="mb-4 flex flex-wrap gap-2">
-        <select
-          value={action}
-          onChange={(e) => { setAction(e.target.value); setPage(0); }}
-          className="rounded-full border border-border bg-secondary px-3 py-1.5 text-xs"
-        >
-          <option value="">All actions</option>
-          {ACTIONS.filter(Boolean).map((a) => <option key={a} value={a}>{a}</option>)}
-        </select>
-        {[7, 30, 90].map((d) => (
-          <button
-            key={d}
-            type="button"
-            onClick={() => { setSinceDays(sinceDays === d ? undefined : d); setPage(0); }}
-            className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              sinceDays === d ? "bg-primary/15 text-primary-soft" : "border border-border bg-secondary text-muted-foreground"
-            }`}
-          >
-            Last {d}d
-          </button>
-        ))}
+    <CompanyAdminShell title="Audit log" actions={<DashButton variant="outline" onClick={exportCsv} disabled={exporting}><Download className="size-4" aria-hidden /> {exporting ? "Exporting…" : "Export CSV"}</DashButton>}>
+      <p className="mb-4 max-w-[62ch] text-[15px] text-faint">Every action your team takes — who, what and when. Kept for your records; it can&apos;t be edited.</p>
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <label>
+          <span className="sr-only">Action</span>
+          <select value={action} onChange={(e) => { setAction(e.target.value); setPage(0); }} className="min-h-11 rounded-full border border-field-line bg-transparent px-4 text-[14px] [&>option]:text-paper-ink">
+            <option value="">All actions</option>
+            {Object.entries(ACTIONS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        </label>
+        <Pills label="Time range" options={SINCE} value={since} onChange={(s) => { setSince(s); setPage(0); }} compact />
       </div>
-
+      {error && <p role="alert" className="mb-4 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
       {!events ? (
-        <OrbLoader className="h-96" />
+        <Skeleton className="h-72" />
+      ) : events.length === 0 ? (
+        !error && <StateCard kind="empty" title="Nothing matches" detail="Try another action or time range." />
       ) : (
         <>
-          <div className="space-y-2">
-            {events.map((e) => (
-              <div key={e.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-secondary px-4 py-3 text-sm">
-                <span className="w-40 shrink-0 text-xs text-muted-foreground">{formatDateTime(e.createdAt)}</span>
-                <span className="font-medium">{e.actorName}</span>
-                <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground">{e.action}</span>
-                {e.target && <span className="text-muted-foreground">{e.target}</span>}
-              </div>
+          <m.ol initial="hidden" animate="shown" className="divide-y divide-line rounded-tile border border-line bg-surface">
+            {events.map((e, i) => (
+              <m.li key={e.id} variants={rise} custom={i} className="grid gap-1 px-4 py-3 sm:grid-cols-[190px_1fr]">
+                <span className="text-[13px] text-faint">{at(e.createdAt)}</span>
+                <span className="text-[15px]"><strong className="font-semibold">{e.actorName}</strong> · {ACTIONS[e.action] ?? e.action}{e.target && <span className="text-faint"> — {e.target}</span>}</span>
+              </m.li>
             ))}
-            {events.length === 0 && (
-              <p className="rounded-2xl border border-dashed border-border-strong px-6 py-12 text-center text-sm text-muted-foreground">
-                No matching audit events.
-              </p>
-            )}
-          </div>
+          </m.ol>
           {totalPages > 1 && (
-            <div className="mt-4 flex justify-center gap-2">
-              <Button variant="ghost-glass" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-              <span className="flex items-center px-2 text-xs text-muted-foreground">{page + 1}/{totalPages}</span>
-              <Button variant="ghost-glass" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
-            </div>
+            <nav aria-label="Audit pages" className="mt-4 flex items-center justify-center gap-3">
+              <DashButton variant="outline" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Previous</DashButton>
+              <span className="text-[14px] text-faint">Page {page + 1} of {totalPages}</span>
+              <DashButton variant="outline" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</DashButton>
+            </nav>
           )}
         </>
       )}

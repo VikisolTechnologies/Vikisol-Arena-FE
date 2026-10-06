@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import {
   Home, Compass, MessageSquare, Fingerprint, ClipboardList, Store, Mail, Settings,
   LayoutDashboard, Search as SearchIcon, Briefcase, Sparkles, Users, ScrollText,
-  CreditCard, Building2, CalendarClock, Building, ShieldAlert, BarChart3, Flag,
+  CreditCard, Building2, CalendarClock, ShieldAlert, BarChart3, ShieldCheck,
+  FileStack, Scale, ToggleLeft, Shield,
 } from "lucide-react";
 import {
   Command, CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem,
@@ -29,7 +30,7 @@ const CANDIDATE_NAV = [
 
 const ENTERPRISE_NAV = [
   { href: "/enterprise/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/enterprise/talent", label: "Talent Universe", icon: SearchIcon },
+  { href: "/enterprise/talent", label: "Talent", icon: SearchIcon },
   { href: "/enterprise/postings", label: "Postings", icon: Briefcase },
   { href: "/enterprise/messages", label: "Messages", icon: Mail },
 ];
@@ -48,10 +49,18 @@ const HIRING_MANAGER_NAV = [
 ];
 
 const PLATFORM_ADMIN_NAV = [
-  { href: "/admin", label: "Tenants", icon: Building },
+  { href: "/admin", label: "Overview", icon: LayoutDashboard },
+  { href: "/admin/verification", label: "Verification", icon: ShieldCheck },
   { href: "/admin/moderation", label: "Moderation", icon: ShieldAlert },
+  { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/tenants", label: "Companies", icon: Building2 },
+  { href: "/admin/content", label: "Content", icon: FileStack },
+  { href: "/admin/disputes", label: "Disputes", icon: Scale },
+  { href: "/admin/jenny", label: "Jenny & AI", icon: Sparkles },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/admin/flags", label: "Feature flags", icon: Flag },
+  { href: "/admin/flags", label: "Feature flags", icon: ToggleLeft },
+  { href: "/admin/audit", label: "Audit log", icon: ScrollText },
+  { href: "/admin/team", label: "Admin team", icon: Shield },
 ];
 
 /** Global ⌘K palette — jump to any screen, search jobs, or ask the agent. Mounted once in the root layout. */

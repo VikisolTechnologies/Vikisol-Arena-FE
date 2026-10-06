@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
-import { PlatformAdminShell, usePlatformAdminGate } from "@/components/app/PlatformAdminShell";
-import { OrbLoader } from "@/components/ui/orb-loader";
-import { Badge } from "@/components/ui/badge";
-import { searchPlatformUsers } from "@/lib/api/platformAdmin";
+import { LogOut, Search, UserX, UserCheck } from "lucide-react";
+import { AdminShell, usePlatformAdminGate } from "@/components/admin/AdminShell";
+import { AdminList, AdminLoading, AdminRow, ReasonSheet } from "@/components/admin/parts";
+import { BottomSheet } from "@/components/bplus/BottomSheet";
+import { Pills, StateCard } from "@/components/bplus/Primitives";
+import { DashButton, StatusPill } from "@/components/dash/Parts";
+import { forceSignOutUser, getAdminAccountDetail, restoreUser, searchPlatformUsers, suspendUser, type AdminAccountDetail } from "@/lib/api/platformAdmin";
 import { formatDate } from "@/lib/format";
-import { EmptyState } from "@/components/ui/empty-state";
 import type { PlatformUser, Role } from "@/lib/types";
 
 const ROLE_FILTERS: { key: Role | ""; label: string }[] = [
@@ -19,70 +20,147 @@ const ROLE_FILTERS: { key: Role | ""; label: string }[] = [
   { key: "platform_admin", label: "Platform admin" },
 ];
 
-const ROLE_TONE: Record<string, string> = {
-  talent: "bg-secondary text-muted-foreground",
-  recruiter: "bg-primary/12 text-primary-soft",
-  company_admin: "bg-amber-500/15 text-amber-400",
-  hiring_manager: "bg-sky-500/15 text-sky-400",
-  platform_admin: "bg-red-500/15 text-red-400",
-};
-
 export default function PlatformUsersPage() {
   const gate = usePlatformAdminGate();
   const [users, setUsers] = useState<PlatformUser[] | null>(null);
   const [query, setQuery] = useState("");
   const [role, setRole] = useState<Role | "">("");
+  const [realProfile, setRealProfile] = useState<AdminAccountDetail | null>(null);
+  const [suspended, setSuspended] = useState<Record<string, boolean>>({});
+  const [action, setAction] = useState<{ user: PlatformUser; kind: "suspend" | "restore" } | null>(null);
+  const [signoutBusyId, setSignoutBusyId] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   const load = (q: string, r: Role | "") => searchPlatformUsers(q, r || undefined).then(setUsers);
 
-  useEffect(() => { if (gate === "ready") load(query, role); }, [gate, role]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (gate === "ready") load(query, role);
+  }, [gate, role]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const openProfile = (u: PlatformUser) => {
+    setError("");
+    setRealProfile(null);
+    getAdminAccountDetail(u.id)
+      .then((d) => {
+        setRealProfile(d);
+        setSuspended((s) => ({ ...s, [u.id]: d.status === "suspended" }));
+      })
+      .catch(() => setError("That profile didn't load. Try again."));
+  };
+
+  const confirmSuspendRestore = async (reason: string) => {
+    if (!action) return;
+    const detail = action.kind === "suspend" ? await suspendUser(action.user.id, reason, 7) : await restoreUser(action.user.id, reason);
+    setSuspended((s) => ({ ...s, [action.user.id]: detail.status === "suspended" }));
+    if (realProfile?.id === action.user.id) setRealProfile(detail);
+  };
+
+  const forceSignOut = async (u: PlatformUser) => {
+    setError("");
+    setSignoutBusyId(u.id);
+    try {
+      await forceSignOutUser(u.id);
+    } catch {
+      setError("Sign-out didn't go through. Try again.");
+    } finally {
+      setSignoutBusyId(null);
+    }
+  };
 
   return (
-    <PlatformAdminShell title="Users">
-      <div className="mb-4 flex items-center gap-2 rounded-full border border-border bg-secondary px-4 py-2.5">
-        <Search className="size-4 text-muted-foreground" />
+    <AdminShell title="Users">
+      {error && <p role="alert" className="mb-4 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
+      <div className="mb-4 flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-4">
+        <Search className="size-4 text-faint" aria-hidden />
         <input
           value={query}
-          onChange={(e) => { setQuery(e.target.value); load(e.target.value, role); }}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            load(e.target.value, role);
+          }}
           placeholder="Search by name or email…"
-          className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          aria-label="Search users"
+          className="w-full bg-transparent py-2.5 text-[15px] outline-none placeholder:text-faint"
         />
       </div>
-      <div className="mb-5 flex flex-wrap gap-1.5">
-        {ROLE_FILTERS.map((r) => (
-          <button
-            key={r.key}
-            type="button"
-            onClick={() => setRole(r.key)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-              role === r.key ? "border-primary/60 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground"
-            }`}
-          >
-            {r.label}
-          </button>
-        ))}
-      </div>
+      <Pills
+        options={ROLE_FILTERS.map((r) => ({ id: r.key, label: r.label }))}
+        value={role}
+        onChange={(k) => setRole(k)}
+        label="Role filter"
+        compact
+      />
 
       {!users ? (
-        <OrbLoader className="h-96" />
-      ) : (
-        <div className="space-y-2">
-          {users.map((u) => (
-            <div key={u.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-secondary px-4 py-3.5">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">{u.name}</p>
-                <p className="truncate text-xs text-muted-foreground">{u.email}</p>
-              </div>
-              {u.tenantName && <span className="text-xs text-muted-foreground">{u.tenantName}</span>}
-              <Badge variant="secondary" className={`capitalize ${ROLE_TONE[u.role] ?? "bg-secondary text-muted-foreground"}`}>
-                {u.role.replace("_", " ")}
-              </Badge>
-              <span className="text-xs text-muted-foreground">{formatDate(u.createdAt)}</span>
-            </div>
-          ))}
-          {users.length === 0 && <EmptyState title="No users match that search." className="py-16" />}
+        <AdminLoading className="mt-5" />
+      ) : users.length === 0 ? (
+        <div className="mt-5">
+          <StateCard kind="empty" title="No users match that search." />
         </div>
+      ) : (
+        <AdminList>
+          {users.map((u) => {
+            const isSuspended = suspended[u.id];
+            return (
+              <AdminRow key={u.id}>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button type="button" onClick={() => openProfile(u)} className="min-w-0 flex-1 text-left outline-none focus-visible:underline">
+                    <p className="truncate text-[15px] font-semibold">{u.name}</p>
+                    <p className="truncate text-[13px] text-faint">{u.email}</p>
+                  </button>
+                  {u.tenantName && <span className="text-[12px] text-faint">{u.tenantName}</span>}
+                  <StatusPill status={isSuspended ? "suspended" : "active"} />
+                  <span className="text-[12px] capitalize text-faint">{u.role.replace(/_/g, " ")}</span>
+                  <span className="text-[12px] text-faint">{formatDate(u.createdAt)}</span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <DashButton variant="outline" onClick={() => openProfile(u)}>
+                    View profile
+                  </DashButton>
+                  {isSuspended ? (
+                    <DashButton variant="primary" onClick={() => setAction({ user: u, kind: "restore" })}>
+                      <UserCheck className="size-4" aria-hidden /> Restore…
+                    </DashButton>
+                  ) : (
+                    <DashButton variant="danger" onClick={() => setAction({ user: u, kind: "suspend" })}>
+                      <UserX className="size-4" aria-hidden /> Suspend…
+                    </DashButton>
+                  )}
+                  <DashButton variant="outline" disabled={signoutBusyId === u.id} onClick={() => forceSignOut(u)}>
+                    <LogOut className="size-4" aria-hidden /> Force sign-out
+                  </DashButton>
+                </div>
+              </AdminRow>
+            );
+          })}
+        </AdminList>
       )}
-    </PlatformAdminShell>
+
+      <BottomSheet open={!!realProfile} onClose={() => setRealProfile(null)} title="User profile">
+        {realProfile && (
+          <div className="space-y-3 text-[14px] text-paper-ink">
+            <p className="font-display-serif text-[22px] font-medium">{realProfile.name}</p>
+            <p>{realProfile.email}</p>
+            <p className="text-paper-ink-muted capitalize">Role: {realProfile.role.replace(/_/g, " ")}</p>
+            <p className="text-paper-ink-muted">Joined {formatDate(realProfile.createdAt)}</p>
+            <p className="text-paper-ink-muted">Status: <span className="capitalize">{realProfile.status}</span></p>
+            {realProfile.suspendedUntil && <p className="text-paper-ink-muted">Suspended until {formatDate(realProfile.suspendedUntil)}{realProfile.suspensionReason ? ` — ${realProfile.suspensionReason}` : ""}</p>}
+            {realProfile.bannedAt && <p className="rounded-xl bg-danger/15 px-3 py-2 text-[13px] text-danger-on-paper">Banned {formatDate(realProfile.bannedAt)}</p>}
+            <p className="text-paper-ink-muted">Posts: {realProfile.posts} · Reports filed: {realProfile.reportsFiled} · Reports against: {realProfile.reportsAgainst}</p>
+            <p className="text-[12px] text-paper-ink-muted">Passwords are never shown in Arena Admin.</p>
+          </div>
+        )}
+      </BottomSheet>
+
+      <ReasonSheet
+        open={!!action}
+        title={action?.kind === "suspend" ? "Suspend user" : "Restore user"}
+        detail={action ? `${action.user.email} — reason is logged in the audit trail.` : undefined}
+        confirmLabel={action?.kind === "suspend" ? "Suspend" : "Restore"}
+        onClose={() => setAction(null)}
+        onConfirm={confirmSuspendRestore}
+        tone={action?.kind === "suspend" ? "danger" : "primary"}
+      />
+    </AdminShell>
   );
 }

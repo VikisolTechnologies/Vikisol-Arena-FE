@@ -5,4 +5,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
 <!-- END:nextjs-agent-rules -->
 
 # Vikisol Arena — read first
-Before any task, read `docs/VIKISOL-MASTER-CONTEXT.md`, `docs/AGENT-COLLABORATION-PROTOCOL.md`, `docs/ARENA-MISSION.md`, `docs/PROGRESS.md` and `docs/ARENA-CURRENT-STATE.md`. Continue from `PROGRESS.md`; don't restart. `CLAUDE.md` has the short version of the rules.
+The authority order is in `CLAUDE.md`:
+1. `docs/VIKISOL-MASTER-CONTEXT.md`
+2. `docs/missions/FE-BPLUS-BUILD.md` + `docs/design/ARENA-APP-FLOW.md` (flow: what the app does
+   and asks) + `docs/design/*` (the design is final)
+3. `docs/ARENA-MISSION.md`
+4. `docs/ARENA-VNEXT-MOBILE-JENNY-BLUEPRINT.md`
+5. `docs/PROGRESS.md`
+
+Also follow `docs/AGENT-COLLABORATION-PROTOCOL.md` and the newest file in `docs/reviews/`.
+Anything not in that list doesn't exist as instruction — the repo was cleaned of superseded plans
+and design docs on 28 Sep 2026. Continue from `PROGRESS.md`; don't restart.

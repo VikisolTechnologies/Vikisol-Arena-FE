@@ -19,19 +19,25 @@ const DENIED_HEADING = "This page isn't in my database.";
 test.describe("Logged out — protected routes redirect to /auth", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  for (const path of ["/identity", "/settings", "/applications"]) {
+  for (const path of ["/settings", "/applications"]) {
     test(`${path} → /auth`, async ({ page }) => {
       await page.goto(path);
       await expect(page).toHaveURL(/\/auth$/, { timeout: 10_000 });
     });
   }
 
+  test("/identity stays on the page and asks the guest to sign in", async ({ page }) => {
+    await page.goto("/identity");
+    await expect(page).toHaveURL(/\/identity$/, { timeout: 10_000 });
+    await expect(page.getByText("Sign in to see your page")).toBeVisible();
+  });
+
   test("/home stays readable for a guest and does not show a private profile", async ({ page }) => {
     await page.goto("/home");
     await expect(page).toHaveURL(/\/home$/, { timeout: 10_000 });
     await expect(page.getByText("Browsing as a guest").filter({ visible: true }).first()).toBeVisible();
     await page.getByRole("button", { name: "Create" }).filter({ visible: true }).click();
-    await expect(page.getByRole("heading", { name: "Sign in to post" })).toBeVisible();
+    await expect(page.getByText("Sign in to publish")).toBeVisible();
   });
 
   test("/enterprise/dashboard → /auth", async ({ page }) => {
@@ -105,7 +111,7 @@ test.describe("Post-login redirect target", () => {
   test("visiting a protected route while logged out, then signing in, lands on the role's default landing (not the original deep link)", async ({
     page,
   }) => {
-    await page.goto("/identity");
+    await page.goto("/settings");
     await expect(page).toHaveURL(/\/auth$/);
     await page.getByRole("button", { name: "Talent", exact: false }).click();
     await revealPasswordSignIn(page);

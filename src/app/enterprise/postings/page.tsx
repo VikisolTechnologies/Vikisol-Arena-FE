@@ -1,193 +1,132 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Plus, Users, MapPin, Lock } from "lucide-react";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { m } from "motion/react";
+import { Lock, MapPin, Plus, Users } from "lucide-react";
+import { rise } from "@/lib/motion";
 import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
-import { OrbLoader } from "@/components/ui/orb-loader";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { getMyEnterpriseProfile, getMyPostings, createPosting, setPostingStatus, PostingLimitError } from "@/lib/api/enterprise";
+import { Pills, Skeleton, StateCard } from "@/components/bplus/Primitives";
+import { DashButton, StatusPill } from "@/components/dash/Parts";
+import { getMyEnterpriseProfile, getMyPostings, setPostingStatus } from "@/lib/api/enterprise";
 import { POSTING_LIMITS } from "@/lib/plan";
 import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
-import { cn } from "@/lib/utils";
-import type { EmploymentType, EnterpriseProfile, JobPosting } from "@/lib/types";
+import { loadApplicants, type Applicant } from "@/lib/data/business";
+import type { EnterpriseProfile, JobPosting } from "@/lib/types";
 
-const SELECT_CLASS = "mt-1.5 flex h-9 w-full rounded-md border border-border bg-secondary px-3 text-sm outline-none";
-const EMPLOYMENT_TYPES: EmploymentType[] = ["Full Time", "Contract", "Internship"];
+const TABS = [
+  { id: "open", label: "Published" },
+  { id: "paused", label: "Paused" },
+  { id: "closed", label: "Closed" },
+] as const;
+type Tab = (typeof TABS)[number]["id"];
 
-const EMPTY_DRAFT = {
-  title: "", description: "", location: "", remote: false,
-  employmentType: "Full Time" as EmploymentType, salaryMin: "", salaryMax: "", skills: "",
-};
-
-export default function PostingsPage() {
+function Postings() {
   const router = useRouter();
+  const params = useSearchParams();
   const [profile, setProfile] = useState<EnterpriseProfile | null>(null);
-  const [postings, setPostings] = useState<JobPosting[]>([]);
-  const [creating, setCreating] = useState(false);
-  const [draft, setDraft] = useState(EMPTY_DRAFT);
-  const [publishing, setPublishing] = useState(false);
-  const [limitError, setLimitError] = useState<string | null>(null);
+  const [postings, setPostings] = useState<JobPosting[] | null>(null);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [tab, setTab] = useState<Tab>("open");
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
-  const load = () => getMyPostings().then(setPostings);
+  const load = () =>
+    getMyPostings()
+      .then((p) => {
+        setPostings(p);
+        return loadApplicants(p);
+      })
+      .then(setApplicants)
+      .catch(() => setError("Jobs didn't load. Try again."));
 
   useEffect(() => {
     if (!requireEnterpriseOnboarded(router)) return;
-    getMyEnterpriseProfile().then(setProfile);
-    load();
-  }, [router]);
+    if (params.get("new") === "1") {
+      router.replace("/enterprise/postings/new");
+      return;
+    }
+    getMyEnterpriseProfile().then(setProfile).catch(() => {});
+    void load();
+  }, [router, params]);
 
-  // Was "one line, an agent drafts the rest" — but every draft came back with the same
-  // Bengaluru/₹12-24L/Full Time/"join <company>" template regardless of what was typed, with
-  // only the skill chips varying by keyword match. No AI or backend call was involved. Until a
-  // real drafting assist exists, this is the honest version: fill in the real posting.
-  const canPublish = profile && draft.title.trim() && draft.description.trim() && draft.location.trim()
-    && Number(draft.salaryMin) > 0 && Number(draft.salaryMax) >= Number(draft.salaryMin);
-
-  const publish = async () => {
-    if (!canPublish || !profile) return;
-    setLimitError(null);
-    setPublishing(true);
+  const change = async (p: JobPosting, status: JobPosting["status"]) => {
+    setBusyId(p.id);
+    setError("");
     try {
-      await createPosting({
-        title: draft.title.trim(),
-        description: draft.description.trim(),
-        industry: profile.industry,
-        location: draft.location.trim(),
-        remote: draft.remote,
-        employmentType: draft.employmentType,
-        salaryMin: Number(draft.salaryMin),
-        salaryMax: Number(draft.salaryMax),
-        skills: draft.skills.split(",").map((s) => s.trim()).filter(Boolean),
-      });
-      setCreating(false);
-      setDraft(EMPTY_DRAFT);
-      load();
-    } catch (e) {
-      if (e instanceof PostingLimitError) setLimitError(e.message);
-      else throw e;
+      await setPostingStatus(p.id, status);
+      await load();
+    } catch (err) {
+      // MARATHON-FE-2 Step A: see the sibling job page's own note on this same swallow.
+      setError(err instanceof Error && err.message ? err.message : "That didn't change. Try again.");
     } finally {
-      setPublishing(false);
+      setBusyId(null);
     }
   };
 
-  const toggleStatus = async (p: JobPosting) => {
-    await setPostingStatus(p.id, p.status === "open" ? "paused" : "open");
-    load();
-  };
-
-  if (!profile) {
-    return (
-      <EnterpriseAppShell title="Postings">
-        <OrbLoader className="h-96" />
-      </EnterpriseAppShell>
-    );
-  }
-
-  const activeCount = postings.filter((p) => p.status !== "closed").length;
-  const limit = POSTING_LIMITS[profile.plan];
-  const atLimit = activeCount >= limit;
+  const active = (postings ?? []).filter((p) => p.status !== "closed").length;
+  const limit = profile ? POSTING_LIMITS[profile.plan] : Infinity;
+  const atLimit = active >= limit;
+  const shown = (postings ?? []).filter((p) => p.status === tab);
 
   return (
     <EnterpriseAppShell
-      title="Postings"
+      title="Jobs"
       profile={profile}
       actions={
-        <div className="flex items-center gap-2.5">
-          {Number.isFinite(limit) && (
-            <span className="text-xs text-muted-foreground">{activeCount}/{limit} active</span>
+        <>
+          {Number.isFinite(limit) && <span className="text-[14px] text-faint">{active}/{limit} active on your plan</span>}
+          {atLimit ? (
+            <DashButton href="/pricing" variant="outline"><Lock className="size-4" aria-hidden /> Plan limit reached — view plans</DashButton>
+          ) : (
+            <DashButton href="/enterprise/postings/new"><Plus className="size-4" aria-hidden /> Post a job</DashButton>
           )}
-          <Button variant="primary-gradient" size="sm" className="gap-1.5" onClick={() => { setLimitError(null); setCreating(true); }}>
-            <Plus className="size-3.5" /> New posting
-          </Button>
-        </div>
+        </>
       }
     >
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {postings.map((p) => (
-          <div key={p.id} className="rounded-[24px] border border-border bg-secondary p-5">
-            <div className="flex items-start justify-between gap-2">
-              <p className="font-display text-sm font-bold leading-snug">{p.title}</p>
-              <Badge variant="secondary" className={cn("shrink-0 capitalize", p.status === "open" ? "bg-emerald-500/15 text-emerald-400" : "bg-secondary text-muted-foreground")}>
-                {p.status}
-              </Badge>
-            </div>
-            <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3" /> {p.location}{p.remote && " · Remote"}</p>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {p.skills.slice(0, 3).map((s) => <Badge key={s} variant="secondary" className="bg-secondary text-[11px] text-muted-foreground">{s}</Badge>)}
-            </div>
-            <div className="mt-4 flex gap-2">
-              <Button variant="ghost-glass" size="sm" className="flex-1 gap-1.5" onClick={() => router.push(`/enterprise/postings/${p.id}`)}>
-                <Users className="size-3.5" /> Applicants
-              </Button>
-              <Button variant="ghost-glass" size="sm" onClick={() => toggleStatus(p)}>
-                {p.status === "open" ? "Pause" : "Reopen"}
-              </Button>
-            </div>
-          </div>
-        ))}
-        {postings.length === 0 && (
-          <div className="col-span-full rounded-2xl border border-dashed border-border-strong px-6 py-12 text-center text-sm text-muted-foreground">
-            No postings yet — create your first one.
-          </div>
+      <Pills label="Show" options={TABS} value={tab} onChange={setTab} compact />
+      {error && <p role="alert" className="mt-4 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
+      <div className="mt-5">
+        {!postings ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-44" />)}</div>
+        ) : shown.length === 0 ? (
+          <StateCard kind="empty" title={tab === "open" ? "No published jobs" : `No ${tab} jobs`} detail={tab === "open" ? "Post a job to start receiving applicants." : undefined} action={tab === "open" && !atLimit ? <DashButton href="/enterprise/postings/new">Post a job</DashButton> : undefined} />
+        ) : (
+          <m.ul initial="hidden" animate="shown" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {shown.map((p, i) => {
+              const mine = applicants.filter((a) => a.posting.id === p.id);
+              const fresh = mine.filter((a) => a.stage === "applied").length;
+              return (
+                <m.li key={p.id} variants={rise} custom={i} className="flex flex-col rounded-tile bg-paper p-5 text-paper-ink">
+                  <div className="flex items-start justify-between gap-2">
+                    <h2 className="text-[17px] font-semibold leading-snug">{p.title}</h2>
+                    <StatusPill status={p.status} onPaper />
+                  </div>
+                  <p className="mt-1.5 flex items-center gap-1 text-[14px] text-paper-ink-muted"><MapPin className="size-3.5" aria-hidden /> {p.location}{p.remote && " · Remote"}</p>
+                  <p className="mt-3 flex items-center gap-1.5 text-[14px]">
+                    <Users className="size-4 text-paper-ink-muted" aria-hidden /> {mine.length} applicant{mine.length === 1 ? "" : "s"}
+                    {fresh > 0 && <span className="rounded-full bg-info-on-paper px-2 py-0.5 text-[12px] font-semibold text-white">{fresh} new</span>}
+                  </p>
+                  <div className="mt-auto flex flex-wrap gap-2 pt-4">
+                    <DashButton href={`/enterprise/postings/${p.id}`}>Open</DashButton>
+                    {p.status !== "closed" && <DashButton variant="outline" onPaper disabled={busyId === p.id} onClick={() => change(p, p.status === "open" ? "paused" : "open")}>{p.status === "open" ? "Pause" : "Reopen"}</DashButton>}
+                    {p.status !== "closed" && <DashButton variant="danger" onPaper disabled={busyId === p.id} onClick={() => change(p, "closed")}>Close</DashButton>}
+                  </div>
+                </m.li>
+              );
+            })}
+          </m.ul>
         )}
       </div>
-
-      <Dialog open={creating} onOpenChange={(open) => { setCreating(open); if (!open) setDraft(EMPTY_DRAFT); }}>
-        <DialogContent className="border-border bg-popover sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>New posting</DialogTitle>
-            <DialogDescription>Describe the role — candidates start applying once it&apos;s live.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            {atLimit ? (
-              <div className="rounded-2xl border border-primary/25 bg-primary/[0.05] p-4 text-center">
-                <Lock className="mx-auto mb-2 size-5 text-primary-soft" />
-                <p className="text-sm font-medium">You&apos;ve used all {limit} active posting{limit === 1 ? "" : "s"} on the {profile.plan} plan.</p>
-                <p className="mt-1 text-xs text-muted-foreground">Close an existing posting, or upgrade for more.</p>
-                <Button variant="primary-gradient" size="sm" className="mt-3" render={<Link href="/pricing" />} nativeButton={false}>
-                  View plans
-                </Button>
-              </div>
-            ) : (
-              <>
-                {limitError && (
-                  <p className="rounded-lg border border-red-500/30 bg-red-500/[0.06] px-3 py-2 text-xs text-red-400">{limitError}</p>
-                )}
-                <Input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="e.g. Senior backend engineer" className="border-border bg-secondary" />
-                <Textarea value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} placeholder="Role, responsibilities, what makes this team worth joining" rows={3} className="border-border bg-secondary" />
-                <Input value={draft.skills} onChange={(e) => setDraft({ ...draft, skills: e.target.value })} placeholder="Skills, comma-separated — e.g. Java, Spring Boot" className="border-border bg-secondary" />
-                <div className="grid grid-cols-2 gap-2">
-                  <Input value={draft.location} onChange={(e) => setDraft({ ...draft, location: e.target.value })} placeholder="Location" className="border-border bg-secondary" />
-                  <select
-                    value={draft.employmentType}
-                    onChange={(e) => setDraft({ ...draft, employmentType: e.target.value as EmploymentType })}
-                    className={cn(SELECT_CLASS, "mt-0 bg-secondary")}
-                  >
-                    {EMPLOYMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <input type="checkbox" checked={draft.remote} onChange={(e) => setDraft({ ...draft, remote: e.target.checked })} />
-                  Remote-friendly
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <Input type="number" min={0} value={draft.salaryMin} onChange={(e) => setDraft({ ...draft, salaryMin: e.target.value })} placeholder="Salary min (LPA)" className="border-border bg-secondary" />
-                  <Input type="number" min={0} value={draft.salaryMax} onChange={(e) => setDraft({ ...draft, salaryMax: e.target.value })} placeholder="Salary max (LPA)" className="border-border bg-secondary" />
-                </div>
-                <Button variant="primary-gradient" size="sm" className="w-full" disabled={!canPublish || publishing} onClick={publish}>
-                  {publishing ? "Publishing…" : "Publish posting"}
-                </Button>
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </EnterpriseAppShell>
+  );
+}
+
+/** Arena for Business — Jobs (flow §8). */
+export default function PostingsPage() {
+  return (
+    <Suspense>
+      <Postings />
+    </Suspense>
   );
 }

@@ -65,6 +65,7 @@ export default function CandidateInterviewPage() {
         me={{ name: profile.name, avatarEmoji: profile.avatarEmoji }}
         counterpart={{ name: companyName, avatarEmoji: companyEmoji }}
         canGiveFeedback={false}
+        stage={application.stage}
         onInterviewUpdate={setInterview}
       />
     </AppShell>

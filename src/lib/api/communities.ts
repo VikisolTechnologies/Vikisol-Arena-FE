@@ -1,29 +1,19 @@
 import type { Community, CommunityMember, Post } from "@/lib/types";
-import { isRealMode } from "./mode";
 import { apiFetch } from "./httpClient";
-import { getFeed } from "./posts";
 
-/** Discuss (Phase 2): communities and thread lists. Mock mode has no communities - it returns
- *  empty lists and the general thread list from mock posts, so the screens still render. */
 export type ThreadSort = "new" | "top";
 
 export async function getThreads(opts: { community?: string; sort?: ThreadSort; page?: number; size?: number } = {}): Promise<Post[]> {
   const { community, sort = "new", page = 0, size = 30 } = opts;
-  if (isRealMode()) return apiFetch<Post[]>("/discuss/threads", { query: { community, sort, page, size } });
-  if (community) return [];
-  const posts = (await getFeed(0, 200)).filter((p) => p.intentType === "ask" || p.intentType === "update" || p.intentType === "offer");
-  const sorted = sort === "top" ? posts.slice().sort((a, b) => (b.score ?? b.reactionCount) - (a.score ?? a.reactionCount)) : posts;
-  return sorted.slice(page * size, page * size + size);
+  return apiFetch<Post[]>("/discuss/threads", { query: { community, sort, page, size } });
 }
 
 export async function listCommunities(q = ""): Promise<Community[]> {
-  if (isRealMode()) return apiFetch<Community[]>("/communities", { query: { q } });
-  return [];
+  return apiFetch<Community[]>("/communities", { query: { q } });
 }
 
 export async function myCommunities(): Promise<Community[]> {
-  if (isRealMode()) return apiFetch<Community[]>("/communities/mine");
-  return [];
+  return apiFetch<Community[]>("/communities/mine");
 }
 
 export function getCommunity(slug: string): Promise<Community> {

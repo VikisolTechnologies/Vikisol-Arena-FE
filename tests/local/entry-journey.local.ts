@@ -1,0 +1,317 @@
+import { test, expect, type Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
+
+// B+ P1 — Entry & progressive onboarding (docs/design/BPLUS-SCREENS.md). Real API mode with every
+// call intercepted: proves the screens send the existing request shapes and never invent data.
+
+const profile = {
+  id: "person-1",
+  name: "Priya Sharma",
+  avatarEmoji: "a",
+  title: "",
+  industry: "Engineering",
+  location: "",
+  remote: false,
+  skills: [],
+  experienceYears: 0,
+  rateFloor: 0,
+  openTo: [],
+  careerHealth: 0,
+  consent: { autoApply: false, searchableByEnterprises: false },
+  autonomy: "manual",
+};
+
+type Call = { method: string; path: string; body: unknown };
+
+async function stubApi(page: Page, calls: Call[]) {
+  await page.route("**/api/v1/**", async (route) => {
+    const req = route.request();
+    const path = new URL(req.url()).pathname;
+    let body: unknown = null;
+    try {
+      body = req.postDataJSON();
+    } catch {
+      body = null;
+    }
+    calls.push({ method: req.method(), path, body });
+    let data: unknown = null;
+    if (path.endsWith("/auth/signup") || path.endsWith("/auth/signin")) {
+      data = { role: "talent", candidateId: "person-1", name: "Priya Sharma", email: "priya@example.com", token: "local-token", mfaRequired: false, mfaPendingToken: null };
+    } else if (path.endsWith("/verification")) {
+      // dateOfBirthSet: false — sign-up already collects it for real now (B10), but this stub
+      // simulates an account without one on file, so the onboarding age gate still shows.
+      data = { verificationLevel: "basic", phoneVerified: false, otpPending: false, dateOfBirthSet: false };
+    } else if (path.includes("/profile/me")) {
+      data = profile;
+    } else if (path.endsWith("/feed") || path.includes("/rooms")) {
+      data = [];
+    }
+    await route.fulfill({ json: { success: true, data } });
+  });
+}
+
+// The dev server compiles a route on first visit and can reload the page mid-navigation; retry
+// only that case. Assertions are untouched.
+async function goto(page: Page, url: string) {
+  try {
+    await page.goto(url);
+  } catch (err) {
+    if (!String(err).includes("interrupted by another navigation")) throw err;
+    await page.waitForLoadState("load");
+    await page.goto(url);
+  }
+}
+
+async function dismissCookies(page: Page) {
+  const accept = page.getByRole("button", { name: "Accept", exact: true });
+  if (await accept.isVisible().catch(() => false)) await accept.click();
+}
+
+async function noOverflow(page: Page) {
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
+}
+
+async function noSeriousA11y(page: Page) {
+  // Scan the settled screen, not a frame mid-entrance (fades would read as low contrast).
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running" || a.effect?.getComputedTiming().iterations === Infinity), undefined, { timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(500);
+  const result = await new AxeBuilder({ page }).analyze();
+  expect(result.violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual([]);
+}
+
+test("sign up → why → local life → identity → all set → feed, without inventing anything", async ({ page }) => {
+  const calls: Call[] = [];
+  await stubApi(page, calls);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await goto(page, "/auth");
+  await page.evaluate(() => localStorage.clear());
+  await goto(page, "/auth");
+  await dismissCookies(page);
+
+  await expect(page.getByRole("heading", { name: "Local people. Real outcomes." })).toBeVisible();
+  for (const internal of ["Recruiter", "Hiring manager", "Platform admin"]) {
+    await expect(page.getByRole("button", { name: internal })).toHaveCount(0);
+  }
+  await noOverflow(page);
+
+  await page.getByRole("button", { name: "Join Arena" }).click();
+  await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
+
+  // Validation: errors after a submit, focus on the first problem, nothing sent.
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page.getByText("Enter your name.")).toBeVisible();
+  await expect(page.getByLabel("Full name")).toBeFocused();
+  await page.getByLabel("Full name").fill("Priya Sharma");
+  await page.getByLabel("Email address").fill("priya@example.com");
+  await page.getByLabel("Password").fill("short");
+  await page.getByLabel("Full name").click();
+  await expect(page.getByText("Use at least 8 characters.")).toBeVisible();
+  await page.getByLabel("Password").fill("long-enough");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page.getByText("Please agree to the Terms of Service and Privacy Policy.")).toBeVisible();
+  expect(calls.some((c) => c.path.endsWith("/auth/signup"))).toBe(false);
+  // B10: sign-up now collects date of birth itself, enforced server-side too.
+  await page.getByLabel("Date of birth").fill("1990-01-01");
+  // Tap the visible box, as a person would (the real input is visually hidden).
+  await page.locator('label[for="signup-agree"] > span').first().click();
+  await expect(page.getByLabel(/I agree to the/)).toBeChecked();
+  await page.getByRole("button", { name: "Create account" }).click();
+
+  // First visit compiles /onboarding on the dev server; give that navigation time.
+  await expect(page).toHaveURL(/\/onboarding\?step=1/, { timeout: 15_000 });
+  expect(calls.find((c) => c.path.endsWith("/auth/signup"))?.body).toMatchObject({ name: "Priya Sharma", email: "priya@example.com", role: "talent", dateOfBirth: "1990-01-01" });
+
+  // Step 1: the age gate. Mandatory, no skip, runs before everything else.
+  await expect(page.getByRole("heading", { name: "When's your birthday?" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Skip" })).toHaveCount(0);
+  await page.getByLabel("Date of birth").fill("1990-01-01");
+  await noSeriousA11y(page);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  expect(calls.find((c) => c.path.endsWith("/verification/date-of-birth"))?.body).toEqual({ dateOfBirth: "1990-01-01" });
+
+  await expect(page.getByRole("heading", { name: "Why are you here?" })).toBeVisible();
+  await expect(page.getByText("Step 2 of 5")).toBeAttached();
+  const find = page.getByRole("button", { name: /Find activities/ });
+  await find.click();
+  await expect(find).toHaveAttribute("aria-pressed", "true");
+  await noSeriousA11y(page);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "Set up your local life" })).toBeVisible();
+  // Board: the area starts on the launch area; the person can change it.
+  await expect(page.getByLabel("Your area")).toHaveValue("Gachibowli / Gopanapally");
+  await page.getByLabel("Your area").selectOption("Kondapur");
+  await page.getByRole("button", { name: "Running" }).click();
+  await noSeriousA11y(page);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "Your identity" })).toBeVisible();
+  await expect(page.getByLabel("Display name *")).toHaveValue("Priya Sharma");
+  await expect(page.getByLabel("Professional title (optional)")).toHaveValue("");
+  await page.getByLabel("Short intro (optional)").fill("Runner and weekend volunteer.");
+  // M6 area 2: nothing from this step stays local-only any more — it all saves for real.
+  await expect(page.getByText(/stay on this device/)).toHaveCount(0);
+  await noSeriousA11y(page);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "You're all set!" })).toBeVisible();
+  await expect(page.getByText("Joined for activities")).toBeVisible();
+  await expect(page.getByText("Kondapur")).toBeVisible();
+  await noSeriousA11y(page);
+  const location = calls.find((c) => c.method === "PUT" && c.path.endsWith("/profile/me/location"));
+  expect(location?.body).toEqual({ consent: "city", city: "Kondapur" });
+  // No invented title/industry: the details endpoint is never called by onboarding.
+  expect(calls.some((c) => c.path.endsWith("/profile/me/details"))).toBe(false);
+  const basics = calls.find((c) => c.method === "PATCH" && c.path.endsWith("/profile/me"));
+  expect(basics?.body).toMatchObject({ name: "Priya Sharma", title: "", bio: "Runner and weekend volunteer." });
+  const intents = calls.find((c) => c.method === "PUT" && c.path.endsWith("/profile/me/intents"));
+  expect(intents?.body).toEqual({ intents: ["activities"] });
+
+  await page.getByRole("link", { name: "Go to Arena" }).click();
+  await expect(page).toHaveURL(/\/home/);
+});
+
+test("The age gate runs first and can't be skipped; Explore first goes straight to the feed after it; Skip works on the steps after", async ({ page }) => {
+  const calls: Call[] = [];
+  await stubApi(page, calls);
+  await goto(page, "/auth");
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem("arena_session", JSON.stringify({ role: "talent", name: "Priya Sharma", email: "priya@example.com" }));
+  });
+  await goto(page, "/onboarding?step=1");
+  await dismissCookies(page);
+  // Step 1 (age gate): mandatory, no Skip button at all.
+  await expect(page.getByRole("heading", { name: "When's your birthday?" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Skip" })).toHaveCount(0);
+  await page.getByLabel("Date of birth").fill("1990-01-01");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+
+  await expect(page.getByRole("heading", { name: "Why are you here?" })).toBeVisible();
+  await page.getByRole("button", { name: /Explore first/ }).click();
+  await page.getByRole("button", { name: "Go to Arena" }).click();
+  await expect(page).toHaveURL(/\/home/);
+  // The age gate already saved for real on this path too — it doesn't wait for the rest of
+  // onboarding, which "Explore first" skips entirely.
+  expect(calls.find((c) => c.path.endsWith("/verification/date-of-birth"))?.body).toEqual({ dateOfBirth: "1990-01-01" });
+
+  // Back in onboarding (age gate already done this session): Skip works on steps 2 and 3.
+  await goto(page, "/onboarding?step=2");
+  await expect(page.getByRole("heading", { name: "Why are you here?" })).toBeVisible();
+  await page.getByRole("button", { name: "Skip" }).click();
+  await expect(page.getByRole("heading", { name: "Set up your local life" })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole("heading", { name: "Why are you here?" })).toBeVisible();
+  await page.getByRole("button", { name: /Find activities/ }).click();
+  await page.getByRole("button", { name: /Explore first/ }).click();
+  // Exclusive: choosing Explore first clears the others.
+  await expect(page.getByRole("button", { name: /Find activities/ })).toHaveAttribute("aria-pressed", "false");
+  // "You're all set" is never reachable by URL without a real save.
+  await goto(page, "/onboarding?step=5");
+  await expect(page.getByRole("heading", { name: "Your identity" })).toBeVisible();
+});
+
+test("Under 18 gets a kind refusal, not the app", async ({ page }) => {
+  const calls: Call[] = [];
+  await stubApi(page, calls);
+  await goto(page, "/auth");
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem("arena_session", JSON.stringify({ role: "talent", name: "Priya Sharma", email: "priya@example.com" }));
+  });
+  await goto(page, "/onboarding?step=1");
+  await dismissCookies(page);
+  const fifteenYearsAgo = new Date();
+  fifteenYearsAgo.setFullYear(fifteenYearsAgo.getFullYear() - 15);
+  await page.getByLabel("Date of birth").fill(fifteenYearsAgo.toISOString().slice(0, 10));
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Arena is for people 18 and older" })).toBeVisible();
+  // Refused, not saved — the under-18 date never reaches the backend.
+  expect(calls.some((c) => c.path.endsWith("/verification/date-of-birth"))).toBe(false);
+  await noSeriousA11y(page);
+});
+
+test("Sign-up itself refuses an under-18 date of birth (B10) with the backend's own message", async ({ page }) => {
+  const calls: Call[] = [];
+  await page.route("**/api/v1/**", async (route) => {
+    const req = route.request();
+    const path = new URL(req.url()).pathname;
+    let body: unknown = null;
+    try {
+      body = req.postDataJSON();
+    } catch {
+      body = null;
+    }
+    calls.push({ method: req.method(), path, body });
+    if (path.endsWith("/auth/signup")) {
+      await route.fulfill({ status: 400, json: { success: false, message: "You must be 18 or older to join Arena" } });
+      return;
+    }
+    await route.fulfill({ json: { success: true, data: null } });
+  });
+  await goto(page, "/auth");
+  await dismissCookies(page);
+  await page.getByRole("button", { name: "Join Arena" }).click();
+  await page.getByLabel("Full name").fill("Too Young");
+  await page.getByLabel("Email address").fill("tooyoung@example.com");
+  await page.getByLabel("Password").fill("long-enough");
+  const fifteenYearsAgo = new Date();
+  fifteenYearsAgo.setFullYear(fifteenYearsAgo.getFullYear() - 15);
+  await page.getByLabel("Date of birth").fill(fifteenYearsAgo.toISOString().slice(0, 10));
+  await page.locator('label[for="signup-agree"] > span').first().click();
+  await page.getByRole("button", { name: "Create account" }).click();
+  // Shown next to the date-of-birth field (fieldForServerError routes "18 or older" there),
+  // not a generic banner — and the page never navigates to onboarding.
+  await expect(page.getByText("You must be 18 or older to join Arena")).toBeVisible();
+  await expect(page).toHaveURL(/\/auth/);
+});
+
+test("sign in, forgot password, expired reset and session notice", async ({ page }) => {
+  const calls: Call[] = [];
+  await stubApi(page, calls);
+  await page.setViewportSize({ width: 320, height: 700 });
+  await goto(page, "/auth?mode=signin");
+  await page.waitForLoadState("networkidle");
+  await dismissCookies(page);
+  await noOverflow(page);
+  await page.getByLabel("Password").fill("long-enough");
+  await page.getByRole("button", { name: "Show the characters" }).click();
+  await expect(page.getByLabel("Password")).toHaveAttribute("type", "text");
+  await page.getByRole("button", { name: "Hide the characters" }).click();
+  await expect(page.getByLabel("Password")).toHaveAttribute("type", "password");
+  await page.getByLabel("Email address").fill("priya@example.com");
+  await page.locator('button[type="submit"]').click();
+  await expect(page).toHaveURL(/\/home/);
+
+  await goto(page, "/auth/forgot");
+  await page.getByLabel("Email address").fill("priya@example.com");
+  await page.getByRole("button", { name: "Send reset link" }).click();
+  await expect(page.getByText("Check your email")).toBeVisible();
+  expect(calls.some((c) => c.path.includes("/auth/forgot"))).toBe(true);
+
+  await goto(page, "/auth/reset/expired-token");
+  await expect(page.getByRole("heading", { name: "This link has expired" })).toBeVisible();
+
+  await page.evaluate(() => localStorage.removeItem("arena_session"));
+  await goto(page, "/auth?mode=signin&reason=expired");
+  await expect(page.getByText("Your session expired. Sign in again.")).toBeVisible();
+});
+
+test("every entry screen fits 320–430px and respects reduced motion", async ({ page }) => {
+  await goto(page, "/auth");
+  await dismissCookies(page);
+  for (const url of ["/auth", "/auth?mode=signup", "/auth?mode=signin", "/auth/forgot"]) {
+    await goto(page, url);
+    for (const width of [320, 360, 375, 390, 430, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      await noOverflow(page);
+    }
+    await noSeriousA11y(page);
+  }
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await goto(page, "/auth");
+  const join = page.getByRole("button", { name: "Join Arena" });
+  await expect(join).toBeVisible();
+  const duration = await join.evaluate((node) => getComputedStyle(node).transitionDuration);
+  expect(duration === "0s" || duration === "0ms").toBe(true);
+});

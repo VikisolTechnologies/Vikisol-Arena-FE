@@ -5,11 +5,11 @@ import type { Metadata } from "next";
 // metadata to a route whose page.tsx is a client component ("use client" files can't export
 // `metadata` themselves) without touching that file at all.
 export const metadata: Metadata = {
-  title: "Discover jobs — Arena",
-  description: "Swipe through open roles matched to your skills. No account needed to browse.",
+  title: "Discover — Arena",
+  description: "People, activities, and work that already exist. No account needed to browse.",
   openGraph: {
-    title: "Discover jobs on Arena",
-    description: "Swipe through open roles matched to your skills.",
+    title: "Discover on Arena",
+    description: "People, activities, and work that already exist.",
     url: "/discover",
   },
 };

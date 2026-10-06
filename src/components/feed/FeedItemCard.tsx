@@ -17,7 +17,6 @@ import { PersonAvatar } from "@/components/ui/person-avatar";
 import { ReactionButton } from "@/components/feed/ReactionButton";
 import { formatFriendlyDateTime } from "@/lib/format";
 import { savePost, unsavePost } from "@/lib/api/posts";
-import { DemoContentBadge } from "@/components/home-v3/DemoContentBadge";
 import { cn } from "@/lib/utils";
 import type { FeedItem } from "@/lib/types";
 import { isVideoUrl, mediaDisplayUrl, videoPosterUrl } from "@/lib/api/media";
@@ -114,7 +113,6 @@ export function FeedItemCard({ item }: { item: FeedItem }) {
           <PersonAvatar seed={avatarSeed} name={authorName} size="sm" />
           <span className="text-sm font-semibold">{authorName}</span>
           {item.mine && <Badge variant="secondary" className="bg-primary/12 text-[11px] text-primary-soft">You</Badge>}
-          {(item.demoContent) && <DemoContentBadge />}
         </div>
         <div className="flex items-center gap-1.5">
           {(item.status === "cancelled" || item.status === "expired" || item.status === "full") && (

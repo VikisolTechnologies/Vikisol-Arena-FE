@@ -10,6 +10,7 @@ const INTENT_LABEL: Record<Post["intentType"], string> = {
   update: "Update",
   company: "Company",
   offer: "Offer",
+  collab: "Project",
 };
 
 const INTENT_ICON: Record<Post["intentType"], typeof Sparkles> = {
@@ -18,6 +19,7 @@ const INTENT_ICON: Record<Post["intentType"], typeof Sparkles> = {
   update: CalendarClock,
   company: Briefcase,
   offer: Gift,
+  collab: Briefcase,
 };
 
 // §4 safety-audit addition: "Show join-count ... and account age" - a fresh, zero-track-record

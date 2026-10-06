@@ -58,30 +58,21 @@ export function CookieConsentBanner() {
 
   if (!visible) return null;
 
+  // Compact one-row bar (architect review 29 Sep): it must never hide the Welcome buttons or the
+  // footer tagline. Pages reserve its measured height via --cookie-banner-h.
   return (
-    <div ref={ref} className="fixed inset-x-0 bottom-0 z-[900] border-t border-border bg-background/95 px-5 py-4 backdrop-blur-[18px] sm:px-6">
-      <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3">
-        <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Cookie className="size-4 shrink-0 text-primary-soft" />
-          We use strictly-necessary cookies to keep you signed in. See our{" "}
-          <Link href="/privacy" className="text-primary-soft hover:underline">Privacy Policy</Link>.
+    <div ref={ref} role="region" aria-label="Cookies" className="fixed inset-x-0 bottom-0 z-[900] border-t border-line bg-background/95 px-4 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 backdrop-blur-[18px]">
+      <div className="mx-auto flex max-w-3xl items-center gap-2">
+        <p className="flex min-w-0 flex-1 items-center gap-2 text-[13px] leading-snug text-faint">
+          <Cookie className="size-4 shrink-0 text-primary-soft" aria-hidden />
+          <span>Only essential cookies, to keep you signed in. <Link href="/privacy" className="text-foreground underline underline-offset-2">Privacy</Link></span>
         </p>
-        <div className="flex shrink-0 gap-2">
-          <button
-            type="button"
-            onClick={() => respond("rejected")}
-            className="rounded-full border border-border px-4 py-1.5 text-xs font-medium hover:border-white/20"
-          >
-            Reject non-essential
-          </button>
-          <button
-            type="button"
-            onClick={() => respond("accepted")}
-            className="rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
-          >
-            Accept
-          </button>
-        </div>
+        <button type="button" onClick={() => respond("rejected")} className="min-h-11 shrink-0 rounded-full px-3 text-[13px] font-semibold text-foreground/85 hover:bg-foreground/5">
+          Reject
+        </button>
+        <button type="button" onClick={() => respond("accepted")} className="min-h-11 shrink-0 rounded-full bg-[#ff5a1f] px-4 text-[13px] font-semibold text-[#1e1714] hover:bg-[#e24a12]">
+          OK
+        </button>
       </div>
     </div>
   );

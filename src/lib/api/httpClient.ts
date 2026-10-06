@@ -1,5 +1,8 @@
 import { API_BASE_URL } from "./mode";
 import { reportApiUnreachable, reportApiReachable } from "./apiHealth";
+import { clearSessionExpired, reportSessionExpired } from "./sessionExpired";
+import { MISSING_DOB_MESSAGE, reportMissingDob } from "./missingDob";
+import { clearSession } from "@/lib/session";
 
 const TOKEN_KEY = "arena_jwt_token";
 
@@ -10,6 +13,7 @@ export function getToken(): string | null {
 
 export function setToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token);
+  clearSessionExpired();
 }
 
 export function clearToken() {
@@ -134,7 +138,11 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
         throw new ApiError(0, "Can't reach the Arena backend right now.");
       }
     } else {
+      // Drafts (intake, compose, ...) live under their own localStorage keys, untouched by
+      // clearSession() - only the session record goes, same as an explicit sign-out.
       clearToken();
+      clearSession();
+      reportSessionExpired();
     }
   }
 
@@ -149,7 +157,14 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   const envelope = json as { success?: boolean; message?: string; data?: T } | null;
 
   if (!res.ok || envelope?.success === false) {
-    throw new ApiError(res.status, envelope?.message || `Request failed (${res.status})`);
+    const message = envelope?.message || `Request failed (${res.status})`;
+    // MARATHON-FE-2 Step 0: AgeUtil.requireDateOfBirth() refuses any write with this exact
+    // message for an account with no date of birth on file (phone/Google sign-up that never hit
+    // onboarding's age gate). Reported globally so MissingDobSheet can show the link to add it,
+    // without every write call site needing its own special case - the thrown ApiError below
+    // still carries the same message for whatever local error text the caller already shows.
+    if (message === MISSING_DOB_MESSAGE) reportMissingDob();
+    throw new ApiError(res.status, message);
   }
 
   if (envelope && typeof envelope === "object" && "data" in envelope) return envelope.data as T;

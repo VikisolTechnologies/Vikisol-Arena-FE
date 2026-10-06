@@ -1,4 +1,3 @@
-import { isRealMode } from "./mode";
 import { apiFetch } from "./httpClient";
 
 /**
@@ -45,8 +44,7 @@ export function checkMediaFile(file: File): string | null {
  * progress, which matters for videos on a phone connection.
  */
 export function uploadMedia(file: File, sig: UploadSignature | null, onProgress?: (fraction: number) => void): Promise<string> {
-  // Mock mode has no Cloudinary - a local object URL is enough to preview and "post" it.
-  if (!isRealMode() || !sig) {
+  if (!sig) {
     onProgress?.(1);
     return Promise.resolve(URL.createObjectURL(file));
   }

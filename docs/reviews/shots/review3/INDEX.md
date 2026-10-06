@@ -1,0 +1,120 @@
+# Review 3 screenshots
+
+Generated 2026-09-30T16:34:12.786Z from http://localhost:3001 by scripts/dev/review-shots.mjs. 114 of 114 Built screens captured (people and business 390×844, admin 1280×800, full page, reduced motion).
+
+`id` — route — board frame
+
+- `welcome` — /auth — public/dev/boards/welcome.webp
+- `sign-up` — /auth?mode=signup — public/dev/boards/sign-up.webp
+- `sign-in` — /auth?mode=signin — public/dev/boards/sign-in.webp
+- `why-here` — /dev/person?stage=onboarding&to=/onboarding%3Fstep%3D1 — public/dev/boards/why-here.webp
+- `local-life` — /dev/person?stage=onboarding&to=/onboarding%3Fstep%3D2 — public/dev/boards/local-life.webp
+- `your-identity` — /dev/person?stage=onboarding&to=/onboarding%3Fstep%3D3 — public/dev/boards/your-identity.webp
+- `all-set` — /dev/person?stage=onboarding&to=/onboarding%3Fstep%3D4 — public/dev/boards/all-set.webp
+- `feed` — /dev/person?to=/home — public/dev/boards/feed.webp
+- `discover` — /dev/person?to=/discover — public/dev/boards/discover.webp
+- `map` — /dev/person?to=/discover%3Fview%3Dmap — public/dev/boards/map.webp
+- `create` — /dev/person?to=/home%3Fcreate%3D1 — public/dev/boards/create.webp
+- `profile` — /dev/person?to=/identity — public/dev/boards/profile.webp
+- `jenny-home` — /dev/person?to=/agent — public/dev/boards/jenny-home.webp
+- `personal-feed` — /dev/person?to=/home — public/dev/boards/personal-feed.webp
+- `discover-filter` — /dev/person?to=/discover%3Fshow%3Dactivities — public/dev/boards/discover-filter.webp
+- `map-results` — /dev/person?to=/discover%3Fview%3Dmap — public/dev/boards/map-results.webp
+- `activity-details` — /dev/screen/activity-details — public/dev/boards/activity-details.webp
+- `join-sent` — /dev/screen/join-sent — public/dev/boards/join-sent.webp
+- `approved-ready` — /dev/screen/approved-ready — public/dev/boards/approved-ready.webp
+- `activity-room` — /dev/screen/activity-room — public/dev/boards/activity-room.webp
+- `need-create` — /dev/person?to=/home%3Fcreate%3D1 — public/dev/boards/need-create.webp
+- `post-need` — /dev/person?to=/needs/new — public/dev/boards/post-need.webp
+- `need-page` — /dev/screen/need-page — public/dev/boards/need-page.webp
+- `offer-details` — /dev/screen/offer-details — public/dev/boards/offer-details.webp
+- `coordination-room` — /dev/screen/coordination-room — public/dev/boards/coordination-room.webp
+- `mark-completed` — /dev/screen/mark-completed — public/dev/boards/mark-completed.webp
+- `see-outcome` — /dev/person?to=/work%3Ftab%3Dcompleted — public/dev/boards/see-outcome.webp
+- `conversation` — /dev/screen/conversation — public/dev/boards/conversation.webp
+- `notifications` — /dev/person?to=/notifications — public/dev/boards/notifications.webp
+- `search` — /dev/person?to=/search — public/dev/boards/search.webp
+- `settings-privacy` — /dev/person?to=/settings — public/dev/boards/settings-privacy.webp
+- `report-block` — /dev/screen/report-block — public/dev/boards/report-block.webp
+- `resilient-states` — /dev/screen/resilient-states — public/dev/boards/resilient-states.webp
+- `career-profile` — /dev/person?to=/identity — public/dev/boards/career-profile.webp
+- `career-intent` — /dev/person?to=/identity/career — public/dev/boards/career-intent.webp
+- `career-setup` — /dev/person?to=/identity/career%3Fstep%3Dsetup — public/dev/boards/career-setup.webp
+- `privacy-preview` — /dev/person?to=/identity/career%3Fstep%3Dprivacy — public/dev/boards/privacy-preview.webp
+- `work-jobs` — /dev/person?to=/jobs — public/dev/boards/work-jobs.webp
+- `job-details` — /dev/screen/job-details — public/dev/boards/job-details.webp
+- `apply-track` — /dev/screen/apply-track — public/dev/boards/apply-track.webp
+- `career-status` — /dev/person?to=/identity/career%3Fstep%3Dsetup — no board
+- `career-skills` — /dev/person?to=/identity/career%3Fstep%3Dsetup — no board
+- `career-pay` — /dev/person?to=/identity/career%3Fstep%3Dsetup — no board
+- `career-prefs` — /dev/person?to=/identity/career%3Fstep%3Dsetup — no board
+- `career-proof` — /dev/person?to=/identity/career%3Fstep%3Dsetup — no board
+- `career-review` — /dev/person?to=/identity/career%3Fstep%3Dsetup — no board
+- `apply-sheet` — /dev/screen/apply-sheet — no board
+- `activity-kind` — /dev/person?to=/activities/new — no board
+- `activity-intake` — /dev/person?to=/activities/new%3Fstep%3Ddetails — no board
+- `activity-cover` — /dev/screen/activity-cover — no board
+- `activity-preview` — /dev/person?to=/activities/new%3Fstep%3Dpreview — no board
+- `activity-published` — /dev/screen/activity-published — no board
+- `activity-manage` — /dev/screen/activity-details — no board
+- `activity-checkin` — /dev/screen/activity-details — no board
+- `activity-cancel` — /dev/screen/activity-details — no board
+- `activity-leave` — /dev/screen/approved-ready — no board
+- `activity-covers` — /dev/covers — no board
+- `need-kind` — /dev/person?to=/needs/new — no board
+- `need-intake` — /dev/person?to=/needs/new%3Fkind%3Dmoving — no board
+- `offer-kind` — /dev/person?to=/offers/new — no board
+- `offer-intake` — /dev/person?to=/offers/new%3Fkind%3Dtutoring — no board
+- `offer-page` — /dev/screen/need-page — no board
+- `offer-requests` — /dev/screen/offer-details — no board
+- `project-start` — /dev/person?to=/projects/new — no board
+- `choose-role` — /auth?mode=role — public/dev/boards/choose-role.webp
+- `company-workspace` — /dev/business?to=/enterprise/onboarding — public/dev/boards/company-workspace.webp
+- `post-job` — /dev/business?to=/enterprise/postings/new — public/dev/boards/post-job.webp
+- `manage-job` — /dev/business?to=/enterprise/postings/demo-job — public/dev/boards/manage-job.webp
+- `candidates` — /dev/business?to=/enterprise/candidates — public/dev/boards/candidates.webp
+- `candidate-profile` — /dev/business?to=/enterprise/postings/demo-job/candidates/demo-app-0 — public/dev/boards/candidate-profile.webp
+- `interview-hire` — /dev/business?to=/enterprise/interviews/demo-app-5 — public/dev/boards/interview-hire.webp
+- `jenny-feed` — /dev/person?to=/home — public/dev/boards/jenny-feed.webp
+- `jenny-discover` — /dev/person?to=/discover?q=I%20want%20a%20beginner%20badminton%20game%20this%20weekend — public/dev/boards/jenny-discover.webp
+- `smart-match` — /dev/person?to=/agent/match/post-cleanup — public/dev/boards/smart-match.webp
+- `tell-jenny` — /dev/person?to=/identity/career/jenny?say=1 — public/dev/boards/tell-jenny.webp
+- `career-draft` — /dev/person?to=/identity/career/jenny?step=draft — public/dev/boards/career-draft.webp
+- `set-privacy` — /dev/person?to=/identity/career/jenny?step=privacy — public/dev/boards/set-privacy.webp
+- `shortlist` — /dev/person?to=/identity/career/shortlist — public/dev/boards/shortlist.webp
+- `review-application` — /dev/person?to=/applications/new?job=job-2 — public/dev/boards/review-application.webp
+- `application-tracker` — /dev/screen/application-tracker — public/dev/boards/application-tracker.webp
+- `biz-home` — /dev/business?to=/enterprise/dashboard — no board
+- `biz-jobs` — /dev/business?to=/enterprise/postings — no board
+- `biz-pipeline` — /dev/business?to=/enterprise/postings/demo-job?tab=candidates — no board
+- `biz-interviews` — /dev/business?to=/enterprise/interviews — no board
+- `biz-talent` — /dev/business?to=/enterprise/talent — no board
+- `biz-messages` — /dev/business?to=/enterprise/messages — no board
+- `biz-posts` — /dev/business?to=/enterprise/posts — no board
+- `biz-admin` — /dev/business?to=/enterprise/admin — no board
+- `biz-team` — /dev/business?to=/enterprise/admin/team — no board
+- `biz-audit` — /dev/business?to=/enterprise/admin/audit — no board
+- `biz-billing` — /dev/business?to=/enterprise/admin/billing — no board
+- `biz-company` — /dev/business?to=/enterprise/admin/company — no board
+- `biz-consent` — /dev/business?to=/enterprise/admin/consent — no board
+- `admin-overview` — /dev/admin?to=/admin — no board
+- `admin-verification` — /dev/admin?to=/admin/verification — no board
+- `admin-moderation` — /dev/admin?to=/admin/moderation — no board
+- `admin-users` — /dev/admin?to=/admin/users — no board
+- `admin-companies` — /dev/admin?to=/admin/tenants — no board
+- `admin-content` — /dev/admin?to=/admin/content — no board
+- `admin-disputes` — /dev/admin?to=/admin/disputes — no board
+- `admin-jenny` — /dev/admin?to=/admin/jenny — no board
+- `admin-analytics` — /dev/admin?to=/admin/analytics — no board
+- `admin-flags` — /dev/admin?to=/admin/flags — no board
+- `admin-audit` — /dev/admin?to=/admin/audit — no board
+- `admin-team` — /dev/admin?to=/admin/team — no board
+- `account-session-expired` — /dev/person?to=/account/session-expired — no board
+- `account-edit` — /dev/person?to=/account/edit — no board
+- `account-notifications` — /dev/person?to=/account/notifications — no board
+- `account-blocked` — /dev/person?to=/account/blocked — no board
+- `account-export` — /dev/person?to=/account/export — no board
+- `account-delete` — /dev/person?to=/account/delete — no board
+- `account-help` — /dev/person?to=/account/help — no board
+- `account-share` — /dev/person?to=/account/share — no board
+- `neighbour-profile` — /dev/person?to=/people/cand-2 — no board

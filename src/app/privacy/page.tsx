@@ -25,7 +25,7 @@ export default function PrivacyPage() {
             for personal data you provide, under India&apos;s Digital Personal Data Protection
             Act, 2023 and the DPDP Rules, 2025.
           </p>
-          <p><strong className="text-foreground">What we collect:</strong> profile details you provide (name, skills, experience, resume/CV file), consent settings (auto-apply, visibility to enterprise recruiters), and activity data (applications, interviews, messages) needed to operate the platform.</p>
+          <p><strong className="text-foreground">What we collect:</strong> profile details you provide (name, skills, experience, resume/CV file), consent settings (visibility to enterprise recruiters, what Jenny may prepare for you), and activity data (applications, interviews, messages) needed to operate the platform.</p>
           <p><strong className="text-foreground">Why:</strong> to match you with relevant opportunities, let enterprise recruiters search consented candidates, and operate your account. We never sell personal data.</p>
           <p><strong className="text-foreground">Consent:</strong> collection is purpose-specific — enabling &quot;visible to enterprises&quot; is separate from account creation, and you can withdraw it at any time from Settings with immediate effect.</p>
           <p><strong className="text-foreground">Your rights:</strong> you can export a copy of your data or request erasure at any time from <Link href="/settings" className="text-primary-soft hover:underline">Settings</Link>. Requests are actioned immediately for consent withdrawal, within 30 days for other rights.</p>

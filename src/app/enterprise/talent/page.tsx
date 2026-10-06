@@ -1,136 +1,128 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search as SearchIcon, MapPin, Sparkles, Bookmark } from "lucide-react";
+import { m } from "motion/react";
+import { Bookmark, MapPin, Search as SearchIcon, ShieldCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { press, rise, spring } from "@/lib/motion";
 import { EnterpriseAppShell } from "@/components/app/EnterpriseAppShell";
-import { OrbLoader } from "@/components/ui/orb-loader";
-import { Starfield } from "@/components/landing/Starfield";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/bplus/Avatar";
+import { Chip } from "@/components/bplus/Controls";
+import { Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { getMyEnterpriseProfile, searchTalent } from "@/lib/api/enterprise";
 import { getShortlistIds, toggleShortlist } from "@/lib/api/shortlist";
 import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
-import { INDUSTRIES } from "@/lib/mock/seed";
-import { EmptyState } from "@/components/ui/empty-state";
-import { cn } from "@/lib/utils";
-import type { EnterpriseProfile, CandidateProfile } from "@/lib/types";
+import { useIndustries } from "@/lib/data/industries";
+import type { CandidateProfile, EnterpriseProfile } from "@/lib/types";
 
-type Result = { candidate: CandidateProfile; matchPercentage: number; fitBlurb: string; availability: string };
+type Result = { candidate: CandidateProfile; availability: string };
+const OPEN_LABEL: Record<string, string> = { "full-time": "Full time", contract: "Contract", projects: "Projects" };
 
-export default function TalentUniversePage() {
+/** Arena for Business — Talent (flow §8; no board — designed in B+). Same `searchTalent` +
+ *  shortlist calls. Shows only people whose career visibility is open; no match % or "fit"
+ *  blurbs — the page shows what people shared, nothing inferred. */
+export default function TalentPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<EnterpriseProfile | null>(null);
+  const [text, setText] = useState("");
   const [query, setQuery] = useState("");
   const [industry, setIndustry] = useState("All");
+  const industries = useIndustries();
   const [remoteOnly, setRemoteOnly] = useState(false);
-  const [results, setResults] = useState<Result[]>([]);
+  const [results, setResults] = useState<Result[] | null>(null);
+  const [error, setError] = useState(false);
   const [shortlist, setShortlist] = useState<string[]>([]);
+  const [limit, setLimit] = useState(12);
 
   useEffect(() => {
     if (!requireEnterpriseOnboarded(router)) return;
-    getMyEnterpriseProfile().then((p) => {
-      setProfile(p);
-    });
-    getShortlistIds().then(setShortlist);
+    getMyEnterpriseProfile().then(setProfile).catch(() => {});
+    getShortlistIds().then(setShortlist).catch(() => {});
   }, [router]);
 
   useEffect(() => {
-    searchTalent({ text: query, industry, remoteOnly }).then((r) => setResults(r as Result[]));
+    const t = setTimeout(() => setQuery(text.trim()), 300);
+    return () => clearTimeout(t);
+  }, [text]);
+
+  useEffect(() => {
+    let live = true;
+    searchTalent({ text: query, industry, remoteOnly })
+      .then((r) => {
+        if (!live) return;
+        setError(false);
+        setLimit(12);
+        setResults(r as Result[]);
+      })
+      .catch(() => live && setError(true));
+    return () => {
+      live = false;
+    };
   }, [query, industry, remoteOnly]);
 
-  if (!profile) {
-    return (
-      <EnterpriseAppShell title="Talent Universe">
-        <OrbLoader className="h-96" />
-      </EnterpriseAppShell>
-    );
-  }
+  const save = (id: string) => toggleShortlist(id).then(setShortlist).catch(() => {});
 
   return (
-    <EnterpriseAppShell profile={profile}>
-      <div
-        className="relative mb-6 overflow-hidden rounded-[32px] border border-border p-6 sm:p-8"
-        style={{ background: "radial-gradient(120% 120% at 50% 0%, #121017 0%, #09090B 60%)" }}
-      >
-        <Starfield
-          active={Boolean(query.trim()) || industry !== "All" || remoteOnly}
-          resultCount={results.length}
-          seed={`${query}|${industry}|${remoteOnly}`}
-        />
-        <div className="relative z-[2]">
-          <p className="mb-1 font-display text-xs font-bold uppercase tracking-[3px] text-primary-soft">Talent Universe</p>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Every talent. One search.</h1>
-          <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
-            <div className="relative flex-1">
-              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder='Try "React developer" or "Hyderabad"'
-                className="border-border bg-secondary pl-9 backdrop-blur-xl"
-              />
-            </div>
-            <select
-              value={industry}
-              onChange={(e) => setIndustry(e.target.value)}
-              className="h-9 rounded-md border border-border bg-secondary px-3 text-sm text-foreground outline-none backdrop-blur-xl"
-            >
-              <option value="All">All industries</option>
-              {INDUSTRIES.map((ind) => <option key={ind} value={ind}>{ind}</option>)}
-            </select>
-            <button
-              type="button"
-              onClick={() => setRemoteOnly((v) => !v)}
-              className={cn(
-                "shrink-0 rounded-md border px-3.5 py-2 text-sm transition-colors",
-                remoteOnly ? "border-primary/50 bg-primary/10 text-primary-soft" : "border-border bg-secondary text-muted-foreground",
-              )}
-            >
-              Remote only
-            </button>
-          </div>
-        </div>
+    <EnterpriseAppShell title="Talent" profile={profile}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <label className="relative flex-1">
+          <span className="sr-only">Search talent</span>
+          <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-faint" aria-hidden />
+          <input value={text} onChange={(e) => setText(e.target.value)} type="search" placeholder="Skill, role or area — e.g. Event planning, Gachibowli" className="min-h-12 w-full rounded-full border border-field-line bg-surface pl-11 pr-4 text-[15px] outline-none focus-visible:border-primary" />
+        </label>
+        <label className="flex items-center gap-2">
+          <span className="sr-only">Industry</span>
+          <select value={industry} onChange={(e) => setIndustry(e.target.value)} className="min-h-12 rounded-full border border-field-line bg-surface px-4 text-[15px] [&>option]:text-paper-ink">
+            <option value="All">All industries</option>
+            {industries.map((ind) => <option key={ind} value={ind}>{ind}</option>)}
+          </select>
+        </label>
+        <Chip selected={remoteOnly} onToggle={() => setRemoteOnly((v) => !v)}>Open to remote</Chip>
       </div>
+      <p className="mt-3 flex items-center gap-2 text-[13px] text-faint"><ShieldCheck className="size-4" aria-hidden /> Only people who made their career visible to companies appear here.</p>
 
-      <p className="mb-3 text-xs text-muted-foreground">{results.length} candidates match — only showing profiles visible to enterprises.</p>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {results.map(({ candidate, matchPercentage, fitBlurb, availability }) => {
-          const saved = shortlist.includes(candidate.id);
-          return (
-            <div key={candidate.id} className="rounded-[24px] border border-border bg-secondary p-5">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-2xl">{candidate.avatarEmoji}</span>
-                  <div>
-                    <p className="text-sm font-semibold">{candidate.name}</p>
-                    <p className="text-xs text-muted-foreground">{candidate.title}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  aria-label={saved ? "Remove from shortlist" : "Save to shortlist"}
-                  onClick={() => toggleShortlist(candidate.id).then(setShortlist)}
-                >
-                  <Bookmark className={cn("size-4", saved ? "fill-primary-soft text-primary-soft" : "text-muted-foreground")} />
-                </button>
+      {error && <p role="alert" className="mt-4 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">Search didn&apos;t load. Try again.</p>}
+      <div className="mt-5">
+        {!results ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-48" />)}</div>
+        ) : results.length === 0 ? (
+          <StateCard kind="empty" title="No one matches yet" detail="Try a broader skill or another area." />
+        ) : (
+          <>
+            <p className="mb-3 text-[14px] text-faint" role="status">{results.length} {results.length === 1 ? "person" : "people"}</p>
+            <m.ul initial="hidden" animate="shown" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {results.slice(0, limit).map(({ candidate: c }, i) => {
+                const saved = shortlist.includes(c.id);
+                return (
+                  <m.li key={c.id} variants={rise} custom={i} className="relative flex flex-col rounded-tile bg-paper p-5 text-paper-ink shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
+                    <div className="flex items-start gap-3">
+                      <Avatar name={c.name} className="size-12 text-[15px]" />
+                      <div className="min-w-0 flex-1">
+                        <Link href={`/enterprise/talent/${c.id}`} className="block text-[16px] font-semibold after:absolute after:inset-0 after:rounded-tile focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-primary-on-paper">{c.name}</Link>
+                        <p className="text-[14px] text-paper-ink-muted">{c.title}</p>
+                      </div>
+                      <m.button type="button" whileTap={press} transition={spring.snappy} onClick={() => save(c.id)} aria-pressed={saved} aria-label={saved ? `Remove ${c.name} from shortlist` : `Save ${c.name} to shortlist`} className="relative z-10 grid size-11 place-items-center rounded-full hover:bg-paper-ink/8">
+                        <Bookmark className={cn("size-5", saved ? "fill-primary text-primary-on-paper" : "text-paper-ink-muted")} aria-hidden />
+                      </m.button>
+                    </div>
+                    <p className="mt-3 flex items-center gap-1.5 text-[14px] text-paper-ink-muted"><MapPin className="size-4" aria-hidden /> {c.location || c.homeCity || "Area not shared"}{c.remote && " · Open to remote"}</p>
+                    {c.openTo.length > 0 && <p className="mt-1 text-[14px] text-paper-ink-muted">Open to {c.openTo.map((o) => OPEN_LABEL[o] ?? o).join(", ").toLowerCase()} · {c.experienceYears} yrs</p>}
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {c.skills.slice(0, 4).map((s) => <span key={s.name} className="inline-flex items-center gap-1 rounded-full bg-paper-ink/8 px-2.5 py-0.5 text-[13px]">{s.name}{s.verified && <ShieldCheck className="size-3.5 text-success-on-paper" aria-label="verified" />}</span>)}
+                    </div>
+                  </m.li>
+                );
+              })}
+            </m.ul>
+            {results.length > limit && (
+              <div className="mt-5 flex justify-center">
+                <button type="button" onClick={() => setLimit((n) => n + 12)} className="min-h-11 rounded-full border border-field-line px-5 text-[15px] font-semibold hover:bg-foreground/5">Show more ({results.length - limit} left)</button>
               </div>
-              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                <MapPin className="size-3" /> {candidate.location} · {availability}
-              </div>
-              <p className="mt-2.5 text-xs italic text-muted-foreground">&ldquo;{fitBlurb}&rdquo;</p>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {candidate.skills.slice(0, 3).map((s) => <Badge key={s.name} variant="secondary" className="bg-secondary text-[11px] text-muted-foreground">{s.name}</Badge>)}
-              </div>
-              <div className="mt-3 flex items-center justify-between">
-                <Badge variant="secondary" className="gap-1 bg-primary/12 text-primary-soft"><Sparkles className="size-3" /> {matchPercentage}%</Badge>
-                <Button variant="ghost-glass" size="sm" onClick={() => router.push(`/enterprise/talent/${candidate.id}`)}>View</Button>
-              </div>
-            </div>
-          );
-        })}
-        {results.length === 0 && <EmptyState title="No candidates match — try a different search." className="col-span-full" />}
+            )}
+          </>
+        )}
       </div>
     </EnterpriseAppShell>
   );

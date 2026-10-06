@@ -26,6 +26,7 @@ const COLUMNS: { stage: ApplicationStage; label: string }[] = [
   { stage: "screening", label: "Screening" },
   { stage: "interview", label: "Interview" },
   { stage: "offer", label: "Offer" },
+  { stage: "hired", label: "Hired" },
   { stage: "rejected", label: "Rejected" },
 ];
 

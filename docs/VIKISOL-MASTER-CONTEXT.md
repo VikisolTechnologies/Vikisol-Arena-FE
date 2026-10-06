@@ -571,7 +571,7 @@ No ads-first strategy and no chasing millions of free users.
 - **Arena:**
   - Live on the real backend, production commit `3093442`. Candidate and enterprise sides are both verified.
   - The company admin reaches the enterprise area with a password only, no 2FA. This is being checked as a security finding.
-  - The audit is in `docs/ARENA-CURRENT-STATE.md`.
+  - The audit is in `docs/reviews/AUDIT-2026-09-26.md` (superseded `ARENA-CURRENT-STATE.md` deleted 28 Sep 2026 cleanup).
   - The cleanup that fixes the 35 test failures is on `feature/arena-cleanup` (merge pending).
   - Blocked on Syam: Sentry "Allowed Domains" needs `arena.vikisol.in`.
   - Home's first-load JavaScript is over the 200KB budget; the fix is splitting the app shell in VNext.
@@ -587,7 +587,7 @@ No ads-first strategy and no chasing millions of free users.
   - Arena ARENA-FINISH-ALL run: fixes go to production; VNext UI goes to a private preview and waits for Syam's approval.
 - **Vikisol One:** paused.
 - **Next reviews for Claude (architect):**
-  - `ARENA-CURRENT-STATE.md`, `ARENA-VNEXT-BLUEPRINT.md` + mockups
+  - `docs/missions/FE-BPLUS-BUILD.md`, `docs/design/*` (superseded `ARENA-CURRENT-STATE.md`/`ARENA-VNEXT-BLUEPRINT.md` deleted 28 Sep 2026 cleanup)
   - `JENNYSOL-CURRENT-STATE.md`, `JENNYSOL-ARCHITECTURE.md`
 
 ---
@@ -643,6 +643,9 @@ Source: `CODEX-IDEAS-LAUNCH-AND-AGENCY.md` (Project docs). These are decisions; 
 | 15 | **Build order:** workflow (1) replaces the "developer sandbox" workflow as JennySol v1's third real workflow (see `JENNYSOL-NEXT.md`). Workflows (2) and (3) are built only after at least 2 agencies sign the paid pilot. |
 | 17 | **Outreach gates** (Codex's outreach pack, `OUTREACH-PACK.md`). **Host messages** go out only after the VNext preview is approved and STEP 8 is live; until then, never promise a feature that isn't live. **Agency offers** go out only after all of: workflow 1 is live, the candidate-data location and subprocessors are decided (a **paid, no-training AI tier or Vikisol-controlled infrastructure, never a free tier and never the founder's personal Mac**), a lawyer-reviewed DPA + pilot agreement exists, GST invoicing is ready, and **agency tenant isolation** is built and tested. The offer states honestly that workflows 2 and 3 are delivered during the pilot. |
 | 18 | **Agency data privacy: ADR-007** (`jennysol-ai/docs/architecture/ADR-007-agency-desk-privacy.md`). Private-first. Class A (identifiable) data goes to private infrastructure only. Class B (redacted) may go to **paid** Gemini (CONTROLLED_CLOUD) with agency permission. There is never silent escalation, and enforcement is always on for agency tenants. Stage 1 (JD → scorecard) needs no candidate data. Stage 2 is blocked on the Class A location decision (Vertex Mumbai recommended), a DPA and tenant isolation. **Hosted DeepSeek is withdrawn** as a backup. **Production Gemini must move to a paid project** (the free tier may train on prompts). |
+| 19 | **Arena communication layer** (founder + Codex proposal, 26 Sep). It is **retention, not revenue.** After the preview is approved: a messaging architecture doc (reviewed before code), then Phase 1 reliability (unread, notifications, mute, leave, block, report, correct access) as part of launch readiness, plus a **private meeting-link field on activities** for hosted audio sessions (mock interviews, English practice, career Q&A). Richer chat comes only after launch data. **No native audio or video** until sessions regularly draw 10–20 real attendees. See `ARENA-MISSION.md` STEP 9. Revenue first comes from the Agency Desk. |
+| 20 | **Gemini billing: confirmed FREE tier** (26 Sep, 19:24). There is one key (`...vteQ`, project `gen-lang-client-0514411270`). Enabling billing on that same project makes it paid; no key swap is needed. **Pending: Syam will do it when the company card is available.** Until then, no real agency or candidate data, and no new sensitive features, goes through Gemini. |
+| 21 | **Arena navigation and documents (architect, 27 Sep 2026).**<br>• **Mobile bottom bar:** Feed · Discover · (+) · Work · You. Map is a List/Map mode inside Discover. Jenny is contextual and never a primary tab. Inbox is in the signed-in header.<br>• **Authority order in each repo:** master context → mission → `ARENA-VNEXT-MOBILE-JENNY-BLUEPRINT.md` → `PROGRESS.md` → `docs/missions/*`. Root-level older plans are historical.<br>• **The demo flag is `demoContent`** everywhere.<br>• **Jenny v2 contracts are PROPOSED, NOT BUILT** until marked BUILT in `JENNY-ARENA-CONTRACT.md` §6.1. |
 | 16 | **Kept separate from Arena.** Arena's launch is not filled with recruitment posts. A future link happens only via explicit opt-in discoverability and a scoped API. |
 
 ---

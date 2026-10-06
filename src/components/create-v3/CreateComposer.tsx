@@ -12,7 +12,7 @@ import { myCommunities } from "@/lib/api/communities";
 import type { Community } from "@/lib/types";
 import type { Post, PostAudience, PostVisibility } from "@/lib/types";
 
-type PostIntent = Exclude<Post["intentType"], "company">;
+type PostIntent = Exclude<Post["intentType"], "company" | "collab">;
 type Step = "pick" | "form";
 
 // One attached photo/video. Uploading starts the moment it's picked, so Publish only waits on
@@ -42,7 +42,7 @@ const PLACEHOLDERS: Record<PostIntent, string> = {
   activity: "e.g. Badminton at 6pm today, need 2 more for doubles",
   ask: "e.g. Anyone used a good invoicing tool for freelance work?",
   update: "What's on your mind?",
-  offer: "e.g. I can help with React for the next two weeks",
+  offer: "e.g. I can help you move a table this weekend",
 };
 
 const fieldStyle: React.CSSProperties = {

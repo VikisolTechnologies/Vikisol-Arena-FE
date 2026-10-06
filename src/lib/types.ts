@@ -9,7 +9,8 @@ export type Role = "talent" | "recruiter" | "company_admin" | "hiring_manager" |
 
 export type OpenTo = "full-time" | "contract" | "projects";
 
-export type Industry = "Engineering" | "Design" | "Sales" | "Healthcare" | "Logistics";
+/** The industry label. The list is open and staff-managed (src/lib/data/industries.ts). */
+export type Industry = string;
 
 export type EmploymentType = "Full Time" | "Contract" | "Internship";
 
@@ -23,7 +24,7 @@ export interface ConsentSettings {
   searchableByEnterprises: boolean;
 }
 
-export type AutonomyLevel = "manual" | "supervised" | "autopilot";
+export type AutonomyLevel = "manual" | "supervised";
 
 export interface CandidateProfile {
   id: string;
@@ -101,6 +102,7 @@ export type ApplicationStage =
   | "screening"
   | "interview"
   | "offer"
+  | "hired"
   | "rejected";
 
 // One record, two views: `jobId` when sourced from the open market (candidate discovered/
@@ -316,7 +318,10 @@ export interface AuditEvent {
   createdAt: string;
 }
 
-export type PostingStatus = "open" | "paused" | "closed";
+// "draft" added MARATHON-FE-2 Step A: JobPostingService's CreatePostingRequest already supports
+// it (a new posting defaults to "open" otherwise, which 400s for an unverified company - the FE
+// never sent "draft" to ask for the alternative, verified live against the real backend).
+export type PostingStatus = "draft" | "open" | "paused" | "closed";
 
 export interface JobPosting {
   id: string;
@@ -444,7 +449,8 @@ export interface ThreadMessage {
 // real Room, UPDATE/COMPANY map to a comment thread - comments/reactions apply generically to
 // every post type (Phase C). "company" was added in the post-spec reconciliation pass -
 // §3.5/§6's "Company posts appear in the feed," postable only via lib/api/companyPosts.ts.
-export type PostIntentType = "activity" | "ask" | "update" | "company" | "offer";
+// "collab" = a collaborative (unpaid) project posted as a post (BE PR #3). Shown like a project.
+export type PostIntentType = "activity" | "ask" | "update" | "company" | "offer" | "collab";
 
 export type PostAudience = "global" | "followers" | "local"; // "local" not selectable yet (needs Phase B geo)
 export type PostVisibility = "public" | "approval"; // drives the join/approve flow; ignored for "update"
@@ -554,6 +560,9 @@ export interface FeedItem {
   visibility?: PostVisibility;
   capacity?: number;
   spotsFilled?: number;
+  /** Needs: offers of help so far, and who (first few) — FE-API-GAPS #38; mock mode only today. */
+  offerCount?: number;
+  offerNames?: string[];
   startsAt?: string;
   endsAt?: string;
   joinable?: boolean;
@@ -568,6 +577,12 @@ export interface FeedItem {
   // §4 safety-audit trust signals - undefined for job/project (not applicable).
   authorJoinCount?: number;
   authorAccountAgeDays?: number;
+  // ARENA-WEB-AND-SEED.md Part 4.2 - optional here (unlike Post.demoContent, which is required):
+  // arena-api's FeedItemResponse (FeedAggregationService's GET /feed) doesn't carry this field
+  // yet - only PostResponse (GET /posts/nearby) does. The Home rebuild's primary content path is
+  // getNearby(), which has it; the general-feed fallback used when location is off doesn't show
+  // the badge yet. Real scope trim, not an oversight - wiring FeedItemResponse too is real,
+  // separate follow-up work.
   demoContent?: boolean;
 
   // job only.
@@ -649,6 +664,9 @@ export interface VerificationStatus {
   phoneNumber?: string;
   /** True while a requested OTP hasn't been confirmed or has expired unconfirmed. */
   otpPending: boolean;
+  /** Real mode only — whether a date of birth is already on file (B10). Lets onboarding's age
+   *  gate skip itself for an account that gave one at sign-up, instead of asking twice. */
+  dateOfBirthSet: boolean;
 }
 
 export interface BlockedUser {
@@ -716,6 +734,8 @@ export interface PublicCandidateProfile {
   followerCount: number;
   followingCount: number;
   viewerFollows?: boolean;
+  /** Who may see this profile (gap #60). "hidden" (or a 404) means nobody else; absent means everyone. */
+  visibility?: "nearby" | "everyone" | "hidden";
 }
 
 
