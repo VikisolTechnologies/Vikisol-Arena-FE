@@ -19,16 +19,23 @@ function notify() {
 // apiFetch - this must never itself trigger reportApiUnreachable/a refresh-token dance) is the
 // simplest real signal that the backend is reachable again.
 const RETRY_POLL_MS = 3000;
+const HEALTH_TIMEOUT_MS = 8000;
 let retryInterval: ReturnType<typeof setInterval> | null = null;
+let healthInFlight = false;
 
 function startRetryLoop() {
   if (retryInterval) return;
   retryInterval = setInterval(async () => {
+    // An 8s check must not stack on the 3s poll.
+    if (healthInFlight) return;
+    healthInFlight = true;
     try {
-      const res = await fetch(`${API_BASE_URL}/actuator/health`, { signal: AbortSignal.timeout(2500) });
+      const res = await fetch(`${API_BASE_URL}/actuator/health`, { signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS) });
       if (res.ok) reportApiReachable();
     } catch {
       // Still down - the interval itself is the retry, nothing else to do here.
+    } finally {
+      healthInFlight = false;
     }
   }, RETRY_POLL_MS);
 }

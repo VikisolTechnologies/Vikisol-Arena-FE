@@ -33,8 +33,12 @@ export class ApiError extends Error {
 // cold-curl numbers); it was that `fetch()` had NO timeout at all, so a slow/stalled connection
 // just sat there indefinitely with nothing telling the user anything was wrong. The
 // `reportApiUnreachable()` banner mechanism (ApiDownBanner.tsx) already existed - it just never
-// fired for "slow," only for "fully failed." A hard 5s timeout closes that gap.
-const REQUEST_TIMEOUT_MS = 5000;
+// fired for "slow," only for "fully failed." The public site reaches the API through
+// Vercel and the home tunnel, so a phone photo or a cold hop can take longer than a
+// laptop curl. Ordinary calls wait 20s, uploads 60s. Idempotent GETs try once more
+// before the app says the backend is unreachable.
+const REQUEST_TIMEOUT_MS = 20_000;
+const UPLOAD_TIMEOUT_MS = 60_000;
 
 interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -69,7 +73,7 @@ async function refreshAccessToken(): Promise<string | null> {
     refreshPromise = (async () => {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS); // refresh is an ordinary JSON call
         const res = await fetch(`${API_BASE_URL}/auth/refresh`, { method: "POST", credentials: "include", signal: controller.signal })
           .finally(() => clearTimeout(timeout));
         if (!res.ok) return null;
@@ -101,7 +105,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     if (!formData) headers["Content-Type"] = "application/json";
     if (auth && token) headers.Authorization = `Bearer ${token}`;
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? REQUEST_TIMEOUT_MS);
+    const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? (formData ? UPLOAD_TIMEOUT_MS : REQUEST_TIMEOUT_MS));
     return fetch(`${API_BASE_URL}${path}${buildQuery(query)}`, {
       method,
       headers,
@@ -113,10 +117,16 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
   let res: Response;
   try {
-    res = await doFetch(getToken());
+    try {
+      res = await doFetch(getToken());
+    } catch (first) {
+      // A dropped connection or a timeout on a read is safe to try once more. Writes are not.
+      if (method !== "GET") throw first;
+      res = await doFetch(getToken());
+    }
   } catch {
     // Either fetch() failed outright (connection refused, DNS failure, offline) or the
-    // REQUEST_TIMEOUT_MS abort fired - both mean "the user is looking at nothing happening,"
+    // request abort fired - both mean "the user is looking at nothing happening,"
     // so both get the same global "having trouble reaching Arena" treatment rather than a
     // silently-hanging or console-only failure.
     reportApiUnreachable();
