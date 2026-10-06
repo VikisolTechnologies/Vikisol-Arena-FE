@@ -49,7 +49,7 @@ export function FeedScreen() {
   const guest = useGuest();
   const draftArea = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().area, () => "");
   const entry = useSyncExternalStore(subscribeEntryDraft, readEntryDraft, () => EMPTY_DRAFT);
-  const [filter, setFilter] = useState<FeedFilter>("nearby");
+  const [filter, setFilter] = useState<FeedFilter>("all");
   const [data, setData] = useState<Load | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
