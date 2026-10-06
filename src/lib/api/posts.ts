@@ -69,6 +69,14 @@ export async function closeNeed(postId: string): Promise<Post> {
   return apiFetch<Post>(`/posts/${postId}/status`, { method: "PUT" });
 }
 
+export async function updatePost(postId: string, patch: { title?: string; body?: string; locationText?: string }): Promise<Post> {
+  return apiFetch<Post>(`/posts/${postId}`, { method: "PATCH", body: patch });
+}
+
+export async function setPostStatus(postId: string, status: "paused" | "open" | "closed"): Promise<Post> {
+  return apiFetch<Post>(`/posts/${postId}/status`, { method: "PUT", body: { status } });
+}
+
 export async function createPost(input: CreatePostInput): Promise<Post> {
   return apiFetch<Post>("/posts", {
     method: "POST",

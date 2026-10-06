@@ -9,12 +9,11 @@ import { createPosting, getMyEnterpriseProfile, PostingLimitError } from "@/lib/
 import { getMyVerification } from "@/lib/api/businessVerification";
 import { requireEnterpriseOnboarded } from "@/lib/auth-guard";
 import { JOB_SCHEMA } from "@/lib/intake/schemas/job";
-import { saveJobExtras } from "@/lib/data/business";
 import type { EmploymentType, EnterpriseProfile } from "@/lib/types";
 import type { MoneyRange, Values } from "@/lib/intake/types";
 
 /** Recruiter board 3 — Post a job. Same `createPosting` call as before; must-haves and
- *  nice-to-haves go into skills + the description; deadline and questions stay on this device until the API stores them (gap #28). */
+ *  nice-to-haves go into skills + the description. Deadline and questions are stored with the job. */
 export default function NewPostingPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<EnterpriseProfile | null>(null);
@@ -56,9 +55,10 @@ export default function NewPostingPage() {
         salaryMax: pay.max ?? pay.min ?? 0,
         skills: [...must, ...nice],
         status: verified ? "open" : "draft",
+        deadline: v.deadline ? String(v.deadline) : undefined,
+        experienceLevel: v.level ? String(v.level) : undefined,
+        questions: ((v.questions as string[] | undefined) ?? []).filter(Boolean).map((text) => ({ text, required: true })),
       });
-      const questions = ((v.questions as string[] | undefined) ?? []).filter(Boolean);
-      if (v.deadline || questions.length) saveJobExtras(posting.id, { deadline: v.deadline ? String(v.deadline) : undefined, questions });
       clearIntakeDraft("job");
       router.replace(`/enterprise/postings/${posting.id}?published=${verified ? "1" : "0"}`);
     } catch (e) {

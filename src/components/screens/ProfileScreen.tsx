@@ -21,10 +21,12 @@ import { getMyBids } from "@/lib/api/myBids";
 import { signOut } from "@/lib/api/auth";
 import type { Post } from "@/lib/types";
 import { Outcomes } from "@/components/profile/Outcomes";
+import { WorkScreen } from "@/components/screens/WorkScreen";
 import { CountUp } from "@/components/bplus/CountUp";
 
 const PROFILE_TABS = [
   { id: "for-you", label: "For you" },
+  { id: "activity", label: "My activity" },
   { id: "about", label: "About" },
   { id: "impact", label: "Impact" },
 ] as const;
@@ -79,10 +81,11 @@ export function ProfileScreen() {
   const area = (draft.area || data?.profile.homeCity || "").split(" / ")[0];
   const bio = draft.intro || data?.profile.bio;
   const title = draft.title || data?.profile.title;
-  const hosted = data?.activity.stats?.hosted ?? data?.posts.filter((p) => p.intentType === "activity").length ?? 0;
-  const joined = data?.activity.stats?.joined ?? data?.joined.filter((p) => p.intentType === "activity").length ?? 0;
-  const helped = data?.activity.stats?.helped ?? data?.joined.filter((p) => p.intentType === "ask").length ?? 0;
-  const projects = data?.activity.stats?.projects ?? data?.won ?? 0;
+  const own = (data?.posts.length ? data.posts : data?.activity.posts) ?? [];
+  const hosted = own.filter((p) => p.intentType === "activity").length;
+  const joined = data?.joined.filter((p) => p.intentType === "activity").length ?? 0;
+  const helped = own.filter((p) => p.intentType === "ask" || p.intentType === "offer").length;
+  const projects = data?.activity.projects.length || data?.won || 0;
   const outcomes = data?.outcomes ?? [];
   // The career layer counts as open once the person said they came for work or chose to be findable.
   const careerOpen = !!(data?.profile.cameForJob || data?.profile.consent?.searchableByEnterprises);
@@ -140,7 +143,7 @@ export function ProfileScreen() {
             {[
               ["Hosted", hosted],
               ["Joined", joined],
-              ["Helped", helped],
+              ["Help", helped],
               ["Projects", projects],
             ].map(([label, n]) => (
               <div key={label}>
@@ -152,7 +155,7 @@ export function ProfileScreen() {
 
           {/* Career board "My Profile": For you · About · Impact. */}
           <m.div variants={rise} custom={3} className="mt-5">
-            <Pills label="Profile" tone="cream" segmented options={PROFILE_TABS} value={tab} onChange={setTab} />
+            <Pills label="Profile" tone="cream" options={PROFILE_TABS} value={tab} onChange={setTab} />
           </m.div>
 
           <AnimatePresence mode="wait" initial={false}>
@@ -171,7 +174,7 @@ export function ProfileScreen() {
                       </Link>
                     </div>
                   </section>
-                  <ProfileActivity posts={data.activity.posts} joined={data.joined} projects={data.activity.projects} outcomes={data.activity.outcomes} stats={data.activity.stats} counts={false} />
+                  <ProfileActivity posts={own} joined={data.joined} projects={data.activity.projects} outcomes={data.activity.outcomes} stats={null} counts={false} />
                   <Outcomes outcomes={outcomes.slice(0, 3)} seeAll />
                   <Link href={careerOpen ? "/identity/career?step=setup" : "/identity/career"} className="mt-6 flex items-center gap-3.5 rounded-tile border-2 border-primary bg-paper p-4 text-paper-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                     <span className="grid size-14 shrink-0 place-items-center rounded-full bg-primary text-white">
@@ -185,6 +188,8 @@ export function ProfileScreen() {
                   </Link>
                 </>
               )}
+
+              {tab === "activity" && <WorkScreen embedded />}
 
               {tab === "about" && (
                 <>

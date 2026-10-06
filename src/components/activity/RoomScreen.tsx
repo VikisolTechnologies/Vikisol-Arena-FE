@@ -174,7 +174,8 @@ export function RoomScreen({ roomId, specimen }: { roomId: string; specimen?: Ro
         })}
         <li ref={listEnd} aria-hidden />
       </ol>
-      <form onSubmit={send} className="sticky bottom-[calc(76px+env(safe-area-inset-bottom))] mt-4 flex items-center gap-2 bg-background py-2">
+      <div aria-hidden className="h-[calc(64px+76px+env(safe-area-inset-bottom))]" />
+      <form onSubmit={send} className="sticky bottom-0 mt-4 flex items-center gap-2 bg-background py-2">
         <label htmlFor="room-message" className="sr-only">Send a message</label>
         <input id="room-message" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={isNeed && other ? `Message ${first(other)}…` : "Send a message…"} className="h-12 min-w-0 flex-1 rounded-full border border-field-line bg-surface px-4 text-[16px] outline-none placeholder:text-faint focus:border-primary" />
         <m.button type="submit" whileTap={press} transition={spring.snappy} disabled={!draft.trim() || sending} aria-label="Send" className="grid size-12 shrink-0 place-items-center rounded-full bg-foreground text-background disabled:opacity-40">

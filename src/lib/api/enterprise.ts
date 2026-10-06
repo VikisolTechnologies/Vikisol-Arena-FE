@@ -61,13 +61,22 @@ export class PostingLimitError extends Error {}
  * null so the UI can show a real upsell message instead of silently doing nothing. Real mode
  * enforces the same limit server-side (arena-api's JobPostingService); a 400 from there gets
  * re-thrown as the same PostingLimitError so the UI's catch block works in both modes. */
-export async function createPosting(input: Omit<JobPosting, "id" | "status" | "createdAt"> & { status?: "draft" | "open" }): Promise<JobPosting> {
+export async function createPosting(input: Omit<JobPosting, "id" | "status" | "createdAt"> & {
+  status?: "draft" | "open";
+  deadline?: string;
+  experienceLevel?: string;
+  questions?: { text: string; required?: boolean }[];
+}): Promise<JobPosting> {
   try {
     return await apiFetch<JobPosting>("/enterprise/postings", { method: "POST", body: input });
   } catch (err) {
     if (err instanceof ApiError) throw new PostingLimitError(err.message);
     throw err;
   }
+}
+
+export async function updatePosting(id: string, patch: { title?: string; description?: string; location?: string; deadline?: string }): Promise<JobPosting> {
+  return apiFetch<JobPosting>(`/enterprise/postings/${id}`, { method: "PATCH", body: patch });
 }
 
 export async function setPostingStatus(id: string, status: JobPosting["status"]): Promise<void> {

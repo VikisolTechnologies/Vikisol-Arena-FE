@@ -15,7 +15,7 @@ import { DemoBadge } from "@/components/bplus/Primitives";
 import { ReportSheet } from "@/components/trust/ReportSheet";
 import { useGuest } from "@/hooks/use-arena-session";
 import { getSession } from "@/lib/session";
-import { cancelPost, getPost, getUserPosts } from "@/lib/api/posts";
+import { cancelPost, getPost, getUserPosts, setPostStatus, updatePost } from "@/lib/api/posts";
 import {
   acceptNeedResponse,
   confirmNeedResponse,
@@ -62,6 +62,7 @@ const STATUS: Record<Post["status"], { label: string; cls: string }> = {
   open: { label: "Open", cls: "bg-primary/10 text-primary-on-paper" },
   full: { label: "Helpers found", cls: "bg-info/15 text-info-on-paper" },
   closed: { label: "Completed", cls: "bg-success/15 text-success-on-paper" },
+  paused: { label: "Paused", cls: "bg-paper-ink/10 text-paper-ink-muted" },
   cancelled: { label: "Closed", cls: "bg-paper-ink/10 text-paper-ink-muted" },
   expired: { label: "Expired", cls: "bg-paper-ink/10 text-paper-ink-muted" },
 };
@@ -94,6 +95,9 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(initial.title ?? "");
+  const [draftBody, setDraftBody] = useState(initial.body ?? "");
   // Real mode only - see toJoinRequestShape's comment. undefined = not loaded yet.
   const [myResponse, setMyResponse] = useState<NeedOfferShape | null | undefined>(specimen ? null : undefined);
   const [myConversationId, setMyConversationId] = useState<string | undefined>(undefined);
@@ -127,6 +131,7 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
   const title = post.title?.trim() || post.body.slice(0, 80);
   const km = distanceKm(me, { lat: post.approxLat, lng: post.approxLng });
   const active = post.status === "open" || post.status === "full";
+  const paused = post.status === "paused";
   const status = STATUS[post.status] ?? STATUS.open;
   const visibleOffers = (offers ?? []).filter((o) => o.status === "pending" || o.status === "approved");
   const helping = post.spotsFilled;
@@ -291,19 +296,60 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
           {error && <p role="alert" className="mt-4 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
           {notice && <p role="status" className="mt-3 text-center text-[14px] text-paper-ink-muted">{notice}</p>}
 
-          <m.div variants={rise} custom={5} className="sticky bottom-[calc(76px+env(safe-area-inset-bottom))] z-10 -mx-5 mt-6 bg-linear-to-t from-paper from-80% to-transparent px-5 pb-2 pt-4">
+          <div aria-hidden className="h-[calc(88px+76px+env(safe-area-inset-bottom))]" />
+          <m.div variants={rise} custom={5} className="sticky bottom-0 z-10 -mx-5 mt-6 bg-linear-to-t from-paper from-80% to-transparent px-5 pb-2 pt-4">
             {post.mine ? (
               <>
-                {/* Board: Edit · Pause · Close. Share and Open chat live in the ⋯ menu. Editing and
-                    pausing a posted need have no API yet (FE-API-GAPS #39), so they say so. */}
+                {editing && (
+                  <form
+                    className="mb-3 space-y-2"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      setBusy(true);
+                      try {
+                        const next = await updatePost(post.id, { title: draftTitle.trim(), body: draftBody.trim() });
+                        setPost(next);
+                        setEditing(false);
+                        setNotice("Saved.");
+                      } catch (err) {
+                        setNotice(err instanceof Error ? err.message : "That didn't save.");
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    <input value={draftTitle} onChange={(e) => setDraftTitle(e.target.value)} aria-label="Title" className="h-12 w-full rounded-button border border-paper-ink/25 bg-white px-3 text-[16px]" />
+                    <textarea value={draftBody} onChange={(e) => setDraftBody(e.target.value)} aria-label="Details" rows={3} className="w-full rounded-button border border-paper-ink/25 bg-white px-3 py-2 text-[16px]" />
+                    <Button type="submit" loading={busy}>Save</Button>
+                  </form>
+                )}
                 <div className="grid grid-cols-3 gap-2.5">
-                  <Button variant="outline" className="border-paper-ink/30 text-paper-ink" disabled={!active} aria-describedby="need-owner-note" onClick={() => setNotice("Editing a posted need isn't available yet. Close it and post again to change it.")}>Edit</Button>
-                  <Button variant="outline" className="border-paper-ink/30 text-paper-ink" disabled={!active} aria-describedby="need-owner-note" onClick={() => setNotice("Pausing isn't available yet. Close it if you no longer need help.")}>Pause</Button>
+                  <Button variant="outline" className="border-paper-ink/30 text-paper-ink" disabled={!active && !paused} onClick={() => { setDraftTitle(post.title ?? ""); setDraftBody(post.body ?? ""); setEditing((v) => !v); }}>Edit</Button>
+                  <Button
+                    variant="outline"
+                    className="border-paper-ink/30 text-paper-ink"
+                    disabled={!active && !paused}
+                    loading={busy}
+                    onClick={async () => {
+                      setBusy(true);
+                      try {
+                        const next = await setPostStatus(post.id, paused ? "open" : "paused");
+                        setPost(next);
+                        setNotice(paused ? "It's open again." : "Paused. Only you can see it until you resume.");
+                      } catch (err) {
+                        setNotice(err instanceof Error ? err.message : "That didn't change.");
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    {paused ? "Resume" : "Pause"}
+                  </Button>
                   <Button
                     variant="outline"
                     className="border-danger-on-paper/60 text-danger-on-paper"
                     loading={busy}
-                    disabled={!active}
+                    disabled={!active && !paused}
                     onClick={async () => {
                       setBusy(true);
                       try {
@@ -319,7 +365,6 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
                     Close
                   </Button>
                 </div>
-                <p id="need-owner-note" className="sr-only">Edit and Pause aren&apos;t available yet.</p>
               </>
             ) : !active ? (
               <p className="rounded-tile bg-paper-muted p-4 text-center text-[15px]">This {c.noun.toLowerCase()} is {status.label.toLowerCase()}.</p>

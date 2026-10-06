@@ -19,6 +19,9 @@ import { CoverStep, type CoverChoice } from "@/components/activities/CoverStep";
 import { ProceduralCover, coverFile as renderCoverFile } from "@/components/covers/ProceduralCover";
 import { useGuest } from "@/hooks/use-arena-session";
 import { createPost } from "@/lib/api/posts";
+import { getMyProfile } from "@/lib/api/profile";
+import { nextHalfHour } from "@/lib/intake/time";
+import { readEntryDraft } from "@/lib/data/onboarding";
 import { setActivityQuestions, updateActivityDetails, uploadActivityCover } from "@/lib/api/activities";
 import { activitySchema } from "@/lib/intake/schemas/activity";
 import { istToIso, toActivityDetails, toCreatePost, toHostQuestions } from "@/lib/activities/publish";
@@ -61,6 +64,14 @@ export function ActivityCreateFlow() {
   const router = useRouter();
   const params = useSearchParams();
   const guest = useGuest();
+  const [area, setArea] = useState<string | null>(null);
+  useEffect(() => {
+    if (guest !== false) return;
+    const stored = () => (readEntryDraft().area || "").split(" / ")[0];
+    getMyProfile()
+      .then((p) => setArea((p?.homeCity || p?.location || stored()).trim()))
+      .catch(() => setArea(stored()));
+  }, [guest]);
   const requested = (STEPS.includes(params.get("step") as Step) ? params.get("step") : "kind") as Step;
   // Client-only (rendered after `guest` resolves), so reading storage here can't mismatch.
   const [subtypeId, setSubtypeId] = useState<string | null>(() => read(KIND_KEY));
@@ -127,12 +138,13 @@ export function ActivityCreateFlow() {
                 }}
               />
             )}
-            {step === "details" && schema && subtypeId && (
+            {step === "details" && schema && subtypeId && area !== null && (
               <IntakeForm
                 schema={schema}
                 key={subtypeId}
                 draftKey={`activity-${subtypeId}`}
                 startAt={params.get("start") ?? undefined}
+                initial={{ area: area || undefined, start: nextHalfHour() }}
                 onExit={() => go("kind")}
                 onSubmit={(v) => {
                   setAnswers(v);

@@ -183,13 +183,16 @@ export function ConversationScreen({ id, specimen }: { id: string; specimen?: Co
       {closed || blocked ? (
         <p className="mt-4 rounded-tile bg-surface p-4 text-center text-[14px] text-faint">{blocked ? `You blocked ${name.split(" ")[0]}. Unblock them in Settings → Blocked accounts.` : "This chat was closed — no more messages can be sent."}</p>
       ) : (
-        <form onSubmit={send} className="sticky bottom-[calc(76px+env(safe-area-inset-bottom))] mt-4 flex items-center gap-2 bg-background py-2">
+        <>
+        <div aria-hidden className="h-[calc(64px+76px+env(safe-area-inset-bottom))]" />
+        <form onSubmit={send} className="sticky bottom-0 mt-4 flex items-center gap-2 bg-background py-2">
           <label htmlFor="thread-message" className="sr-only">Write a message</label>
           <input id="thread-message" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Write a message…" maxLength={2000} className="h-12 min-w-0 flex-1 rounded-full border border-field-line bg-surface px-4 text-[16px] outline-none placeholder:text-faint focus:border-primary" />
           <m.button type="submit" whileTap={press} transition={spring.snappy} disabled={!draft.trim() || sending} aria-label="Send" className="grid size-12 shrink-0 place-items-center rounded-full bg-foreground text-background disabled:opacity-40">
             <SendHorizontal className="size-5" aria-hidden />
           </m.button>
         </form>
+        </>
       )}
       {error && <p role="alert" className="mt-2 text-[14px] text-danger">{error}</p>}
 

@@ -43,4 +43,5 @@ test("the map distance slider starts at 5 km and widens the list", async ({ page
   });
   await expect(page.getByText("Far picnic")).toBeVisible();
   await expect.poll(() => radii.at(-1)).toBe("30");
+  await expect(page.locator("[data-radius-km]")).toHaveAttribute("data-radius-km", "30");
 });
