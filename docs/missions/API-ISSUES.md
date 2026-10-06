@@ -1,6 +1,19 @@
 # API issues (frontend → backend)
 One entry per mismatch: endpoint, what the frontend expects, what the backend returns, status (OPEN / FIXED <commit>).
 
+## `PUT /notifications/preferences` returns a uniqueness-conflict 409 message that doesn't fit a boolean preference (OPEN, minor) — found via QA-5
+- **Endpoint:** `PUT /notifications/preferences`.
+- **FE expects:** either a 200, or an error message that actually describes what's wrong with a
+  `{messages, activities, needs, jobs, jenny, marketing}` boolean-flags body.
+- **BE returns:** on a rapid duplicate call (which the FE used to send by accident - now fixed,
+  see QA-BUGS.md's QA-5), a `409` with `"One of the values you entered is already in use
+  elsewhere in the system."` - a generic uniqueness-constraint message that makes no sense for a
+  boolean preference PUT. Looks like a shared conflict-handler firing for the wrong reason on
+  this endpoint, independent of whether the FE sends the request once or twice.
+- **What the FE does instead:** nothing yet - the duplicate-call bug that surfaced this is fixed,
+  so it's no longer reachable from the FE's own code path, but the backend's error text for this
+  endpoint is still worth a look in case anything else can trigger it.
+
 ## No real, server-side profile-photo storage for a candidate anywhere (OPEN) — found via QA-3
 - **Endpoint:** none exists. `CandidateProfile` (`src/lib/types.ts`, mirrors the real
   `CandidateProfileResponse`) has no `photoUrl` field at all.

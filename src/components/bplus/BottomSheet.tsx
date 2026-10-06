@@ -102,7 +102,15 @@ export function BottomSheet({
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div data-theme="bplus" className="fixed inset-0 z-50 flex items-end justify-center">
+        <div
+          data-theme="bplus"
+          // ARENA-STABILIZE.md Phase 2, G2's fix (ui/dialog.tsx, ui/sheet.tsx) missed this sheet -
+          // was z-50, sitting below CookieConsentBanner's z-[900] and BottomTabBar's z-[890], so a
+          // sheet opened before either was dismissed had its own bottom-anchored primary button
+          // (e.g. Report's "Submit report") covered and unclickable. A modal must always out-rank
+          // persistent chrome, never sit under it.
+          className="fixed inset-0 z-[950] flex items-end justify-center"
+        >
           <m.div
             className="absolute inset-0 bg-black/60"
             initial={{ opacity: 0 }}

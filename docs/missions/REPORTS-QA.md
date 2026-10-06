@@ -1,30 +1,84 @@
 # QA reports (newest first)
 
-## Summary (as of this cycle — 6 Oct 2026, cycle 2)
-**Journeys tested so far:** 2 of 12 (Onboarding, Profile), full click-through + automated.
-Profile was tested primarily at desktop (1280x800) and small phone (360x740) this cycle; the
-backend's own rate limiter (noted in cycle 1) kicked in partway through the phone/tablet
-automated runs after repeated manual + automated sign-ups and blocked finishing all four sizes
-for Journey 2 — the functional findings below were confirmed live before that happened, and the
-automated `profile.qa.ts` passed cleanly on `phone` once the limiter cooled down. The other 9
-journeys (Host, Join, Needs/offers, Inbox, Job seeker, Company, Admin, Account, plus Discover/Map)
-are **not yet tested**.
+## Summary (as of this cycle — 6 Oct 2026, cycle 3)
+**Journeys tested so far:** 2 of 12 (Onboarding, Profile), full click-through + automated; Profile
+is now fully exercised (Edit navigation, visibility, notification preferences, report, block,
+unblock — only photo upload remains out of reach, a pre-existing logged gap, not re-tested since
+nothing changed). The other 9 journeys (Host, Join, Needs/offers, Inbox, Job seeker, Company,
+Admin, Account, plus Discover/Map) are **not yet tested**.
 
 **Journeys passed per size** (small phone 360x740 / phone 390x844 / tablet 768x1024 / desktop
-1280x800):
-- Journey 1 (Onboarding): **PASS / PASS / PASS / PASS** (re-ran clean this cycle too) — sign up,
-  under-18 refused, adult sign-up, onboarding to completion, feed empty state, refresh keeps
-  session, sign out, wrong password rejected cleanly, sign back in.
-- Journey 2 (Profile): **PASS / PASS / rate-limited (not re-run) / PASS**, with one MAJOR bug
-  found (QA-3) at every size it ran: the profile screen's own "Edit" button opens a dead legacy
-  editor, not the real one. Visibility (hidden -> "This profile isn't available" for another
-  account) passed cleanly. Photo upload, notification preferences, block and report were **not**
-  exercised this cycle (budget went to the Edit-navigation bug once it surfaced) — next up.
+1280x800 — this cycle ran small-phone and desktop only, to pace sign-ups under the backend's rate
+limiter per cycle 1/2's note; phone and tablet carry forward cycle 2's PASS/rate-limited results,
+unchanged):
+- Journey 1 (Onboarding): **PASS / PASS / PASS / PASS** (unchanged, not re-run this cycle — no FE
+  change touched this area since cycle 2's clean run).
+- Journey 2 (Profile): **PASS / PASS / rate-limited (carried forward) / PASS**, now with QA-3
+  **VERIFIED FIXED** (re-tested live: Edit now correctly opens `/account/edit`) and two new bugs
+  found and filed this cycle, both MAJOR: **QA-4** (the cookie-consent banner's z-index sits above
+  every bottom sheet, blocking any sheet's bottom-anchored primary button — e.g. Report's "Submit
+  report" — until the banner is dismissed; app-wide, not Report-specific) and **QA-5** (the
+  notification-preferences "Jenny"/"Marketing" toggles fire their save PUT twice from one click; the
+  duplicate gets a nonsensical 409 and the user sees a false "Couldn't save" error for a change
+  that already saved). Report -> "Also block" -> Blocked accounts list -> Unblock all confirmed
+  working end-to-end once the cookie banner is out of the way (both sizes). No overflow at either
+  size on any of the screens touched this cycle.
 
-**Open bug counts:** 0 BLOCKER, 1 MAJOR, 2 MINOR (see docs/missions/QA-BUGS.md).
+**Open bug counts:** 0 BLOCKER, 2 MAJOR, 0 MINOR (see docs/missions/QA-BUGS.md) — QA-1 and QA-3
+are FIXED/VERIFIED, QA-2 was closed as not-a-bug; QA-4 and QA-5 are new and OPEN.
 
-**For the frontend builder:** add `tests/qa/.artifacts/` to `.gitignore` — it holds Playwright
-screenshots/traces from this suite and shouldn't be committed.
+---
+
+## Cycle 3 — 6 Oct 2026
+**Re-read `REPORTS.md`** — unchanged since cycle 2 (still MARATHON-FE-2 Step C, areas 1-9 built,
+mock data removed). Confirmed frontend (3000) and backend (8081) already running; didn't touch
+either. Picked up cycle 2's carry-over list for Journey 2 (Profile): re-test QA-3 (marked FIXED),
+then notification preferences, block and report (not reached last cycle).
+
+**Re-tested QA-3 (FIXED -> VERIFIED):** confirmed in source (`ProfileScreen.tsx` line 117 now
+`href="/account/edit"`) and live (fresh account, Playwright, desktop + small-phone) — Edit lands
+on the real editor, no errors, no overflow. Set to `VERIFIED` in `QA-BUGS.md`.
+
+**Notification preferences (`/account/notifications`):** flipping the "Jenny" toggle flips the
+switch correctly on screen, but a network capture showed the save handler firing the real `PUT
+/notifications/preferences` **twice** from one click — the first succeeds (`200`), the duplicate
+gets a `409 "already in use elsewhere"` (a conflict message that doesn't fit a boolean
+preference at all) and the page shows a false "Couldn't save that change" error for a change
+that had already saved. Root cause read in `src/app/account/notifications/page.tsx`: the real API
+call lives inside the `setPrefs(cur => ...)` updater function — a side effect inside a React
+state updater, which can run twice from one click. Filed as **QA-5 (MAJOR)**.
+
+**Report + block (`/people/[id]` -> Report, "Also block"):** first attempt, `Submit report` was
+unclickable — Playwright's own trace showed the cookie-consent banner (`aria-label="Cookies"`)
+intercepting the click for the full 90s timeout. Confirmed in code: the banner is `z-[900]`,
+`BottomSheet` is `z-50` — any sheet's bottom-anchored button sits 850 layers below a still-showing
+cookie banner, app-wide, not specific to Report. Filed as **QA-4 (MAJOR)**. Workaround confirmed:
+dismissing the cookie banner first lets the same click land immediately. With that workaround,
+re-ran the full flow end to end: reported a second real account with "Spam or unsolicited
+contact" + "Also block", got the "Thanks for telling us" confirmation, the blocked account
+correctly appeared in Settings -> Blocked accounts, and Unblock correctly removed it (list back
+to "No one blocked"). No overflow at either size tested (small-phone, desktop).
+
+**Photo upload (the remaining cycle-2 carry-over item):** not re-attempted — already logged as a
+real backend gap inside QA-3's own entry (no server-side `photoUrl` field exists anywhere yet);
+nothing changed there this cycle, so re-testing it would just reproduce the same known gap.
+
+**Rate limiter:** paced this cycle's sign-ups (one net-check repro + two sizes of the new suite,
+~8 accounts total vs. the ~15 that tripped it in cycles 1-2) — no rate-limit hits this cycle. Ran
+only small-phone and desktop for the new suite to keep both the new tests' and cycle 1/2's
+account counts well under the threshold; phone and tablet still need `trust-settings.qa.ts` run
+next cycle once budget allows.
+
+**Automated suite:** added `tests/qa/trust-settings.qa.ts` (notification-preference toggle +
+reload persistence; report-with-also-block -> Blocked accounts -> Unblock, across two real
+accounts). `npx playwright test --config=playwright.qa.config.ts tests/qa/trust-settings.qa.ts`:
+2/2 passed on both `desktop` and `small-phone` (4/4 total) once the test dismisses the cookie
+banner first, same as `onboarding.qa.ts` already did — `profile.qa.ts` doesn't yet, worth adding
+there too next cycle since QA-4 means it's silently relying on no sheet-button assertions to not
+hit the same block.
+
+**Not reached this cycle:** Host an activity (Journey 3) and everything after it — still next up,
+per cycle 1/2's list, now joined by re-running `trust-settings.qa.ts` on phone/tablet.
 
 ---
 

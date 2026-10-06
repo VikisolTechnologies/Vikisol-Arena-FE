@@ -22,13 +22,11 @@ export default function NotificationPrefsPage() {
   }, []);
 
   const toggle = (id: string, enabled: boolean) => {
-    setPrefs((cur) => {
-      if (!cur) return cur;
-      const next = cur.map((p) => (p.id === id ? { ...p, enabled } : p));
-      const server = Object.fromEntries(next.map((p) => [p.id, p.enabled])) as Record<string, boolean>;
-      setNotificationPreferences(server as never).catch(() => setError("Couldn't save that change — try again."));
-      return next;
-    });
+    if (!prefs) return;
+    const next = prefs.map((p) => (p.id === id ? { ...p, enabled } : p));
+    setPrefs(next);
+    const server = Object.fromEntries(next.map((p) => [p.id, p.enabled])) as Record<string, boolean>;
+    setNotificationPreferences(server as never).catch(() => setError("Couldn't save that change — try again."));
   };
 
   return (
