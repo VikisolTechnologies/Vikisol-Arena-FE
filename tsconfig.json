@@ -42,7 +42,9 @@
     ".next-perf/types/**/*.ts",
     ".next-perf/dev/types/**/*.ts",
     ".next-mock-tests/types/**/*.ts",
-    ".next-mock-tests/dev/types/**/*.ts"
+    ".next-mock-tests/dev/types/**/*.ts",
+    ".next-proxy-tests/types/**/*.ts",
+    ".next-proxy-tests/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

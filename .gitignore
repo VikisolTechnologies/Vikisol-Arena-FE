@@ -60,3 +60,4 @@ next-env.d.ts
 docs/reviews/shots/**/*.png
 .next-real-smoke/
 .next-safety-net/
+.next-proxy-tests/

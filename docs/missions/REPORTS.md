@@ -1,6 +1,30 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+# FE READY TO MERGE
+
+F-PROXY (`GOLIVE-PROXY.md`, 6 Oct 2026) ran immediately after MARATHON-FE-2 Step D, same branch.
+Implements the founder's go-live design (Cloudflare Tunnel only, `vikisol.in` DNS untouched,
+same-origin `/api/v1/*` calls proxied server-side to the tunnel): `src/middleware.ts` now rewrites
+every `/api/v1/*` request to `ARENA_API_ORIGIN`, adding the `X-Arena-Proxy-Secret` header and a
+server-resolved `X-Arena-Client-Ip` (never the client's own), stripping any client-supplied
+`X-Arena-*` header first. The two server-side `generateMetadata` callers
+(`people/[id]`/`companies/[id]` layouts) that can't use the new relative base URL now call the
+backend directly via `src/lib/api/serverApiOrigin.ts` with the same secret header. New
+`playwright.proxy.config.ts` + `tests/proxy/*.proxy.ts` (7/7 passing) verify the proxy itself —
+sign-up/refresh/sign-out relaying upstream's `Set-Cookie`, a 401 passing through, the secret
+reaching upstream but never reflected back, a spoofed client-IP header discarded, a 9 MB body
+streaming through intact — against a small local fixture backend
+(`tests/proxy/fixtures/upstream-server.mjs`), not the real arena-api. Full `playwright.local.
+config.ts` suite re-run afterward and confirmed unaffected (420 passed, 2 skipped, 0 failed) —
+the new middleware logic is a no-op wherever `ARENA_API_ORIGIN`/`ARENA_PROXY_SECRET` are unset,
+which is every existing test environment and local dev. `npx tsc --noEmit` and full-tree `eslint`
+both clean. Opened (not merged) `feature/arena-vnext-mobile-jenny` → `main`, titled "Arena B+ —
+first real-backend release", per the mission's standing never-merge rule. See
+`RELEASE-CHECKLIST.md`'s new "F-PROXY" section for the full account and the exact Vercel
+variables (`NEXT_PUBLIC_API_BASE_URL` changes to the relative `/api/v1`; two new server-only
+vars, `ARENA_API_ORIGIN` and `ARENA_PROXY_SECRET`, are added).
+
 # FE RELEASE CANDIDATE READY
 
 MARATHON-FE-2 (2–6 Oct 2026) ran every step, 0 through D, without stopping. Full local suite

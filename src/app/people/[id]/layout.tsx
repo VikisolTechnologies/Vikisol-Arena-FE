@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
-import { API_BASE_URL } from "@/lib/api/mode";
+import { serverApiOrigin, serverApiHeaders } from "@/lib/api/serverApiOrigin";
 
 // ARENA-INVENTORY-FIXES.md FIX 1 - a shared profile link is the growth loop; it needs to
 // preview correctly on WhatsApp/LinkedIn instead of showing generic Arena boilerplate. This
 // sibling layout is the standard way to attach dynamic per-route metadata to a route whose
 // page.tsx is a client component. Plain fetch() here, not the browser-oriented apiFetch
 // wrapper (localStorage token reads etc. don't apply server-side) - GET /profile/{id} is
-// permitAll now, so no auth header is needed anyway.
+// permitAll now, so no bearer auth header is needed. This runs server-side, so it calls
+// arena-api directly via `serverApiOrigin()` (GOLIVE-PROXY.md F-PROXY) rather than the
+// browser-only relative `/api/v1` path, and carries the proxy secret the same way the Vercel
+// rewrite would.
 type PublicProfileShape = { name?: string; title?: string; industry?: string; bio?: string };
 
 const FALLBACK_TITLE = "Profile · Arena";
@@ -16,7 +19,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const fallback: Metadata = { title: FALLBACK_TITLE, description: FALLBACK_DESCRIPTION };
   try {
-    const res = await fetch(`${API_BASE_URL}/profile/${id}`, { next: { revalidate: 300 } });
+    const res = await fetch(`${serverApiOrigin()}/api/v1/profile/${id}`, {
+      headers: serverApiHeaders(),
+      next: { revalidate: 300 },
+    });
     if (!res.ok) return fallback;
     const json = (await res.json()) as { data?: PublicProfileShape };
     const p = json.data;

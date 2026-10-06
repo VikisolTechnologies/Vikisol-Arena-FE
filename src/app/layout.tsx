@@ -64,6 +64,12 @@ export const metadata: Metadata = {
 };
 
 // viewport-fit=cover so env(safe-area-inset-*) works on notched phones; zoom stays enabled.
+// GOLIVE-PROXY.md F-PROXY: in production NEXT_PUBLIC_API_BASE_URL is the relative "/api/v1"
+// (same-origin, proxied by middleware.ts), so `new URL(...)` has no origin to resolve and
+// throws - caught below, API_ORIGIN is null, and no preconnect tag renders. That's correct,
+// not a bug: the API is same-origin now (nothing to preconnect to), and the tunnel origin
+// behind ARENA_API_ORIGIN must never reach the browser (see GOLIVE-PROXY.md's "never given to
+// users" rule) - this must stay built from the public var, never ARENA_API_ORIGIN.
 const API_ORIGIN = (() => {
   try {
     return new URL(process.env.NEXT_PUBLIC_API_BASE_URL ?? "").origin;

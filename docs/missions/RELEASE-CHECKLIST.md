@@ -1,8 +1,56 @@
 # Release checklist — Arena B+, real backend
 
-**Status: FE RELEASE CANDIDATE READY.** Current as of MARATHON-FE-2 (2–6 Oct 2026, Steps 0 → D).
+**Status: FE RELEASE CANDIDATE READY, including F-PROXY.** Current as of MARATHON-FE-2 (2–6 Oct
+2026, Steps 0 → D) plus the F-PROXY mission (`GOLIVE-PROXY.md`, 6 Oct 2026) that followed it.
 Supersedes every earlier version of this file — the "Step 8 not attempted" / "full area 7 and 8
 not re-verified" caveats from the original `MARATHON-FE` run are resolved; see below.
+
+## F-PROXY: how the frontend reaches the home server (GOLIVE-PROXY.md)
+The founder's go-live design is Cloudflare Tunnel **only**, `vikisol.in`'s GoDaddy DNS untouched.
+The browser only ever talks to `arena.vikisol.in`; every `/api/v1/*` call is same-origin and
+`src/middleware.ts`'s `proxyApiRequest()` rewrites it server-side to the real backend behind the
+tunnel, adding the header arena-api's trusted-proxy filter requires. Done:
+- **Base URL**: in production `NEXT_PUBLIC_API_BASE_URL=/api/v1` (relative) — same-origin, no
+  CORS, first-party cookies on iPhone Safari. Every absolute-URL builder from the old
+  `api-arena.vikisol.in` world was checked: `apiHealth.ts`, `httpClient.ts`, `companyAdmin.ts`'s
+  `auditExportUrl()` (all browser-side, relative is correct and already window-gated) and
+  `src/app/layout.tsx`'s preconnect tag (relative URL has no origin to preconnect to — correctly
+  renders nothing now, and must stay built from the *public* var, never the tunnel one, or it'd
+  leak the tunnel hostname to every page's HTML). Two true server-side callers needed a real fix:
+  `src/app/people/[id]/layout.tsx` and `src/app/companies/[id]/layout.tsx`'s `generateMetadata`
+  (link-preview fetches that run in Node, not the browser, so a relative path has nothing to
+  resolve against) now call the backend directly via the new server-only
+  `src/lib/api/serverApiOrigin.ts` (`ARENA_API_ORIGIN` + the proxy-secret header), never the
+  public relative path.
+- **Proxy**: `src/middleware.ts`'s `proxyApiRequest()` — a rewrite, not a route handler, so
+  bodies stream and aren't limited by Vercel's 4.5 MB function body cap. Strips any
+  client-supplied `X-Arena-*` header first, then sets `X-Arena-Proxy-Secret` from the
+  server-only `ARENA_PROXY_SECRET` and `X-Arena-Client-Ip` from Vercel's own
+  `x-real-ip`/`x-vercel-forwarded-for` (never from anything the client sent). Adds
+  `Cache-Control: no-store`. Dormant (falls through) whenever `ARENA_API_ORIGIN`/
+  `ARENA_PROXY_SECRET` aren't both set, i.e. always in local dev — the pre-existing dev-only
+  `src/app/api/v1/[...path]/route.ts` (now body-streaming too, not buffered) still covers hitting
+  the old Railway API from localhost and is otherwise unreached once those two vars are set.
+- **Cookies**: confirmed by reading `SessionCookieHelper.java`/`RefreshCookieHelper.java` —
+  `arena_session` and the refresh cookie already default to no `Domain`, `SameSite=Lax`,
+  `Secure` in production, all env-configurable; `src/lib/serverSession.ts`'s middleware read of
+  `arena_session` is unaffected (no code change needed, backend-owned, confirmed not FE's to fix).
+- **Tests** (`playwright.proxy.config.ts` + `tests/proxy/*.proxy.ts`, 7/7 passing): sign-up,
+  refresh and sign-out through the proxy (each one's upstream `Set-Cookie` relayed back); a 401
+  passing through untouched; the secret header reaching upstream but never reflected back to the
+  caller; a client-supplied `X-Arena-Client-Ip` discarded rather than forwarded; a 9 MB body
+  streamed through intact. Run against a small local fixture server
+  (`tests/proxy/fixtures/upstream-server.mjs`) standing in for arena-api — proving the proxy's
+  own behavior (headers, streaming, pass-through) doesn't need the real Spring Boot backend.
+  Full suite (`playwright.local.config.ts`) re-run after these changes: unaffected, still green
+  (the middleware addition is a no-op whenever `ARENA_API_ORIGIN`/`ARENA_PROXY_SECRET` are unset,
+  which they are in that config).
+- **No WebSockets or SSE anywhere in the frontend** (checked by grep) — nothing that can't go
+  through a Vercel rewrite proxy.
+- **Vercel plan**: Hobby is non-commercial-use only and caps bandwidth/function duration: a
+  commercial launch needs at least the Pro plan before go-live, independent of this proxy design
+  (same requirement would exist with any API host). Not a frontend code change — flagged here so
+  the founder sees it before flipping the Vercel env vars below.
 
 ## Branch
 `feature/arena-vnext-mobile-jenny` → `main` (frontend `Vikisol-Arena-FE`). Every commit this run
@@ -10,15 +58,19 @@ pushed successfully. **Never merged to main** — per the mission's own standing
 is the architect's/founder's, not this run's.
 
 ## Vercel Production env vars (when the architect says release-ready and the founder gives the OK)
-| Variable | Value |
-|---|---|
-| `NEXT_PUBLIC_ARENA_DATA` | `api` |
-| `NEXT_PUBLIC_API_BASE_URL` | `https://api-arena.vikisol.in/api/v1` |
+Per `GOLIVE-PROXY.md`'s go-live order: the server passes INFRA-1, the founder's new tunnel
+domain is live on Cloudflare DNS, and the backend PRs are merged and deployed **before** these
+four are set and the frontend PR is merged.
 
-No other variable changes behavior now — `isRealMode()`/`FIXTURES_ALLOWED`/mock mode no longer
-exist at all (Step C removed them entirely; "api" is the only data mode). Google Sign-In/Maps
-keys are independent and already documented in `.env.local.example`. The backend goes first,
-then the frontend, per the inbox's release rule.
+| Variable | Value | Notes |
+|---|---|---|
+| `NEXT_PUBLIC_ARENA_DATA` | `api` | the only data mode; no other value changes behavior (Step C removed mock mode entirely) |
+| `NEXT_PUBLIC_API_BASE_URL` | `/api/v1` | **relative**, not the old `https://api-arena.vikisol.in/api/v1` — same-origin, proxied by `src/middleware.ts` |
+| `ARENA_API_ORIGIN` | `https://api.<new-domain>` | server-only, never `NEXT_PUBLIC_*` — the Cloudflare Tunnel hostname behind the proxy; never shown to users |
+| `ARENA_PROXY_SECRET` | *(the exact value the founder generated into the server's secrets file — never typed into a chat)* | server-only, never `NEXT_PUBLIC_*` — must byte-for-byte match arena-api's own `ARENA_PROXY_SECRET` |
+
+Google Sign-In/Maps keys are independent and already documented in `.env.local.example`. The
+backend goes first, then the frontend, per the inbox's release rule.
 
 ## What works end to end, verified live against the real local backend this run
 - **Auth & onboarding:** sign up (DOB collected, backend-enforced 18+), sign in, refresh, sign

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import { API_BASE_URL } from "@/lib/api/mode";
+import { serverApiOrigin, serverApiHeaders } from "@/lib/api/serverApiOrigin";
 
 // ARENA-INVENTORY-FIXES.md FIX 1 - same reasoning as people/[id]/layout.tsx: a shared company
-// link needs a real preview. GET /companies/{id} is permitAll now, no auth header needed.
+// link needs a real preview. GET /companies/{id} is permitAll now, no bearer auth header
+// needed. Calls arena-api directly server-side (GOLIVE-PROXY.md F-PROXY) with the proxy
+// secret, same as that file.
 type CompanyShape = { name?: string; industry?: string; openJobCount?: number };
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -12,7 +14,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     description: "View this company's open roles on Arena.",
   };
   try {
-    const res = await fetch(`${API_BASE_URL}/companies/${id}`, { next: { revalidate: 300 } });
+    const res = await fetch(`${serverApiOrigin()}/api/v1/companies/${id}`, {
+      headers: serverApiHeaders(),
+      next: { revalidate: 300 },
+    });
     if (!res.ok) return fallback;
     const json = (await res.json()) as { data?: CompanyShape };
     const c = json.data;
