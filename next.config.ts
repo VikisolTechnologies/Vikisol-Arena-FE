@@ -1,35 +1,19 @@
 import type { NextConfig } from "next";
 
 // FE-BPLUS-BUILD §6: fixture data must never reach production. A production build that isn't
-// in "api" data mode fails here, before anything is compiled.
+// in "api" data mode fails here, before anything is compiled. Mock/mixed data mode no longer
+// exists at all (MARATHON-FE-2 Step C) - "api" is the only mode - but this guard stays as a
+// cheap safety net against a misconfigured env var.
 if (process.env.VERCEL_ENV === "production" && process.env.NEXT_PUBLIC_ARENA_DATA !== "api") {
-  throw new Error('Refusing to build production with preview fixtures: set NEXT_PUBLIC_ARENA_DATA="api".');
+  throw new Error('Refusing to build production with NEXT_PUBLIC_ARENA_DATA unset: set it to "api".');
 }
 
-// Production data mode: the preview world (fictional people, posts, rooms, photos paths) is swapped
-// for typed empty stand-ins, so none of it ships in a production bundle (performance pass).
-const PREVIEW_OFF = process.env.NEXT_PUBLIC_ARENA_DATA === "api";
-const previewAlias: Record<string, string> = PREVIEW_OFF
-  ? Object.fromEntries(
-      [
-        ["@/lib/fixtures/world", "world"],
-        ["@/lib/mock/posts", "posts"],
-        ["@/lib/mock/rooms", "rooms"],
-        ["@/lib/mock/projects", "projects"],
-        ["@/lib/mock/activity", "activity"],
-        ["@/lib/mock/people", "people"],
-        ["@/lib/mock/follows", "follows"],
-        ["@/lib/fixtures/jenny", "jenny"],
-        ["@/lib/data/fixtures", "data-fixtures"],
-      ].map(([from, to]) => [from, `./src/lib/preview-off/${to}.ts`]),
-    )
-  : {};
-
 const nextConfig: NextConfig = {
-  turbopack: { resolveAlias: previewAlias },
-  // /dev (build tracker, compare pages, specimens) uses `*.dev.tsx` page files, which only preview
-  // builds pick up — a production-data build has no /dev routes at all, not just 404 ones.
-  pageExtensions: PREVIEW_OFF ? ["tsx", "ts", "jsx", "js"] : ["dev.tsx", "tsx", "ts", "jsx", "js"],
+  // /dev (build tracker, compare pages, specimens) uses `*.dev.tsx` page files, kept out of the
+  // real production bundle - a production build has no /dev routes at all, not just 404 ones.
+  // Tied to VERCEL_ENV (not the old data-mode flag, which no longer exists) so local dev and any
+  // preview/staging deploy still get the dev tooling.
+  pageExtensions: process.env.VERCEL_ENV === "production" ? ["tsx", "ts", "jsx", "js"] : ["dev.tsx", "tsx", "ts", "jsx", "js"],
   // Performance pass only (scripts/dev/perf.mjs): attribute shipped bytes to their sources.
   productionBrowserSourceMaps: process.env.ARENA_SOURCEMAPS === "1",
   // The dev tools badge is not part of the product. Preview screenshots must not show it.

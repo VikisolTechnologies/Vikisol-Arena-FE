@@ -2,10 +2,7 @@
  * M6 area 3b — the `/activities/*` endpoints (ActivitiesController.java), layered on top of the
  * same ACTIVITY posts and join requests `src/lib/api/posts.ts` already handles (approve/decline
  * stay on the generic `/posts/{id}/joins/...` endpoints — ActivitiesController has no
- * activity-specific equivalent; confirmed reading it). Real mode only: mock mode's activity
- * screens keep using the existing mock post/join fixtures (no new mock data work per M6's
- * rules) and simply no-op or return an honest empty where this richer layer would go, since the
- * demo path never had it.
+ * activity-specific equivalent; confirmed reading it).
  *
  * Every shape here mirrors `ActivityDtos.java` field-for-field (verified live against the local
  * backend with curl, not just read from source).

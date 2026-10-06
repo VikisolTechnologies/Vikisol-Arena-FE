@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AccountPage } from "@/components/account/AccountPage";
-import { readEditDraft, writeEditDraft, type EditProfileDraft } from "@/components/account/fixtures";
+import { readEditDraft, writeEditDraft, type EditProfileDraft } from "@/components/account/draft";
 import { Button } from "@/components/bplus/Button";
 import { TextField, TextArea } from "@/components/bplus/TextField";
 import { Chip } from "@/components/bplus/Controls";

@@ -1,6 +1,87 @@
 # Mission reports (newest first)
 Builders append their final report for each mission here. The architect reads it directly.
 
+## MARATHON-FE-2, Step C — 6 Oct 2026
+**Removed the dummy data entirely, in the order the mission named, verified with
+`npx tsc --noEmit` + eslint + an api-mode production build after each coordinated batch.**
+Mock mode is gone — there is no more fallback path in the shipped app; "api" data mode is the
+only mode. Goal grep (`grep -rn "lib/mock\|preview-off\|fixtures\|isRealMode\|FIXTURES_ALLOWED" src`)
+returns nothing.
+
+**1. `isRealMode()` mock branches, `src/lib/api/*` (31 files) then everywhere else in `src`.**
+Every function that forked on `isRealMode()` now has only its real-mode body; the mock
+fallback (localStorage stores, `MOCK_*` fixture lookups, `delay()`) is deleted with it, along
+with now-fully-dead local helpers that existed only to support a deleted branch. Two real bugs
+caught along the way: `enterprise.ts`'s talent-search types used
+`ReturnType<typeof getCandidateById>` (a mock-module import) purely for typing, now
+`CandidateProfile | undefined`; and `MessagesInbox.tsx`/`InboxScreen.tsx` both had a stray
+`isRealMode()`-gated fake-realtime-reply simulator and a mock-candidate-name lookup for the
+`?with=<id>` deep link respectively — both dead in every real build already, now gone, with the
+deep link fixed to rely on `getOrCreateConversation`'s own real-participant resolution instead.
+`isRealMode()` itself is deleted from `src/lib/api/mode.ts`.
+
+**2-4. `src/lib/mock/*`, `src/lib/preview-off/*`, `src/lib/data/fixtures.ts` + `FIXTURES_ALLOWED`.**
+Deleted together — `preview-off/*` was next.config.ts's build-time stand-in for exactly the mock/
+fixtures modules being deleted, so keeping one without the other would have broken the build.
+Also deleted: `src/components/admin/fixtures.ts` (a second fixtures module matched by the goal
+grep's own "fixtures" pattern) and `src/lib/fixtures/*` (Jenny's P8 preview-queue fixtures,
+reachable only when `JENNY_PREVIEW` — now hardcoded `false`, since "mixed" data mode no longer
+exists — is true, i.e. never). `src/components/account/fixtures.ts` was **not** deleted — most
+of it is real static content (notification preference labels, real help-topic copy), not mock
+data, so it's renamed to `draft.ts` with an accurate header comment instead. Fixing it surfaced
+a real bug: its `readEditDraft()` fallback for a brand-new user with no saved draft was a
+hardcoded sample profile (`"Priya Sharma" / "Neighbour" / interests: ["Running"]`) — a real
+person opening Edit Profile for the first time would see someone else's fake data pre-filled in
+their own name field. Now defaults to honest empty values. Also found and fixed: `admin/page.tsx`'s
+"Launch metrics" section (`getLaunchMetrics()`) had hardcoded fake numbers (`jobs: 11`,
+`applications: 64`, `reports: 2`, every load, regardless of reality) shown to a real platform
+admin; now reads `postingsTotal`/`applicationsTotal` from the real `getPlatformAnalytics()` and
+`moderationPending` from the real dashboard call, keeping "No data yet" only for metrics with no
+backend source at all (signups funnel, D1/D7 return).
+
+**5. The fixture-only `/dev/*` routes.** Deleted exactly the three the mission named
+(`/dev/person`, `/dev/admin`, `/dev/business` — each a fake-data account-impersonation preview,
+the direct `isRealMode()` callers) and nothing else. Judgment call: the broader `/dev/compare`,
+`/dev/screen`, `/dev/covers`, `/dev/progress` design-review tooling (plus `src/lib/dev/*` and
+two support scripts, `scripts/dev/cut-boards.mjs` / `review-shots.mjs`) was left in place —
+it's a separate, still-referenced build-tracking/screenshot-comparison workflow, not
+mock-user-data — *except* that deleting `/dev/person` breaks the handful of `screens.json`
+entries whose `route` field points at it (`/dev/person?stage=onboarding&...`); not fixed, since
+`screens.json` itself is out of this step's named scope and the comparison tool already
+tolerates missing routes.
+
+**6. `public/fixtures/people` and `photos`.** Deleted along with the empty `map/` dir and
+`CREDITS.md` — confirmed via the credits file's own header ("preview fixtures / mock mode, never
+ships with real data") and grep (sole importer was `src/lib/fixtures/world.ts`, itself deleted
+in sub-step 4's cleanup) before removing.
+
+**7. The mock Playwright suite.** `playwright.mock.config.ts`'s actual scope (`testDir:
+"./tests/e2e"`, `testMatch` on `admin/`, `account/`, `preview/`) turned out to span three
+directories, not one dedicated folder — deleted all three (`tests/e2e/admin`, `tests/e2e/account`,
+`tests/e2e/preview`) along with the config. Ported the two files with real, portable value
+(`admin-routes.spec.ts`, `account-routes.spec.ts` — route-renders-with-right-heading-and-title
+smoke tests) to `tests/local/admin-routes.local.ts` / `account-routes.local.ts`, stub-based like
+every other `tests/local/*.local.ts` file. Did **not** port the original suite's fixture-specific
+behavioral assertions (a particular mismatched-domain company existing by default, "Pending not
+Paused" wording, a "pricing beta banner" flag, a gap-number text scan) — those either have no
+real-backend equivalent or were already exercised live against the real backend in this
+mission's own Step B (see above). Caught one bug in the port itself before it shipped: the
+`/admin` route's dashboard stub used the wrong response shape (copied from a different,
+similarly-named type) and crashed the page intermittently depending on browser engine — fixed
+before committing. Full `tests/local/*` suite: 400 passed, 2 skipped, and a pre-existing (not
+caused by this step — verified by running the exact same failures against the commit at the
+*start* of this step) set of flaky/broken tests: `career.local.ts`, `host.local.ts` (×2),
+`join.local.ts`, and a mobile-webkit-wide `safety-net.local.ts` slowdown. Left alone, as a
+pre-existing issue outside this step's scope — not touched, not hidden.
+
+**Final state:** `npx tsc --noEmit` clean. `npx eslint src` (full tree, not just changed files):
+0 errors, 13 warnings, all pre-existing-style intentional `_param`-unused-parameter cases this
+codebase already uses elsewhere (changing a public function's signature to silence a warning
+would ripple into unrelated call sites). `VERCEL_ENV=production NEXT_PUBLIC_ARENA_DATA=api npx
+next build`: compiles clean.
+
+**Next:** Step D0 — independent QA pass.
+
 ## MARATHON-FE-2, Step B — 5 Oct 2026
 **Verified live by clicking through with real accounts against the real local backend** (not by
 reading code), per the mission's own instruction. Data created through the app: Company A

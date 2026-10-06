@@ -2,21 +2,30 @@
  * Jenny domain for the P8 boards (FE-BPLUS-BUILD §7 P8; blueprint §2). The shapes below follow the
  * PROPOSED v2 contract (ContextualBrief, InterpretedIntent, expanded ProposedAction preview,
  * AutomationRecipe, QueueItem) — none of it is BUILT in JennySol yet, so every Jenny surface here
- * runs on the preview world only and renders nothing when fixtures aren't allowed (api mode).
- * Real proposals from the live v1 gateway keep using `JennyActionCard`.
+ * is permanently off (JENNY_PREVIEW, below) and renders nothing. Real proposals from the live v1
+ * gateway keep using `JennyActionCard`.
  *
  * What's computed rather than invented: opportunities, "why this matches" reasons and today's
  * plan are derived from the (preview) feed and the person's own interests/availability — never a
  * score, never a ranking by fit (correction #4). Decisions and toggles live on this device.
  */
-import { FIXTURES_ALLOWED } from "@/lib/data/mode";
 import { distanceKm, whenLabel, type FeedItem } from "@/lib/data/feed";
 import { guessType } from "@/lib/activities/taxonomy";
-import { DRAFT_SENTENCE, RECENT_FIXTURES, REMINDER_FIXTURES, queueFixtures } from "@/lib/fixtures/jenny";
 import type { Post } from "@/lib/types";
 
-/** Jenny's P8 surfaces exist only where fixtures may show (preview / mixed). */
-export const JENNY_PREVIEW = FIXTURES_ALLOWED;
+/** Jenny's P8 surfaces are PROPOSED-contract preview only (see file header) - permanently off,
+ * same as it already was in any real-data build. Every JENNY_PREVIEW-gated component
+ * (JennyScreen.tsx's Today/Automations/Reminders/RecentActivity, WorkScreen.tsx's Jenny
+ * sections, etc.) already never mounts when this is false, so the sample content below is never
+ * read. */
+export const JENNY_PREVIEW = false;
+
+const DRAFT_SENTENCE = "";
+const RECENT_FIXTURES: { text: string; icon: "post" | "calendar" | "invite"; at: string }[] = [];
+const REMINDER_FIXTURES: { id: string; title: string; detail: string; when: string }[] = [];
+function queueFixtures(): QueueItem[] {
+  return [];
+}
 
 /* ── Expanded ProposedAction preview (PROPOSED) ── */
 export interface ActionPreview {

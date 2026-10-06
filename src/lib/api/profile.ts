@@ -1,4 +1,3 @@
-import { getOnboardingProfile, saveOnboardingProfile } from "@/lib/session";
 import type { AutonomyLevel, CandidateProfile, ConsentSettings, Industry, LocationConsent, OpenTo, PublicCandidateProfile } from "@/lib/types";
 import { ApiError, apiFetch } from "./httpClient";
 
@@ -62,29 +61,6 @@ function toCandidateProfile(res: CandidateProfileResponse): CandidateProfile {
   };
 }
 
-// Mock-mode-only overlay for §5's location consent, kept separate from OnboardingProfile since
-// it's a Phase B addition orthogonal to onboarding - same small-dedicated-key pattern as
-// verification.ts's own mock state.
-const LOCATION_KEY = "arena_location_consent";
-interface MockLocationState {
-  locationConsent: LocationConsent;
-  homeCity?: string;
-  approxLat?: number;
-  approxLng?: number;
-}
-function readMockLocation(): MockLocationState {
-  if (typeof window === "undefined") return { locationConsent: "off" };
-  try {
-    const raw = localStorage.getItem(LOCATION_KEY);
-    return raw ? (JSON.parse(raw) as MockLocationState) : { locationConsent: "off" };
-  } catch {
-    return { locationConsent: "off" };
-  }
-}
-function writeMockLocation(state: MockLocationState) {
-  localStorage.setItem(LOCATION_KEY, JSON.stringify(state));
-}
-
 // PERF-REPORT.md Pass 3's own follow-up: "per-route data fetch" was diagnosed as part of the
 // 2-2.6s click-to-render cost on in-app navigation, but the profile fetch specifically is worse
 // than a generic per-route fetch — AppShell's `profile` prop means every one of the 23 routes
@@ -125,38 +101,7 @@ export async function getMyProfile(): Promise<CandidateProfile> {
   return profileRequest;
 }
 
-async function patchOnboardingProfile(
-  patch: Partial<{
-    skills: string[];
-    consent: ConsentSettings;
-    autonomy: AutonomyLevel;
-    resumeFileName: string;
-    resumeUploadedAt: string;
-    careerHealth: number;
-  }>,
-) {
-  const current = await getMyProfile();
-  const onboarding = getOnboardingProfile();
-  saveOnboardingProfile({
-    name: onboarding?.name ?? current.name,
-    title: onboarding?.title ?? current.title,
-    industry: onboarding?.industry ?? current.industry,
-    skills: patch.skills ?? onboarding?.skills ?? current.skills.map((s) => s.name),
-    experienceYears: onboarding?.experienceYears ?? current.experienceYears,
-    rateFloor: onboarding?.rateFloor ?? current.rateFloor,
-    openTo: onboarding?.openTo ?? current.openTo,
-    consent: patch.consent ?? onboarding?.consent ?? current.consent,
-    autonomy: patch.autonomy ?? onboarding?.autonomy ?? current.autonomy,
-    resumeFileName: patch.resumeFileName ?? onboarding?.resumeFileName ?? current.resumeFileName,
-    resumeUploadedAt: patch.resumeUploadedAt ?? onboarding?.resumeUploadedAt ?? current.resumeUploadedAt,
-    careerHealth: patch.careerHealth ?? onboarding?.careerHealth ?? current.careerHealth,
-  });
-  return getMyProfile();
-}
-
-/** Real mode only: syncs the onboarding wizard's name/title/industry/experience/rate/openTo to
- * arena-api. Mock mode's onboarding page already writes this straight to localStorage via
- * saveOnboardingProfile(), so this is a no-op there. */
+/** Syncs the onboarding wizard's name/title/industry/experience/rate/openTo to arena-api. */
 export async function updateMyProfileDetails(details: {
   name: string;
   title: string;

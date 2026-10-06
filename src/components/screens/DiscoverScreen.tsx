@@ -5,19 +5,16 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
 import { EMPTY_DRAFT, readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
 import { AnimatePresence, m } from "motion/react";
-import { BookOpen, CalendarDays, Camera, Footprints, GraduationCap, Leaf, List, Map as MapIcon, MapPin, Palette, Search, SlidersHorizontal, Sprout, Utensils } from "lucide-react";
+import { BookOpen, CalendarDays, Footprints, Leaf, List, Map as MapIcon, MapPin, Palette, Search, SlidersHorizontal, Sprout, Utensils } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { dissolve, press, rise, spring } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
 import { Button } from "@/components/bplus/Button";
 import { BottomSheet } from "@/components/bplus/BottomSheet";
 import { Chip } from "@/components/bplus/Controls";
-import { Avatar } from "@/components/bplus/Avatar";
-import { DemoBadge, HScroll, Pills, PreviewPill, SectionHeader, Skeleton, StateCard } from "@/components/bplus/Primitives";
+import { DemoBadge, Pills, SectionHeader, Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { NeedCard, RowCard } from "@/components/cards/FeedCards";
 import { DiscoverMap } from "@/components/screens/DiscoverMap";
-import { FIXTURES_ALLOWED } from "@/lib/data/mode";
-import { PREVIEW_PEOPLE, PREVIEW_SKILLS } from "@/lib/data/fixtures";
 import { LAUNCH_ZONE, filterFeed, getFeedItems, getTrending, hrefFor, originFor, search, whenLabel, type FeedItem, type Post } from "@/lib/data/feed";
 import { isDemo } from "@/lib/data/feed";
 import type { SearchResults } from "@/lib/api/search";
@@ -222,27 +219,6 @@ function DiscoverList() {
         </div>
       ) : (
         <m.div key={chip} initial="hidden" animate="shown" className="mt-6 space-y-8">
-          {(chip === "all" || chip === "people") && FIXTURES_ALLOWED && (
-            <m.section variants={rise} custom={0} aria-label="People near you">
-              <SectionHeader title="People near you" action={<PreviewPill />} />
-              <HScroll label="People near you">
-                {PREVIEW_PEOPLE.map((p) => (
-                  <div key={p.id} role="listitem" className="relative aspect-[3/4] w-[118px] shrink-0 snap-start overflow-hidden rounded-tile bg-surface">
-                    <Avatar name={p.name} className="absolute inset-0 size-full rounded-none text-[28px]" />
-                    <div aria-hidden className="absolute inset-0 bg-linear-to-t from-black/85 via-black/25 to-transparent" />
-                    <div className="absolute inset-x-2.5 bottom-2.5 text-white">
-                      <p className="truncate text-[16px] font-semibold">{p.name.split(" ")[0]}</p>
-                      <p className="mt-0.5 flex items-center gap-1 text-[13px] text-white/90">
-                        <MapPin className="size-3.5" strokeWidth={2} aria-hidden />
-                        {p.distanceKm} km
-                      </p>
-                      <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-white/90">{p.interests.join(" · ")}</p>
-                    </div>
-                  </div>
-                ))}
-              </HScroll>
-            </m.section>
-          )}
           {(chip === "all" || chip === "activities") && (
             <m.section variants={rise} custom={1} aria-label="Popular this week">
               <SectionHeader title={chip === "activities" ? "Activities near you" : "Popular this week"} />
@@ -268,27 +244,6 @@ function DiscoverList() {
                       <c.icon className="size-8" strokeWidth={2.2} aria-hidden />
                       <span className="text-center text-[14px] font-semibold leading-tight text-paper-ink">{c.label}</span>
                     </m.button>
-                  );
-                })}
-              </div>
-            </m.section>
-          )}
-          {(chip === "all" || chip === "skills") && FIXTURES_ALLOWED && (
-            <m.section variants={rise} custom={2} aria-label="Skills and support">
-              <SectionHeader title="Skills & support" action={<PreviewPill />} />
-              <div className="grid grid-cols-2 gap-3">
-                {PREVIEW_SKILLS.map((s) => {
-                  const IconCmp = s.id === "s-ux" ? Palette : s.id === "s-photo" ? Camera : GraduationCap;
-                  return (
-                    <div key={s.id} className="flex items-center gap-3 rounded-tile bg-paper p-3 text-paper-ink">
-                      <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl", s.tone === "info" ? "bg-info/15 text-info-on-paper" : s.tone === "success" ? "bg-success/15 text-success-on-paper" : "bg-primary/10 text-primary-on-paper")}>
-                        <IconCmp className="size-5" strokeWidth={1.9} aria-hidden />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block truncate text-[15px] font-semibold">{s.label}</span>
-                        <span className="block text-[13px] text-paper-ink-muted">{s.nearby} nearby</span>
-                      </span>
-                    </div>
                   );
                 })}
               </div>
@@ -332,7 +287,7 @@ function EmptyFor({ chip, byType }: { chip: Chip; byType: Record<"activities" | 
     (chip === "needs" && byType.needs.length === 0) ||
     (chip === "offers" && byType.offers.length === 0) ||
     (chip === "projects" && byType.projects.length === 0) ||
-    ((chip === "people" || chip === "skills") && !FIXTURES_ALLOWED);
+    (chip === "people" || chip === "skills");
   if (!empty) return null;
   return <StateCard kind="empty" title={`No ${CHIPS.find((c) => c.id === chip)?.label.toLowerCase()} nearby yet`} detail="Be the first — it takes a minute." action={<Button onClick={() => window.dispatchEvent(new Event("arena-open-create"))}>Post something</Button>} />;
 }

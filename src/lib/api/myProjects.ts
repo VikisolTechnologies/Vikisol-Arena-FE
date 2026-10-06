@@ -44,8 +44,8 @@ export async function createMyProject(input: {
   return apiFetch<ProjectResponseWire>("/marketplace/projects", { method: "POST", body: input }).then(toMyProject);
 }
 
-export function addBidToMyProject(projectId: string, bid: Project["bids"][number]) {
-  // real mode's award/bid data all lives server-side already
+export function addBidToMyProject(_projectId: string, _bid: Project["bids"][number]) {
+  // award/bid data all lives server-side already
 }
 
 export async function awardProject(projectId: string, bidId: string): Promise<MyProject | null> {

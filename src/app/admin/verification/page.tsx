@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Check, Globe, X } from "lucide-react";
 import { AdminShell, usePlatformAdminGate } from "@/components/admin/AdminShell";
 import { AdminList, AdminLoading, AdminRow, ReasonSheet } from "@/components/admin/parts";
-import type { VerificationRequest } from "@/components/admin/fixtures";
 import {
   approveVerification,
   getVerificationQueue,
@@ -14,6 +13,19 @@ import {
 import { Pills, StateCard } from "@/components/bplus/Primitives";
 import { DashButton, StatusPill } from "@/components/dash/Parts";
 import { formatDateTime } from "@/lib/format";
+
+interface VerificationRequest {
+  id: string;
+  companyName: string;
+  domain: string;
+  website: string;
+  gstin?: string;
+  cin?: string;
+  domainMatch: boolean;
+  submittedAt: string;
+  status: "pending" | "approved" | "rejected";
+  rejectReason?: string;
+}
 
 const TABS = [
   { id: "pending" as const, label: "Pending" },

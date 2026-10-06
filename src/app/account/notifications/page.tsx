@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AccountPage } from "@/components/account/AccountPage";
-import { getDefaultNotifPrefs, type NotifPref } from "@/components/account/fixtures";
+import { getDefaultNotifPrefs, type NotifPref } from "@/components/account/draft";
 import { getNotificationPreferences, setNotificationPreferences } from "@/lib/api/notifications";
 import { Toggle } from "@/components/bplus/Controls";
 import { StateCard } from "@/components/bplus/Primitives";

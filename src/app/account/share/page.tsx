@@ -6,7 +6,6 @@ import { AccountPage } from "@/components/account/AccountPage";
 import { Button } from "@/components/bplus/Button";
 import { StateCard } from "@/components/bplus/Primitives";
 import { getSession } from "@/lib/session";
-import { ME } from "@/lib/fixtures/world";
 
 export default function ShareProfilePage() {
   const [url, setUrl] = useState("");
@@ -14,9 +13,11 @@ export default function ShareProfilePage() {
   const [shareError, setShareError] = useState("");
 
   useEffect(() => {
-    const id = getSession()?.candidateId || ME.id;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setUrl(`${window.location.origin}/people/${id}`);
+    const id = getSession()?.candidateId;
+    if (id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUrl(`${window.location.origin}/people/${id}`);
+    }
   }, []);
 
   const copy = async () => {

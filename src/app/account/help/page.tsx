@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AccountPage } from "@/components/account/AccountPage";
-import { getHelpTopics } from "@/components/account/fixtures";
+import { getHelpTopics } from "@/components/account/draft";
 import { rise } from "@/lib/motion";
 import { m } from "motion/react";
 

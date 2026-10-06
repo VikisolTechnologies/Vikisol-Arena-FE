@@ -1,5 +1,7 @@
 /**
- * Preview fixtures for P11 account screens (mock mode). Real mode uses APIs or honest empties.
+ * P11 account screens: real static content (notification preference labels, help topics) and
+ * the profile-edit draft, which is device-only (no real GET /profile/me call backs this form
+ * yet) and now defaults to honest empty values instead of a sample profile.
  */
 
 export interface NotifPref {
@@ -99,7 +101,7 @@ export function readEditDraft(): EditProfileDraft {
   } catch {
     /* fall through */
   }
-  return { displayName: "Priya Sharma", title: "Neighbour", intro: "", interests: ["Running"], availability: ["Weekends"] };
+  return { displayName: "", title: "", intro: "", interests: [], availability: [] };
 }
 
 export function writeEditDraft(draft: EditProfileDraft) {

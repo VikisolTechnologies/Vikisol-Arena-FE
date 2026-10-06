@@ -3,7 +3,7 @@
  * sentence (no model, no network). It pulls out only what the words literally say — a kind, an
  * activity type, a day, a time, a number of people, a level, a known area — and leaves every
  * other field empty for the person to fill. Real mode waits for the PROPOSED v2 interpret
- * contract (FE-API-GAPS #42); nothing here is used when fixtures aren't allowed.
+ * contract (FE-API-GAPS #42); nothing here is used while that's unbuilt.
  */
 import { ALL_SUBTYPES } from "@/lib/activities/taxonomy";
 import { AREA_CENTRES } from "@/lib/data/feed";

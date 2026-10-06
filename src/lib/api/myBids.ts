@@ -18,8 +18,8 @@ interface BidResponseWire {
   status: string;
 }
 
-export function recordMyBid(record: MyBidRecord) {
-  // real mode's bid record already lives server-side from placeBid()
+export function recordMyBid(_record: MyBidRecord) {
+  // the bid record already lives server-side from placeBid()
 }
 
 export async function getMyBids(): Promise<MyBidRecord[]> {

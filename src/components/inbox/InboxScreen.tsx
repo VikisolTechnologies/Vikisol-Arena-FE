@@ -13,7 +13,6 @@ import { ButtonLink, Button } from "@/components/bplus/Button";
 import { Pills, Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { getMyRooms } from "@/lib/api/rooms";
 import { getConversations, getOrCreateConversation } from "@/lib/api/messages";
-import { getCandidateById } from "@/lib/mock/candidates";
 import { requireOnboarded } from "@/lib/auth-guard";
 import { timeAgo } from "@/lib/data/time";
 import type { Conversation, Room } from "@/lib/types";
@@ -80,8 +79,7 @@ export function InboxScreen() {
   // conversation, then go straight to its thread.
   useEffect(() => {
     if (!withParam) return;
-    const candidate = getCandidateById(withParam);
-    getOrCreateConversation(withParam, candidate?.name ?? "New contact", candidate?.avatarEmoji ?? "🧑").then((conv) => router.replace(`/messages/${conv.id}`));
+    getOrCreateConversation(withParam, "New contact", "🧑").then((conv) => router.replace(`/messages/${conv.id}`));
   }, [withParam, router]);
 
   useEffect(() => {

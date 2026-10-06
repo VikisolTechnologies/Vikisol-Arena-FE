@@ -16,12 +16,18 @@ import {
 import Link from "next/link";
 import { AdminShell, usePlatformAdminGate } from "@/components/admin/AdminShell";
 import { AdminList, AdminLoading, AdminRow, MetricGrid, NoDataYet } from "@/components/admin/parts";
-import { getLaunchMetrics } from "@/components/admin/fixtures";
 import { Stat } from "@/components/dash/Parts";
 import { StateCard } from "@/components/bplus/Primitives";
-import { getPlatformDashboard } from "@/lib/api/platformAdmin";
+import { getPlatformAnalytics, getPlatformDashboard } from "@/lib/api/platformAdmin";
 import { formatDateTime } from "@/lib/format";
-import type { PlatformDashboard } from "@/lib/types";
+import type { PlatformAnalytics, PlatformDashboard } from "@/lib/types";
+
+interface LaunchMetric {
+  id: string;
+  label: string;
+  value: number | null;
+  hint?: string;
+}
 
 const METRIC_ICONS: Record<string, typeof UserPlus> = {
   signups: UserPlus,
@@ -40,16 +46,36 @@ const METRIC_ICONS: Record<string, typeof UserPlus> = {
 export default function AdminOverviewPage() {
   const gate = usePlatformAdminGate();
   const [dashboard, setDashboard] = useState<PlatformDashboard | null>(null);
+  const [analytics, setAnalytics] = useState<PlatformAnalytics | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (gate !== "ready") return;
-    getPlatformDashboard()
-      .then(setDashboard)
+    Promise.all([getPlatformDashboard(), getPlatformAnalytics()])
+      .then(([d, a]) => {
+        setDashboard(d);
+        setAnalytics(a);
+      })
       .catch(() => setError("Overview didn't load. Try again."));
   }, [gate]);
 
-  const launchMetrics = getLaunchMetrics();
+  // Metrics genuinely not tracked anywhere yet (signups funnel, D1/D7 return) show "No data yet"
+  // honestly rather than a fabricated number - this used to be a hardcoded fixture (11 jobs, 64
+  // applications, 2 reports, every time, regardless of the real count) shown to a real platform
+  // admin; now reads the real counts where a real count exists.
+  const launchMetrics: LaunchMetric[] = [
+    { id: "signups", label: "Sign-ups", value: null, hint: "No data yet" },
+    { id: "onboarding", label: "Onboarding completed", value: null, hint: "No data yet" },
+    { id: "activities-created", label: "Activities created", value: null, hint: "No data yet" },
+    { id: "activities-joined", label: "Activities joined", value: null, hint: "No data yet" },
+    { id: "activities-completed", label: "Activities completed", value: null, hint: "No data yet" },
+    { id: "needs-resolved", label: "Needs resolved", value: null, hint: "No data yet" },
+    { id: "jobs", label: "Jobs posted", value: analytics?.postingsTotal ?? null, hint: "From platform analytics" },
+    { id: "applications", label: "Applications", value: analytics?.applicationsTotal ?? null, hint: "From platform analytics" },
+    { id: "d1", label: "D1 return", value: null, hint: "No data yet" },
+    { id: "d7", label: "D7 return", value: null, hint: "No data yet" },
+    { id: "reports", label: "Reports filed", value: dashboard?.moderationPending ?? null, hint: "Moderation queue" },
+  ];
 
   return (
     <AdminShell title="Overview">
