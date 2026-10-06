@@ -56,6 +56,12 @@ export function DiscoverMap() {
   const area = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().area, () => "");
 
   useEffect(() => {
+    const bump = () => setReload((n) => n + 1);
+    window.addEventListener("arena-location", bump);
+    return () => window.removeEventListener("arena-location", bump);
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     getMyProfile()
       .then((p) => (p.approxLat != null && p.approxLng != null ? { lat: p.approxLat, lng: p.approxLng, approximate: true as const } : null))

@@ -124,6 +124,12 @@ function DiscoverList() {
   const [me, setMe] = useState<{ lat?: number; lng?: number } | null>(null);
 
   useEffect(() => {
+    const bump = () => setAttempt((n) => n + 1);
+    window.addEventListener("arena-location", bump);
+    return () => window.removeEventListener("arena-location", bump);
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     Promise.all([
       getFeedItems("for-you", 0, 40),

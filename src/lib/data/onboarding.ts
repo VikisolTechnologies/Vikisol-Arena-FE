@@ -152,7 +152,9 @@ export function readCurrentPosition(): Promise<{ lat: number; lng: number }> {
         lastPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         resolve(lastPosition);
       },
-      () => reject(new Error("Location wasn't shared. You can choose your area instead.")),
+      (err) => reject(new Error(err.code === err.PERMISSION_DENIED
+        ? "Location is blocked. In your browser's site settings for Arena, allow Location, then try again."
+        : "Location wasn't shared. You can type your area instead.")),
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 300_000 },
     );
   });

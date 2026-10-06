@@ -11,6 +11,7 @@ import { press, spring } from "@/lib/motion";
 import { useOffline } from "@/hooks/use-arena-session";
 import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
 import { PreviewBar } from "@/components/bplus/Primitives";
+import { LocationSession } from "@/components/location/LocationSession";
 
 const CreateSheet = dynamic(() => import("@/components/create/CreateSheet").then((mod) => mod.CreateSheet), { ssr: false });
 
@@ -66,6 +67,7 @@ export function AppShell({ children, tone }: { children: ReactNode; /** Full cre
         className="mx-auto flex min-h-svh w-full max-w-[480px] flex-col px-5 pt-[max(8px,env(safe-area-inset-top))]"
         style={{ paddingBottom: `calc(${BAR + 24}px + env(safe-area-inset-bottom)${cookieBanner ? " + var(--cookie-banner-h, 88px)" : ""})` }}
       >
+        <LocationSession />
         {children}
       </div>
 

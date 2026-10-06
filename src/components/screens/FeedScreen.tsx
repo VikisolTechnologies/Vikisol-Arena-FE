@@ -59,6 +59,12 @@ export function FeedScreen() {
   const [radiusKm, setRadiusKm] = useState<number>(DEFAULT_RADIUS_KM);
 
   useEffect(() => {
+    const bump = () => setAttempt((n) => n + 1);
+    window.addEventListener("arena-location", bump);
+    return () => window.removeEventListener("arena-location", bump);
+  }, []);
+
+  useEffect(() => {
     if (guest === null) return;
     let cancelled = false;
     Promise.all([
