@@ -24,16 +24,6 @@ export const INTENTS = [
 export type EntryIntent = (typeof INTENTS)[number]["id"];
 const INTENT_IDS = new Set<string>(INTENTS.map((i) => i.id));
 
-/** Launch zone first (Gachibowli), then its neighbours. Geography, not user data. */
-export const AREAS = [
-  "Gachibowli / Gopanapally",
-  "Financial District / Nanakramguda",
-  "Madhapur / Hitec City",
-  "Kondapur",
-  "Manikonda / Narsingi",
-  "Serilingampally",
-] as const;
-
 export const SUGGESTED_INTERESTS = [
   "Running",
   "Badminton",
@@ -162,7 +152,9 @@ export function readCurrentPosition(): Promise<{ lat: number; lng: number }> {
         lastPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         resolve(lastPosition);
       },
-      () => reject(new Error("Location wasn't shared. You can choose your area instead.")),
+      (err) => reject(new Error(err.code === err.PERMISSION_DENIED
+        ? "Location is blocked. In your browser's site settings for Arena, allow Location, then try again."
+        : "Location wasn't shared. You can type your area instead.")),
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 300_000 },
     );
   });

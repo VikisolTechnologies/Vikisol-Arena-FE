@@ -10,14 +10,14 @@ import { AppShell } from "@/components/bplus/AppShell";
 import { Avatar } from "@/components/bplus/Avatar";
 import { Button, ButtonLink } from "@/components/bplus/Button";
 import { SectionHeader, Skeleton, StateCard } from "@/components/bplus/Primitives";
-import { Outcomes } from "@/components/profile/Outcomes";
 import { ReportSheet } from "@/components/trust/ReportSheet";
 import { useGuest } from "@/hooks/use-arena-session";
 import { follow, getCounts, unfollow } from "@/lib/api/follows";
 import { getPublicProfile } from "@/lib/api/profile";
-import { getUserPosts } from "@/lib/api/posts";
+import { loadProfileActivity, type ProfileActivity as ActivityData } from "@/lib/api/profileActivity";
+import { ProfileActivity } from "@/components/profile/ProfileActivity";
 import { getSession } from "@/lib/session";
-import type { Post, PublicCandidateProfile } from "@/lib/types";
+import type { PublicCandidateProfile } from "@/lib/types";
 
 const VERIFIED: Record<string, string> = { phone: "Phone verified", id: "ID verified" };
 
@@ -28,10 +28,9 @@ export function PublicProfileScreen({ id }: { id: string }) {
   const router = useRouter();
   const guest = useGuest();
   const [profile, setProfile] = useState<PublicCandidateProfile | null | undefined>(undefined);
-  const [posts, setPosts] = useState<Post[] | null>(null);
+  const [activity, setActivity] = useState<ActivityData | null>(null);
   const [following, setFollowing] = useState<boolean | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
-  const [hour] = useState(() => Date.now());
 
   useEffect(() => {
     let cancelled = false;
@@ -51,7 +50,7 @@ export function PublicProfileScreen({ id }: { id: string }) {
   useEffect(() => {
     if (!visible) return;
     let cancelled = false;
-    getUserPosts(id).then((page) => !cancelled && setPosts(page.content)).catch(() => !cancelled && setPosts([]));
+    loadProfileActivity(id).then((a) => !cancelled && setActivity(a)).catch(() => !cancelled && setActivity({ posts: [], projects: [], outcomes: [], stats: null }));
     if (!getSession()) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- signed-out visitors can't follow
       setFollowing(false);
@@ -110,7 +109,6 @@ export function PublicProfileScreen({ id }: { id: string }) {
 
   const area = profile.homeCity ?? profile.location;
   const verified = VERIFIED[profile.verificationLevel] ?? (profile.phoneVerified ? VERIFIED.phone : null);
-  const outcomes = (posts ?? []).filter((p) => p.status === "closed" || (p.startsAt && new Date(p.startsAt).getTime() < hour)).slice(0, 6);
 
   return (
     <AppShell>
@@ -182,7 +180,9 @@ export function PublicProfileScreen({ id }: { id: string }) {
         )}
 
         <m.div variants={rise} custom={5}>
-          {posts === null ? <Skeleton className="mt-6 h-24 w-full" /> : <Outcomes outcomes={outcomes} />}
+          {activity === null ? <Skeleton className="mt-6 h-24 w-full" /> : (
+            <ProfileActivity posts={activity.posts} projects={activity.projects} outcomes={activity.outcomes} stats={activity.stats} />
+          )}
         </m.div>
       </m.div>
       <ReportSheet open={reportOpen} onClose={() => setReportOpen(false)} target={{ kind: "profile", id: profile.id }} person={{ userId: profile.id, name: profile.name, detail: profile.title }} />

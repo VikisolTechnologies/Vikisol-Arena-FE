@@ -7,7 +7,7 @@ import { Check, ChevronRight, Eye, Footprints, Info, MapPin, Plus } from "lucide
 import { cn } from "@/lib/utils";
 import { press, rise, spring } from "@/lib/motion";
 import { Button, ButtonLink } from "@/components/bplus/Button";
-import { Chip, SelectField, Toggle } from "@/components/bplus/Controls";
+import { Chip, Toggle } from "@/components/bplus/Controls";
 import { Lede, Title } from "@/components/bplus/Screen";
 import { TextArea, TextField } from "@/components/bplus/TextField";
 import { PhotoPicker } from "@/components/bplus/PhotoPicker";
@@ -16,7 +16,6 @@ import { IconBadge, type IconBadgeTone } from "@/components/bplus/IconBadge";
 import { BriefcaseSolid, ChatSolid, CompassSolid, LeafSolid, PeopleSolid, PlusSolid, RunnerSolid, StarSolid } from "@/components/bplus/SolidIcons";
 import { Burst } from "@/components/bplus/Burst";
 import {
-  AREAS,
   AVAILABILITY,
   INTENTS,
   INTRO_MAX,
@@ -30,6 +29,7 @@ import { isAdult } from "@/lib/geo";
 import { setDateOfBirth } from "@/lib/api/verification";
 import { signOut } from "@/lib/api/auth";
 import { useRouter } from "next/navigation";
+import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 
 type Glyph = typeof RunnerSolid;
 type StepProps = { draft: EntryDraft; update: (patch: Partial<EntryDraft>) => void };
@@ -47,7 +47,8 @@ const INTENT_LOOK: Record<EntryIntent, { icon: Glyph; tone: IconBadgeTone }> = {
 };
 
 function Footer({ children }: { children: ReactNode }) {
-  return <div className="mt-auto pt-8">{children}</div>;
+  const keyboard = useKeyboardInset();
+  return <div className="scroll-mb-28 pt-8" style={{ paddingBottom: keyboard || undefined }}>{children}</div>;
 }
 
 function SectionLabel({ children, hint }: { children: ReactNode; hint?: string }) {
@@ -279,10 +280,6 @@ function InterestPicker({ draft, update, addLabel, onlySelected }: StepProps & {
 export function LocalLifeStep({ draft, update, onContinue }: StepProps & { onContinue: () => void }) {
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState("");
-  // Board: the area starts on the launch area; the person can change it.
-  useEffect(() => {
-    if (!draft.area) update({ area: AREAS[0] });
-  }, [draft.area, update]);
 
   const toggleLocation = async (on: boolean) => {
     setLocationError("");
@@ -305,7 +302,7 @@ export function LocalLifeStep({ draft, update, onContinue }: StepProps & { onCon
       <Lede>Help us show you what&apos;s nearby and relevant.</Lede>
 
       <div className="mt-7">
-        <SelectField label="Your area" value={draft.area} onChange={(area) => update({ area })} options={AREAS} placeholder="Choose your area" icon={MapPin} />
+        <TextField label="Your area" value={draft.area} onChange={(area) => update({ area })} placeholder="Type your area" icon={MapPin} />
       </div>
 
       <div className="mt-7">

@@ -4,13 +4,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { m } from "motion/react";
-import { useSyncExternalStore } from "react";
 import { Bookmark, CircleCheck, Search, Sprout } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { rise } from "@/lib/motion";
 import { Cover } from "@/components/covers/Cover";
 import { filterFeed, getFeedItems, originFor, whenLabel, type FeedItem } from "@/lib/data/feed";
-import { EMPTY_DRAFT, readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
 import { AppShell } from "@/components/bplus/AppShell";
 import { Button, ButtonLink } from "@/components/bplus/Button";
 import { Pills, SectionHeader, Skeleton, StateCard } from "@/components/bplus/Primitives";
@@ -67,7 +65,6 @@ export function JobsScreen() {
   const [allJobs, setAllJobs] = useState(false);
   const [saved, setSaved] = useState<string[]>(() => (typeof window === "undefined" ? [] : readSaved()));
   const [forYou, setForYou] = useState<FeedItem[] | null>(null);
-  const draft = useSyncExternalStore(subscribeEntryDraft, readEntryDraft, () => EMPTY_DRAFT);
 
   useEffect(() => {
     if (!requireOnboarded(router)) return;
@@ -76,17 +73,17 @@ export function JobsScreen() {
       .then((j) => !cancelled && (setJobs(Array.isArray(j) ? j : []), setError(false)))
       .catch(() => !cancelled && setError(true));
     getMyProfile().then((p) => !cancelled && setProfile(p)).catch(() => {});
-    getFeedItems("for-you", 0, 40)
-      .then((items) => {
+    Promise.all([getFeedItems("for-you", 0, 40), getMyProfile().catch(() => null)])
+      .then(([items, p]) => {
         if (cancelled) return;
-        const near = filterFeed(items, "nearby", originFor(null, draft.area), 5);
+        const near = filterFeed(items, "nearby", originFor(p ? { lat: p.approxLat, lng: p.approxLng } : null), 5);
         setForYou(near.filter((i) => i.itemType === "activity" && i.startsAt && Date.parse(i.startsAt) > Date.now()).sort((a, b) => Date.parse(a.startsAt!) - Date.parse(b.startsAt!)).slice(0, 3));
       })
       .catch(() => !cancelled && setForYou([]));
     return () => {
       cancelled = true;
     };
-  }, [router, attempt, draft.area]);
+  }, [router, attempt]);
 
   // Local by default (board); when nothing local is listed, start on All instead of an empty list.
   const filter: Filter = chosen ?? ((jobs ?? []).some((j) => isLocal(j, profile)) ? "local" : "all");

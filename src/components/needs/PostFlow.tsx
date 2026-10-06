@@ -129,7 +129,7 @@ export function PostFlow({ mode }: { mode: Mode }) {
                   <p className="mt-2 text-[15px] text-paper-ink-muted">{mode === "need" ? "Pick the closest — we'll only ask what helps neighbours say yes." : "Pick the closest — you set your own limits."}</p>
                   <TellJenny
                     kind={mode === "need" ? "ask" : "offer"}
-                    example={mode === "need" ? "Help moving a sofa tomorrow evening in Kondapur" : "I can tutor Class 10 maths on weekends in Gachibowli"}
+                    example={mode === "need" ? "Help moving a sofa tomorrow evening" : "I can tutor Class 10 maths on weekends"}
                     className="mt-4"
                     onPrefill={(p) => router.push(p.href)}
                   />

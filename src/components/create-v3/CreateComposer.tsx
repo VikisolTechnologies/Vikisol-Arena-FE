@@ -513,7 +513,7 @@ export function CreateComposer({
                     <input
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
-                      placeholder="Where (e.g. Gachibowli) - kept general"
+                      placeholder="Where — an area, kept general"
                       style={{ ...fieldStyle, flex: 1 }}
                     />
                     <button

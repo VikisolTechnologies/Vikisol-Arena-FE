@@ -157,7 +157,7 @@ export function subscribeJenny(cb: () => void) {
 export interface Me {
   interests: string[];
   availability: string[];
-  origin: { lat: number; lng: number };
+  origin: { lat: number; lng: number } | null;
 }
 
 const words = (s: string) => s.toLowerCase();

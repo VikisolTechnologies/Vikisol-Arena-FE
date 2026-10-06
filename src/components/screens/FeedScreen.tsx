@@ -9,7 +9,8 @@ import { Button, ButtonLink } from "@/components/bplus/Button";
 import { Pills, Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { HeroActivityCard, NeedCard, RowCard } from "@/components/cards/FeedCards";
 import { dissolve, rise } from "@/lib/motion";
-import { LAUNCH_ZONE, distanceKm, filterFeed, getFeedItems, originFor, type FeedFilter, type FeedItem } from "@/lib/data/feed";
+import { DEFAULT_RADIUS_KM, distanceKm, filterFeed, getFeedItems, originFor, type FeedFilter, type FeedItem } from "@/lib/data/feed";
+import { PlacePrompt } from "@/components/location/PlacePrompt";
 import { getMyProfile } from "@/lib/data/profile";
 import { EMPTY_DRAFT, readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
 import dynamic from "next/dynamic";
@@ -48,14 +49,20 @@ export function FeedScreen() {
   const guest = useGuest();
   const draftArea = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().area, () => "");
   const entry = useSyncExternalStore(subscribeEntryDraft, readEntryDraft, () => EMPTY_DRAFT);
-  const [filter, setFilter] = useState<FeedFilter>("nearby");
+  const [filter, setFilter] = useState<FeedFilter>("all");
   const [data, setData] = useState<Load | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [unread, setUnread] = useState(0);
   const [hour] = useState(() => new Date().getHours());
-  const [radiusKm, setRadiusKm] = useState<number>(LAUNCH_ZONE.radiusKm);
+  const [radiusKm, setRadiusKm] = useState<number>(DEFAULT_RADIUS_KM);
+
+  useEffect(() => {
+    const bump = () => setAttempt((n) => n + 1);
+    window.addEventListener("arena-location", bump);
+    return () => window.removeEventListener("arena-location", bump);
+  }, []);
 
   useEffect(() => {
     if (guest === null) return;
@@ -82,7 +89,7 @@ export function FeedScreen() {
     setAttempt((n) => n + 1);
   };
 
-  const area = draftArea || data?.me?.city || LAUNCH_ZONE.name;
+  const area = draftArea || data?.me?.city || "";
   const origin = useMemo(() => originFor(data?.me, draftArea), [data?.me, draftArea]);
   const { text: hello, icon: TimeIcon } = greeting(hour);
   const shown = useMemo(() => (data ? filterFeed(data.items.filter((i) => !["closed", "cancelled", "expired"].includes(i.status)), filter, origin, radiusKm) : []), [data, filter, origin, radiusKm]);
@@ -101,7 +108,7 @@ export function FeedScreen() {
           <div className="min-w-0">
             <p className="text-[15px] font-medium text-primary">{hello}</p>
             <h1 className="mt-0.5 flex items-center gap-2 font-display-serif text-[32px] font-medium leading-tight text-foreground">
-              <span className="truncate">{area ? area.split(" / ")[0] : "Around you"}</span>
+              <span className="truncate">{area || "Around you"}</span>
               <TimeIcon className="size-7 shrink-0 text-warning" strokeWidth={1.75} aria-hidden />
             </h1>
             <p className="mt-1 text-[15px] text-faint">Real people. Real things happening nearby.</p>
@@ -146,6 +153,10 @@ export function FeedScreen() {
                 </div>
                 <Skeleton className="h-28 w-full" />
               </m.div>
+            ) : filter === "nearby" && !origin ? (
+              <m.div key="place" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={dissolve}>
+                <PlacePrompt onSaved={refresh} />
+              </m.div>
             ) : shown.length === 0 ? (
               <m.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={dissolve}>
                 <StateCard
@@ -166,7 +177,7 @@ export function FeedScreen() {
               </m.div>
             ) : (
               <m.div key={`list-${filter}`} initial="hidden" animate="shown" className="space-y-3">
-                {filter === "nearby" && radiusKm > LAUNCH_ZONE.radiusKm && <p className="text-[14px] text-faint">Showing everything within {radiusKm} km.</p>}
+                {filter === "nearby" && radiusKm > DEFAULT_RADIUS_KM && <p className="text-[14px] text-faint">Showing everything within {radiusKm} km.</p>}
                 {hero && (
                   <m.div variants={rise} custom={0}>
                     <HeroActivityCard item={hero} km={km(hero)} />

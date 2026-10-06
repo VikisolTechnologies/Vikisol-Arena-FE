@@ -31,7 +31,7 @@ export const JOB_SCHEMA: Schema = {
       title: "Where, pay and timing",
       fields: [
         { id: "mode", type: "chips", label: "Work mode", options: [{ value: "onsite", label: "On-site" }, { value: "remote", label: "Remote" }], required: true, default: "onsite" },
-        { id: "location", type: "area", label: "Location", required: true, placeholder: "e.g. Gachibowli, Hyderabad" },
+        { id: "location", type: "area", label: "Location", required: true, placeholder: "Your area" },
         { id: "pay", type: "money", unit: "LPA", range: true, label: "Pay range", required: true, why: "Required — people decide faster when pay is clear." },
         { id: "deadline", type: "date", label: "Application deadline", more: true, why: "Kept on this device until Arena stores deadlines." },
       ],

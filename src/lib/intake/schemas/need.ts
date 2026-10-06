@@ -65,7 +65,7 @@ export const NEED_KINDS: NeedCategory[] = [
     id: "rides", label: "Rides & carpool", icon: Car,
     safety: "Ride with people you've met or who are verified. Pickup points stay private until you accept someone.",
     fields: [
-      { id: "from", type: "area", label: "From (area)", required: true, placeholder: "e.g. Gachibowli" },
+      { id: "from", type: "area", label: "From (area)", required: true, placeholder: "Your area" },
       { id: "to", type: "area", label: "To (area)", required: true, placeholder: "e.g. Hitech City" },
       { id: "seats", type: "stepper", label: "Seats", min: 1, max: 6, default: 1 },
       { id: "pickup", type: "point", label: "Exact pickup point", visibility: "after-approval" },
@@ -112,7 +112,7 @@ export function needSchema(kindId: string): Schema {
     id: "where",
     title: "Where & who sees it",
     fields: [
-      { id: "area", type: "area", label: "Area", required: true, placeholder: "e.g. Gachibowli", why: "Only the area is shown — never your address." },
+      { id: "area", type: "area", label: "Area", required: true, placeholder: "Your area", why: "Only the area is shown — never your address." },
       { id: "audience", type: "chips", label: "Share with", options: [{ value: "global", label: "Anyone on Arena" }, { value: "followers", label: "People who follow me" }], default: "global" },
       { id: "photos", type: "photos", label: "Photos", max: 4, why: "Helps people see what's involved." },
     ],
@@ -145,7 +145,7 @@ export function offerSchema(kindId: string): Schema {
         fields: [
           { id: "days", type: "multichips", label: "Days", options: o("Weekdays", "Weekends", "Evenings"), required: true },
           { id: "limit", type: "chips", label: "Limit", options: o("Once a week", "Twice a week", "A few times a month", "No limit"), default: "twice-a-week", why: "So you never feel overcommitted." },
-          { id: "area", type: "area", label: "Area", required: true, placeholder: "e.g. Gachibowli" },
+          { id: "area", type: "area", label: "Area", required: true, placeholder: "Your area" },
           { id: "audience", type: "chips", label: "Share with", options: [{ value: "global", label: "Anyone on Arena" }, { value: "followers", label: "People who follow me" }], default: "global" },
         ],
       },

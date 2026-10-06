@@ -111,7 +111,7 @@ export function ActivityCreateFlow() {
                 intro={
                   <TellJenny
                     kind="activity"
-                    example="Cricket this Sunday 7am at Gachibowli, 12 players"
+                    example="Cricket this Sunday at 7am, 12 players"
                     className="mt-4"
                     onPrefill={(p) => {
                       setSubtypeId(p.subtype ?? "other");

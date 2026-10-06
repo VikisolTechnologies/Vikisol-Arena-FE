@@ -23,7 +23,7 @@ function localDay(iso: string) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function matches(i: FeedItem, it: Intent, origin: Origin) {
+function matches(i: FeedItem, it: Intent, origin: Origin | null) {
   if (i.itemType !== "activity" || ["closed", "cancelled", "expired"].includes(i.status)) return false;
   const hay = `${i.title ?? ""} ${i.body} ${i.tags.join(" ")}`.toLowerCase();
   if (it.subtype) {
@@ -54,7 +54,7 @@ function matches(i: FeedItem, it: Intent, origin: Origin) {
  * filters (type, level, when, distance, setting); results are every nearby activity that passes
  * them, soonest first. "Why these results?" says exactly how. Preview only (FE-API-GAPS #42).
  */
-export function IntentResults({ query, initial, items, origin, area, onPlain }: { query: string; initial: Intent; items: FeedItem[]; origin: Origin; area: string; onPlain: () => void }) {
+export function IntentResults({ query, initial, items, origin, area, onPlain }: { query: string; initial: Intent; items: FeedItem[]; origin: Origin | null; area: string; onPlain: () => void }) {
   const [it, setIt] = useState<Intent>(initial);
   const [edit, setEdit] = useState<null | "subtype" | "level" | "when" | "radius" | "setting">(null);
   const [whyOpen, setWhyOpen] = useState(false);

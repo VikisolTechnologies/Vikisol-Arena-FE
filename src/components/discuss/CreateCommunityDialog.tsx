@@ -72,7 +72,7 @@ export function CreateCommunityDialog({
           </div>
           <label className="flex flex-col gap-1">
             <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Name</span>
-            <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="e.g. Hyderabad Home Cooks" className="border-border bg-card" />
+            <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="e.g. Home cooks nearby" className="border-border bg-card" />
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">What&apos;s it for? (optional)</span>

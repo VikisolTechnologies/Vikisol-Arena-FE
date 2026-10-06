@@ -11,6 +11,7 @@ import { press, spring } from "@/lib/motion";
 import { useOffline } from "@/hooks/use-arena-session";
 import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
 import { PreviewBar } from "@/components/bplus/Primitives";
+import { LocationSession } from "@/components/location/LocationSession";
 
 const CreateSheet = dynamic(() => import("@/components/create/CreateSheet").then((mod) => mod.CreateSheet), { ssr: false });
 
@@ -39,6 +40,15 @@ export function AppShell({ children, tone }: { children: ReactNode; /** Full cre
   const closeCreate = useCallback(() => setCreateOpen(false), []);
 
   useEffect(() => {
+    const root = document.documentElement;
+    const previous = root.style.scrollPaddingBottom;
+    root.style.scrollPaddingBottom = `calc(${BAR + 24}px + env(safe-area-inset-bottom))`;
+    return () => {
+      root.style.scrollPaddingBottom = previous;
+    };
+  }, []);
+
+  useEffect(() => {
     const open = () => setCreateOpen(true);
     window.addEventListener("arena-open-create", open);
     // "Post a need" from onboarding arrives as ?create=…; open once, then drop the param.
@@ -63,9 +73,10 @@ export function AppShell({ children, tone }: { children: ReactNode; /** Full cre
       )}
       <PreviewBar className="relative z-20 mx-auto max-w-[480px] bg-background pt-[max(6px,env(safe-area-inset-top))]" />
       <div
-        className="mx-auto flex min-h-svh w-full max-w-[480px] flex-col px-5 pt-[max(8px,env(safe-area-inset-top))]"
-        style={{ paddingBottom: `calc(${BAR + 24}px + env(safe-area-inset-bottom)${cookieBanner ? " + var(--cookie-banner-h, 88px)" : ""})` }}
+        className="mx-auto flex w-full max-w-[480px] flex-col overflow-y-auto overscroll-y-contain px-5 pt-[max(8px,env(safe-area-inset-top))] pb-6"
+        style={{ height: `calc(100svh - ${BAR}px - env(safe-area-inset-bottom)${cookieBanner ? " - var(--cookie-banner-h, 88px)" : ""})`, scrollbarGutter: "stable" }}
       >
+        <LocationSession />
         {children}
       </div>
 

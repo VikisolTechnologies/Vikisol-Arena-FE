@@ -62,7 +62,7 @@ export function ProjectCreateFlow() {
             schema={PROJECT_SCHEMA}
             draftKey="project"
             startAt={params.get("start") ?? undefined}
-            intro={<TellJenny kind="project" example="A map of every lake clean-up spot in Gachibowli" className="mt-4" onPrefill={() => setPrefilled((n) => n + 1)} />}
+            intro={<TellJenny kind="project" example="A map of every lake clean-up spot near you" className="mt-4" onPrefill={() => setPrefilled((n) => n + 1)} />}
             onExit={() => router.push("/home")}
             onSubmit={submit}
             submitText={(v) => (v.paid === "paid" ? "Publish project" : "Save draft")}

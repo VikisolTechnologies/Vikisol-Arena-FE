@@ -13,7 +13,7 @@ export const TYPE_FIELDS: Record<string, Field[]> = {
     { id: "overs", type: "chips", label: "Overs", options: o("6", "10", "20", "Custom"), showIf: (v) => v.format !== "nets" },
     { id: "perSide", type: "stepper", label: "Players per side", min: 2, max: 11, default: 8 },
     { id: "equipment", type: "multichips", label: "Equipment provided", options: o("Bat", "Ball", "Stumps", "Pads", "Gloves") },
-    { id: "ground", type: "text", label: "Ground booked", placeholder: "e.g. Gachibowli Box Arena", more: true, maxLength: 80 },
+    { id: "ground", type: "text", label: "Ground booked", placeholder: "The ground or hall", more: true, maxLength: 80 },
   ],
   badminton: [
     { id: "play", type: "chips", label: "Singles or doubles", options: o("Singles", "Doubles", "Both"), required: true },
@@ -149,7 +149,7 @@ export function activitySchema(subtypeId: string): Schema {
       id: "where",
       title: "Where",
       fields: [
-        { id: "area", type: "area", label: "Area", required: true, placeholder: "e.g. Gachibowli", why: "Public — approximate only." },
+        { id: "area", type: "area", label: "Area", required: true, placeholder: "Your area", why: "Public — approximate only." },
         { id: "point", type: "point", label: "Exact meeting point", visibility: "after-approval", placeholder: "e.g. East Gate, near the cycling track", why: "Only people you approve see this." },
         { id: "setting", type: "chips", label: "Indoor or outdoor", options: o("Outdoor", "Indoor") },
       ],

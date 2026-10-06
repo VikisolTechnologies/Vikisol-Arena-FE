@@ -183,9 +183,9 @@ export function ArenaMap({
         <span aria-hidden className="flex flex-col items-center">
           <span className="size-4 rounded-full bg-[#3b82f6] ring-4 ring-white/85" />
           <span className="mt-1 whitespace-nowrap text-center text-[12px] font-medium leading-tight text-white [text-shadow:0_1px_4px_#000]">
-            {you ? "You" : "Gachibowli"}
+            You
             <br />
-            <span className="text-white/75">{you ? "(approximate)" : "(launch area)"}</span>
+            <span className="text-white/75">(approximate)</span>
           </span>
         </span>,
         "center",

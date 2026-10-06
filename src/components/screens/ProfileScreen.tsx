@@ -15,6 +15,8 @@ import { useGuest } from "@/hooks/use-arena-session";
 import { getMyProfile, type CandidateProfile } from "@/lib/data/profile";
 import { EMPTY_DRAFT, readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
 import { getJoinedPosts, getMyPosts } from "@/lib/api/posts";
+import { loadProfileActivity, type ProfileActivity as ActivityData } from "@/lib/api/profileActivity";
+import { ProfileActivity } from "@/components/profile/ProfileActivity";
 import { getMyBids } from "@/lib/api/myBids";
 import { signOut } from "@/lib/api/auth";
 import type { Post } from "@/lib/types";
@@ -28,7 +30,7 @@ const PROFILE_TABS = [
 ] as const;
 type ProfileTab = (typeof PROFILE_TABS)[number]["id"];
 
-type Data = { profile: CandidateProfile; posts: Post[]; joined: Post[]; won: number; outcomes: Post[] };
+type Data = { profile: CandidateProfile; posts: Post[]; joined: Post[]; won: number; outcomes: Post[]; activity: ActivityData };
 
 export function ProfileScreen() {
   const router = useRouter();
@@ -43,7 +45,7 @@ export function ProfileScreen() {
     if (guest !== false) return;
     let cancelled = false;
     Promise.all([getMyProfile(), getMyPosts(), getJoinedPosts().catch(() => []), getMyBids().catch(() => [])])
-      .then(([profile, rawPosts, rawJoined, rawBids]) => {
+      .then(async ([profile, rawPosts, rawJoined, rawBids]) => {
         if (cancelled) return;
         // One malformed source shouldn't blank the page; treat it as empty.
         const list = <T,>(v: T[] | unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
@@ -52,8 +54,10 @@ export function ProfileScreen() {
         const bids = list<{ status: string }>(rawBids);
         const now = Date.now();
         const outcomes = [...posts, ...joined].filter((p) => p.status === "closed" || (p.startsAt && new Date(p.startsAt).getTime() < now)).slice(0, 8);
+        const activity = await loadProfileActivity(profile.id).catch(() => ({ posts: [], projects: [], outcomes: [], stats: null }));
+        if (cancelled) return;
         setError(null);
-        setData({ profile, posts, joined, won: bids.filter((b) => b.status === "won").length, outcomes });
+        setData({ profile, posts, joined, won: bids.filter((b) => b.status === "won").length, outcomes, activity });
       })
       .catch((err: unknown) => !cancelled && setError(err instanceof Error ? err.message : "Your profile didn't load."));
     return () => {
@@ -75,9 +79,10 @@ export function ProfileScreen() {
   const area = (draft.area || data?.profile.homeCity || "").split(" / ")[0];
   const bio = draft.intro || data?.profile.bio;
   const title = draft.title || data?.profile.title;
-  const hosted = data?.posts.filter((p) => p.intentType === "activity").length ?? 0;
-  const joined = data?.joined.filter((p) => p.intentType === "activity").length ?? 0;
-  const helped = data?.joined.filter((p) => p.intentType === "ask").length ?? 0;
+  const hosted = data?.activity.stats?.hosted ?? data?.posts.filter((p) => p.intentType === "activity").length ?? 0;
+  const joined = data?.activity.stats?.joined ?? data?.joined.filter((p) => p.intentType === "activity").length ?? 0;
+  const helped = data?.activity.stats?.helped ?? data?.joined.filter((p) => p.intentType === "ask").length ?? 0;
+  const projects = data?.activity.stats?.projects ?? data?.won ?? 0;
   const outcomes = data?.outcomes ?? [];
   // The career layer counts as open once the person said they came for work or chose to be findable.
   const careerOpen = !!(data?.profile.cameForJob || data?.profile.consent?.searchableByEnterprises);
@@ -136,7 +141,7 @@ export function ProfileScreen() {
               ["Hosted", hosted],
               ["Joined", joined],
               ["Helped", helped],
-              ["Projects", data.won],
+              ["Projects", projects],
             ].map(([label, n]) => (
               <div key={label}>
                 <dd className="font-display-serif text-[24px] font-medium"><CountUp value={n as number} /></dd>
@@ -166,6 +171,7 @@ export function ProfileScreen() {
                       </Link>
                     </div>
                   </section>
+                  <ProfileActivity posts={data.activity.posts} joined={data.joined} projects={data.activity.projects} outcomes={data.activity.outcomes} stats={data.activity.stats} counts={false} />
                   <Outcomes outcomes={outcomes.slice(0, 3)} seeAll />
                   <Link href={careerOpen ? "/identity/career?step=setup" : "/identity/career"} className="mt-6 flex items-center gap-3.5 rounded-tile border-2 border-primary bg-paper p-4 text-paper-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                     <span className="grid size-14 shrink-0 place-items-center rounded-full bg-primary text-white">

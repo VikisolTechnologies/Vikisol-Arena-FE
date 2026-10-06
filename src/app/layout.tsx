@@ -12,6 +12,7 @@ import { DeferredCommandPalette } from "@/components/vnext/DeferredCommandPalett
 import { DeferredSessionExpired } from "@/components/account/DeferredSessionExpired";
 import { DeferredMissingDob } from "@/components/account/DeferredMissingDob";
 import { MotionProvider } from "@/components/motion/MotionProvider";
+import { InstallHint } from "@/components/InstallHint";
 
 // Self-hosted (src/app/fonts, OFL - licences alongside) rather than next/font/google: the
 // Google variant downloads the fonts at build time, and Vercel builds kept failing when that
@@ -61,6 +62,16 @@ export const metadata: Metadata = {
   title: "Arena — needs, people, activities and work nearby",
   description:
     "A network for needs, people, activities and work nearby. Jenny helps when there is something real to say.",
+  applicationName: "Arena",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "Arena", statusBarStyle: "black-translucent" },
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 // viewport-fit=cover so env(safe-area-inset-*) works on notched phones; zoom stays enabled.
@@ -107,6 +118,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
         <ApiDownBanner />
+        <InstallHint />
         <RouteTransition />
         <MotionProvider>
           <PageTransition>{children}</PageTransition>

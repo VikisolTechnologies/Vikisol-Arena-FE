@@ -14,34 +14,29 @@ export type FeedFilter = "nearby" | "week" | "all";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-/** The launch zone: Nearby is measured from here when we don't know where someone is. */
-export const LAUNCH_ZONE = { name: "Gachibowli", lat: 17.4401, lng: 78.3489, radiusKm: 5 } as const;
-
-/** Approximate centres of the onboarding areas (geography, not user data). */
-export const AREA_CENTRES: Record<string, { lat: number; lng: number }> = {
-  "Gachibowli / Gopanapally": { lat: 17.4401, lng: 78.3489 },
-  "Financial District / Nanakramguda": { lat: 17.4166, lng: 78.3413 },
-  "Madhapur / Hitec City": { lat: 17.4483, lng: 78.3915 },
-  Kondapur: { lat: 17.4698, lng: 78.3578 },
-  "Manikonda / Narsingi": { lat: 17.4037, lng: 78.3767 },
-  Serilingampally: { lat: 17.4933, lng: 78.3139 },
-};
+/** Default nearby radius. The backend accepts 2 km to 50 km. */
+export const DEFAULT_RADIUS_KM = 5;
+export const MIN_RADIUS_KM = 2;
+export const MAX_RADIUS_KM = 50;
 
 export type Origin = { lat: number; lng: number };
 
-/** Where "Nearby" is measured from: the person's own approximate point, else their chosen area,
- *  else the launch zone. */
-export function originFor(me?: { lat?: number; lng?: number } | null, area?: string): Origin {
+/** Where "Nearby" is measured from: the person's own approximate point. A typed area name is
+ *  not a coordinate, and there is no preset city. */
+export function originFor(me?: { lat?: number; lng?: number } | null, area?: string): Origin | null {
+  void area;
   if (me?.lat != null && me?.lng != null) return { lat: me.lat, lng: me.lng };
-  if (area && AREA_CENTRES[area]) return AREA_CENTRES[area];
-  return { lat: LAUNCH_ZONE.lat, lng: LAUNCH_ZONE.lng };
+  return null;
 }
 
-/** Nearby = has a point within `radiusKm` of the origin. Items with only a place name, or in
- *  another city, never count as nearby. */
-export function filterFeed(items: FeedItem[], filter: FeedFilter, origin: Origin = LAUNCH_ZONE, radiusKm: number = LAUNCH_ZONE.radiusKm, now = Date.now()): FeedItem[] {
+/** Nearby = has a point within `radiusKm` of the origin. Without an origin, nothing is nearby.
+ *  Items with only a place name never count as nearby. */
+export function filterFeed(items: FeedItem[], filter: FeedFilter, origin: Origin | null = null, radiusKm: number = DEFAULT_RADIUS_KM, now = Date.now()): FeedItem[] {
   if (filter === "all") return items;
-  if (filter === "nearby") return items.filter((i) => { const km = distanceKm(origin, { lat: i.approxLat, lng: i.approxLng }); return km != null && km <= radiusKm; });
+  if (filter === "nearby") {
+    if (!origin) return [];
+    return items.filter((i) => { const km = distanceKm(origin, { lat: i.approxLat, lng: i.approxLng }); return km != null && km <= radiusKm; });
+  }
   return items.filter((i) => {
     const t = new Date(i.startsAt ?? i.createdAt).getTime();
     return Number.isFinite(t) && Math.abs(t - now) <= WEEK_MS;

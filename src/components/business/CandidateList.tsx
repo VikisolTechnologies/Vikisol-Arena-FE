@@ -173,7 +173,7 @@ export function CandidateList({ applicants, must, hrefFor, onMove, onBulk, initi
         </label>
         <label className="mt-4 block text-[15px] font-semibold">
           Location
-          <input value={draft.place} onChange={(e) => setDraft((d) => ({ ...d, place: e.target.value }))} placeholder="e.g. Gachibowli" className="mt-1.5 block min-h-12 w-full rounded-xl border border-field-line bg-transparent [&>option]:text-paper-ink px-3 text-[15px] font-normal" />
+          <input value={draft.place} onChange={(e) => setDraft((d) => ({ ...d, place: e.target.value }))} placeholder="An area" className="mt-1.5 block min-h-12 w-full rounded-xl border border-field-line bg-transparent [&>option]:text-paper-ink px-3 text-[15px] font-normal" />
         </label>
         <label className="mt-4 flex min-h-11 items-center gap-3 text-[15px]">
           <input type="checkbox" checked={draft.remoteOk} onChange={(e) => setDraft((d) => ({ ...d, remoteOk: e.target.checked }))} className="size-5 accent-[var(--primary)]" />

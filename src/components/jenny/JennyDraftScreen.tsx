@@ -16,7 +16,7 @@ import { KIND_LABEL, applyPrefill, firstGap, nudgeFor, nudgeLine, prefillFor } f
 import { defaultsOf, type MoneyRange } from "@/lib/intake/types";
 
 const KINDS: { id: DraftKind; label: string }[] = (["ask", "offer", "activity", "project"] as const).map((id) => ({ id, label: KIND_LABEL[id] }));
-const EXAMPLES = ["Need two volunteers for lake cleanup Saturday at Gachibowli Lake", "Cricket this Sunday 7am at Gachibowli, 12 players", "Help moving a sofa tomorrow evening in Kondapur"];
+const EXAMPLES = ["Need two volunteers for a lake cleanup on Saturday", "Cricket this Sunday at 7am, 12 players", "Help moving a sofa tomorrow evening"];
 
 function dayLabel(iso?: unknown) {
   if (typeof iso !== "string" || !iso) return null;

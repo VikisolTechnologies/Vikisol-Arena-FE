@@ -9,8 +9,9 @@ import { cn } from "@/lib/utils";
 import { press, spring, staggerDelay } from "@/lib/motion";
 import { ButtonLink } from "@/components/bplus/Button";
 import { Pills, Skeleton, StateCard } from "@/components/bplus/Primitives";
-import { getNearby, whenLabel, type Post } from "@/lib/data/feed";
+import { DEFAULT_RADIUS_KM, MAX_RADIUS_KM, MIN_RADIUS_KM, distanceKm, getNearby, whenLabel, type Post } from "@/lib/data/feed";
 import { getMyProfile } from "@/lib/data/profile";
+import { PlacePrompt } from "@/components/location/PlacePrompt";
 import { readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
 import { Cover } from "@/components/covers/Cover";
 
@@ -20,9 +21,6 @@ import { Cover } from "@/components/covers/Cover";
 // moves when it arrives (performance pass: map CLS was 0.2).
 const ArenaMap = dynamic(() => import("@/components/map/ArenaMap").then((mod) => mod.ArenaMap), { ssr: false, loading: () => <Skeleton className="aspect-[3/4] w-full rounded-none" /> });
 
-/** Launch zone centre (Gachibowli / Gopanapally) — used until we know the person's approximate area. */
-const LAUNCH = { lat: 17.4401, lng: 78.3489 };
-const RADIUS_KM = 6;
 /** The ring around "You": how approximate the shown position is (~1.5 km), not an exact point. */
 const APPROX_RING_KM = 1.5;
 
@@ -53,25 +51,42 @@ export function DiscoverMap() {
   const [filter, setFilter] = useState<Filter>("all");
   const [selected, setSelected] = useState<string | null>(null);
   const [tilesFailed, setTilesFailed] = useState(false);
+  const [reload, setReload] = useState(0);
+  const [radiusKm, setRadiusKm] = useState(DEFAULT_RADIUS_KM);
   const area = useSyncExternalStore(subscribeEntryDraft, () => readEntryDraft().area, () => "");
+
+  useEffect(() => {
+    const bump = () => setReload((n) => n + 1);
+    window.addEventListener("arena-location", bump);
+    return () => window.removeEventListener("arena-location", bump);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     getMyProfile()
-      .then((p) => (p.approxLat != null && p.approxLng != null ? { lat: p.approxLat, lng: p.approxLng, approximate: true } : { ...LAUNCH, approximate: false }))
-      .catch(() => ({ ...LAUNCH, approximate: false }))
+      .then((p) => (p.approxLat != null && p.approxLng != null ? { lat: p.approxLat, lng: p.approxLng, approximate: true as const } : null))
+      .catch(() => null)
       .then((c) => {
         if (cancelled) return;
         setCenter(c);
-        return getNearby({ lat: c.lat, lng: c.lng, radiusKm: RADIUS_KM }).then((p) => !cancelled && setPosts(p));
+        if (!c) {
+          setPosts([]);
+          return;
+        }
+        return getNearby({ lat: c.lat, lng: c.lng, radiusKm }).then((p) => !cancelled && setPosts(p));
       })
       .catch((err: unknown) => !cancelled && setError(err instanceof Error ? err.message : "Nearby didn't load."));
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reload, radiusKm]);
 
-  const shown = useMemo(() => (posts ?? []).filter((p) => filter === "all" || p.intentType === filter), [posts, filter]);
+  const shown = useMemo(() => (posts ?? []).filter((p) => {
+    if (filter !== "all" && p.intentType !== filter) return false;
+    if (!center || p.approxLat == null || p.approxLng == null) return false;
+    const km = distanceKm(center, { lat: p.approxLat, lng: p.approxLng });
+    return km != null && km <= radiusKm;
+  }), [posts, filter, center, radiusKm]);
   // Board: the nearest upcoming thing is previewed until a pin is tapped.
   const nearest = useMemo(() => {
     if (!center) return null;
@@ -85,15 +100,36 @@ export function DiscoverMap() {
     <div className="mt-5">
       <div className="flex h-12 items-center gap-3 rounded-button border border-field-line bg-surface px-4 text-[15px]">
         <MapPin className="size-5 text-faint" strokeWidth={1.75} aria-hidden />
-        <span className="truncate">{area || (center?.approximate ? "Your area" : "Gachibowli / Gopanapally")}</span>
+        <span className="truncate">{area || "Your area"}</span>
       </div>
       <div className="mt-4">
         <Pills label="Show on map" options={FILTERS} value={filter} onChange={(f) => { setFilter(f); setSelected(null); }} />
       </div>
+      <label className="mt-4 block">
+        <span className="flex items-center justify-between text-[14px] font-medium">
+          <span>Distance</span>
+          <span>{radiusKm} km</span>
+        </span>
+        <input
+          type="range"
+          min={MIN_RADIUS_KM}
+          max={MAX_RADIUS_KM}
+          step={1}
+          value={radiusKm}
+          aria-label="Distance"
+          onChange={(e) => setRadiusKm(Number(e.target.value))}
+          className="mt-2 h-11 w-full accent-primary"
+        />
+      </label>
 
       <div className="relative mt-4 overflow-hidden rounded-[var(--radius-card)] border border-line">
-        {!center || (!posts && !error) ? (
+        {posts === null && !error ? (
           <Skeleton className="aspect-[3/4] w-full rounded-none" />
+        ) : !center ? (
+          <div className="p-4">
+            <PlacePrompt onSaved={() => { setPosts(null); setReload((n) => n + 1); }} />
+            <p className="mt-3 text-center text-[13px] text-faint">Approximate location for your privacy</p>
+          </div>
         ) : error ? (
           <div className="p-4"><StateCard kind="error" title="Nearby didn't load" detail={error} /></div>
         ) : !tilesFailed ? (
@@ -101,19 +137,21 @@ export function DiscoverMap() {
         ) : onBasemap(center.lat, center.lng) ? (
           <TileMap center={center} you={center.approximate} posts={shown} selected={pick?.id ?? null} onSelect={setSelected} />
         ) : (
-          <DrawnMap center={center} you={center.approximate} posts={shown} selected={selected} onSelect={setSelected} />
+          <DrawnMap center={center} radiusKm={radiusKm} posts={shown} selected={selected} onSelect={setSelected} />
         )}
-        <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-end gap-2">
-          <p className="pointer-events-auto flex flex-1 items-center gap-2 rounded-xl bg-background/85 px-3 py-2 text-[12px] leading-tight text-foreground backdrop-blur">
-            <MapPin className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
-            <span>
-              Looking in this area
-              <br />
-              <span className="text-faint">Approximate location for your privacy</span>
-            </span>
-            <Info className="ml-auto size-4 shrink-0 text-faint" strokeWidth={1.75} aria-hidden />
-          </p>
-        </div>
+        {center && (
+          <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-end gap-2">
+            <p className="pointer-events-auto flex flex-1 items-center gap-2 rounded-xl bg-background/85 px-3 py-2 text-[12px] leading-tight text-foreground backdrop-blur">
+              <MapPin className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+              <span>
+                Looking in this area
+                <br />
+                <span className="text-faint">Approximate location for your privacy</span>
+              </span>
+              <Info className="ml-auto size-4 shrink-0 text-faint" strokeWidth={1.75} aria-hidden />
+            </p>
+          </div>
+        )}
       </div>
 
       <AnimatePresence>
@@ -134,14 +172,18 @@ export function DiscoverMap() {
           </m.article>
         )}
       </AnimatePresence>
-      {posts && shown.length === 0 && !error && (
-        <p className="mt-3 text-center text-[14px] text-faint">Nothing posted within {RADIUS_KM} km yet.</p>
+      {posts && center && shown.length === 0 && !error && (
+        <p className="mt-3 text-center text-[14px] text-faint">Nothing posted within {radiusKm} km yet.</p>
       )}
       {shown.length > 0 && <p className="mt-3 text-center text-[14px] text-faint">Tap a pin to see what&apos;s there.</p>}
-      <p className="sr-only" aria-live="polite">{shown.length} places on the map.</p>
-      <ul className="sr-only">
+      <ul className="mt-3 space-y-2" aria-label="Places in this distance" aria-live="polite">
         {shown.map((p) => (
-          <li key={p.id}><Link href={`/feed/${p.id}`}>{p.title || p.body.slice(0, 60)}</Link></li>
+          <li key={p.id}>
+            <Link href={`/feed/${p.id}`} className="block rounded-tile bg-paper px-4 py-3 text-paper-ink">
+              <span className="block text-[16px] font-semibold">{p.title || p.body.slice(0, 60)}</span>
+              <span className="text-[13px] text-paper-ink-muted">{[whenLabel(p.startsAt), p.locationText].filter(Boolean).join(" · ")}</span>
+            </Link>
+          </li>
         ))}
       </ul>
     </div>
@@ -149,13 +191,13 @@ export function DiscoverMap() {
 }
 
 /** A light, drawn map (no tiles, no 3D): real approximate pins placed relative to the centre. */
-function DrawnMap({ center, you, posts, selected, onSelect }: { center: { lat: number; lng: number }; you: boolean; posts: Post[]; selected: string | null; onSelect: (id: string) => void }) {
+function DrawnMap({ center, radiusKm, posts, selected, onSelect }: { center: { lat: number; lng: number }; radiusKm: number; posts: Post[]; selected: string | null; onSelect: (id: string) => void }) {
   const kmPerDegLat = 111;
   const kmPerDegLng = 111 * Math.cos((center.lat * Math.PI) / 180);
   const place = (p: Post) => {
     if (p.approxLat == null || p.approxLng == null) return null;
-    const x = ((p.approxLng - center.lng) * kmPerDegLng) / RADIUS_KM;
-    const y = ((p.approxLat - center.lat) * kmPerDegLat) / RADIUS_KM;
+    const x = ((p.approxLng - center.lng) * kmPerDegLng) / radiusKm;
+    const y = ((p.approxLat - center.lat) * kmPerDegLat) / radiusKm;
     if (Math.abs(x) > 1 || Math.abs(y) > 1) return null;
     return { left: `${50 + x * 44}%`, top: `${50 - y * 44}%` };
   };
@@ -170,9 +212,9 @@ function DrawnMap({ center, you, posts, selected, onSelect }: { center: { lat: n
         <span className="size-4 rounded-full bg-info ring-4 ring-background" />
       </div>
       <p aria-hidden className="absolute left-1/2 top-1/2 mt-5 -translate-x-1/2 text-center text-[12px] font-medium leading-tight text-foreground">
-        {you ? "You" : "Gachibowli"}
+        You
         <br />
-        <span className="text-faint">{you ? "(approximate)" : "(launch area)"}</span>
+        <span className="text-faint">(approximate)</span>
       </p>
       {posts.map((p, i) => {
         const at = place(p);
@@ -200,7 +242,7 @@ function DrawnMap({ center, you, posts, selected, onSelect }: { center: { lat: n
 }
 
 /** The launch-zone basemap with real approximate pins (Web Mercator), "You" and the 5 km ring. */
-function TileMap({ center, you, posts, selected, onSelect }: { center: { lat: number; lng: number }; you: boolean; posts: Post[]; selected: string | null; onSelect: (id: string) => void }) {
+function TileMap({ center, posts, selected, onSelect }: { center: { lat: number; lng: number }; you?: boolean; posts: Post[]; selected: string | null; onSelect: (id: string) => void }) {
   const me = onBasemap(center.lat, center.lng)!;
   const ringW = (2 * APPROX_RING_KM) / 12; // fraction of the 12 km-wide basemap
   return (
@@ -213,9 +255,9 @@ function TileMap({ center, you, posts, selected, onSelect }: { center: { lat: nu
         <span className="size-4 rounded-full bg-info ring-4 ring-white/80" />
       </div>
       <p aria-hidden className="absolute mt-5 -translate-x-1/2 text-center text-[12px] font-medium leading-tight text-white" style={{ left: `${me.x * 100}%`, top: `${me.y * 100}%` }}>
-        {you ? "You" : "Gachibowli"}
+        You
         <br />
-        <span className="text-white/70">{you ? "(approximate)" : "(launch area)"}</span>
+        <span className="text-white/70">(approximate)</span>
       </p>
       {posts.map((p, i) => {
         if (p.approxLat == null || p.approxLng == null) return null;

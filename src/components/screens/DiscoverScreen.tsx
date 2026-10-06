@@ -15,7 +15,9 @@ import { Chip } from "@/components/bplus/Controls";
 import { DemoBadge, Pills, SectionHeader, Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { NeedCard, RowCard } from "@/components/cards/FeedCards";
 import { DiscoverMap } from "@/components/screens/DiscoverMap";
-import { LAUNCH_ZONE, filterFeed, getFeedItems, getTrending, hrefFor, originFor, search, whenLabel, type FeedItem, type Post } from "@/lib/data/feed";
+import { DEFAULT_RADIUS_KM, filterFeed, getFeedItems, getTrending, hrefFor, originFor, search, whenLabel, type FeedItem, type Post } from "@/lib/data/feed";
+import { getMyProfile } from "@/lib/data/profile";
+import { PlacePrompt } from "@/components/location/PlacePrompt";
 import { isDemo } from "@/lib/data/feed";
 import type { SearchResults } from "@/lib/api/search";
 import { Cover } from "@/components/covers/Cover";
@@ -119,15 +121,27 @@ function DiscoverList() {
   const [results, setResults] = useState<SearchResults | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [me, setMe] = useState<{ lat?: number; lng?: number } | null>(null);
+
+  useEffect(() => {
+    const bump = () => setAttempt((n) => n + 1);
+    window.addEventListener("arena-location", bump);
+    return () => window.removeEventListener("arena-location", bump);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([getFeedItems("for-you", 0, 40), getTrending(0, 10).catch(() => [] as Post[])])
-      .then(([f, t]) => {
+    Promise.all([
+      getFeedItems("for-you", 0, 40),
+      getTrending(0, 10).catch(() => [] as Post[]),
+      getMyProfile().then((p) => ({ lat: p.approxLat, lng: p.approxLng })).catch(() => null),
+    ])
+      .then(([f, t, profile]) => {
         if (cancelled) return;
         setError(null);
         setFeed(f);
         setTrending(t);
+        setMe(profile);
       })
       .catch((err: unknown) => !cancelled && setError(err instanceof Error ? err.message : "Discover didn't load."));
     return () => {
@@ -158,8 +172,8 @@ function DiscoverList() {
 
   // Discover is "near you": the same radius rule as the Feed's Nearby (fidelity pass).
   const draft = useSyncExternalStore(subscribeEntryDraft, readEntryDraft, () => EMPTY_DRAFT);
-  const origin = useMemo(() => originFor(null, draft.area), [draft.area]);
-  const near = useMemo(() => filterFeed(feed ?? [], "nearby", origin, LAUNCH_ZONE.radiusKm), [feed, origin]);
+  const origin = useMemo(() => originFor(me, draft.area), [me, draft.area]);
+  const near = useMemo(() => filterFeed(feed ?? [], "nearby", origin, DEFAULT_RADIUS_KM), [feed, origin]);
   const nearTrending = useMemo(() => (trending ?? []).filter((p) => near.some((n) => n.id === p.id)), [trending, near]);
   const byType = useMemo(() => {
     const f = near;
@@ -209,13 +223,17 @@ function DiscoverList() {
           <StateCard kind="error" title="Discover didn't load" detail={error} action={<Button variant="outline" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>} />
         </div>
       ) : submitted && intent && feed ? (
-        <IntentResults key={submitted} query={submitted} initial={intent} items={feed} origin={origin} area={(draft.area || LAUNCH_ZONE.name).split(" / ")[0]} onPlain={() => setPlain(true)} />
+        <IntentResults key={submitted} query={submitted} initial={intent} items={feed} origin={origin} area={draft.area || "your area"} onPlain={() => setPlain(true)} />
       ) : submitted ? (
         <SearchResultsList results={results} query={submitted} />
       ) : !feed ? (
         <div className="mt-6 space-y-3" aria-busy="true" aria-label="Loading">
           <Skeleton className="h-44 w-full" />
           <Skeleton className="h-40 w-full" />
+        </div>
+      ) : !origin ? (
+        <div className="mt-6">
+          <PlacePrompt onSaved={() => setAttempt((n) => n + 1)} />
         </div>
       ) : (
         <m.div key={chip} initial="hidden" animate="shown" className="mt-6 space-y-8">

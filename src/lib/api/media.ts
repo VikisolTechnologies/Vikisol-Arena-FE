@@ -71,7 +71,9 @@ export function uploadMedia(file: File, sig: UploadSignature | null, onProgress?
         reject(new Error("Upload failed"));
       }
     };
+    xhr.timeout = 60_000;
     xhr.onerror = () => reject(new Error("Upload failed - check your connection."));
+    xhr.ontimeout = () => reject(new Error("Upload failed - check your connection."));
     xhr.send(form);
   });
 }

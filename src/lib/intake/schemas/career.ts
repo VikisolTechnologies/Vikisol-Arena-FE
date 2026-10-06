@@ -92,7 +92,7 @@ export const CAREER_SCHEMA: Schema = {
       fields: [
         { id: "roles", type: "list", label: "Desired roles", max: 3, itemPlaceholder: "e.g. Senior Product Designer", why: "Up to three.", required: true },
         { id: "modes", type: "multichips", label: "Work mode", options: MODES },
-        { id: "locations", type: "list", label: "Preferred locations", max: 5, itemPlaceholder: "e.g. Gachibowli" },
+        { id: "locations", type: "list", label: "Preferred locations", max: 5, itemPlaceholder: "An area" },
         { id: "relocate", type: "toggle", label: "Open to relocate", default: false, more: true },
         { id: "shift", type: "chips", label: "Shift preference", options: SHIFTS, more: true },
         { id: "size", type: "multichips", label: "Company size", options: SIZES, more: true },
