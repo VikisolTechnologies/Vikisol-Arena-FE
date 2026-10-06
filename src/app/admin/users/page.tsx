@@ -4,13 +4,11 @@ import { useEffect, useState } from "react";
 import { LogOut, Search, UserX, UserCheck } from "lucide-react";
 import { AdminShell, usePlatformAdminGate } from "@/components/admin/AdminShell";
 import { AdminList, AdminLoading, AdminRow, ReasonSheet } from "@/components/admin/parts";
-import { getAdminUserProfile, pushPlatformAudit, type AdminUserProfile } from "@/components/admin/fixtures";
 import { BottomSheet } from "@/components/bplus/BottomSheet";
 import { Pills, StateCard } from "@/components/bplus/Primitives";
 import { DashButton, StatusPill } from "@/components/dash/Parts";
 import { forceSignOutUser, getAdminAccountDetail, restoreUser, searchPlatformUsers, suspendUser, type AdminAccountDetail } from "@/lib/api/platformAdmin";
 import { formatDate } from "@/lib/format";
-import { isRealMode } from "@/lib/api/mode";
 import type { PlatformUser, Role } from "@/lib/types";
 
 const ROLE_FILTERS: { key: Role | ""; label: string }[] = [
@@ -27,7 +25,6 @@ export default function PlatformUsersPage() {
   const [users, setUsers] = useState<PlatformUser[] | null>(null);
   const [query, setQuery] = useState("");
   const [role, setRole] = useState<Role | "">("");
-  const [profile, setProfile] = useState<AdminUserProfile | null>(null);
   const [realProfile, setRealProfile] = useState<AdminAccountDetail | null>(null);
   const [suspended, setSuspended] = useState<Record<string, boolean>>({});
   const [action, setAction] = useState<{ user: PlatformUser; kind: "suspend" | "restore" } | null>(null);
@@ -42,72 +39,32 @@ export default function PlatformUsersPage() {
 
   const openProfile = (u: PlatformUser) => {
     setError("");
-    if (isRealMode()) {
-      setRealProfile(null);
-      getAdminAccountDetail(u.id)
-        .then((d) => {
-          setRealProfile(d);
-          setSuspended((s) => ({ ...s, [u.id]: d.status === "suspended" }));
-        })
-        .catch(() => setError("That profile didn't load. Try again."));
-      return;
-    }
-    setProfile(
-      getAdminUserProfile(u.id) ?? {
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        role: u.role,
-        tenantName: u.tenantName,
-        createdAt: u.createdAt,
-        suspended: suspended[u.id] ?? false,
-        dataExportPending: false,
-        deleteRequested: false,
-        joinedActivities: 0,
-      },
-    );
+    setRealProfile(null);
+    getAdminAccountDetail(u.id)
+      .then((d) => {
+        setRealProfile(d);
+        setSuspended((s) => ({ ...s, [u.id]: d.status === "suspended" }));
+      })
+      .catch(() => setError("That profile didn't load. Try again."));
   };
 
   const confirmSuspendRestore = async (reason: string) => {
     if (!action) return;
-    if (isRealMode()) {
-      const detail = action.kind === "suspend" ? await suspendUser(action.user.id, reason, 7) : await restoreUser(action.user.id, reason);
-      setSuspended((s) => ({ ...s, [action.user.id]: detail.status === "suspended" }));
-      if (realProfile?.id === action.user.id) setRealProfile(detail);
-      return;
-    }
-    const next = action.kind === "suspend";
-    setSuspended((s) => ({ ...s, [action.user.id]: next }));
-    pushPlatformAudit({
-      actorName: "Platform Admin",
-      action: next ? "user.suspended" : "user.restored",
-      target: action.user.email,
-      metadata: reason,
-    });
-    if (profile?.id === action.user.id) {
-      setProfile((p) => (p ? { ...p, suspended: next } : p));
-    }
+    const detail = action.kind === "suspend" ? await suspendUser(action.user.id, reason, 7) : await restoreUser(action.user.id, reason);
+    setSuspended((s) => ({ ...s, [action.user.id]: detail.status === "suspended" }));
+    if (realProfile?.id === action.user.id) setRealProfile(detail);
   };
 
   const forceSignOut = async (u: PlatformUser) => {
     setError("");
-    if (isRealMode()) {
-      setSignoutBusyId(u.id);
-      try {
-        await forceSignOutUser(u.id);
-      } catch {
-        setError("Sign-out didn't go through. Try again.");
-      } finally {
-        setSignoutBusyId(null);
-      }
-      return;
+    setSignoutBusyId(u.id);
+    try {
+      await forceSignOutUser(u.id);
+    } catch {
+      setError("Sign-out didn't go through. Try again.");
+    } finally {
+      setSignoutBusyId(null);
     }
-    pushPlatformAudit({
-      actorName: "Platform Admin",
-      action: "user.force_signout",
-      target: u.email,
-      metadata: "All sessions invalidated (preview)",
-    });
   };
 
   return (
@@ -179,39 +136,20 @@ export default function PlatformUsersPage() {
         </AdminList>
       )}
 
-      <BottomSheet open={isRealMode() ? !!realProfile : !!profile} onClose={() => (isRealMode() ? setRealProfile(null) : setProfile(null))} title="User profile">
-        {isRealMode()
-          ? realProfile && (
-              <div className="space-y-3 text-[14px] text-paper-ink">
-                <p className="font-display-serif text-[22px] font-medium">{realProfile.name}</p>
-                <p>{realProfile.email}</p>
-                <p className="text-paper-ink-muted capitalize">Role: {realProfile.role.replace(/_/g, " ")}</p>
-                <p className="text-paper-ink-muted">Joined {formatDate(realProfile.createdAt)}</p>
-                <p className="text-paper-ink-muted">Status: <span className="capitalize">{realProfile.status}</span></p>
-                {realProfile.suspendedUntil && <p className="text-paper-ink-muted">Suspended until {formatDate(realProfile.suspendedUntil)}{realProfile.suspensionReason ? ` — ${realProfile.suspensionReason}` : ""}</p>}
-                {realProfile.bannedAt && <p className="rounded-xl bg-danger/15 px-3 py-2 text-[13px] text-danger-on-paper">Banned {formatDate(realProfile.bannedAt)}</p>}
-                <p className="text-paper-ink-muted">Posts: {realProfile.posts} · Reports filed: {realProfile.reportsFiled} · Reports against: {realProfile.reportsAgainst}</p>
-                <p className="text-[12px] text-paper-ink-muted">Passwords are never shown in Arena Admin.</p>
-              </div>
-            )
-          : profile && (
-              <div className="space-y-3 text-[14px] text-paper-ink">
-                <p className="font-display-serif text-[22px] font-medium">{profile.name}</p>
-                <p>{profile.email}</p>
-                <p className="text-paper-ink-muted capitalize">Role: {profile.role.replace(/_/g, " ")}</p>
-                {profile.tenantName && <p className="text-paper-ink-muted">Company: {profile.tenantName}</p>}
-                {profile.area && <p className="text-paper-ink-muted">Area: {profile.area}</p>}
-                <p className="text-paper-ink-muted">Joined {formatDate(profile.createdAt)}</p>
-                <p className="text-paper-ink-muted">Activities joined: {profile.joinedActivities}</p>
-                {profile.dataExportPending && (
-                  <p className="rounded-xl bg-warning/20 px-3 py-2 text-[13px]">Data export requested — pending</p>
-                )}
-                {profile.deleteRequested && (
-                  <p className="rounded-xl bg-danger/15 px-3 py-2 text-[13px] text-danger-on-paper">Account deletion requested</p>
-                )}
-                <p className="text-[12px] text-paper-ink-muted">Passwords are never shown in Arena Admin.</p>
-              </div>
-            )}
+      <BottomSheet open={!!realProfile} onClose={() => setRealProfile(null)} title="User profile">
+        {realProfile && (
+          <div className="space-y-3 text-[14px] text-paper-ink">
+            <p className="font-display-serif text-[22px] font-medium">{realProfile.name}</p>
+            <p>{realProfile.email}</p>
+            <p className="text-paper-ink-muted capitalize">Role: {realProfile.role.replace(/_/g, " ")}</p>
+            <p className="text-paper-ink-muted">Joined {formatDate(realProfile.createdAt)}</p>
+            <p className="text-paper-ink-muted">Status: <span className="capitalize">{realProfile.status}</span></p>
+            {realProfile.suspendedUntil && <p className="text-paper-ink-muted">Suspended until {formatDate(realProfile.suspendedUntil)}{realProfile.suspensionReason ? ` — ${realProfile.suspensionReason}` : ""}</p>}
+            {realProfile.bannedAt && <p className="rounded-xl bg-danger/15 px-3 py-2 text-[13px] text-danger-on-paper">Banned {formatDate(realProfile.bannedAt)}</p>}
+            <p className="text-paper-ink-muted">Posts: {realProfile.posts} · Reports filed: {realProfile.reportsFiled} · Reports against: {realProfile.reportsAgainst}</p>
+            <p className="text-[12px] text-paper-ink-muted">Passwords are never shown in Arena Admin.</p>
+          </div>
+        )}
       </BottomSheet>
 
       <ReasonSheet

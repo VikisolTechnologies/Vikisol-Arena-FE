@@ -8,7 +8,6 @@ import { TextField, TextArea } from "@/components/bplus/TextField";
 import { Chip } from "@/components/bplus/Controls";
 import { PhotoPicker } from "@/components/bplus/PhotoPicker";
 import { StateCard } from "@/components/bplus/Primitives";
-import { isRealMode } from "@/lib/api/mode";
 
 const AVAIL = ["Weekdays", "Weekends", "Evenings"] as const;
 const INTEREST_SUGGESTIONS = ["Running", "Badminton", "Volunteering", "Food", "Yoga", "Reading"];
@@ -54,13 +53,11 @@ export default function EditProfilePage() {
 
   return (
     <AccountPage title="Edit profile" lede="Help neighbours get to know you. You control what's visible.">
-      {isRealMode() && (
-        <StateCard
-          kind="empty"
-          title="Some fields stay on this device"
-          detail="Display name, title, intro, interests and availability need PATCH /profile/me. Area and photo upload use existing calls where available."
-        />
-      )}
+      <StateCard
+        kind="empty"
+        title="Some fields stay on this device"
+        detail="Display name, title, intro, interests and availability need PATCH /profile/me. Area and photo upload use existing calls where available."
+      />
       <div className="space-y-5">
         <PhotoPicker
           value={draft.photo ?? null}
@@ -121,9 +118,7 @@ export default function EditProfilePage() {
           </div>
         </div>
         <p className="text-[13px] text-paper-ink-muted">
-          {isRealMode()
-            ? "Saved fields that Arena can store go to the API; the rest stay on this device until the API supports them."
-            : "Preview: changes save on this device only."}
+          Saved fields that Arena can store go to the API; the rest stay on this device until the API supports them.
         </p>
         <Button type="button" onClick={save} success={saved}>
           {saved ? "Saved" : "Save changes"}

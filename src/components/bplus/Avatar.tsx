@@ -1,6 +1,4 @@
 import { cn } from "@/lib/utils";
-import { isRealMode } from "@/lib/api/mode";
-import { previewPhotoForName } from "@/lib/mock/people";
 
 export function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -8,10 +6,9 @@ export function initials(name: string) {
   return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
 }
 
-/** A person's own photo, or their initials on a warm disc. In preview (mock) mode only, the
- *  fictional preview neighbours show their credited fixture photo (public/fixtures/CREDITS.md). */
+/** A person's own photo, or their initials on a warm disc. */
 export function Avatar({ src, name, className, eager }: { src?: string | null; name: string; className?: string; eager?: boolean }) {
-  const photo = src || (isRealMode() ? undefined : previewPhotoForName(name));
+  const photo = src;
   if (photo) {
     // eslint-disable-next-line @next/next/no-img-element -- user photo / local data URL / fixture
     return <img src={photo} alt="" loading={eager ? "eager" : "lazy"} decoding="async" className={cn("size-12 rounded-full bg-paper-muted object-cover", className)} />;

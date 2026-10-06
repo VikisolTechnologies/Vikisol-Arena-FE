@@ -10,11 +10,9 @@
  * score, never a ranking by fit (correction #4). Decisions and toggles live on this device.
  */
 import { FIXTURES_ALLOWED } from "@/lib/data/mode";
-import { isRealMode } from "@/lib/api/mode";
-import { sendThreadMessage } from "@/lib/api/messages";
 import { distanceKm, whenLabel, type FeedItem } from "@/lib/data/feed";
 import { guessType } from "@/lib/activities/taxonomy";
-import { DRAFT_SENTENCE, PREVIEW_SEND, RECENT_FIXTURES, REMINDER_FIXTURES, queueFixtures } from "@/lib/fixtures/jenny";
+import { DRAFT_SENTENCE, RECENT_FIXTURES, REMINDER_FIXTURES, queueFixtures } from "@/lib/fixtures/jenny";
 import type { Post } from "@/lib/types";
 
 /** Jenny's P8 surfaces exist only where fixtures may show (preview / mixed). */
@@ -97,16 +95,10 @@ export function loadQueue(): QueueItem[] {
   });
 }
 
-/** Approve once. In preview (mock) mode a message really goes into the preview conversation;
- *  against a real backend these are sample items, so nothing is sent and the note says so. */
+/** Approve once. These are sample items against the real backend, so nothing is sent and the
+ *  note says so. */
 export async function approve(item: QueueItem): Promise<Decision> {
-  let note = "Preview — nothing was shared";
-  if (item.id === PREVIEW_SEND.itemId && !isRealMode() && item.action) {
-    await sendThreadMessage(PREVIEW_SEND.conversationId, item.action.content);
-    note = PREVIEW_SEND.note;
-  } else if (isRealMode()) {
-    note = "Sample item — nothing was sent";
-  }
+  const note = "Sample item — nothing was sent";
   const d: Decision = { state: "approved", at: new Date().toISOString(), note };
   writeJSON(DECISIONS, { ...readDecisions(), [item.id]: d });
   return d;

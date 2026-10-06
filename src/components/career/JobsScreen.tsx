@@ -13,8 +13,7 @@ import { filterFeed, getFeedItems, originFor, whenLabel, type FeedItem } from "@
 import { EMPTY_DRAFT, readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
 import { AppShell } from "@/components/bplus/AppShell";
 import { Button, ButtonLink } from "@/components/bplus/Button";
-import { Pills, PreviewPill, SectionHeader, Skeleton, StateCard } from "@/components/bplus/Primitives";
-import { isRealMode } from "@/lib/api/mode";
+import { Pills, SectionHeader, Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { CompanyMark } from "@/components/career/CompanyMark";
 import { getJobs } from "@/lib/api/jobs";
 import { getMyProfile } from "@/lib/api/profile";
@@ -137,7 +136,7 @@ export function JobsScreen() {
       </div>
 
       <section className="mt-5 flex-1" aria-label="Jobs near you">
-        <SectionHeader title={filter === "remote" ? "Remote jobs" : "Jobs near you"} action={shown.length > 4 ? <button type="button" onClick={() => setAllJobs((v) => !v)} aria-expanded={allJobs} className="inline-flex min-h-11 items-center text-[14px] text-foreground/85 underline underline-offset-4">{allJobs ? "Show fewer" : `See all ${shown.length}`}</button> : isRealMode() ? undefined : <PreviewPill />} />
+        <SectionHeader title={filter === "remote" ? "Remote jobs" : "Jobs near you"} action={shown.length > 4 ? <button type="button" onClick={() => setAllJobs((v) => !v)} aria-expanded={allJobs} className="inline-flex min-h-11 items-center text-[14px] text-foreground/85 underline underline-offset-4">{allJobs ? "Show fewer" : `See all ${shown.length}`}</button> : undefined} />
         {error ? (
           <StateCard kind="error" title="Jobs didn't load" detail="Check your connection and try again." action={<Button variant="outline" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>} />
         ) : !jobs ? (

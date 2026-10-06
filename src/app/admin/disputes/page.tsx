@@ -3,12 +3,10 @@
 import { useEffect, useState } from "react";
 import { AdminShell, usePlatformAdminGate } from "@/components/admin/AdminShell";
 import { AdminList, AdminLoading, AdminRow, ReasonSheet, SlaTimer } from "@/components/admin/parts";
-import { getDisputes, pushPlatformAudit, type AttendanceDispute } from "@/components/admin/fixtures";
 import { Pills, StateCard } from "@/components/bplus/Primitives";
 import { DashButton, StatusPill } from "@/components/dash/Parts";
 import { getDisputeQueue, resolveDispute, type DisputeView } from "@/lib/api/platformAdmin";
 import { formatDateTime } from "@/lib/format";
-import { isRealMode } from "@/lib/api/mode";
 
 const TABS = [
   { id: "open" as const, label: "Open" },
@@ -20,21 +18,17 @@ const TABS = [
 export default function DisputesPage() {
   const gate = usePlatformAdminGate();
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("open");
-  const [items, setItems] = useState<(AttendanceDispute | DisputeView)[] | null>(null);
-  const [resolving, setResolving] = useState<{ item: AttendanceDispute | DisputeView; side: "host" | "joiner" } | null>(null);
+  const [items, setItems] = useState<DisputeView[] | null>(null);
+  const [resolving, setResolving] = useState<{ item: DisputeView; side: "host" | "joiner" } | null>(null);
 
   const [error, setError] = useState("");
 
   const load = () => {
-    if (isRealMode()) {
-      setItems(null);
-      getDisputeQueue(tab).catch(() => {
-        setError("The dispute queue didn't load. Refresh to try again.");
-        return [];
-      }).then(setItems);
-      return;
-    }
-    setItems(getDisputes());
+    setItems(null);
+    getDisputeQueue(tab).catch(() => {
+      setError("The dispute queue didn't load. Refresh to try again.");
+      return [];
+    }).then(setItems);
   };
 
   useEffect(() => {
@@ -46,25 +40,12 @@ export default function DisputesPage() {
 
   const resolve = async (reason: string) => {
     if (!resolving) return;
-    const status = resolving.side === "host" ? "resolved_host" : "resolved_joiner";
-    if (isRealMode()) {
-      await resolveDispute(resolving.item.id, resolving.side, reason);
-      load();
-      return;
-    }
-    setItems((prev) =>
-      prev?.map((d) => (d.id === resolving.item.id ? { ...d, status, note: reason } : d)) ?? null,
-    );
-    pushPlatformAudit({
-      actorName: "Platform Admin",
-      action: "dispute.resolved",
-      target: resolving.item.activityTitle,
-      metadata: `${status}: ${reason}`,
-    });
+    await resolveDispute(resolving.item.id, resolving.side, reason);
+    load();
   };
 
-  const statusOf = (d: AttendanceDispute | DisputeView) => ("state" in d ? d.state : d.status);
-  const filtered = isRealMode() ? items ?? [] : items?.filter((d) => statusOf(d) === tab) ?? [];
+  const statusOf = (d: DisputeView) => d.state;
+  const filtered = items ?? [];
 
   return (
     <AdminShell title="Disputes">

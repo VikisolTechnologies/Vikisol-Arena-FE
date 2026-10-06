@@ -21,7 +21,6 @@ import { Stat } from "@/components/dash/Parts";
 import { StateCard } from "@/components/bplus/Primitives";
 import { getPlatformDashboard } from "@/lib/api/platformAdmin";
 import { formatDateTime } from "@/lib/format";
-import { isRealMode } from "@/lib/api/mode";
 import type { PlatformDashboard } from "@/lib/types";
 
 const METRIC_ICONS: Record<string, typeof UserPlus> = {
@@ -82,11 +81,6 @@ export default function AdminOverviewPage() {
                 return <Stat key={m.id} icon={Icon} value={m.value} label={m.label} tone="primary" />;
               })}
             </MetricGrid>
-            {!isRealMode() && (
-              <p className="mt-3 text-[13px] text-faint">
-                Preview: jobs, applications and reports use sample numbers; retention metrics stay empty until the API exists.
-              </p>
-            )}
           </section>
 
           <section aria-labelledby="platform-snapshot-heading">

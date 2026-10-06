@@ -19,8 +19,6 @@ import { timeAgo } from "@/lib/data/time";
 import type { Conversation, Room } from "@/lib/types";
 import { Cover } from "@/components/covers/Cover";
 import { CompanyMark } from "@/components/career/CompanyMark";
-import { isRealMode } from "@/lib/api/mode";
-import { previewMediaForPost } from "@/lib/mock/posts";
 import { JennyOrb } from "@/components/jenny/JennyOrb";
 
 const FILTERS = [
@@ -163,7 +161,7 @@ function JennyRow() {
       <JennyOrb size={56} online still />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[16px] font-semibold">Jenny</span>
-        <span className="block truncate text-[14px] text-faint">{isRealMode() ? "Ask her to find, plan or draft something" : "Two things for your Saturday"}</span>
+        <span className="block truncate text-[14px] text-faint">Ask her to find, plan or draft something</span>
       </span>
       <span className="shrink-0 rounded-full bg-primary/15 px-2 py-0.5 text-[12px] font-semibold text-primary-soft">AI</span>
     </Link>
@@ -180,10 +178,9 @@ function ThreadRow({ thread: t }: { thread: Thread }) {
   let preview: string;
   if (t.kind === "room") {
     const IconCmp = ROOM_ICON[t.room.postIntentType as keyof typeof ROOM_ICON] ?? Users;
-    const media = isRealMode() ? undefined : previewMediaForPost(t.room.postId);
     thumb =
-      t.room.postIntentType === "activity" || media ? (
-        <Cover source={{ id: t.room.postId, kind: "activity", title: t.room.postBody, media }} className="size-14 shrink-0 rounded-xl" />
+      t.room.postIntentType === "activity" ? (
+        <Cover source={{ id: t.room.postId, kind: "activity", title: t.room.postBody }} className="size-14 shrink-0 rounded-xl" />
       ) : (
         <span className="grid size-14 shrink-0 place-items-center rounded-xl bg-[radial-gradient(circle_at_30%_20%,var(--warning),var(--primary-pressed)_65%,var(--surface))] text-white">
           <IconCmp className="size-6" strokeWidth={1.75} aria-hidden />

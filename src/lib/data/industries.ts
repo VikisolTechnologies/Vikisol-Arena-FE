@@ -1,17 +1,15 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api/httpClient";
-import { isRealMode } from "@/lib/api/mode";
 
 /** An industry is a plain string everywhere (the label, e.g. "Engineering"). The list is staff-managed. */
 export type IndustryOption = { key: string; label: string };
 
-/** Preview fixture: the five that exist today. Real mode reads GET /public/industries (active only, in display order). */
+/** Fallback shown until GET /public/industries (active only, in display order) loads. */
 export const PREVIEW_INDUSTRIES: IndustryOption[] = ["Engineering", "Design", "Sales", "Healthcare", "Logistics"].map((label) => ({ key: label.toUpperCase(), label }));
 
 let cached: Promise<IndustryOption[]> | null = null;
 
 export function loadIndustries(): Promise<IndustryOption[]> {
-  if (!isRealMode()) return Promise.resolve(PREVIEW_INDUSTRIES);
   cached ??= apiFetch<IndustryOption[]>("/public/industries", { auth: false }).catch((err) => {
     cached = null; // retry next time rather than remembering a failure
     throw err;

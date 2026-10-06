@@ -7,7 +7,6 @@ import { Button } from "@/components/bplus/Button";
 import { StateCard } from "@/components/bplus/Primitives";
 import { getSession } from "@/lib/session";
 import { ME } from "@/lib/fixtures/world";
-import { isRealMode } from "@/lib/api/mode";
 
 export default function ShareProfilePage() {
   const [url, setUrl] = useState("");
@@ -44,11 +43,6 @@ export default function ShareProfilePage() {
 
   return (
     <AccountPage title="Share profile" lede="Send a link to your public profile. Only what you've made visible is shown.">
-      {!isRealMode() && (
-        <div className="mb-4">
-          <StateCard kind="empty" title="Preview link" detail="In preview this opens the public profile specimen." />
-        </div>
-      )}
       <div className="rounded-tile bg-paper p-4 text-paper-ink">
         <p className="flex items-center gap-2 text-[13px] font-medium text-paper-ink-muted">
           <Link2 className="size-4" aria-hidden /> Your public link

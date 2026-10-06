@@ -6,7 +6,6 @@ import { getFeedItems } from "@/lib/api/feed";
 import { getNearby, getTrending } from "@/lib/api/posts";
 import { search } from "@/lib/api/search";
 import type { FeedItem, Post } from "@/lib/types";
-import { isRealMode } from "@/lib/api/mode";
 
 export { getFeedItems, getNearby, getTrending, search };
 export type { FeedItem, Post };
@@ -96,8 +95,7 @@ export function hrefFor(item: Pick<FeedItem, "id" | "itemType">) {
   return `/feed/${item.id}`;
 }
 
-/** Sample content must say so: server-seeded demo items, and everything in preview (mock) mode. */
+/** Sample content must say so: server-seeded demo items. */
 export function isDemo(item: object) {
-  if (!isRealMode()) return true;
   return "demoContent" in item && (item as { demoContent?: boolean }).demoContent === true;
 }

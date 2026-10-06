@@ -17,7 +17,6 @@ import type { PhotoValue } from "@/components/intake/IntakeField";
 import { useGuest, useOffline } from "@/hooks/use-arena-session";
 import { createPost } from "@/lib/api/posts";
 import { setNeedDetails } from "@/lib/api/needs";
-import { isRealMode } from "@/lib/api/mode";
 import { getMyProfile } from "@/lib/api/profile";
 import { getUploadSignature, uploadMedia } from "@/lib/api/media";
 import { HELP_LABEL, NEED_KINDS, URGENCY_LABEL, findNeedKind, needSchema, offerSchema, publicLines } from "@/lib/intake/schemas/need";
@@ -86,18 +85,16 @@ export function PostFlow({ mode }: { mode: Mode }) {
       // MARATHON-FE area 4: the structured fields PUT /needs/{id}/details stores, same spirit as
       // area 3b's activity details - the public post text above is for today's feed cards, this
       // is the real, structured truth.
-      if (isRealMode()) {
-        await setNeedDetails(post.id, {
-          category: kind.id,
-          preferredTime: mode === "need" ? URGENCY_LABEL[String(v.urgency)] : undefined,
-          urgency: mode === "need" && typeof v.urgency === "string" ? v.urgency : undefined,
-          helpType: typeof v.help === "string" ? v.help : undefined,
-          answers: Object.fromEntries(Object.entries(v).filter(([k]) => !["title", "details", "area", "pickup", "audience", "photos", "urgency", "help"].includes(k))),
-          days: mode === "offer" && Array.isArray(v.days) ? (v.days as string[]) : undefined,
-          limit: mode === "offer" && typeof v.limit === "string" ? v.limit : undefined,
-          proofUrl: mode === "offer" && typeof v.proof === "string" && v.proof.trim() ? v.proof.trim() : undefined,
-        }).catch(() => {});
-      }
+      await setNeedDetails(post.id, {
+        category: kind.id,
+        preferredTime: mode === "need" ? URGENCY_LABEL[String(v.urgency)] : undefined,
+        urgency: mode === "need" && typeof v.urgency === "string" ? v.urgency : undefined,
+        helpType: typeof v.help === "string" ? v.help : undefined,
+        answers: Object.fromEntries(Object.entries(v).filter(([k]) => !["title", "details", "area", "pickup", "audience", "photos", "urgency", "help"].includes(k))),
+        days: mode === "offer" && Array.isArray(v.days) ? (v.days as string[]) : undefined,
+        limit: mode === "offer" && typeof v.limit === "string" ? v.limit : undefined,
+        proofUrl: mode === "offer" && typeof v.proof === "string" && v.proof.trim() ? v.proof.trim() : undefined,
+      }).catch(() => {});
       clearIntakeDraft(`${mode}-${kind.id}`);
       vibrate();
       router.replace(`/feed/${post.id}`);

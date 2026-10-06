@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Check, Globe, X } from "lucide-react";
 import { AdminShell, usePlatformAdminGate } from "@/components/admin/AdminShell";
 import { AdminList, AdminLoading, AdminRow, ReasonSheet } from "@/components/admin/parts";
-import { getVerificationQueue as getFixtureQueue, pushPlatformAudit, type VerificationRequest } from "@/components/admin/fixtures";
+import type { VerificationRequest } from "@/components/admin/fixtures";
 import {
   approveVerification,
   getVerificationQueue,
@@ -14,7 +14,6 @@ import {
 import { Pills, StateCard } from "@/components/bplus/Primitives";
 import { DashButton, StatusPill } from "@/components/dash/Parts";
 import { formatDateTime } from "@/lib/format";
-import { isRealMode } from "@/lib/api/mode";
 
 const TABS = [
   { id: "pending" as const, label: "Pending" },
@@ -49,38 +48,25 @@ export default function VerificationQueuePage() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = () => {
-    if (isRealMode()) {
-      getVerificationQueue()
-        .then((q) => setItems(q.map(toRow)))
-        .catch(() => setError("The verification queue didn't load. Refresh to try again."));
-      return;
-    }
-    setItems(getFixtureQueue());
+    getVerificationQueue()
+      .then((q) => setItems(q.map(toRow)))
+      .catch(() => setError("The verification queue didn't load. Refresh to try again."));
   };
 
   useEffect(() => {
     if (gate !== "ready") return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [gate]);
 
-  // A domain mismatch can't be approved in one tap: it needs a written note, kept in the audit log.
-  const approve = async (item: VerificationRequest, note?: string) => {
+  // A domain mismatch can't be approved in one tap: it needs a written note. The backend's
+  // approve endpoint takes no body yet, so this note isn't sent anywhere - pre-existing gap from
+  // Step A, not something this step introduced or is fixing.
+  const approve = async (item: VerificationRequest, _note?: string) => {
     setBusyId(item.id);
     setError("");
     try {
-      if (isRealMode()) {
-        await approveVerification(item.id);
-        load();
-      } else {
-        setItems((prev) => prev?.map((v) => (v.id === item.id ? { ...v, status: "approved" as const } : v)) ?? null);
-        pushPlatformAudit({
-          actorName: "Platform Admin",
-          action: "verification.approved",
-          target: item.companyName,
-          metadata: note ? `Domain ${item.domain} did not match the work email; approved after manual review: ${note}` : `Domain ${item.domain}`,
-        });
-      }
+      await approveVerification(item.id);
+      load();
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : "That didn't save.");
     } finally {
@@ -92,13 +78,8 @@ export default function VerificationQueuePage() {
     if (!rejecting) return;
     setError("");
     try {
-      if (isRealMode()) {
-        await rejectVerification(rejecting.id, reason);
-        load();
-      } else {
-        setItems((prev) => prev?.map((v) => (v.id === rejecting.id ? { ...v, status: "rejected" as const, rejectReason: reason } : v)) ?? null);
-        pushPlatformAudit({ actorName: "Platform Admin", action: "verification.rejected", target: rejecting.companyName, metadata: reason });
-      }
+      await rejectVerification(rejecting.id, reason);
+      load();
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : "That didn't save.");
     }

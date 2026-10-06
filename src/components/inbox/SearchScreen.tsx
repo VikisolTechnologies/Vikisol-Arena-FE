@@ -14,11 +14,8 @@ import { Button } from "@/components/bplus/Button";
 import { Pills, Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { search, type SearchResults, type SearchType } from "@/lib/api/search";
 import { savePost, unsavePost } from "@/lib/api/posts";
-import { isRealMode } from "@/lib/api/mode";
 import { distanceKm, getFeedItems, originFor, whenLabel, type FeedItem, type Origin } from "@/lib/data/feed";
 import { AREAS, EMPTY_DRAFT, readEntryDraft, subscribeEntryDraft, writeEntryDraft } from "@/lib/data/onboarding";
-import { FIXTURES_ALLOWED } from "@/lib/data/mode";
-import { PREVIEW_PEOPLE } from "@/lib/data/fixtures";
 import type { Post } from "@/lib/types";
 import { allowGuestBrowsing } from "@/lib/auth-guard";
 import { timeAgo } from "@/lib/data/time";
@@ -92,21 +89,6 @@ export function toRows(data: SearchResults, scope: Scope, origin?: Origin): Row[
   return rows.map((r, i) => ({ r, i })).sort((a, b) => (b.r.at ?? -Infinity) - (a.r.at ?? -Infinity) || a.i - b.i).map(({ r }) => r);
 }
 
-/** Preview mode only: the preview neighbours as people/skills results (gap #17 in real mode). */
-function previewPeopleRows(q: string, skills: boolean): Row[] {
-  const t = q.toLowerCase();
-  return PREVIEW_PEOPLE.filter((p) => !t || `${skills ? "" : p.name} ${p.interests.join(" ")}`.toLowerCase().includes(t)).map((p) => ({
-    key: `u-${p.id}`,
-    href: `/people/${p.id}`,
-    title: p.name,
-    kind: skills ? "Skills" : "Person",
-    icon: UserRound,
-    meta: p.interests.join(", "),
-    km: p.distanceKm,
-    person: p.name,
-  }));
-}
-
 /** Board "Messages, trust…" #4 — Search: scopes, the area, a radius and a results list with
  *  photos. Query and scope live in the URL (?q=&scope=). Before anything is typed it lists what's
  *  newest nearby — still real results, not suggestions. */
@@ -144,8 +126,6 @@ export function SearchScreen() {
     else url.searchParams.delete("scope");
     window.history.replaceState(null, "", url);
     if (trimmed.length < 2 || !apiType) return;
-    // Mock mode has no real people/skills search to call - previewPeopleRows() below handles it.
-    if ((scope === "people" || scope === "skills") && !isRealMode()) return;
     let cancelled = false;
     const timer = window.setTimeout(() => {
       const peopleOpts = scope === "people" || scope === "skills" ? { near: true, radiusKm: radius || undefined } : undefined;
@@ -163,8 +143,7 @@ export function SearchScreen() {
   const current = result?.key === key ? result : null;
   let rows: Row[] = [];
   if (peopleScope) {
-    if (isRealMode()) rows = trimmed.length >= 2 && current?.data ? toRows(current.data, scope, origin) : [];
-    else if (FIXTURES_ALLOWED) rows = previewPeopleRows(trimmed, scope === "skills");
+    rows = trimmed.length >= 2 && current?.data ? toRows(current.data, scope, origin) : [];
   } else if (trimmed.length >= 2) rows = current?.data ? toRows(current.data, scope, origin) : [];
   else if (nearby) {
     // Nothing typed yet: the newest things nearby, as results.
@@ -179,7 +158,7 @@ export function SearchScreen() {
   // Radius: items with a point outside it drop out; items without one stay, marked "distance unknown".
   if (radius) rows = rows.filter((r) => r.km == null || r.km <= radius);
   if (sort === "nearest" || peopleScope) rows = [...rows].sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
-  const peopleWaiting = peopleScope && isRealMode() && trimmed.length >= 2 && !current;
+  const peopleWaiting = peopleScope && trimmed.length >= 2 && !current;
   const waiting = peopleWaiting || (!peopleScope && (trimmed.length >= 2 ? !current : !nearby));
 
   const toggleSave = async (postId: string) => {
@@ -233,13 +212,11 @@ export function SearchScreen() {
       </div>
 
       <div className="mt-5 flex-1">
-        {peopleScope && !isRealMode() && !FIXTURES_ALLOWED ? (
-          <StateCard kind="empty" title={scope === "people" ? "People search needs a moment" : "Skill search needs a moment"} detail="For now, find neighbours through activities and needs you join." />
-        ) : waiting ? (
+        {waiting ? (
           <div className="space-y-3" aria-busy="true" aria-label="Searching">
             {[0, 1, 2].map((i) => <Skeleton key={i} className="h-[92px] w-full" />)}
           </div>
-        ) : trimmed.length >= 2 && !current?.data && (isRealMode() || !peopleScope) ? (
+        ) : trimmed.length >= 2 && !current?.data ? (
           <StateCard kind="error" title="Search isn't responding" detail="Try again in a moment." />
         ) : rows.length === 0 ? (
           <StateCard kind="empty" title={trimmed ? `Nothing matches “${trimmed}”` : `Nothing within ${radius || "any"} km yet`} detail={radius && radius < 10 ? "Try a wider distance or fewer words." : scope !== "all" ? "Try fewer words, or search everything." : "Try fewer or different words."} action={radius && radius < 10 ? <button type="button" onClick={() => setRadius(10)} className="min-h-11 text-[15px] font-semibold text-primary underline underline-offset-4">Widen to 10 km</button> : scope !== "all" ? <button type="button" onClick={() => setScope("all")} className="min-h-11 text-[15px] font-semibold text-primary underline underline-offset-4">Search everything</button> : undefined} />

@@ -10,12 +10,10 @@ import { DemoBadge, KindChip } from "@/components/bplus/Primitives";
 import { formatKm, goingLabel, hrefFor, isDemo, spotsLeft, whenLabel, type FeedItem } from "@/lib/data/feed";
 import { Cover } from "@/components/covers/Cover";
 import { AvatarStack } from "@/components/bplus/Avatar";
-import { isRealMode } from "@/lib/api/mode";
-import { previewPeopleFor } from "@/lib/mock/people";
 
-/** Faces for a count, preview mode only (the API doesn't return who's going on feed items). */
-function facesFor(item: FeedItem, n: number) {
-  return isRealMode() ? [] : previewPeopleFor(item.id, Math.min(3, n), item.authorName).map((p) => p.name);
+/** Faces for a count — the API doesn't return who's going on feed items, so this is always empty. */
+function facesFor(_item: FeedItem, _n: number) {
+  return [] as string[];
 }
 
 /** A photo that reserves its box before it loads (no layout shift); without one, a unique

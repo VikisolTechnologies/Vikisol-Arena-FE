@@ -4,11 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { MessagesSquare, Briefcase, ShieldCheck, ShieldX, AlertTriangle, Ban, UserX } from "lucide-react";
 import { AdminShell, usePlatformAdminGate } from "@/components/admin/AdminShell";
 import { AdminList, AdminLoading, AdminRow, ReasonSheet, SlaTimer } from "@/components/admin/parts";
-import { pushPlatformAudit } from "@/components/admin/fixtures";
 import { Pills, StateCard } from "@/components/bplus/Primitives";
 import { DashButton } from "@/components/dash/Parts";
 import { banReportedUser, getModerationQueue, resolveModerationItem, suspendReportedUser, warnReportedUser } from "@/lib/api/platformAdmin";
-import { isRealMode } from "@/lib/api/mode";
 import { formatDateTime } from "@/lib/format";
 import type { ModerationItem, ModerationStatus } from "@/lib/types";
 
@@ -58,19 +56,9 @@ export default function ModerationPage() {
     if (action === "warn") await warnReportedUser(item.id, reason);
     else if (action === "suspend") await suspendReportedUser(item.id, reason, SUSPEND_DAYS);
     else if (action === "ban") await banReportedUser(item.id, reason);
-    if (isRealMode()) {
-      // warn/suspend/ban don't resolve the moderation item itself (it can still be dismissed or
-      // taken down separately) - just show the note was sent until the next reload.
-      setNotes((n) => ({ ...n, [item.id]: reason }));
-    } else {
-      setNotes((n) => ({ ...n, [item.id]: reason }));
-      pushPlatformAudit({
-        actorName: "Platform Admin",
-        action: action === "warn" ? "moderation.warned" : action === "suspend" ? "moderation.suspended" : "moderation.banned",
-        target: item.postingTitle,
-        metadata: reason,
-      });
-    }
+    // warn/suspend/ban don't resolve the moderation item itself (it can still be dismissed or
+    // taken down separately) - just show the note was sent until the next reload.
+    setNotes((n) => ({ ...n, [item.id]: reason }));
   };
 
   const onAction = (item: ModerationItem, action: ModerationAction) => {

@@ -14,7 +14,6 @@ import { confirmPhoneOtp, getVerificationStatus, requestPhoneOtp, setDateOfBirth
 import { changeEmail, changePassword } from "@/lib/api/auth";
 import { getMyBlocks, unblockUser } from "@/lib/api/blocks";
 import { ApiError } from "@/lib/api/httpClient";
-import { isRealMode } from "@/lib/api/mode";
 import { timeAgo } from "@/lib/data/time";
 import { PASSWORD_MIN } from "@/lib/data/auth";
 import type { AutonomyLevel, BlockedUser, CandidateProfile, LocationConsent, VerificationStatus } from "@/lib/types";
@@ -340,7 +339,7 @@ export function VerificationSheet({ open, onClose }: { open: boolean; onClose: (
           <p className="mt-1 text-[15px] text-paper-ink-muted">{status.phoneNumber}</p>
         ) : status?.otpPending ? (
           <div className="mt-3 space-y-3">
-            <p className="text-[14px] text-paper-ink-muted">Code sent to {status.phoneNumber}.{!isRealMode() && " (Demo mode: the code is 123456.)"}</p>
+            <p className="text-[14px] text-paper-ink-muted">Code sent to {status.phoneNumber}.</p>
             <PaperInput label="6-digit code" value={otp} onChange={setOtp} autoComplete="one-time-code" inputMode="numeric" maxLength={6} />
             <Button disabled={!otp.trim()} loading={busy} onClick={() => run(async () => { setStatus(await confirmPhoneOtp(otp.trim())); setOtp(""); }, "That code didn't work.")}>Confirm</Button>
           </div>

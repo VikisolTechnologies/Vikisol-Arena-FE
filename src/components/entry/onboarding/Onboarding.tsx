@@ -8,7 +8,6 @@ import { StepperDots } from "@/components/bplus/Controls";
 import { pageSlide } from "@/lib/motion";
 import { useDirection } from "@/components/motion/useDirection";
 import { getSession, setOnboarded } from "@/lib/session";
-import { isRealMode } from "@/lib/api/mode";
 import { getVerificationStatus } from "@/lib/api/verification";
 import {
   clearEntryPending,
@@ -58,7 +57,6 @@ export function Onboarding() {
 
   useEffect(() => {
     if (!hasSession) return;
-    if (!isRealMode()) { setDobSet(false); return; }
     let cancelled = false;
     getVerificationStatus()
       .then((v) => { if (!cancelled) setDobSet(v.dateOfBirthSet); })

@@ -3,49 +3,37 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/bplus/BottomSheet";
-import { getJoinRequests, recordJoinOutcome } from "@/lib/api/posts";
+import { recordJoinOutcome } from "@/lib/api/posts";
 import { acceptDispute, getAttendance, hostCheckIn, type AttendanceRow } from "@/lib/api/activities";
-import { isRealMode } from "@/lib/api/mode";
 import type { PostJoinRequest } from "@/lib/types";
 
-/** Flow §3 A12 — the host marks who came. M6 area 3b: real mode now uses the activity-specific
- * attendance sheet (`PUT /activities/{id}/attendance/{joinId}/check-in`,
- * `GET /activities/{id}/attendance`, `PUT .../accept-dispute`) instead of the generic join
- * outcome, so disputes show up here too. Mock mode keeps the old generic outcome flow — it has
- * no equivalent endpoints. */
+/** Flow §3 A12 — the host marks who came, via the activity-specific attendance sheet
+ * (`PUT /activities/{id}/attendance/{joinId}/check-in`, `GET /activities/{id}/attendance`,
+ * `PUT .../accept-dispute`), so disputes show up here too. `specimen` is compare-page-only
+ * (`/dev/screen/[id]`): a fixed join-request list rendered statically with no network call, for
+ * visual review. */
 export function CheckInSheet({ postId, onClose, specimen }: { postId: string | null; onClose: () => void; specimen?: PostJoinRequest[] }) {
-  const real = isRealMode();
-  const [joins, setJoins] = useState<PostJoinRequest[] | null>(specimen ?? null);
   const [rows, setRows] = useState<AttendanceRow[] | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
-    if (!postId) return;
+    if (!postId || specimen) return;
     let cancelled = false;
-    if (real) {
-      getAttendance(postId)
-        .then((r) => !cancelled && setRows(r))
-        .catch((err: unknown) => !cancelled && setError(err instanceof Error ? err.message : "Attendance didn't load."));
-      return () => {
-        cancelled = true;
-      };
-    }
-    if (specimen) return;
-    getJoinRequests(postId)
-      .then((j) => !cancelled && setJoins(j))
+    getAttendance(postId)
+      .then((r) => !cancelled && setRows(r))
       .catch((err: unknown) => !cancelled && setError(err instanceof Error ? err.message : "Attendance didn't load."));
     return () => {
       cancelled = true;
     };
-  }, [postId, specimen, real]);
+  }, [postId, specimen]);
 
-  const approved = (joins ?? []).filter((j) => j.status === "approved");
+  const approved = (specimen ?? []).filter((j) => j.status === "approved");
 
   return (
     <BottomSheet open={!!postId} onClose={onClose} title="Check in">
       <h2 className="mt-3 pr-12 font-display-serif text-[26px] font-medium">Who showed up?</h2>
       <p className="mt-2 text-[14px] text-paper-ink-muted">Attendance stays private between you and each person.</p>
       {error && <p role="alert" className="mt-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
-      {real ? (
+      {!specimen ? (
         <ul className="mt-4 space-y-2.5">
           {!rows && !error && <li className="text-[14px] text-paper-ink-muted">Loading…</li>}
           {rows?.length === 0 && <li className="text-[14px] text-paper-ink-muted">Nobody joined this one.</li>}
@@ -105,8 +93,7 @@ export function CheckInSheet({ postId, onClose, specimen }: { postId: string | n
         </ul>
       ) : (
         <ul className="mt-4 space-y-2.5">
-          {!joins && !error && <li className="text-[14px] text-paper-ink-muted">Loading…</li>}
-          {joins && approved.length === 0 && <li className="text-[14px] text-paper-ink-muted">Nobody joined this one.</li>}
+          {approved.length === 0 && <li className="text-[14px] text-paper-ink-muted">Nobody joined this one.</li>}
           {approved.map((j) => (
             <li key={j.id} className="rounded-tile bg-paper-muted p-3">
               <p className="text-[15px] font-semibold">{j.userName}</p>
@@ -121,9 +108,7 @@ export function CheckInSheet({ postId, onClose, specimen }: { postId: string | n
                       className={cn("min-h-11 rounded-full border px-4 text-[14px] font-semibold", "border-paper-ink/55")}
                       onClick={() =>
                         postId &&
-                        recordJoinOutcome(postId, j.id, o)
-                          .then(() => setJoins((cur) => (cur ?? []).map((x) => (x.id === j.id ? { ...x, outcome: o } : x))))
-                          .catch((err: unknown) => setError(err instanceof Error ? err.message : "That didn't save."))
+                        recordJoinOutcome(postId, j.id, o).catch((err: unknown) => setError(err instanceof Error ? err.message : "That didn't save."))
                       }
                     >
                       {o === "attended" ? "Attended" : "Didn't show"}

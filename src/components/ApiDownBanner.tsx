@@ -2,14 +2,12 @@
 
 import { WifiOff } from "lucide-react";
 import { useApiDown } from "@/lib/api/apiHealth";
-import { isRealMode } from "@/lib/api/mode";
 
-/** Global "can't reach the backend" signal for real mode — one banner instead of every page's
- * data-fetching effect needing its own error UI. Mock mode never has anything to report here
- * (isRealMode() gates it out entirely), so this renders nothing there. */
+/** Global "can't reach the backend" signal — one banner instead of every page's data-fetching
+ * effect needing its own error UI. */
 export function ApiDownBanner() {
   const down = useApiDown();
-  if (!isRealMode() || !down) return null;
+  if (!down) return null;
 
   // SERVER-PERF.md - reworded for the person actually seeing this (was written for a developer:
   // "check that arena-api is running"). This fires the moment a request times out (see

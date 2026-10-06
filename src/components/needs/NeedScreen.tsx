@@ -15,7 +15,7 @@ import { DemoBadge } from "@/components/bplus/Primitives";
 import { ReportSheet } from "@/components/trust/ReportSheet";
 import { useGuest } from "@/hooks/use-arena-session";
 import { getSession } from "@/lib/session";
-import { cancelPost, decideJoin, getJoinRequests, getPost, getUserPosts, requestJoin, withdrawJoin } from "@/lib/api/posts";
+import { cancelPost, getPost, getUserPosts } from "@/lib/api/posts";
 import {
   acceptNeedResponse,
   confirmNeedResponse,
@@ -27,7 +27,6 @@ import {
   type NeedResponse,
   type NeedResponseCompletion,
 } from "@/lib/api/needs";
-import { isRealMode } from "@/lib/api/mode";
 import { EMPTY_DRAFT, readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
 import { Cover } from "@/components/covers/Cover";
 import { getMyProfile, getPublicProfile } from "@/lib/api/profile";
@@ -103,7 +102,7 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
 
   const reload = useCallback(() => getPost(post.id).then((p) => p && setPost(p)), [post.id]);
   const reloadMyResponse = useCallback(() => {
-    if (!isRealMode() || specimen) return;
+    if (specimen) return;
     getNeed(post.id)
       .then((n) => {
         setMyResponse(n?.viewer?.myResponse ? toJoinRequestShape(n.viewer.myResponse) : null);
@@ -119,14 +118,8 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
   }, [reloadMyResponse]);
   useEffect(() => {
     if (!post.mine || specimen) return;
-    if (isRealMode()) {
-      getNeedResponses(post.id)
-        .then((r) => setOffers(r.map(toJoinRequestShape)))
-        .catch((err: unknown) => setError(err instanceof Error ? err.message : "Offers didn't load."));
-      return;
-    }
-    getJoinRequests(post.id)
-      .then((r) => setOffers(Array.isArray(r) ? r : []))
+    getNeedResponses(post.id)
+      .then((r) => setOffers(r.map(toJoinRequestShape)))
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Offers didn't load."));
   }, [post.id, post.mine, specimen]);
 
@@ -137,28 +130,13 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
   const status = STATUS[post.status] ?? STATUS.open;
   const visibleOffers = (offers ?? []).filter((o) => o.status === "pending" || o.status === "approved");
   const helping = post.spotsFilled;
-  // Real mode reads this from GET /needs/{id}'s viewer.myResponse (post.myJoinStatus is always
-  // empty for ASK/OFFER posts - verified live, a different table entirely); mock mode keeps
-  // reading the generic field it was built against.
-  const myJoinStatus = isRealMode() ? myResponse?.status : post.myJoinStatus;
+  // Read from GET /needs/{id}'s viewer.myResponse (post.myJoinStatus is always empty for
+  // ASK/OFFER posts - verified live, a different table entirely).
+  const myJoinStatus = myResponse?.status;
 
   const offerHelp = async () => {
     if (!getSession()) return router.push("/auth?mode=signin");
-    if (isRealMode()) {
-      setRespondOpen(true);
-      return;
-    }
-    setBusy(true);
-    setError("");
-    try {
-      await requestJoin(post.id);
-      vibrate();
-      await reload();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : c.sendFail);
-    } finally {
-      setBusy(false);
-    }
+    setRespondOpen(true);
   };
   const sendResponse = async () => {
     setBusy(true);
@@ -180,8 +158,7 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
     setBusy(true);
     setError("");
     try {
-      if (isRealMode()) await withdrawNeedResponse(post.id);
-      else await withdrawJoin(post.id);
+      await withdrawNeedResponse(post.id);
       await reload();
       await reloadMyResponse();
     } catch (err) {
@@ -347,13 +324,7 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
             ) : !active ? (
               <p className="rounded-tile bg-paper-muted p-4 text-center text-[15px]">This {c.noun.toLowerCase()} is {status.label.toLowerCase()}.</p>
             ) : myJoinStatus === "approved" ? (
-              isRealMode() ? (
-                myConversationId ? <ButtonLink href={`/messages/${myConversationId}`}>Open chat</ButtonLink> : <p className="text-center text-[15px]">You&apos;re helping. The chat opens shortly.</p>
-              ) : post.roomId ? (
-                <ButtonLink href={`/rooms/${post.roomId}`}>Open chat</ButtonLink>
-              ) : (
-                <p className="text-center text-[15px]">You&apos;re helping. The chat opens shortly.</p>
-              )
+              myConversationId ? <ButtonLink href={`/messages/${myConversationId}`}>Open chat</ButtonLink> : <p className="text-center text-[15px]">You&apos;re helping. The chat opens shortly.</p>
             ) : myJoinStatus === "pending" ? (
               <div className="space-y-2">
                 <p role="status" className="flex items-center justify-center gap-2 text-[15px] font-semibold"><HandHeart className="size-5 text-primary-on-paper" aria-hidden /> {c.sent} — {post.authorName.split(" ")[0]} will review it</p>
@@ -370,8 +341,7 @@ export function NeedScreen({ post: initial, specimen }: { post: Post; specimen?:
 
       <ReportSheet open={reportOpen} onClose={() => setReportOpen(false)} target={{ kind: "post", id: post.id }} person={{ userId: post.authorUserId || undefined, name: post.authorName, detail: title }} />
 
-      {/* POST /needs/{id}/responses requires a message - real mode only; mock mode's generic
-       * requestJoin() still needs none, so it skips straight to offerHelp(). */}
+      {/* POST /needs/{id}/responses requires a message. */}
       <BottomSheet open={respondOpen} onClose={() => setRespondOpen(false)} title={c.sheet}>
         <h2 className="mt-3 pr-12 font-display-serif text-[24px] font-medium">{post.authorName.split(" ")[0]} will see this</h2>
         <div className="mt-4">
@@ -465,23 +435,13 @@ function OfferDetails({
       // Accepting a need/offer response opens a private 1:1 conversation
       // (ConversationService), not a post "room" like an activity's join does - a real
       // difference, not an oversight (verified reading NeedService.accept()).
-      if (isRealMode()) {
-        const updated = approve ? await acceptNeedResponse(post.id, offer.id) : await declineNeedResponse(post.id, offer.id);
-        if (!updated) throw new Error("That didn't save. Nothing changed.");
-        if (approve) {
-          vibrate();
-          if (updated.conversationId) return router.push(`/messages/${updated.conversationId}`);
-        }
-        onDecided(toJoinRequestShape(updated));
-        return;
-      }
-      const updated = await decideJoin(post.id, offer.id, approve);
+      const updated = approve ? await acceptNeedResponse(post.id, offer.id) : await declineNeedResponse(post.id, offer.id);
+      if (!updated) throw new Error("That didn't save. Nothing changed.");
       if (approve) {
         vibrate();
-        const fresh = await getPost(post.id);
-        if (fresh?.roomId) return router.push(`/rooms/${fresh.roomId}`);
+        if (updated.conversationId) return router.push(`/messages/${updated.conversationId}`);
       }
-      onDecided(updated);
+      onDecided(toJoinRequestShape(updated));
     } catch (err) {
       setError(err instanceof Error ? err.message : "That didn't save. Nothing changed.");
     } finally {
@@ -571,7 +531,7 @@ function OfferDetails({
         </p>
 
         {error && <p role="alert" className="mt-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{error}</p>}
-        {isRealMode() && offer.status === "approved" && !offer.completion?.ownerConfirmedAt && (
+        {offer.status === "approved" && !offer.completion?.ownerConfirmedAt && (
           <Button
             className="mt-5"
             loading={busy === "accept"}
@@ -591,7 +551,7 @@ function OfferDetails({
             Mark as completed
           </Button>
         )}
-        {isRealMode() && offer.completion?.ownerConfirmedAt && (
+        {offer.completion?.ownerConfirmedAt && (
           <p className="mt-5 rounded-tile bg-success/15 p-4 text-center text-[15px] text-success-on-paper">
             Marked completed{offer.completion.responderConfirmedAt ? " — both sides confirmed." : " — waiting for the other side to confirm too."}
           </p>
@@ -606,10 +566,8 @@ function OfferDetails({
             </div>
             <p className="mt-2 text-center text-[13px] text-paper-ink-muted">This opens a private coordination room for the two of you.</p>
           </>
-        ) : isRealMode() && offer.conversationId ? (
+        ) : offer.conversationId ? (
           <ButtonLink href={`/messages/${offer.conversationId}`} className="mt-5">Open chat</ButtonLink>
-        ) : !isRealMode() && post.roomId ? (
-          <ButtonLink href={`/rooms/${post.roomId}`} className="mt-5">Open chat</ButtonLink>
         ) : null}
       </m.article>
     </div>

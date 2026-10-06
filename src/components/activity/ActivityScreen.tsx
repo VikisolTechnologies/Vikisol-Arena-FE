@@ -18,9 +18,8 @@ import { Burst } from "@/components/bplus/Burst";
 import { DemoBadge, StateCard } from "@/components/bplus/Primitives";
 import { RequirementDialog, requirementFromError, type Requirement } from "@/components/requirements/RequirementForm";
 import { PaperPlane, SaferCommunity, StatusTimeline, SuccessCheck, downloadIcs, activityWhen } from "@/components/activity/ActivityParts";
-import { decideJoin, getJoinRequests, getPost, requestJoin, savePost, unsavePost, withdrawJoin } from "@/lib/api/posts";
+import { decideJoin, getJoinRequests, getPost, savePost, unsavePost, withdrawJoin } from "@/lib/api/posts";
 import { getActivity, getJoinerAnswers, joinActivity, type ActivityAnswer, type ActivityDetails, type JoinActivityInput } from "@/lib/api/activities";
-import { isRealMode } from "@/lib/api/mode";
 import { startChat } from "@/lib/api/messages";
 import { getMyProfile } from "@/lib/data/profile";
 import { distanceKm, formatKm } from "@/lib/data/feed";
@@ -79,9 +78,7 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false,
     setBusy(true);
     setError("");
     try {
-      // Real mode: the activity-aware join (answers, emergency contact). Mock mode has no
-      // equivalent endpoint, so it keeps using the generic requestJoin it was already built on.
-      const req = isRealMode() ? await joinActivity(post.id, input) : await requestJoin(post.id);
+      const req = await joinActivity(post.id, input);
       await reload();
       await reloadActivity();
       vibrate();
@@ -100,7 +97,7 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false,
     if (!getSession()) return router.push(`/auth?mode=signin`);
     // Answer the host's questions first if there are any (M6 area 3b) — otherwise join straight
     // away, same as before.
-    if (isRealMode() && ((activity?.questions.length ?? 0) > 0 || activity?.needsEmergencyContact)) {
+    if ((activity?.questions.length ?? 0) > 0 || activity?.needsEmergencyContact) {
       setAnswerSheetOpen(true);
       return;
     }
@@ -262,7 +259,7 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false,
                 <p className="rounded-tile bg-paper-muted p-4 text-center text-[15px]">This activity is full.</p>
               )
             ) : (
-              <Button onClick={join} loading={busy || (isRealMode() && activity === undefined)}>{signedIn ? (post.visibility === "public" ? "Join" : "Request to join") : "Sign in to join"}</Button>
+              <Button onClick={join} loading={busy || activity === undefined}>{signedIn ? (post.visibility === "public" ? "Join" : "Request to join") : "Sign in to join"}</Button>
             )}
           </m.div>
         )}

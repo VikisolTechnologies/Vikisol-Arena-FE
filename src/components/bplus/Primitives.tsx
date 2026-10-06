@@ -6,7 +6,6 @@ import { m } from "motion/react";
 import { CircleAlert, CircleCheck, CloudOff, Gift, HeartHandshake, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { press, spring } from "@/lib/motion";
-import { isRealMode } from "@/lib/api/mode";
 
 type Icon = ComponentType<{ className?: string; strokeWidth?: number; "aria-hidden"?: boolean }>;
 
@@ -96,31 +95,25 @@ export function KindChip({ kind }: { kind: string }) {
 }
 
 /* ── "Preview data" honesty (FE-BPLUS-BUILD §6), quiet by design (architect review A4).
- * Mock mode: every screen is preview data, so one slim bar at the top of the screen says so and
- * nothing else is labelled. Real "mixed" mode: only the fixture regions and server demo items
- * sitting among real content get a small muted "Sample" mark. ── */
-export function PreviewBar({ label = "sample neighbours and activities", className }: { label?: string; className?: string }) {
-  if (isRealMode()) return null;
-  return (
-    <p role="note" className={cn("flex items-center justify-center gap-2 border-b border-line py-1.5 text-center text-[12px] text-faint", className)}>
-      <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-warning" />
-      Preview data — {label}
-    </p>
-  );
+ * Mock mode is gone - the only remaining case is the fixture regions and server demo items
+ * sitting among real content, which get a small muted "Sample" mark. PreviewBar no longer has
+ * anything to announce (there is no more "every screen is preview data" state); kept as a no-op
+ * so its callers (AppShell, DashShell) don't need a change. ── */
+export function PreviewBar(_props: { label?: string; className?: string }) {
+  return null;
 }
 
-/** A fixture region inside a real screen (mixed mode only); nothing in mock mode (the bar covers it). */
+/** A fixture region inside a real screen. */
 export function PreviewPill({ className }: { className?: string }) {
   return <SampleMark className={className} />;
 }
 
-/** A server demo item among real ones (mixed mode only); nothing in mock mode. */
+/** A server demo item among real ones. */
 export function DemoBadge({ className, onPhoto }: { className?: string; onPhoto?: boolean }) {
   return <SampleMark className={className} onPhoto={onPhoto} />;
 }
 
 function SampleMark({ className, onPhoto }: { className?: string; onPhoto?: boolean }) {
-  if (!isRealMode()) return null;
   return (
     <span className={cn("inline-flex shrink-0 items-center gap-1 text-[11px] font-medium", onPhoto ? "rounded-full bg-black/45 px-1.5 py-0.5 text-white/85" : "text-faint", className)}>
       <span aria-hidden className="size-1.5 rounded-full bg-warning" />

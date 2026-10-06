@@ -8,7 +8,6 @@ import { CompanyAdminShell } from "@/components/app/CompanyAdminShell";
 import { Pills, Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { DashButton } from "@/components/dash/Parts";
 import { auditExportUrl, searchAudit, type AuditEvent } from "@/lib/api/companyAdmin";
-import { isRealMode } from "@/lib/api/mode";
 import { getToken } from "@/lib/api/httpClient";
 
 /** Plain-language names for the audit actions (the codes stay what the API filters on). */
@@ -77,14 +76,9 @@ export default function AuditLogPage() {
   const exportCsv = async () => {
     setExporting(true);
     try {
-      if (!isRealMode()) {
-        const rows = events ?? [];
-        download(new Blob(["Time,Actor,Action,Target\n" + rows.map((e) => `"${e.createdAt}","${e.actorName}","${e.action}","${e.target ?? ""}"`).join("\n")], { type: "text/csv" }));
-      } else {
-        const res = await fetch(auditExportUrl(), { headers: { Authorization: `Bearer ${getToken()}` } });
-        if (!res.ok) throw new Error("export failed");
-        download(await res.blob());
-      }
+      const res = await fetch(auditExportUrl(), { headers: { Authorization: `Bearer ${getToken()}` } });
+      if (!res.ok) throw new Error("export failed");
+      download(await res.blob());
     } catch {
       setError("The export didn't download. Try again.");
     } finally {
