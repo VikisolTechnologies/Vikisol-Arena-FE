@@ -38,6 +38,7 @@ yarn-error.log*
 # playwright
 /test-results/
 /playwright-report/
+/tests/qa/.artifacts/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/

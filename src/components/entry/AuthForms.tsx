@@ -188,11 +188,11 @@ export function SignUpView({ onBack, onSignIn, land, initialAccount = "talent" }
         />
         <Checkbox id="signup-agree" checked={agree} onChange={setAgree} error={submitted ? errors.agree : ""}>
           I agree to the{" "}
-          <Link href="/terms" className="underline underline-offset-2">
+          <Link href="/terms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="underline underline-offset-2">
+          <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
             Privacy Policy
           </Link>
         </Checkbox>
