@@ -11,11 +11,13 @@ import { AppShell } from "@/components/bplus/AppShell";
 import { Avatar } from "@/components/bplus/Avatar";
 import { BottomSheet } from "@/components/bplus/BottomSheet";
 import { Button } from "@/components/bplus/Button";
+import { TextField } from "@/components/bplus/TextField";
 import { Pills, Skeleton, StateCard } from "@/components/bplus/Primitives";
 import { search, type SearchResults, type SearchType } from "@/lib/api/search";
 import { savePost, unsavePost } from "@/lib/api/posts";
 import { distanceKm, getFeedItems, originFor, whenLabel, type FeedItem, type Origin } from "@/lib/data/feed";
-import { AREAS, EMPTY_DRAFT, readEntryDraft, subscribeEntryDraft, writeEntryDraft } from "@/lib/data/onboarding";
+import { EMPTY_DRAFT, readEntryDraft, subscribeEntryDraft, writeEntryDraft } from "@/lib/data/onboarding";
+import { getMyProfile } from "@/lib/data/profile";
 import type { Post } from "@/lib/types";
 import { allowGuestBrowsing } from "@/lib/auth-guard";
 import { timeAgo } from "@/lib/data/time";
@@ -60,7 +62,7 @@ interface Row {
 
 const KIND_TONE: Record<string, string> = { Activity: "text-success-on-paper", Need: "text-primary-on-paper", Offer: "text-success-on-paper", Job: "text-info-on-paper", Person: "text-info-on-paper" };
 
-export function toRows(data: SearchResults, scope: Scope, origin?: Origin): Row[] {
+export function toRows(data: SearchResults, scope: Scope, origin?: Origin | null): Row[] {
   const rows: Row[] = [];
   const want = (s: Scope) => scope === "all" || scope === s;
   const km = (p: Post) => (origin ? distanceKm(origin, { lat: p.approxLat, lng: p.approxLng }) : null);
@@ -103,8 +105,9 @@ export function SearchScreen() {
   const [sheet, setSheet] = useState<"area" | "radius" | "safe" | null>(null);
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const draft = useSyncExternalStore(subscribeEntryDraft, readEntryDraft, () => EMPTY_DRAFT);
-  const area = draft.area || AREAS[0];
-  const origin = useMemo(() => originFor(null, area), [area]);
+  const area = draft.area;
+  const [me, setMe] = useState<{ lat?: number; lng?: number } | null>(null);
+  const origin = useMemo(() => originFor(me, area), [me, area]);
   // Keyed by the exact query+scope it answers so a slow older response never shows under a newer one.
   const [result, setResult] = useState<{ key: string; data: SearchResults | null } | null>(null);
   const [nearby, setNearby] = useState<FeedItem[] | null>(null);
@@ -113,6 +116,7 @@ export function SearchScreen() {
     if (!allowGuestBrowsing(router)) return;
     input.current?.focus();
     getFeedItems("for-you", 0, 40).then(setNearby).catch(() => setNearby([]));
+    getMyProfile().then((p) => setMe({ lat: p.approxLat, lng: p.approxLng })).catch(() => setMe(null));
   }, [router]);
 
   const trimmed = query.trim();
@@ -268,16 +272,10 @@ export function SearchScreen() {
 
       <BottomSheet open={sheet === "area"} onClose={() => setSheet(null)} title="Near">
         <h2 className="mt-2 font-display-serif text-[26px] font-medium">Search near</h2>
-        <ul className="mt-4 space-y-1">
-          {AREAS.map((a) => (
-            <li key={a}>
-              <button type="button" onClick={() => { writeEntryDraft({ ...readEntryDraft(), area: a }); setSheet(null); }} aria-pressed={a === area} className="flex min-h-12 w-full items-center justify-between rounded-xl px-3 text-left text-[16px] hover:bg-paper-muted">
-                {a} {a === area && <Check className="size-5 text-primary-on-paper" aria-hidden />}
-              </button>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-3 text-[13px] text-paper-ink-muted">This is also your area on the Feed and Discover.</p>
+        <div className="mt-4">
+          <TextField label="Area" value={area} onChange={(next) => writeEntryDraft({ ...readEntryDraft(), area: next })} placeholder="Type your area" />
+        </div>
+        <p className="mt-3 text-[13px] text-paper-ink-muted">This is also your area on the Feed and Discover. Distance uses your approximate location.</p>
       </BottomSheet>
       <BottomSheet open={sheet === "radius"} onClose={() => setSheet(null)} title="Distance">
         <h2 className="mt-2 font-display-serif text-[26px] font-medium">How far?</h2>

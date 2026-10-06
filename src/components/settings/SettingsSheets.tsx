@@ -146,7 +146,7 @@ export function LocationSheet({ open, onClose, profile, onProfile }: SheetProps)
         <PaperRadios legend="Location" options={LOCATION_OPTIONS} value={current} onChange={choose} disabled={busy} />
       </div>
       <div className="mt-4">
-        <PaperInput label="Your city" value={city} onChange={setCity} placeholder="e.g. Hyderabad" maxLength={60} />
+        <PaperInput label="Your city" value={city} onChange={setCity} placeholder="Your city" maxLength={60} />
       </div>
       {busy && <p role="status" className="mt-3 text-[14px] text-paper-ink-muted">Saving…</p>}
       <Err>{error}</Err>

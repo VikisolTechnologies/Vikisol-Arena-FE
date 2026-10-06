@@ -138,9 +138,8 @@ test("sign up → why → local life → identity → all set → feed, without 
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
   await expect(page.getByRole("heading", { name: "Set up your local life" })).toBeVisible();
-  // Board: the area starts on the launch area; the person can change it.
-  await expect(page.getByLabel("Your area")).toHaveValue("Gachibowli / Gopanapally");
-  await page.getByLabel("Your area").selectOption("Kondapur");
+  await expect(page.getByLabel("Your area")).toHaveValue("");
+  await page.getByLabel("Your area").fill("Kondapur");
   await page.getByRole("button", { name: "Running" }).click();
   await noSeriousA11y(page);
   await page.getByRole("button", { name: "Continue", exact: true }).click();

@@ -6,7 +6,6 @@
  * contract (FE-API-GAPS #42); nothing here is used while that's unbuilt.
  */
 import { ALL_SUBTYPES } from "@/lib/activities/taxonomy";
-import { AREA_CENTRES } from "@/lib/data/feed";
 
 export type DraftKind = "ask" | "offer" | "activity" | "project";
 
@@ -30,7 +29,7 @@ export interface Understood {
   peopleWord?: string;
   level?: "beginner" | "intermediate" | "advanced" | "all-levels";
   area?: string;
-  /** Plain-words place the person named ("Gachibowli Lake"), kept for the description. */
+  /** Plain-words place the person named, kept for the description. */
   place?: string;
   setting?: "outdoor" | "indoor";
   tags: string[];
@@ -143,16 +142,10 @@ function readPeople(t: string): { people?: number; peopleWord?: string } {
 }
 
 function readArea(raw: string): { area?: string; place?: string } {
-  const lower = raw.toLowerCase();
-  for (const key of Object.keys(AREA_CENTRES)) {
-    const parts = key.split(/\s*\/\s*/);
-    const hit = parts.find((p) => lower.includes(p.toLowerCase()));
-    if (hit) {
-      const place = raw.match(new RegExp(`${hit}(\\s+(lake|park|stadium|ground|circle|arena|hub))?`, "i"))?.[0];
-      return { area: key, place: place ?? hit };
-    }
-  }
-  return {};
+  const hit = raw.match(/\b(?:in|at|near)\s+([A-Za-z][\w'.-]*(?:\s+[A-Za-z][\w'.-]*){0,3})/);
+  if (!hit) return {};
+  const place = hit[1].replace(/\b(on|this|next|for|with|and)$/i, "").trim();
+  return place ? { area: place, place } : {};
 }
 
 function readSubtype(t: string) {

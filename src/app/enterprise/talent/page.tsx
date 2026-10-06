@@ -70,7 +70,7 @@ export default function TalentPage() {
         <label className="relative flex-1">
           <span className="sr-only">Search talent</span>
           <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-faint" aria-hidden />
-          <input value={text} onChange={(e) => setText(e.target.value)} type="search" placeholder="Skill, role or area — e.g. Event planning, Gachibowli" className="min-h-12 w-full rounded-full border border-field-line bg-surface pl-11 pr-4 text-[15px] outline-none focus-visible:border-primary" />
+          <input value={text} onChange={(e) => setText(e.target.value)} type="search" placeholder="Skill, role or area" className="min-h-12 w-full rounded-full border border-field-line bg-surface pl-11 pr-4 text-[15px] outline-none focus-visible:border-primary" />
         </label>
         <label className="flex items-center gap-2">
           <span className="sr-only">Industry</span>

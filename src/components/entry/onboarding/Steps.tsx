@@ -16,7 +16,6 @@ import { IconBadge, type IconBadgeTone } from "@/components/bplus/IconBadge";
 import { BriefcaseSolid, ChatSolid, CompassSolid, LeafSolid, PeopleSolid, PlusSolid, RunnerSolid, StarSolid } from "@/components/bplus/SolidIcons";
 import { Burst } from "@/components/bplus/Burst";
 import {
-  AREAS,
   AVAILABILITY,
   INTENTS,
   INTRO_MAX,
@@ -281,10 +280,6 @@ function InterestPicker({ draft, update, addLabel, onlySelected }: StepProps & {
 export function LocalLifeStep({ draft, update, onContinue }: StepProps & { onContinue: () => void }) {
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState("");
-  // Board: the area starts on the launch area; the person can change it.
-  useEffect(() => {
-    if (!draft.area) update({ area: AREAS[0] });
-  }, [draft.area, update]);
 
   const toggleLocation = async (on: boolean) => {
     setLocationError("");
@@ -307,7 +302,7 @@ export function LocalLifeStep({ draft, update, onContinue }: StepProps & { onCon
       <Lede>Help us show you what&apos;s nearby and relevant.</Lede>
 
       <div className="mt-7">
-        <SelectField label="Your area" value={draft.area} onChange={(area) => update({ area })} options={AREAS} placeholder="Choose your area" icon={MapPin} />
+        <TextField label="Your area" value={draft.area} onChange={(area) => update({ area })} placeholder="Type your area" icon={MapPin} />
       </div>
 
       <div className="mt-7">

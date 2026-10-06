@@ -112,7 +112,7 @@ export default function CompanyPostsPage() {
         <p className="mt-1 text-[14px] text-paper-ink-muted">Published as {profile?.companyName ?? "your company"}, visible in everyone&apos;s Feed.</p>
         <m.div key={shakeKey} animate={shakeKey ? { x: [...shake.x] } : undefined} transition={shake.transition}>
           <label className="mt-4 block text-[15px] font-semibold" htmlFor="post-body">Post</label>
-          <textarea id="post-body" value={body} onChange={(e) => setBody(e.target.value)} onBlur={() => setTouched(true)} rows={5} aria-invalid={!!fieldError} aria-describedby="post-help" placeholder="e.g. We're hiring two community associates in Gachibowli — see our jobs." className="mt-1.5 w-full rounded-xl border border-paper-ink/25 bg-white p-3 text-[15px] aria-[invalid=true]:border-danger-on-paper" />
+          <textarea id="post-body" value={body} onChange={(e) => setBody(e.target.value)} onBlur={() => setTouched(true)} rows={5} aria-invalid={!!fieldError} aria-describedby="post-help" placeholder="e.g. We're hiring two community associates — see our jobs." className="mt-1.5 w-full rounded-xl border border-paper-ink/25 bg-white p-3 text-[15px] aria-[invalid=true]:border-danger-on-paper" />
           <p id="post-help" className={fieldError ? "text-[13px] font-semibold text-danger-on-paper" : "text-right text-[13px] text-paper-ink-muted"}>{fieldError || `${body.length}/${MAX}`}</p>
         </m.div>
         <label className="mt-3 block text-[15px] font-semibold" htmlFor="post-tags">Tags <span className="font-normal text-paper-ink-muted">(optional, comma-separated)</span></label>

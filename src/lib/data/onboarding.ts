@@ -24,16 +24,6 @@ export const INTENTS = [
 export type EntryIntent = (typeof INTENTS)[number]["id"];
 const INTENT_IDS = new Set<string>(INTENTS.map((i) => i.id));
 
-/** Launch zone first (Gachibowli), then its neighbours. Geography, not user data. */
-export const AREAS = [
-  "Gachibowli / Gopanapally",
-  "Financial District / Nanakramguda",
-  "Madhapur / Hitec City",
-  "Kondapur",
-  "Manikonda / Narsingi",
-  "Serilingampally",
-] as const;
-
 export const SUGGESTED_INTERESTS = [
   "Running",
   "Badminton",
