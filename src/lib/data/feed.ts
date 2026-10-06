@@ -23,7 +23,8 @@ export type Origin = { lat: number; lng: number };
 
 /** Where "Nearby" is measured from: the person's own approximate point. A typed area name is
  *  not a coordinate, and there is no preset city. */
-export function originFor(me?: { lat?: number; lng?: number } | null, _area?: string): Origin | null {
+export function originFor(me?: { lat?: number; lng?: number } | null, area?: string): Origin | null {
+  void area;
   if (me?.lat != null && me?.lng != null) return { lat: me.lat, lng: me.lng };
   return null;
 }

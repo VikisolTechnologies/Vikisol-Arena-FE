@@ -25,11 +25,15 @@ export function InstallHint() {
     };
     window.addEventListener("beforeinstallprompt", onPrompt);
     const apple = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    if (apple) {
+    const reveal = window.setTimeout(() => {
+      if (!apple) return;
       setIos(true);
       setShow(true);
-    }
-    return () => window.removeEventListener("beforeinstallprompt", onPrompt);
+    }, 0);
+    return () => {
+      window.clearTimeout(reveal);
+      window.removeEventListener("beforeinstallprompt", onPrompt);
+    };
   }, []);
 
   if (!show) return null;

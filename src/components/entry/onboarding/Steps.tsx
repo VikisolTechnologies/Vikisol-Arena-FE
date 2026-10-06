@@ -7,7 +7,7 @@ import { Check, ChevronRight, Eye, Footprints, Info, MapPin, Plus } from "lucide
 import { cn } from "@/lib/utils";
 import { press, rise, spring } from "@/lib/motion";
 import { Button, ButtonLink } from "@/components/bplus/Button";
-import { Chip, SelectField, Toggle } from "@/components/bplus/Controls";
+import { Chip, Toggle } from "@/components/bplus/Controls";
 import { Lede, Title } from "@/components/bplus/Screen";
 import { TextArea, TextField } from "@/components/bplus/TextField";
 import { PhotoPicker } from "@/components/bplus/PhotoPicker";
