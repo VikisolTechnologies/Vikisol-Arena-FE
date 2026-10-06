@@ -1,6 +1,21 @@
 # API issues (frontend → backend)
 One entry per mismatch: endpoint, what the frontend expects, what the backend returns, status (OPEN / FIXED <commit>).
 
+## No real, server-side profile-photo storage for a candidate anywhere (OPEN) — found via QA-3
+- **Endpoint:** none exists. `CandidateProfile` (`src/lib/types.ts`, mirrors the real
+  `CandidateProfileResponse`) has no `photoUrl` field at all.
+- **FE expects:** a way for a candidate's own uploaded profile photo to survive a cleared
+  browser or show up on a second device - the normal expectation for "upload a profile photo."
+- **BE returns:** nothing - there's no field on the candidate profile for it and no upload
+  endpoint. `src/app/account/edit/page.tsx`'s own `PhotoPicker` already only ever reads/writes a
+  device-local draft (`draft.photo`, localStorage) - its page header text says so explicitly
+  ("Area and photo upload use existing calls where available" - photo isn't one of them).
+- **What the FE does instead:** `ProfileScreen.tsx`'s avatar and `/account/edit`'s `PhotoPicker`
+  both read/write the same local-only draft; a user who uploads a photo on one device/browser
+  sees it fall back to initials everywhere else, with no way to fix it. Not worked around -
+  there's nothing to call. Needs a backend `photoUrl` field plus a real upload endpoint before
+  this can be a real feature.
+
 ## `GET /connect-requests/{employer-side}` doesn't exist — no way to check prior connect status for one candidate (OPEN, minor)
 - **Endpoint:** none exists. `ConnectController` only has `POST /enterprise/talent/{candidateId}/connect`
   (employer, idempotent — returns the existing row if one's already there), `GET /connect-requests`

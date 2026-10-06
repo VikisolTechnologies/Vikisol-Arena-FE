@@ -1,6 +1,61 @@
 # QA bugs
 One entry per bug, newest first. Format per `docs/missions/MARATHON-QA.md`.
 
+### QA-3 [MAJOR] Profile's own "Edit" button opens a dead, wrong-design legacy editor with no way to change name/bio/photo/interests — status FIXED (partial, one sub-issue logged as a real gap)
+- **Fix:** `src/components/screens/ProfileScreen.tsx` — the main "Edit" button next to the avatar
+  now links to `/account/edit` (the real, maintained editor) instead of `/identity/edit`.
+  `/identity/edit`'s skills force-graph and resume upload are genuinely different functionality
+  with no equivalent at `/account/edit`, so rather than retire the whole screen, added a small
+  "Edit" link next to the Skills row in the About tab pointing there — it stays reachable, just
+  no longer the thing the primary Edit button opens. The `picsum.photos` hardcoded cover on
+  `/identity/edit` wasn't touched (out of scope for this specific bug; that screen's own cover
+  image is a separate, smaller issue from the navigation bug being fixed here).
+- **Not fixed, logged as a real gap (not attempted - needs a backend field, not a frontend fix):**
+  `ProfileScreen`'s avatar, and `/account/edit`'s own `PhotoPicker`, both only ever read/write
+  the device-local onboarding draft (`draft.photo`, localStorage) — confirmed by reading both
+  files: `CandidateProfile` (`src/lib/types.ts`) has no `photoUrl` field at all, and
+  `/account/edit`'s own page header already says as much ("Area and photo upload use existing
+  calls where available" - photo isn't one of them). There is currently no real, server-side
+  profile-photo storage anywhere in this app for any account; a user's own photo genuinely
+  cannot survive a cleared browser or a second device today. This needs a backend
+  `CandidateProfile.photoUrl` field (or similar) plus a real upload endpoint before the frontend
+  can fix it - flagging for `API-ISSUES.md` rather than claiming a frontend-only fix that doesn't
+  exist.
+- **Area and route:** `/identity` -> `/identity/edit`, confirmed live at desktop (1280x800) and
+  small phone (360x740), signed-in account (no special role).
+- **Steps to reproduce:**
+  1. Sign up, complete onboarding, land on `/identity` (the "You" tab / Profile screen).
+  2. Click the "Edit" button next to your avatar (`href="/identity/edit"`,
+     `src/components/screens/ProfileScreen.tsx` line 117).
+  3. Compare what loads against Settings -> "Edit profile" (`/account/edit`), which is the real,
+     currently-maintained editor (name, bio, photo via `PhotoPicker`, interests, availability -
+     `src/app/account/edit/page.tsx`).
+- **Expected:** the profile screen's own "Edit" button opens the real editor (same place Settings
+  links to), including a way to change your profile photo after onboarding.
+- **Actual:** it opens `src/app/identity/edit/page.tsx` - a completely different, older design
+  system (`@/components/app/AppShell` + shadcn `Card`/`Button`, a vertical desktop nav list
+  "Home / Nearby / Discuss / Work / Inbox / Saved / Notifications / Profile" instead of the B+
+  bottom-tab chrome used everywhere else in the app). That screen can only edit **skills** (a
+  force-graph picker) and the **resume**; there is no field anywhere on it for name, bio, photo
+  or interests. Its cover photo is a hardcoded `picsum.photos` placeholder
+  (`https://picsum.photos/seed/${profile.id}-cover/...`), not a real upload. Confirmed live:
+  signed up a fresh account, clicked Edit from `/identity`, landed on `/identity/edit`, page body
+  only offered "Edit skills" / "Resume" / "Activity" tabs - no name/bio/photo controls at all.
+  Separately, `ProfileScreen.tsx` itself only ever renders the **locally-cached onboarding draft**
+  photo (`draft.photo`, device-only `localStorage`) as the avatar, never a server-side
+  `profile.photoUrl` - so on a second device, or after clearing site data, a user who uploaded a
+  profile photo at sign-up sees their own avatar fall back to initials, with no visible way from
+  the main Profile screen to fix it (the real photo editor only exists at `/account/edit`,
+  reachable today only via Settings, not from Profile's own Edit button).
+- **Evidence:** live repro this cycle (fresh QA account, Playwright); no overflow at either size
+  (`identity/edit`'s own `scrollWidth`-`clientWidth` was 0 at 360px), so this is a navigation/
+  wiring bug, not a layout bug. No console errors on the page itself.
+- **Likely owner:** FE - either repoint `ProfileScreen.tsx`'s Edit button at `/account/edit` and
+  retire `src/app/identity/edit/page.tsx`, or merge that screen's skills/resume/activity panels
+  into the real editor and delete the dead one. Also worth deciding whether `CandidateProfile`
+  should carry a server `photoUrl` that `ProfileScreen`'s `Avatar` reads as a fallback when there's
+  no local draft.
+
 ### QA-1 [MINOR] "Terms of Service" / "Privacy Policy" links inside the sign-up agreement checkbox discard the whole form — status FIXED
 - **Fix:** `src/components/entry/AuthForms.tsx` — both links now open in a new tab
   (`target="_blank" rel="noopener noreferrer"`) instead of navigating away in the same tab, so the

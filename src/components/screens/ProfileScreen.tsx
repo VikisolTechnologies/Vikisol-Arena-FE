@@ -114,7 +114,7 @@ export function ProfileScreen() {
         <m.div initial="hidden" animate="shown">
           <m.div variants={rise} custom={0} className="relative z-10 -mt-14 flex items-end justify-between">
             <Avatar src={draft.photo} name={name} className="size-24 border-4 border-background text-[30px]" />
-            <ButtonLink href="/identity/edit" variant="outline" className="mb-1 h-10 w-auto px-5 text-[15px]">Edit</ButtonLink>
+            <ButtonLink href="/account/edit" variant="outline" className="mb-1 h-10 w-auto px-5 text-[15px]">Edit</ButtonLink>
           </m.div>
           <m.div variants={rise} custom={1}>
             <h1 className="mt-3 font-display-serif text-[30px] font-medium leading-tight">{name}</h1>
@@ -193,7 +193,13 @@ export function ProfileScreen() {
                   <dl className="mt-6 space-y-3 text-[15px]">
                     <div><dt className="text-[13px] text-faint">Area</dt><dd>{draft.area || data.profile.homeCity || "Not set"}</dd></div>
                     <div><dt className="text-[13px] text-faint">Title</dt><dd>{title || "Not set"}</dd></div>
-                    <div><dt className="text-[13px] text-faint">Skills</dt><dd>{data.profile.skills.length ? data.profile.skills.map((x) => x.name).join(", ") : "Not added yet"}</dd></div>
+                    <div>
+                      <dt className="flex items-center justify-between text-[13px] text-faint">
+                        Skills
+                        <Link href="/identity/edit" className="inline-flex min-h-11 items-center text-[14px] font-normal normal-case text-foreground underline underline-offset-4">Edit</Link>
+                      </dt>
+                      <dd>{data.profile.skills.length ? data.profile.skills.map((x) => x.name).join(", ") : "Not added yet"}</dd>
+                    </div>
                   </dl>
                   {(draft.interests.length > 0 || draft.photo || draft.availability.length > 0) && (
                     <p className="mt-3 text-[12px] text-faint">Interests, photo and availability are saved on this device for now.</p>
