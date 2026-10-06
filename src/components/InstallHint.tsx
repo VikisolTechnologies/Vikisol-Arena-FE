@@ -51,7 +51,7 @@ export function InstallHint() {
       {install && (
         <button
           type="button"
-          className="shrink-0 font-semibold text-primary"
+          className="shrink-0 font-semibold text-primary-soft"
           onClick={() => {
             void install.prompt().then(() => dismiss());
           }}

@@ -191,7 +191,7 @@ export function IntakeForm({
               </div>
               {reviewExtra?.(values)}
               {submitError && <p role="alert" className="mt-3 rounded-xl bg-danger/12 px-3.5 py-2.5 text-[14px]">{submitError}</p>}
-              <div className={cn("mt-6", tabBar && "scroll-mb-2")} style={{ paddingBottom: keyboard || undefined }}>
+              <div className={cn("mt-6", tabBar && "scroll-mb-28")} style={{ paddingBottom: keyboard || undefined }}>
                 <Button loading={busy} onClick={() => onSubmit(values)}>{submitText?.(values) ?? schema.submitLabel}</Button>
               </div>
             </div>
@@ -228,7 +228,7 @@ export function IntakeForm({
                   </div>
                 )}
               </div>
-              <div className={cn("mt-8", tabBar && "scroll-mb-2")} style={{ paddingBottom: keyboard || undefined }}>
+              <div className={cn("mt-8", tabBar && "scroll-mb-28")} style={{ paddingBottom: keyboard || undefined }}>
                 <Button type="submit">{stepIndex === steps.length - 1 ? "Review" : "Continue"}</Button>
               </div>
             </form>

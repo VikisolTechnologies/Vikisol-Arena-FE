@@ -48,7 +48,7 @@ const INTENT_LOOK: Record<EntryIntent, { icon: Glyph; tone: IconBadgeTone }> = {
 
 function Footer({ children }: { children: ReactNode }) {
   const keyboard = useKeyboardInset();
-  return <div className="pt-8" style={{ paddingBottom: keyboard || undefined }}>{children}</div>;
+  return <div className="scroll-mb-28 pt-8" style={{ paddingBottom: keyboard || undefined }}>{children}</div>;
 }
 
 function SectionLabel({ children, hint }: { children: ReactNode; hint?: string }) {

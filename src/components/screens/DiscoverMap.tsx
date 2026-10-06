@@ -126,7 +126,10 @@ export function DiscoverMap() {
         {posts === null && !error ? (
           <Skeleton className="aspect-[3/4] w-full rounded-none" />
         ) : !center ? (
-          <div className="p-4"><PlacePrompt onSaved={() => { setPosts(null); setReload((n) => n + 1); }} /></div>
+          <div className="p-4">
+            <PlacePrompt onSaved={() => { setPosts(null); setReload((n) => n + 1); }} />
+            <p className="mt-3 text-center text-[13px] text-faint">Approximate location for your privacy</p>
+          </div>
         ) : error ? (
           <div className="p-4"><StateCard kind="error" title="Nearby didn't load" detail={error} /></div>
         ) : !tilesFailed ? (

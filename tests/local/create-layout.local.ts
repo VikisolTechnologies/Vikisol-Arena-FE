@@ -15,13 +15,28 @@ async function signedIn(page: Page) {
     localStorage.setItem("arena_cookie_consent", "accepted");
     localStorage.setItem("arena_session", JSON.stringify({ role: "talent", name: "Priya Sharma", email: "priya@example.com" }));
     localStorage.setItem("arena_onboarded", "true");
+    sessionStorage.setItem("arena_location_session", "1");
   });
 }
 
 async function actionClearsContent(page: Page, label: string) {
   const button = page.getByRole("button", { name: label }).last();
   await expect(button).toBeVisible();
-  await button.scrollIntoViewIfNeeded();
+  await page.evaluate((name) => {
+    const buttons = [...document.querySelectorAll("button")].filter((b) => (b.textContent ?? "").trim() === name);
+    const btn = buttons[buttons.length - 1];
+    if (!btn) return;
+    let node: HTMLElement | null = btn.parentElement;
+    while (node) {
+      const style = getComputedStyle(node);
+      if (/(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight + 1) {
+        node.scrollTop = node.scrollHeight;
+        return;
+      }
+      node = node.parentElement;
+    }
+    window.scrollTo(0, document.documentElement.scrollHeight);
+  }, label);
   const result = await page.evaluate((name) => {
     const buttons = [...document.querySelectorAll("button")].filter((b) => (b.textContent ?? "").trim() === name);
     const btn = buttons[buttons.length - 1] as HTMLElement | undefined;
@@ -48,32 +63,31 @@ async function actionClearsContent(page: Page, label: string) {
 for (const viewport of VIEWPORTS) {
   test(`create flows keep Continue under the questions at ${viewport.width}×${viewport.height}`, async ({ page }) => {
     await page.setViewportSize({ ...viewport });
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await signedIn(page);
 
-    await page.goto("/activities/new");
-    await page.getByRole("textbox", { name: "Search activity types" }).fill("crick");
-    await page.getByRole("button", { name: /Cricket/ }).click();
+    await page.evaluate(() => localStorage.setItem("arena_activity_kind", "cricket"));
+    await page.goto("/activities/new?step=details");
     await expect(page.getByRole("heading", { name: "Cricket: the basics" })).toBeVisible();
     await actionClearsContent(page, "Continue");
 
-    await page.goto("/needs/new");
-    await expect(page.getByRole("button", { name: "Continue" }).last()).toBeVisible();
+    await page.goto("/needs/new?kind=moving");
+    await expect(page.getByRole("heading", { name: "What do you need?" })).toBeVisible();
     await actionClearsContent(page, "Continue");
 
-    await page.goto("/offers/new");
-    await expect(page.getByRole("button", { name: "Continue" }).last()).toBeVisible();
+    await page.goto("/offers/new?kind=errands");
+    await expect(page.getByRole("heading", { name: "What can you offer?" })).toBeVisible();
     await actionClearsContent(page, "Continue");
 
     await page.goto("/projects/new");
-    await expect(page.getByRole("button", { name: "Continue" }).last()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Start a project" })).toBeVisible();
     await actionClearsContent(page, "Continue");
 
     await page.evaluate(() => localStorage.setItem("arena_onboarded", "false"));
     for (const step of [1, 2, 3, 4]) {
       await page.goto(`/onboarding?step=${step}`);
-      const label = step === 1 ? "Continue" : "Continue";
-      await expect(page.getByRole("button", { name: label }).last()).toBeVisible();
-      await actionClearsContent(page, label);
+      await expect(page.getByRole("button", { name: "Continue" }).last()).toBeVisible();
+      await actionClearsContent(page, "Continue");
     }
   });
 }

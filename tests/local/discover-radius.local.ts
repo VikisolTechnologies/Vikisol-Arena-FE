@@ -33,7 +33,14 @@ test("the map distance slider starts at 5 km and widens the list", async ({ page
   await expect(slider).toHaveValue("5");
   await expect(page.getByRole("list", { name: "Places in this distance" }).getByText("Evening walk")).toBeVisible();
   await expect(page.getByText("Far picnic")).toHaveCount(0);
-  await slider.fill("30");
+  await page.evaluate(() => {
+    const input = document.querySelector('input[aria-label="Distance"]') as HTMLInputElement | null;
+    if (!input) throw new Error("Distance slider missing");
+    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+    set?.call(input, "30");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
   await expect(page.getByText("Far picnic")).toBeVisible();
   await expect.poll(() => radii.at(-1)).toBe("30");
 });

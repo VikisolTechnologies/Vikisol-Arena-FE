@@ -44,7 +44,7 @@ export function LocationSession() {
   return (
     <p role="status" className="mb-3 flex items-start gap-3 rounded-xl border border-line bg-surface px-4 py-3 text-[14px] leading-relaxed text-foreground">
       <span>Location is blocked for Arena. Open your browser menu, choose site settings for this site, allow Location, then reopen Arena.</span>
-      <button type="button" onClick={() => setBlocked(false)} className="shrink-0 font-semibold text-primary">Dismiss</button>
+      <button type="button" onClick={() => setBlocked(false)} className="shrink-0 font-semibold text-foreground underline underline-offset-4">Dismiss</button>
     </p>
   );
 }

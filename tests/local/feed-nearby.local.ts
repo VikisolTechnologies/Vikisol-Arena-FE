@@ -29,7 +29,7 @@ test("the feed opens on All", async ({ page }) => {
   await setup(page, [item("b", "Carter Road walk", 19.0596, 72.8295, "Bandra, Mumbai")]);
   await page.goto("/home");
   await expect(page.getByRole("radio", { name: "All" })).toBeChecked();
-  await expect(page.getByText("Carter Road walk")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Carter Road walk" })).toBeVisible();
 });
 
 test("Nearby shows only items within 5 km of the person; other cities only under All", async ({ page }) => {
