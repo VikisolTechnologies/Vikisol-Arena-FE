@@ -6,7 +6,7 @@ import { ArrowRight, Check, ChevronDown, CircleAlert, Eye, EyeOff, Lock, Mail, S
 import { authErrorMessage, signIn, signInWithGoogle, validateEmail, validatePassword, verifyMfa } from "@/lib/data/auth";
 import { requestPhoneSigninOtp, verifyPhoneSigninOtp, type SignInResult } from "@/lib/api/auth";
 import type { Session } from "@/lib/types";
-import { LOGIN_GOOGLE, LOGIN_HELP_HREF, LOGIN_MOBILE_OTP } from "./flags";
+import { LOGIN_GOOGLE, LOGIN_MOBILE_OTP } from "./flags";
 
 type Landing = (session: Pick<Session, "role">, fromSignup: boolean) => void;
 type Pane = "mobile" | "otp" | "email" | "password" | "mfa";
@@ -648,9 +648,9 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
       {(pane === "mobile" || pane === "otp" || pane === "mfa") && (
         <p className="al-help">
           Having trouble signing in?{" "}
-          <a href={LOGIN_HELP_HREF} className="al-link">
+          <button type="button" className="al-link" onClick={onRecover}>
             Get help
-          </a>
+          </button>
         </p>
       )}
     </section>

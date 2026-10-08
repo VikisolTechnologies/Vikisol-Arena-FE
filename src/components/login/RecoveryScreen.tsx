@@ -7,6 +7,7 @@ import { authErrorMessage, forgotPassword } from "@/lib/data/auth";
 import { requestPhoneSigninOtp, verifyPhoneSigninOtp } from "@/lib/api/auth";
 import type { Session } from "@/lib/types";
 import { Cta, FieldError, IndiaFlag, OtpBoxes } from "./LoginCard";
+import { LOGIN_HELP_HREF } from "./flags";
 import { LoginFrame } from "./LoginScreen";
 
 type Landing = (session: Pick<Session, "role">, fromSignup: boolean) => void;
@@ -172,6 +173,12 @@ export function RecoveryScreen({ onExit, land }: { onExit: () => void; land: Lan
               <Link href="/auth/forgot" className="al-link">
                 Get a reset link by email
               </Link>
+            </p>
+            <p className="al-help al-help-left">
+              Still stuck?{" "}
+              <a href={LOGIN_HELP_HREF} className="al-link">
+                Email us
+              </a>
             </p>
           </>
         )}
