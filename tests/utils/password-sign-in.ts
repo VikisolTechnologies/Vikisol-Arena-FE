@@ -8,8 +8,19 @@ export async function revealPasswordSignIn(page: Page) {
   if (await acceptCookies.isVisible().catch(() => false)) {
     await acceptCookies.click();
   }
+  // Login card (Oct 2026): opens on the Mobile tab; password sign-in lives under the Email tab.
+  const emailTab = page.getByRole("tab", { name: /Email/ });
+  if (await emailTab.isVisible().catch(() => false)) {
+    await emailTab.click();
+  }
   const usePassword = page.getByRole("button", { name: "Use password instead" });
   if (await usePassword.isVisible().catch(() => false)) {
     await usePassword.click();
   }
+}
+
+/** The Email tab asks for the email first, then the password on the next step. Call after
+ * filling Email and before filling Password. */
+export async function continueToPassword(page: Page) {
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
 }

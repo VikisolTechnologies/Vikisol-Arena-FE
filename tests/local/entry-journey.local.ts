@@ -273,12 +273,15 @@ test("sign in, forgot password, expired reset and session notice", async ({ page
   await page.waitForLoadState("networkidle");
   await dismissCookies(page);
   await noOverflow(page);
+  // Login card (Oct 2026): Mobile tab first; Email tab asks for the email, then the password.
+  await page.getByRole("tab", { name: /Email/ }).click();
+  await page.getByLabel("Email address").fill("priya@example.com");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByLabel("Password").fill("long-enough");
   await page.getByRole("button", { name: "Show the characters" }).click();
   await expect(page.getByLabel("Password")).toHaveAttribute("type", "text");
   await page.getByRole("button", { name: "Hide the characters" }).click();
   await expect(page.getByLabel("Password")).toHaveAttribute("type", "password");
-  await page.getByLabel("Email address").fill("priya@example.com");
   await page.locator('button[type="submit"]').click();
   await expect(page).toHaveURL(/\/home/);
 

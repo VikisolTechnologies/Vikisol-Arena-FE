@@ -66,13 +66,7 @@ export function LoginScreen({ onSignUp, land, notice }: { onSignUp: () => void; 
         </header>
 
         <div className="al-in" style={{ "--i": 3 } as React.CSSProperties}>
-          <LoginCard land={land} notice={notice} />
-          <p className="al-new">
-            New to Arena?{" "}
-            <button type="button" className="al-link" onClick={onSignUp}>
-              Create account
-            </button>
-          </p>
+          <LoginCard land={land} notice={notice} onSignUp={onSignUp} />
         </div>
 
         <footer className="al-foot al-in" style={{ "--i": 4 } as React.CSSProperties}>

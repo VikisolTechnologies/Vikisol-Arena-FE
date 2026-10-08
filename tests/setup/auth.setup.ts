@@ -1,7 +1,7 @@
 import { test as setup, expect } from "@playwright/test";
 import { DEMO_ACCOUNTS, type DemoAccount } from "../fixtures/accounts";
 import { escapeRegExp } from "../utils/escape-regexp";
-import { revealPasswordSignIn } from "../utils/password-sign-in";
+import { continueToPassword, revealPasswordSignIn } from "../utils/password-sign-in";
 
 /**
  * Runs once before every other project (see playwright.config.ts's `dependencies: ["setup"]`),
@@ -19,6 +19,7 @@ async function signInAs(page: import("@playwright/test").Page, account: DemoAcco
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await revealPasswordSignIn(page);
   await page.getByLabel("Email").fill(account.email);
+  await continueToPassword(page);
   await page.getByLabel("Password").fill(account.password);
   await page.locator('button[type="submit"]').click();
   await expect(page).toHaveURL(new RegExp(escapeRegExp(account.expectedLandingPath)), { timeout: 15_000 });

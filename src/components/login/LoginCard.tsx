@@ -10,7 +10,7 @@ import type { Session } from "@/lib/types";
 import { LOGIN_GOOGLE, LOGIN_HELP_HREF, LOGIN_MOBILE_OTP } from "./flags";
 
 type Landing = (session: Pick<Session, "role">, fromSignup: boolean) => void;
-type Pane = "mobile" | "otp" | "email" | "mfa";
+type Pane = "mobile" | "otp" | "email" | "password" | "mfa";
 type CtaState = "idle" | "loading" | "success";
 
 const SUCCESS_HOLD_MS = 380;
@@ -90,6 +90,22 @@ function GoogleCircle({ onCredential, disabled }: { onCredential: (idToken: stri
   );
 }
 
+function AppleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true">
+      <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
+    </svg>
+  );
+}
+
+function WhatsAppIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="#25D366" aria-hidden="true">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+    </svg>
+  );
+}
+
 function OtpBoxes({ value, onChange, invalid, label, describedBy }: { value: string; onChange: (v: string) => void; invalid: boolean; label: string; describedBy?: string }) {
   const refs = useRef<Array<HTMLInputElement | null>>([]);
   const setAt = (index: number, digits: string) => {
@@ -150,10 +166,11 @@ function OtpBoxes({ value, onChange, invalid, label, describedBy }: { value: str
   );
 }
 
-export function LoginCard({ land, notice }: { land: Landing; notice?: string }) {
+export function LoginCard({ land, notice, onSignUp }: { land: Landing; notice?: string; onSignUp: () => void }) {
   const [pane, setPane] = useState<Pane>(LOGIN_MOBILE_OTP ? "mobile" : "email");
   const [cta, setCta] = useState<CtaState>("idle");
   const [error, setError] = useState("");
+  const [socialNote, setSocialNote] = useState("");
 
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
@@ -172,6 +189,9 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
   const busy = cta !== "idle";
   const digits = phone.replace(/\D/g, "");
   const e164 = `+91${digits}`;
+  const phoneOk = /^[6-9]\d{9}$/.test(digits);
+  const showTabs = LOGIN_MOBILE_OTP && pane !== "mfa";
+  const showSocial = pane === "mobile" || pane === "email";
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -181,6 +201,7 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
 
   const go = (next: Pane) => {
     setError("");
+    setSocialNote("");
     setCode("");
     setCta("idle");
     setPane(next);
@@ -206,15 +227,24 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
     setCta("idle");
   };
 
-  const submitEmail = async (e: FormEvent) => {
+  const submitEmail = (e: FormEvent) => {
+    e.preventDefault();
+    const eErr = validateEmail(email);
+    setEmailError(eErr);
+    if (eErr) {
+      document.getElementById("signin-email")?.focus();
+      return;
+    }
+    go("password");
+  };
+
+  const submitPassword = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    const eErr = validateEmail(email);
     const pErr = validatePassword(password);
-    setEmailError(eErr);
     setPasswordError(pErr);
-    if (eErr || pErr) {
-      document.getElementById(eErr ? "signin-email" : "signin-password")?.focus();
+    if (pErr) {
+      document.getElementById("signin-password")?.focus();
       return;
     }
     setCta("loading");
@@ -228,7 +258,7 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
   const sendOtp = async (e?: FormEvent) => {
     e?.preventDefault();
     setError("");
-    if (!/^[6-9]\d{9}$/.test(digits)) {
+    if (!phoneOk) {
       setPhoneError("Please enter a valid mobile number");
       document.getElementById("login-phone")?.focus();
       return;
@@ -290,6 +320,7 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
 
   const onGoogle = async (idToken: string) => {
     setError("");
+    setSocialNote("");
     setCta("loading");
     try {
       handle(await signInWithGoogle(idToken));
@@ -313,6 +344,7 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
   const maskedPhone = `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`;
   const mm = String(Math.floor(resendIn / 60)).padStart(2, "0");
   const ss = String(resendIn % 60).padStart(2, "0");
+  const notYet = (name: string) => () => setSocialNote(`${name} sign-in isn't available yet. Use your mobile number or email for now.`);
 
   return (
     <section className="al-card" aria-label="Sign in">
@@ -322,7 +354,7 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
         </p>
       )}
 
-      {LOGIN_MOBILE_OTP && pane !== "mfa" && (
+      {showTabs && (
         <div className="al-tabs" role="tablist" aria-label="Sign-in method">
           <button id="login-tab-mobile" type="button" role="tab" className="al-tab" aria-selected={tab === "mobile"} aria-controls="login-pane" tabIndex={tab === "mobile" ? 0 : -1} onClick={() => tab !== "mobile" && go("mobile")} onKeyDown={onTabKey}>
             <Smartphone aria-hidden="true" />
@@ -341,7 +373,7 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
         </div>
       )}
 
-      <div id="login-pane" key={pane} className="al-pane" role={LOGIN_MOBILE_OTP && pane !== "mfa" ? "tabpanel" : undefined} aria-labelledby={LOGIN_MOBILE_OTP && pane !== "mfa" ? `login-tab-${tab}` : undefined}>
+      <div id="login-pane" key={pane} className="al-pane" role={showTabs ? "tabpanel" : undefined} aria-labelledby={showTabs ? `login-tab-${tab}` : undefined}>
         {pane === "mobile" && (
           <>
             <h2 className="al-title">Enter your mobile number</h2>
@@ -350,7 +382,7 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
               <label htmlFor="login-phone" className="al-sr">
                 Mobile number
               </label>
-              <div className="al-field" data-state={phoneError ? "error" : /^[6-9]\d{9}$/.test(digits) ? "success" : undefined}>
+              <div className="al-field" data-state={phoneError ? "error" : phoneOk ? "success" : undefined}>
                 <span className="al-cc">
                   <IndiaFlag />
                   <span>
@@ -372,7 +404,7 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
                     if (phoneError) setPhoneError("");
                   }}
                 />
-                {/^[6-9]\d{9}$/.test(digits) && <Check aria-hidden="true" style={{ margin: "0 14px 0 0", color: "var(--al-success)" }} />}
+                {phoneOk && <Check aria-hidden="true" style={{ margin: "0 14px 0 0", color: "var(--al-success)" }} />}
               </div>
               <FieldError id="login-phone-error" message={phoneError} />
               <FieldError id="login-form-error" message={error} />
@@ -408,7 +440,7 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
         {pane === "email" && (
           <>
             <h2 className="al-title">Sign in with email</h2>
-            <p className="al-desc">Enter your email address and password.</p>
+            <p className="al-desc">Enter your email address to continue.</p>
             <form className="al-form" method="post" noValidate onSubmit={submitEmail}>
               <label htmlFor="signin-email" className="al-sr">
                 Email address
@@ -419,7 +451,7 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
                   id="signin-email"
                   type="email"
                   inputMode="email"
-                  autoComplete="email"
+                  autoComplete="username"
                   autoCapitalize="none"
                   spellCheck={false}
                   placeholder="you@example.com"
@@ -433,6 +465,20 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
                 />
               </div>
               <FieldError id="signin-email-error" message={emailError} />
+              <Cta state={cta} busyLabel="Continue" doneLabel="Continue">
+                Continue
+              </Cta>
+            </form>
+          </>
+        )}
+
+        {pane === "password" && (
+          <>
+            <h2 className="al-title">Enter your password</h2>
+            <p className="al-desc">{email.trim()}</p>
+            <form className="al-form" method="post" noValidate onSubmit={submitPassword}>
+              {/* Lets password managers pair the saved password with this email. */}
+              <input type="email" name="username" autoComplete="username" value={email.trim()} readOnly hidden />
               <label htmlFor="signin-password" className="al-sr">
                 Password
               </label>
@@ -442,6 +488,7 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
                   id="signin-password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
+                  autoFocus
                   placeholder="Password"
                   value={password}
                   aria-invalid={Boolean(passwordError) || undefined}
@@ -456,7 +503,10 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
                 </button>
               </div>
               <FieldError id="signin-password-error" message={passwordError} />
-              <div className="al-row" style={{ justifyContent: "flex-end" }}>
+              <div className="al-row">
+                <button type="button" className="al-link" onClick={() => go("email")}>
+                  Different email
+                </button>
                 <Link href="/auth/forgot" className="al-link">
                   Forgot password?
                 </Link>
@@ -496,21 +546,45 @@ export function LoginCard({ land, notice }: { land: Landing; notice?: string }) 
         )}
       </div>
 
-      {LOGIN_GOOGLE && pane !== "mfa" && pane !== "otp" && (
+      {showSocial && (
         <>
           <div className="al-or">or continue with</div>
           <div className="al-social">
-            <GoogleCircle onCredential={onGoogle} disabled={busy} />
+            {LOGIN_GOOGLE ? (
+              <GoogleCircle onCredential={onGoogle} disabled={busy} />
+            ) : (
+              <button type="button" className="al-soc" aria-label="Continue with Google" onClick={notYet("Google")}>
+                <GoogleG />
+              </button>
+            )}
+            <button type="button" className="al-soc" aria-label="Continue with Apple" onClick={notYet("Apple")}>
+              <AppleIcon />
+            </button>
+            <button type="button" className="al-soc" aria-label="Continue with WhatsApp" onClick={notYet("WhatsApp")}>
+              <WhatsAppIcon />
+            </button>
           </div>
+          <p className="al-note" role="status">
+            {socialNote}
+          </p>
         </>
       )}
 
-      <p className="al-help">
-        Having trouble signing in?{" "}
-        <a href={LOGIN_HELP_HREF} className="al-link">
-          Get help
-        </a>
-      </p>
+      {tab === "email" && pane !== "mfa" ? (
+        <p className="al-help">
+          Don&apos;t have an account?{" "}
+          <button type="button" className="al-link" onClick={onSignUp}>
+            Create account
+          </button>
+        </p>
+      ) : (
+        <p className="al-help">
+          Having trouble signing in?{" "}
+          <a href={LOGIN_HELP_HREF} className="al-link">
+            Get help
+          </a>
+        </p>
+      )}
     </section>
   );
 }

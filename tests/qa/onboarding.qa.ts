@@ -100,7 +100,9 @@ test.describe("Journey 1 — Onboarding", () => {
     await expect(page).toHaveURL(/mode=signin/, { timeout: 10_000 });
 
     // wrong password shows a clear error, doesn't crash
+    await page.getByRole("tab", { name: /Email/ }).click();
     await page.locator("#signin-email").fill(email);
+    await page.getByRole("button", { name: "Continue", exact: true }).click();
     await page.locator("#signin-password").fill("WrongPassword1!");
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page.getByText(/Invalid email or password/i)).toBeVisible({ timeout: 10_000 });

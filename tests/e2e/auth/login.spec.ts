@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { DEMO_ACCOUNTS } from "../../fixtures/accounts";
-import { revealPasswordSignIn } from "../../utils/password-sign-in";
+import { continueToPassword, revealPasswordSignIn } from "../../utils/password-sign-in";
 
 /** @auth @smoke — sign-in lifecycle against the real /auth form and the real API. Valid-login
  * coverage for all 5 roles already happens in tests/setup/auth.setup.ts (it IS the login test,
@@ -25,6 +25,7 @@ test.describe("Sign-in validation", () => {
     await page.goto("/auth");
     await revealPasswordSignIn(page);
     await page.getByLabel("Email").fill("not-an-email");
+    await continueToPassword(page);
     await page.getByLabel("Password").fill("whatever123");
     await page.locator('button[type="submit"]').click();
     // Native HTML5 <input type="email"> validation should block the form submit entirely -
@@ -39,6 +40,7 @@ test.describe("Sign-in validation", () => {
     await page.getByRole("button", { name: "Talent", exact: false }).click();
     await revealPasswordSignIn(page);
     await page.getByLabel("Email").fill(DEMO_ACCOUNTS.talent.email);
+    await continueToPassword(page);
     await page.getByLabel("Password").fill("definitely-the-wrong-password-123");
     await page.locator('button[type="submit"]').click();
     await expect(page.locator("p.text-red-400")).toBeVisible({ timeout: 10_000 });
@@ -50,6 +52,7 @@ test.describe("Sign-in validation", () => {
     await page.getByRole("button", { name: "Talent", exact: false }).click();
     await revealPasswordSignIn(page);
     await page.getByLabel("Email").fill(DEMO_ACCOUNTS.talent.email);
+    await continueToPassword(page);
     await page.getByLabel("Password").fill("definitely-the-wrong-password-123");
     const submit = page.locator('button[type="submit"]');
     await submit.click();

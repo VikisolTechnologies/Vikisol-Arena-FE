@@ -86,15 +86,15 @@
 .al-card {
   position: relative; margin-top: 26px; padding: 18px; border-radius: 26px;
   background: var(--al-glass-solid);
-  border: 1px solid var(--al-glass-border);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.3), 0 0 46px rgba(255, 110, 40, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 150, 90, 0.42);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.3), 0 0 34px rgba(255, 110, 40, 0.2), inset 0 0 26px rgba(255, 120, 50, 0.07), inset 0 1px 0 rgba(255, 200, 160, 0.2);
 }
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   .al-card { background: linear-gradient(160deg, rgba(70, 38, 18, 0.4), rgba(18, 15, 13, 0.5) 45%); -webkit-backdrop-filter: blur(24px) saturate(1.15); backdrop-filter: blur(24px) saturate(1.15); }
 }
 .al-notice { margin: 0 0 14px; padding: 10px 12px; border-radius: 12px; background: var(--al-glass-light); border: 1px solid var(--al-glass-border); font-size: 13.5px; }
 
-.al-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+.al-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 20px; }
 .al-tab {
   display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 14px; border-radius: 12px; cursor: pointer;
   background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--al-text); text-align: left; font: inherit;
@@ -160,9 +160,12 @@
 /* Google renders its own button in a frame; it sits invisibly over our circle so the tap is Google's. */
 .al-soc .al-gsi { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0.011; }
 .al-soc:focus-within { border-color: var(--al-orange); box-shadow: 0 0 0 3px rgba(255, 90, 31, 0.22); }
+.al-soc { padding: 0; color: inherit; cursor: pointer; }
+button.al-soc:hover { background: rgba(255, 255, 255, 0.1); }
+.al-note { min-height: 0; margin: 10px 0 0; text-align: center; font-size: 13px; line-height: 1.4; color: var(--al-text); }
+.al-note:empty { display: none; }
 .al-help { margin: 16px 0 0; text-align: center; font-size: 13.5px; color: var(--al-text-2); }
-.al-help .al-link { min-height: 0; padding: 12px 2px; margin: -12px 0; }
-.al-new { margin: 14px 0 0 2px; text-align: left; font-size: 13.5px; color: var(--al-text-2); text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7); }
+.al-help .al-link { min-height: 0; padding: 12px 2px; margin: -12px 0; font-size: inherit; }
 
 /* OTP boxes */
 .al-otp { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
@@ -215,8 +218,7 @@
   .al-head { margin-top: clamp(28px, 6svh, 64px); }
   .al-h1 { font-size: 54px; }
   .al-card { max-width: 460px; padding: 22px; }
-  .al-new { max-width: 460px; margin-left: 0; text-align: center; }
-  .al-shade {
+    .al-shade {
     background:
       linear-gradient(90deg, rgba(8, 7, 6, 0.9) 0%, rgba(8, 7, 6, 0.66) 30%, rgba(8, 7, 6, 0.16) 62%, rgba(8, 7, 6, 0) 100%),
       linear-gradient(180deg, rgba(8, 7, 6, 0.4) 0%, rgba(8, 7, 6, 0) 24%, rgba(8, 7, 6, 0.1) 70%, rgba(8, 7, 6, 0.6) 100%),

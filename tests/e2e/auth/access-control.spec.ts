@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { DEMO_ACCOUNTS } from "../../fixtures/accounts";
 import { attachMonitor } from "../../utils/monitor";
-import { revealPasswordSignIn } from "../../utils/password-sign-in";
+import { continueToPassword, revealPasswordSignIn } from "../../utils/password-sign-in";
 
 /** @auth @security — protected-route and cross-role access control (spec §4/§21). This exact
  * class of bug (wrong-role sessions stranded in the wrong onboarding wizard instead of a real
@@ -116,6 +116,7 @@ test.describe("Post-login redirect target", () => {
     await page.getByRole("button", { name: "Talent", exact: false }).click();
     await revealPasswordSignIn(page);
     await page.getByLabel("Email").fill(DEMO_ACCOUNTS.talent.email);
+    await continueToPassword(page);
     await page.getByLabel("Password").fill(DEMO_ACCOUNTS.talent.password);
     await page.locator('button[type="submit"]').click();
     await expect(page).toHaveURL(/\/home$/, { timeout: 15_000 });
