@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, type ClipboardEvent, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
-import Link from "next/link";
 import Script from "next/script";
 import { ArrowRight, Check, ChevronDown, CircleAlert, Eye, EyeOff, Lock, Mail, Smartphone } from "lucide-react";
 import { authErrorMessage, signIn, signInWithGoogle, validateEmail, validatePassword, verifyMfa } from "@/lib/data/auth";
@@ -563,9 +562,9 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
                   </span>
                   Keep me signed in
                 </label>
-                <Link href="/auth/forgot" className="al-link">
+                <button type="button" className="al-link" onClick={onRecover}>
                   Forgot password?
-                </Link>
+                </button>
               </div>
               <FieldError id="login-form-error" message={error} />
               <Cta state={cta} busyLabel="Signing in..." doneLabel="Signed in">

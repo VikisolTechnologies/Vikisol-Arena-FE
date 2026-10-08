@@ -288,3 +288,4 @@ button.al-soc:hover { background: rgba(255, 255, 255, 0.1); }
   .al-recover { max-width: 460px; }
   .arena-login[data-compact] .al-top { justify-content: flex-start; margin-top: 14px; }
 }
+.al-sent-icon { width: 44px; height: 44px; margin-bottom: 14px; color: var(--al-success); }

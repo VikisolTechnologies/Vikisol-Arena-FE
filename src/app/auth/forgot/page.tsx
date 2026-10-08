@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { ForgotPasswordView } from "@/components/entry/PasswordRecovery";
+import { ForgotEmailScreen } from "@/components/login/ForgotEmailScreen";
 
 export const metadata: Metadata = { title: "Reset password · Arena" };
 
 export default function ForgotPage() {
-  return <ForgotPasswordView />;
+  return <ForgotEmailScreen />;
 }

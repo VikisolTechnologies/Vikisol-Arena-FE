@@ -34,7 +34,8 @@ for now if the look is right, but they must be reported plainly, never hidden.
 | Account recovery | `/auth?mode=recover` | **Done, live.** |
 | Welcome / entrance | `/auth` (no mode) | **On hold.** Needs a real looping forest video from Syam (Envato). Do not fake it with CSS zoom. Still the old B+ `WelcomeView`. |
 | Sign up | `/auth?mode=signup` | Not started. Still B+ `SignUpView`. Likely next. |
-| Forgot / reset by email | `/auth/forgot`, `/auth/reset/[token]` | Not restyled. Still B+ `PasswordRecovery.tsx`. Works. |
+| Forgot password by email | `/auth/forgot` | **Done, live** (`login/ForgotEmailScreen.tsx`). |
+| Set new password from the emailed link | `/auth/reset/[token]` | Not restyled. Still B+ `ResetPasswordView` in `PasswordRecovery.tsx`. Works. |
 | Everything after login | | Not started. Palette for the app interior is **undecided**; ask Syam before restyling any of it. |
 
 ## The new look (login family)
