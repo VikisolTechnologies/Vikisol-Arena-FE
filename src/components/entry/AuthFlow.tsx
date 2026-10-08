@@ -10,9 +10,10 @@ import type { Session } from "@/lib/types";
 import { WelcomeView } from "./WelcomeView";
 import { SignUpView } from "./AuthForms";
 import { LoginScreen } from "@/components/login/LoginScreen";
+import { RecoveryScreen } from "@/components/login/RecoveryScreen";
 import { RoleChooser } from "./RoleChooser";
 
-type View = "welcome" | "signin" | "signup" | "role";
+type View = "welcome" | "signin" | "signup" | "role" | "recover";
 
 /** Role-based landing — unchanged from the previous entry flow. */
 function useLand() {
@@ -39,8 +40,8 @@ export function AuthFlow() {
   const params = useSearchParams();
   const land = useLand();
   const mode = params.get("mode");
-  const view: View = mode === "signup" ? "signup" : mode === "signin" ? "signin" : mode === "role" ? "role" : "welcome";
-  const direction = useDirection(view === "welcome" ? 0 : view === "signin" ? 1 : view === "role" ? 2 : 3);
+  const view: View = mode === "signup" ? "signup" : mode === "signin" ? "signin" : mode === "role" ? "role" : mode === "recover" ? "recover" : "welcome";
+  const direction = useDirection(view === "welcome" ? 0 : view === "signin" ? 1 : view === "role" ? 2 : view === "recover" ? 4 : 3);
   const fromWelcome = useRef(false);
 
   const go = (next: View) => {
@@ -66,7 +67,8 @@ export function AuthFlow() {
           {view === "welcome" && <WelcomeView onJoin={() => go("signup")} onSignIn={() => go("signin")} />}
           {view === "role" && <RoleChooser onBack={back} onContinue={(c) => router.push(`${pathname}?mode=signup${c === "company" ? "&as=company" : ""}`, { scroll: false })} />}
           {view === "signup" && <SignUpView onBack={back} onSignIn={() => go("signin")} land={land} initialAccount={params.get("as") === "company" ? "company_admin" : "talent"} />}
-          {view === "signin" && <LoginScreen onSignUp={() => go("signup")} land={land} notice={notice} />}
+          {view === "signin" && <LoginScreen onBack={back} onSignUp={() => go("signup")} onRecover={() => go("recover")} land={land} notice={notice} />}
+          {view === "recover" && <RecoveryScreen onExit={() => router.push(`${pathname}?mode=signin`, { scroll: false })} land={land} />}
         </m.div>
       </AnimatePresence>
     </div>

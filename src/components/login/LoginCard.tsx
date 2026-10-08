@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ClipboardEvent, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { ArrowRight, Check, ChevronDown, Eye, EyeOff, Lock, Mail, Smartphone } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, CircleAlert, Eye, EyeOff, Lock, Mail, Smartphone } from "lucide-react";
 import { authErrorMessage, signIn, signInWithGoogle, validateEmail, validatePassword, verifyMfa } from "@/lib/data/auth";
 import { requestPhoneSigninOtp, verifyPhoneSigninOtp, type SignInResult } from "@/lib/api/auth";
 import type { Session } from "@/lib/types";
@@ -17,7 +17,7 @@ const SUCCESS_HOLD_MS = 380;
 const RESEND_SECONDS = 30;
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
-function Cta({ state, children, busyLabel, doneLabel }: { state: CtaState; children: ReactNode; busyLabel: string; doneLabel: string }) {
+export function Cta({ state, children, busyLabel, doneLabel }: { state: CtaState; children: ReactNode; busyLabel: string; doneLabel: string }) {
   return (
     <button type="submit" className="al-cta" data-state={state} disabled={state !== "idle"} aria-busy={state === "loading"}>
       {state === "loading" ? busyLabel : state === "success" ? doneLabel : children}
@@ -26,7 +26,7 @@ function Cta({ state, children, busyLabel, doneLabel }: { state: CtaState; child
   );
 }
 
-function FieldError({ id, message }: { id: string; message: string }) {
+export function FieldError({ id, message }: { id: string; message: string }) {
   return (
     <p id={id} className="al-err" role="alert" hidden={!message}>
       {message}
@@ -34,7 +34,7 @@ function FieldError({ id, message }: { id: string; message: string }) {
   );
 }
 
-function IndiaFlag() {
+export function IndiaFlag() {
   return (
     <svg className="al-flag" viewBox="0 0 22 15" aria-hidden="true">
       <rect width="22" height="5" fill="#FF9933" />
@@ -106,7 +106,7 @@ function WhatsAppIcon() {
   );
 }
 
-function OtpBoxes({ value, onChange, invalid, label, describedBy }: { value: string; onChange: (v: string) => void; invalid: boolean; label: string; describedBy?: string }) {
+export function OtpBoxes({ value, onChange, invalid, label, describedBy }: { value: string; onChange: (v: string) => void; invalid: boolean; label: string; describedBy?: string }) {
   const refs = useRef<Array<HTMLInputElement | null>>([]);
   const setAt = (index: number, digits: string) => {
     const chars = value.padEnd(6, " ").split("");
@@ -166,7 +166,7 @@ function OtpBoxes({ value, onChange, invalid, label, describedBy }: { value: str
   );
 }
 
-export function LoginCard({ land, notice, onSignUp }: { land: Landing; notice?: string; onSignUp: () => void }) {
+export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing; notice?: string; onSignUp: () => void; onRecover: () => void }) {
   const [pane, setPane] = useState<Pane>(LOGIN_MOBILE_OTP ? "mobile" : "email");
   const [cta, setCta] = useState<CtaState>("idle");
   const [error, setError] = useState("");
@@ -180,7 +180,9 @@ export function LoginCard({ land, notice, onSignUp }: { land: Landing; notice?: 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [emailError, setEmailError] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [notFound, setNotFound] = useState(false);
+  const [keepSignedIn, setKeepSignedIn] = useState(true);
   const [passwordError, setPasswordError] = useState("");
 
   const [mfaToken, setMfaToken] = useState<string | null>(null);
@@ -190,8 +192,10 @@ export function LoginCard({ land, notice, onSignUp }: { land: Landing; notice?: 
   const digits = phone.replace(/\D/g, "");
   const e164 = `+91${digits}`;
   const phoneOk = /^[6-9]\d{9}$/.test(digits);
-  const showTabs = LOGIN_MOBILE_OTP && pane !== "mfa";
-  const showSocial = pane === "mobile" || pane === "email";
+  const emailProblem = !email.trim() ? "Enter your email address." : validateEmail(email) ? "Please enter a valid email address." : "";
+  const emailError = emailTouched ? emailProblem : "";
+  const showTabs = LOGIN_MOBILE_OTP && pane !== "mfa" && pane !== "password";
+  const showSocial = pane === "mobile" || pane === "email" || pane === "password";
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -223,16 +227,26 @@ export function LoginCard({ land, notice, onSignUp }: { land: Landing; notice?: 
   };
 
   const fail = (err: unknown) => {
-    setError(authErrorMessage(err));
+    const message = authErrorMessage(err);
+    // arena-api's own wording when the email has no account: show the "Account not found" state.
+    if (pane === "password" && /no account found/i.test(message)) {
+      setNotFound(true);
+      go("email");
+      return;
+    }
+    setError(message);
     setCta("idle");
   };
 
   const submitEmail = (e: FormEvent) => {
     e.preventDefault();
-    const eErr = validateEmail(email);
-    setEmailError(eErr);
-    if (eErr) {
+    setEmailTouched(true);
+    if (emailProblem) {
       document.getElementById("signin-email")?.focus();
+      return;
+    }
+    if (notFound) {
+      onSignUp();
       return;
     }
     go("password");
@@ -439,13 +453,13 @@ export function LoginCard({ land, notice, onSignUp }: { land: Landing; notice?: 
 
         {pane === "email" && (
           <>
-            <h2 className="al-title">Sign in with email</h2>
+            <h2 className="al-title">{notFound ? "Account not found" : "Sign in with email"}</h2>
             <p className="al-desc">Enter your email address to continue.</p>
             <form className="al-form" method="post" noValidate onSubmit={submitEmail}>
               <label htmlFor="signin-email" className="al-sr">
                 Email address
               </label>
-              <div className="al-field" data-state={emailError ? "error" : undefined}>
+              <div className="al-field" data-state={emailError || notFound ? "error" : undefined}>
                 <Mail aria-hidden="true" />
                 <input
                   id="signin-email"
@@ -456,29 +470,67 @@ export function LoginCard({ land, notice, onSignUp }: { land: Landing; notice?: 
                   spellCheck={false}
                   placeholder="you@example.com"
                   value={email}
-                  aria-invalid={Boolean(emailError) || undefined}
+                  aria-invalid={Boolean(emailError) || notFound || undefined}
                   aria-describedby="signin-email-error"
+                  onBlur={() => email && setEmailTouched(true)}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    if (emailError) setEmailError("");
+                    if (notFound) setNotFound(false);
                   }}
                 />
+                {(emailError || notFound) && <CircleAlert className="al-bang" aria-hidden="true" />}
               </div>
               <FieldError id="signin-email-error" message={emailError} />
-              <Cta state={cta} busyLabel="Continue" doneLabel="Continue">
-                Continue
-              </Cta>
+              {notFound && (
+                <p className="al-banner" role="alert">
+                  <CircleAlert aria-hidden="true" />
+                  We couldn&apos;t find an account with this email address.
+                </p>
+              )}
+              {notFound ? (
+                <>
+                  <Cta state="idle" busyLabel="" doneLabel="">
+                    Create account
+                  </Cta>
+                  <button
+                    type="button"
+                    className="al-ghost"
+                    onClick={() => {
+                      setNotFound(false);
+                      setEmail("");
+                      setEmailTouched(false);
+                      document.getElementById("signin-email")?.focus();
+                    }}
+                  >
+                    Try a different email
+                  </button>
+                </>
+              ) : (
+                <button type="submit" className="al-cta" data-state="idle" disabled={Boolean(emailError)}>
+                  Continue
+                  <i aria-hidden="true">
+                    <ArrowRight />
+                  </i>
+                </button>
+              )}
             </form>
           </>
         )}
 
         {pane === "password" && (
           <>
-            <h2 className="al-title">Enter your password</h2>
-            <p className="al-desc">{email.trim()}</p>
+            <h2 className="al-title al-title-lg">Enter your password</h2>
+            <p className="al-desc">Welcome back! Please enter your password to continue.</p>
             <form className="al-form" method="post" noValidate onSubmit={submitPassword}>
               {/* Lets password managers pair the saved password with this email. */}
               <input type="email" name="username" autoComplete="username" value={email.trim()} readOnly hidden />
+              <div className="al-field al-field-static">
+                <Mail aria-hidden="true" />
+                <span className="al-static">{email.trim()}</span>
+                <button type="button" className="al-link al-change" onClick={() => go("email")}>
+                  Change
+                </button>
+              </div>
               <label htmlFor="signin-password" className="al-sr">
                 Password
               </label>
@@ -489,7 +541,7 @@ export function LoginCard({ land, notice, onSignUp }: { land: Landing; notice?: 
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   autoFocus
-                  placeholder="Password"
+                  placeholder="Enter your password"
                   value={password}
                   aria-invalid={Boolean(passwordError) || undefined}
                   aria-describedby="signin-password-error"
@@ -498,15 +550,19 @@ export function LoginCard({ land, notice, onSignUp }: { land: Landing; notice?: 
                     if (passwordError) setPasswordError("");
                   }}
                 />
-                <button type="button" className="al-eye" aria-label={showPassword ? "Hide the characters" : "Show the characters"} aria-pressed={showPassword} onClick={() => setShowPassword((s) => !s)}>
+                <button type="button" className="al-eye" aria-label={showPassword ? "Hide the characters" : "Show the characters"} aria-pressed={showPassword} onClick={() => setShowPassword((v) => !v)}>
                   {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
                 </button>
               </div>
               <FieldError id="signin-password-error" message={passwordError} />
               <div className="al-row">
-                <button type="button" className="al-link" onClick={() => go("email")}>
-                  Different email
-                </button>
+                <label className="al-check">
+                  <input type="checkbox" checked={keepSignedIn} onChange={(e) => setKeepSignedIn(e.target.checked)} />
+                  <span aria-hidden="true">
+                    <Check />
+                  </span>
+                  Keep me signed in
+                </label>
                 <Link href="/auth/forgot" className="al-link">
                   Forgot password?
                 </Link>
@@ -570,14 +626,27 @@ export function LoginCard({ land, notice, onSignUp }: { land: Landing; notice?: 
         </>
       )}
 
-      {tab === "email" && pane !== "mfa" ? (
+      {pane === "email" && (
         <p className="al-help">
-          Don&apos;t have an account?{" "}
-          <button type="button" className="al-link" onClick={onSignUp}>
-            Create account
+          Forgot{" "}
+          <button type="button" className="al-link" onClick={onRecover}>
+            email
+          </button>{" "}
+          or{" "}
+          <button type="button" className="al-link" onClick={onRecover}>
+            password
+          </button>
+          ?
+        </p>
+      )}
+      {pane === "password" && (
+        <p className="al-help">
+          <button type="button" className="al-link" onClick={onRecover}>
+            Forgot email?
           </button>
         </p>
-      ) : (
+      )}
+      {(pane === "mobile" || pane === "otp" || pane === "mfa") && (
         <p className="al-help">
           Having trouble signing in?{" "}
           <a href={LOGIN_HELP_HREF} className="al-link">

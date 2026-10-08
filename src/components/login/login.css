@@ -56,7 +56,17 @@
   width: 100%; max-width: 520px;
   padding: max(22px, env(safe-area-inset-top)) var(--al-gutter) max(20px, env(safe-area-inset-bottom));
 }
-.al-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.al-nav { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.al-back {
+  display: grid; place-items: center; width: 44px; height: 44px; margin-left: -4px; padding: 0; border-radius: 50%; cursor: pointer; color: var(--al-text);
+  background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.24);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); transition: background 0.15s ease;
+}
+.al-back:hover { background: rgba(255, 255, 255, 0.2); }
+.al-back svg { width: 20px; height: 20px; }
+.al-top { display: flex; align-items: center; margin-top: 14px; }
+.arena-login[data-compact] .al-top { justify-content: center; margin-top: -40px; pointer-events: none; }
+.arena-login[data-compact] .al-brand { pointer-events: auto; }
 .al-brand { display: flex; align-items: center; gap: 10px; color: var(--al-text); text-decoration: none; }
 .al-brand svg { width: 40px; height: 40px; }
 .al-word { display: block; font-size: 27px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; text-transform: lowercase; }
@@ -73,7 +83,7 @@
 }
 .al-skip:hover > span { background: rgba(255, 255, 255, 0.22); }
 
-.al-head { margin-top: clamp(28px, 7.5svh, 76px); }
+.al-head { margin-top: clamp(18px, 4svh, 44px); }
 .al-h1 {
   margin: 0; font-family: var(--font-playfair), "Playfair Display", Georgia, serif;
   font-weight: 700; font-size: clamp(42px, 12.3vw, 50px); line-height: 0.98; letter-spacing: -0.012em;
@@ -105,6 +115,7 @@
 .al-tab b { display: block; font-size: 14.5px; font-weight: 600; line-height: 1.2; }
 .al-tab small { display: block; margin-top: 2px; font-size: 11.5px; color: var(--al-text-2); line-height: 1.2; }
 
+.al-title-lg { font-size: 20px !important; }
 .al-title { margin: 0; font-family: var(--font-playfair), "Playfair Display", Georgia, serif; font-size: 17px; font-weight: 700; line-height: 1.25; }
 .al-desc { margin: 5px 0 0; font-size: 13.5px; line-height: 1.4; color: var(--al-text-2); }
 .al-form { margin-top: 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
@@ -227,4 +238,53 @@ button.al-soc:hover { background: rgba(255, 255, 255, 0.1); }
 }
 @media (min-width: 1100px) {
   .al-bg img, .al-bg video { object-position: 50% 45%; }
+}
+
+/* ---------- states added with the full sign-in + recovery flow ---------- */
+.al-bang { flex: none; width: 20px !important; height: 20px !important; margin: 0 14px 0 0 !important; color: var(--al-error) !important; }
+.al-banner { display: flex; align-items: center; gap: 10px; margin: 0; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.35; color: #ffb4a8; background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(255, 107, 107, 0.55); }
+.al-banner svg { flex: none; width: 18px; height: 18px; color: var(--al-error); }
+.al-ghost { width: 100%; height: 50px; border-radius: 12px; cursor: pointer; font: inherit; font-size: 15px; font-weight: 600; color: var(--al-text); background: rgba(12, 10, 9, 0.35); border: 1px solid rgba(255, 255, 255, 0.55); transition: background 0.15s ease; }
+.al-ghost:hover { background: rgba(255, 255, 255, 0.1); }
+.al-field-static { background: rgba(12, 10, 9, 0.3); }
+.al-static { flex: 1; min-width: 0; padding: 0 14px; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.al-change { margin-right: 14px; }
+.al-check { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-size: 13.5px; color: var(--al-text); cursor: pointer; }
+.al-check input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.al-check span { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 5px; border: 1px solid var(--al-input-border); background: var(--al-input-bg); }
+.al-check span svg { width: 14px; height: 14px; color: #fff; opacity: 0; }
+.al-check input:checked + span { background: var(--al-orange); border-color: var(--al-orange); }
+.al-check input:checked + span svg { opacity: 1; }
+.al-check input:focus-visible + span { outline: 2px solid var(--al-text); outline-offset: 2px; }
+.al-help-left { text-align: left; }
+
+.al-recover { margin-top: clamp(22px, 5svh, 48px); }
+.al-h2 { margin: 0; font-family: var(--font-playfair), "Playfair Display", Georgia, serif; font-size: 28px; font-weight: 700; line-height: 1.15; color: var(--al-text); text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55); }
+.al-lede { margin: 10px 0 0; font-size: 15px; line-height: 1.45; color: var(--al-text); opacity: 0.92; text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7); }
+.al-recover .al-form { margin-top: 22px; }
+.al-recover .al-field, .al-recover .al-otp input { background: rgba(14, 11, 9, 0.62); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.al-center { text-align: center; }
+.al-resend { margin: 4px 0; font-size: 14px; line-height: 1.5; color: var(--al-text); }
+.al-resend .al-link { min-height: 36px; font-size: 14px; }
+.al-resend .al-link:disabled { color: var(--al-orange-hover); }
+.al-options { display: grid; gap: 12px; margin-top: 22px; }
+.al-option {
+  display: flex; align-items: center; gap: 16px; width: 100%; min-height: 76px; padding: 14px 16px; border-radius: 16px; cursor: pointer; text-align: left; font: inherit; color: var(--al-text);
+  background: rgba(18, 15, 13, 0.62); border: 1px solid rgba(255, 255, 255, 0.24);
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); transition: background 0.15s ease, border-color 0.15s ease;
+}
+.al-option:hover { background: rgba(40, 28, 20, 0.7); border-color: var(--al-glass-border-active); }
+.al-option > span { flex: 1; min-width: 0; }
+.al-option b { display: block; font-size: 15.5px; font-weight: 600; }
+.al-option b em { font-style: normal; color: var(--al-orange); }
+.al-option small { display: block; margin-top: 3px; font-size: 13px; line-height: 1.35; color: var(--al-text-2); }
+.al-option-icon { flex: none; width: 30px; height: 30px; stroke-width: 1.5; }
+.al-option-key { color: #ffb347; }
+.al-option-go { flex: none; width: 18px; height: 18px; color: var(--al-orange); }
+.al-found { margin: 22px 0 0; padding: 16px; border-radius: 14px; font-size: 17px; font-weight: 600; word-break: break-all; background: rgba(18, 15, 13, 0.62); border: 1px solid var(--al-glass-border-active); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+.al-nav.al-in { animation-name: al-fade; }
+@media (min-width: 768px) {
+  .al-nav { margin-bottom: 0; }
+  .al-recover { max-width: 460px; }
+  .arena-login[data-compact] .al-top { justify-content: flex-start; margin-top: 14px; }
 }

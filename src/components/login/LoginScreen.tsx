@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import localFont from "next/font/local";
-import { ArrowRight } from "lucide-react";
+import type { CSSProperties, ReactNode } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ArenaMark } from "@/components/brand/ArenaLogo";
 import { CookieBannerSpacer } from "@/components/bplus/Screen";
 import type { Session } from "@/lib/types";
@@ -35,41 +36,37 @@ function Sprout() {
   );
 }
 
-/** The sign-in screen (`/auth?mode=signin`), built to the approved "Welcome back" mockup. */
-export function LoginScreen({ onSignUp, land, notice }: { onSignUp: () => void; land: Landing; notice?: string }) {
+const step = (i: number) => ({ "--i": i }) as CSSProperties;
+
+/** Background, back button, Skip, logo and footer shared by the sign-in and recovery screens. */
+export function LoginFrame({ onBack, skip = true, compact = false, children }: { onBack: () => void; skip?: boolean; compact?: boolean; children: ReactNode }) {
   return (
-    <div className={`arena-login ${playfair.variable}`}>
+    <div className={`arena-login ${playfair.variable}`} data-compact={compact || undefined}>
       <LoginBackground />
       <main className="al-frame">
-        <div className="al-top al-in" style={{ "--i": 0 } as React.CSSProperties}>
-          <Link href="/auth" className="al-brand" aria-label="Arena. Local people. Real outcomes.">
+        <div className="al-nav al-in" style={step(0)}>
+          <button type="button" className="al-back" aria-label="Back" onClick={onBack}>
+            <ArrowLeft aria-hidden="true" />
+          </button>
+          {skip && (
+            <Link href="/home" className="al-skip" aria-label="Skip sign-in and look around">
+              <span>
+                Skip <ArrowRight size={16} aria-hidden="true" />
+              </span>
+            </Link>
+          )}
+        </div>
+        <div className="al-top al-in" style={step(0)}>
+          <Link href="/auth" className="al-brand" aria-label={compact ? "Arena" : "Arena. Local people. Real outcomes."}>
             <ArenaMark />
             <span>
               <span className="al-word">arena</span>
-              <span className="al-tag">Local people. Real outcomes.</span>
-            </span>
-          </Link>
-          <Link href="/home" className="al-skip" aria-label="Skip sign-in and look around">
-            <span>
-              Skip <ArrowRight size={16} aria-hidden="true" />
+              {!compact && <span className="al-tag">Local people. Real outcomes.</span>}
             </span>
           </Link>
         </div>
-
-        <header className="al-head">
-          <h1 className="al-h1 al-in" style={{ "--i": 1 } as React.CSSProperties}>
-            Welcome <em>back</em>
-          </h1>
-          <p className="al-sub al-in" style={{ "--i": 2 } as React.CSSProperties}>
-            Good to see you again.
-          </p>
-        </header>
-
-        <div className="al-in" style={{ "--i": 3 } as React.CSSProperties}>
-          <LoginCard land={land} notice={notice} onSignUp={onSignUp} />
-        </div>
-
-        <footer className="al-foot al-in" style={{ "--i": 4 } as React.CSSProperties}>
+        {children}
+        <footer className="al-foot al-in" style={step(4)}>
           <Sprout />
           <p>
             Same neighbors
@@ -80,5 +77,24 @@ export function LoginScreen({ onSignUp, land, notice }: { onSignUp: () => void; 
         <CookieBannerSpacer />
       </main>
     </div>
+  );
+}
+
+/** The sign-in screen (`/auth?mode=signin`), built to the approved "Welcome back" mockups. */
+export function LoginScreen({ onBack, onSignUp, onRecover, land, notice }: { onBack: () => void; onSignUp: () => void; onRecover: () => void; land: Landing; notice?: string }) {
+  return (
+    <LoginFrame onBack={onBack}>
+      <header className="al-head">
+        <h1 className="al-h1 al-in" style={step(1)}>
+          Welcome <em>back</em>
+        </h1>
+        <p className="al-sub al-in" style={step(2)}>
+          Good to see you again.
+        </p>
+      </header>
+      <div className="al-in" style={step(3)}>
+        <LoginCard land={land} notice={notice} onSignUp={onSignUp} onRecover={onRecover} />
+      </div>
+    </LoginFrame>
   );
 }

@@ -22,6 +22,11 @@ of superseded plans, reports and design docs (see `docs/PROGRESS.md` for the lis
 remaining "historical evidence" tier; a doc either governs or has been deleted (git history keeps
 it if ever needed).
 
+## Founder-directed redesign in progress (Oct 2026)
+Read **`docs/ARENA-REDESIGN-HANDOFF.md`** before touching `/auth` or starting any page redesign.
+Syam is redesigning Arena page by page to his own mockups; for the pages that file lists, it takes
+precedence over "the design is final" above. Everything else stays B+ until its turn.
+
 ## The short version
 - **Arena** is a living network: NEED → RESPONSE → CONVERSATION → OUTCOME → IDENTITY.
 - **Mobile bottom bar:** Feed · Discover · (+) · Work · You. Map is Discover's map mode. Jenny is
