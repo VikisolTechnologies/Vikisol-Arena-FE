@@ -8,7 +8,8 @@ import { useDirection } from "@/components/motion/useDirection";
 import { entryIsPending, markEntryPending } from "@/lib/data/onboarding";
 import type { Session } from "@/lib/types";
 import { WelcomeView } from "./WelcomeView";
-import { SignInView, SignUpView } from "./AuthForms";
+import { SignUpView } from "./AuthForms";
+import { LoginScreen } from "@/components/login/LoginScreen";
 import { RoleChooser } from "./RoleChooser";
 
 type View = "welcome" | "signin" | "signup" | "role";
@@ -65,7 +66,7 @@ export function AuthFlow() {
           {view === "welcome" && <WelcomeView onJoin={() => go("signup")} onSignIn={() => go("signin")} />}
           {view === "role" && <RoleChooser onBack={back} onContinue={(c) => router.push(`${pathname}?mode=signup${c === "company" ? "&as=company" : ""}`, { scroll: false })} />}
           {view === "signup" && <SignUpView onBack={back} onSignIn={() => go("signin")} land={land} initialAccount={params.get("as") === "company" ? "company_admin" : "talent"} />}
-          {view === "signin" && <SignInView onBack={back} onSignUp={() => go("signup")} land={land} notice={notice} />}
+          {view === "signin" && <LoginScreen onSignUp={() => go("signup")} land={land} notice={notice} />}
         </m.div>
       </AnimatePresence>
     </div>
