@@ -24,13 +24,15 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test("the bottom bar is Feed · Discover · (+) · Work · You, with no Map or Jenny tab", async ({ page }) => {
+test("the bottom bar is Feed · Discover · (+) · Chats · You, with no Map or Jenny tab", async ({ page }) => {
+  // The bottom bar is the phone layout; from 1024px the same places are in the sidebar.
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/home");
   const nav = page.getByRole("navigation", { name: "Primary" });
-  await expect(nav.getByRole("link")).toHaveText(["Feed", "Discover", "Work", "You"]);
+  await expect(nav.getByRole("link")).toHaveText(["Feed", "Discover", "Chats", "You"]);
   await expect(nav.getByRole("button", { name: "Create" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "Feed" })).toHaveAttribute("aria-current", "page");
-  await expect(page.getByText("Real people. Real things happening nearby.")).toBeVisible();
+  await expect(page.getByRole("radiogroup", { name: "Show" }).getByRole("radio")).toHaveText(["All", "Activities", "Jobs", "Needs", "Offers"]);
 });
 
 test("Create sheet: six options, Esc closes, focus returns to (+)", async ({ page }) => {

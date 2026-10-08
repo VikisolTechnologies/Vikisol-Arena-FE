@@ -29,7 +29,8 @@ precedence over "the design is final" above. Everything else stays B+ until its 
 
 ## The short version
 - **Arena** is a living network: NEED → RESPONSE → CONVERSATION → OUTCOME → IDENTITY.
-- **Mobile bottom bar:** Feed · Discover · (+) · Work · You. Map is Discover's map mode. Jenny is
+- **Mobile bottom bar:** Feed · Discover · (+) · Chats · You (founder mockup, Oct 2026; Work is
+  reached from the desktop sidebar and the feed's Jobs filter). Map is Discover's map mode. Jenny is
   contextual (Create sheet, Feed cards, header), never a primary tab. Inbox is in the signed-in
   header.
 - **Brand:** warm graphite (`#16110F`) + cream paper (`#F7F0E6`) + orange (`#FF5A1F`) — see

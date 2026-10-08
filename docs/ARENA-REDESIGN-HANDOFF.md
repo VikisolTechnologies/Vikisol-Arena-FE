@@ -34,7 +34,9 @@ for now if the look is right, but they must be reported plainly, never hidden.
 | Account recovery | `/auth?mode=recover` | **Done, live.** Reached from "Get help". |
 | Welcome / entrance | `/auth` (no mode) | **On hold.** Needs a real looping forest video from Syam (Envato). Do not fake it with CSS zoom. Still the old B+ `WelcomeView`; its two buttons both open the one-entry screen. |
 | Company sign-up | `/auth?mode=signup&as=company` | Old B+ `SignUpView`, unchanged. |
-| Personalize your feed, Home feed | | In one of Syam's mockups but **not built**. Need real suggestions data; no fake people. |
+| **Feed (home)** | `/home` | **Done.** `components/arena/ArenaShell.tsx` (new app frame), `components/arena/FeedCard.tsx`, `components/screens/FeedScreen.tsx`. See "App shell and feed" below. |
+| Discover / Map, Create post, Post detail, Chats & Groups | `/discover`, Create sheet, `/feed/[id]`, `/rooms` | In the same mockup as the feed (screens 2 to 5) but **not restyled yet**. They still use the old `bplus/AppShell`. Move each onto `ArenaShell` when its turn comes. |
+| Suggested people, Personalize your feed | | In mockups but **not built**: no suggestions endpoint, and no fake people. |
 | Forgot password by email | `/auth/forgot` | **Done, live** (`login/ForgotEmailScreen.tsx`). |
 | Set new password from the emailed link | `/auth/reset/[token]` | Not restyled. Still B+ `ResetPasswordView` in `PasswordRecovery.tsx`. Works. |
 | Everything after login | | Not started. Palette for the app interior is **undecided**; ask Syam before restyling any of it. |
@@ -62,6 +64,29 @@ move these tokens into global CSS until Syam decides the app-wide palette.
 
 Class naming: everything is `al-*`. Entrance animation is the `.al-in` class with `--i` for order;
 it is CSS only (no GSAP/Framer on this route) and switches off for reduced motion.
+
+## App shell and feed (signed-in app)
+
+- **`ArenaShell`** is the new frame for redesigned in-app pages. Phone: top bar (logo, search,
+  chats with unread count, notifications, you) and the bottom bar Feed · Discover · (+) · Chats ·
+  You. From 1024px: left sidebar, top search bar with a Create button, and an optional right rail
+  (`aside` prop, shown from 1280px). The page turns cream on desktop through a media query in
+  `arena.css` that sets the same token values as `[data-tone="light"]`.
+- It uses the existing **B+ tokens** (`bg-paper`, `text-paper-ink`, `bg-primary` ...). It is not
+  the login family's `al-*` styling and adds no palette.
+- The old `bplus/AppShell` is still used by every other page; only its tab list was changed so the
+  bottom bar matches (Work became Chats).
+- **Feed:** kind filter row (All, Activities, Jobs, Needs, Offers) and, behind the Filters button
+  on the location bar, the where-and-when filter (Anywhere, Nearby, This week). Cards show author,
+  kind label, cover, title, place, time, going, and Like / Comment / Share. Like uses the existing
+  react/unreact calls; Share uses the device share sheet or copies the link.
+- **Right rail** uses only real data: count of posts within 5 km (links to `/map`), upcoming
+  activities, and the person's chats. The mockup's mini map with pins, attendee faces, the "..."
+  menu and "Suggested people" are not built (no data for them, or not asked yet).
+- White text on Arena orange fails contrast at small sizes, so text-on-orange uses
+  `bg-primary-on-paper` (the deeper orange). Icon-only orange buttons keep `bg-primary`.
+- Pre-existing failing test, not caused by this work: `core.local.ts` "Work, You and Jenny render
+  honest states".
 
 ## Two tones
 

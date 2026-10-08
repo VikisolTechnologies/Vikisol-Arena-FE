@@ -1,0 +1,27 @@
+/* Arena app shell + feed (founder mockup, Oct 2026). Uses the B+ tokens; nothing here is a new
+   palette. Phone and tablet stay on the graphite page with cream cards; from 1024px the page
+   itself turns cream (the same values as [data-tone="light"]) with a sidebar and a right rail. */
+.arena-shell { --shell-bar: 72px; --shell-side: 232px; --shell-top: 64px; min-height: 100svh; }
+
+@media (min-width: 1024px) {
+  [data-theme="bplus"].arena-shell {
+    color-scheme: light;
+    --background: #f7f0e6;
+    --foreground: #1e1714;
+    --faint: #6e625a;
+    --surface: #fffcf7;
+    --line: rgba(30, 23, 20, 0.12);
+    --field-line: #8f8076;
+    --paper: #fffcf7;
+    --paper-muted: #f1e8dc;
+    --primary-soft: #b83a0a;
+    --success-on-dark: #1f6e3e;
+    --info-on-dark: #1d57b8;
+    --danger-on-dark: #b42318;
+  }
+}
+
+.arena-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.arena-scroll-x { overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.arena-scroll-x::-webkit-scrollbar { display: none; }
+.arena-hero { background-image: linear-gradient(90deg, rgba(14, 10, 8, 0.9) 0%, rgba(14, 10, 8, 0.55) 45%, rgba(14, 10, 8, 0.15) 100%), url("/login/arena-login-poster.webp"); background-size: cover; background-position: center 38%; }

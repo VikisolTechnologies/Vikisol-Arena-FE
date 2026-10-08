@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState, type ComponentType, type ReactNode } from "react";
 import { m } from "motion/react";
-import { Briefcase, CloudOff, House, Plus, Search, UserRound } from "lucide-react";
+import { CloudOff, House, MessageCircle, Plus, Search, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { press, spring } from "@/lib/motion";
 import { useOffline } from "@/hooks/use-arena-session";
@@ -20,7 +20,7 @@ type Icon = ComponentType<{ className?: string; strokeWidth?: number; fill?: str
 const TABS: { href: string; label: string; icon: Icon; match: string[] }[] = [
   { href: "/home", label: "Feed", icon: House, match: ["/home"] },
   { href: "/discover", label: "Discover", icon: Search, match: ["/discover", "/map"] },
-  { href: "/work", label: "Work", icon: Briefcase, match: ["/work", "/jobs", "/applications"] },
+  { href: "/rooms", label: "Chats", icon: MessageCircle, match: ["/rooms", "/messages"] },
   { href: "/identity", label: "You", icon: UserRound, match: ["/identity"] },
 ];
 
@@ -29,7 +29,7 @@ const BAR = 76;
 
 /**
  * The one B+ app frame: content in a centred 480px column, a fixed bottom bar
- * (Feed · Discover · (+) · Work · You) that respects the safe area, and the Create sheet.
+ * (Feed · Discover · (+) · Chats · You; founder mockup, Oct 2026) that respects the safe area, and the Create sheet.
  * Map is Discover's map mode; Jenny is reached from Create, Feed and headers — not a tab.
  */
 export function AppShell({ children, tone }: { children: ReactNode; /** Full cream page (career boards, review A6); the bottom bar stays dark. */ tone?: "light" }) {
