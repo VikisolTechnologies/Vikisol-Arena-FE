@@ -23,7 +23,9 @@ const profile = {
 
 type Call = { method: string; path: string; body: unknown };
 
-async function stubApi(page: Page, calls: Call[]) {
+/** `newEmail`: arena-api answers the sign-in code request with "No account found", which is how
+ *  the one-entry screen learns the person is new. */
+async function stubApi(page: Page, calls: Call[], opts: { newEmail?: boolean } = {}) {
   await page.route("**/api/v1/**", async (route) => {
     const req = route.request();
     const path = new URL(req.url()).pathname;
@@ -35,6 +37,10 @@ async function stubApi(page: Page, calls: Call[]) {
     }
     calls.push({ method: req.method(), path, body });
     let data: unknown = null;
+    if (opts.newEmail && path.endsWith("/auth/email/signin/request-otp")) {
+      await route.fulfill({ status: 400, json: { success: false, message: "No account found with this email" } });
+      return;
+    }
     if (path.endsWith("/auth/signup") || path.endsWith("/auth/signin")) {
       data = { role: "talent", candidateId: "person-1", name: "Priya Sharma", email: "priya@example.com", token: "local-token", mfaRequired: false, mfaPendingToken: null };
     } else if (path.endsWith("/verification")) {
@@ -79,9 +85,9 @@ async function noSeriousA11y(page: Page) {
   expect(result.violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual([]);
 }
 
-test("sign up → why → local life → identity → all set → feed, without inventing anything", async ({ page }) => {
+test("one entry: a new email creates an account in one short form; then why → local life → identity → all set → feed, without inventing anything", async ({ page }) => {
   const calls: Call[] = [];
-  await stubApi(page, calls);
+  await stubApi(page, calls, { newEmail: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await goto(page, "/auth");
   await page.evaluate(() => localStorage.clear());
@@ -94,32 +100,35 @@ test("sign up → why → local life → identity → all set → feed, without 
   }
   await noOverflow(page);
 
+  // "Join Arena" and "Sign in" open the same screen; Arena works out whether the account exists.
   await page.getByRole("button", { name: "Join Arena" }).click();
-  await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  await page.getByRole("tab", { name: /Email/ }).click();
+  await page.getByLabel("Email address").fill("priya@example.com");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "You're new here" })).toBeVisible();
 
   // Validation: errors after a submit, focus on the first problem, nothing sent.
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page.getByText("Enter your name.")).toBeVisible();
   await expect(page.getByLabel("Full name")).toBeFocused();
   await page.getByLabel("Full name").fill("Priya Sharma");
-  await page.getByLabel("Email address").fill("priya@example.com");
   await page.getByLabel("Password").fill("short");
-  await page.getByLabel("Full name").click();
-  await expect(page.getByText("Use at least 8 characters.")).toBeVisible();
-  await page.getByLabel("Password").fill("long-enough");
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByText("Please agree to the Terms of Service and Privacy Policy.")).toBeVisible();
+  await expect(page.getByText("Use at least 8 characters.")).toBeVisible();
   expect(calls.some((c) => c.path.endsWith("/auth/signup"))).toBe(false);
-  // B10: sign-up now collects date of birth itself, enforced server-side too.
+  await page.getByLabel("Password").fill("long-enough");
+  // Date of birth is collected at sign-up and enforced server-side too (B10).
   await page.getByLabel("Date of birth").fill("1990-01-01");
-  // Tap the visible box, as a person would (the real input is visually hidden).
-  await page.locator('label[for="signup-agree"] > span').first().click();
-  await expect(page.getByLabel(/I agree to the/)).toBeChecked();
+  await noSeriousA11y(page);
   await page.getByRole("button", { name: "Create account" }).click();
 
-  // First visit compiles /onboarding on the dev server; give that navigation time.
-  await expect(page).toHaveURL(/\/onboarding\?step=1/, { timeout: 15_000 });
+  // Straight into Arena: no extra screens between creating the account and the feed.
+  await expect(page).toHaveURL(/\/home/, { timeout: 15_000 });
   expect(calls.find((c) => c.path.endsWith("/auth/signup"))?.body).toMatchObject({ name: "Priya Sharma", email: "priya@example.com", role: "talent", dateOfBirth: "1990-01-01" });
+
+  // Onboarding still exists for anyone sent to it (phone and Google accounts without a birthday).
+  await goto(page, "/onboarding?step=1");
 
   // Step 1: the age gate. Mandatory, no skip, runs before everything else.
   await expect(page.getByRole("heading", { name: "When's your birthday?" })).toBeVisible();
@@ -242,22 +251,25 @@ test("Sign-up itself refuses an under-18 date of birth (B10) with the backend's 
       body = null;
     }
     calls.push({ method: req.method(), path, body });
+    if (path.endsWith("/auth/email/signin/request-otp")) {
+      await route.fulfill({ status: 400, json: { success: false, message: "No account found with this email" } });
+      return;
+    }
     if (path.endsWith("/auth/signup")) {
       await route.fulfill({ status: 400, json: { success: false, message: "You must be 18 or older to join Arena" } });
       return;
     }
     await route.fulfill({ json: { success: true, data: null } });
   });
-  await goto(page, "/auth");
+  await goto(page, "/auth?mode=signin");
   await dismissCookies(page);
-  await page.getByRole("button", { name: "Join Arena" }).click();
-  await page.getByLabel("Full name").fill("Too Young");
+  await page.getByRole("tab", { name: /Email/ }).click();
   await page.getByLabel("Email address").fill("tooyoung@example.com");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByLabel("Full name").fill("Too Young");
   await page.getByLabel("Password").fill("long-enough");
-  const fifteenYearsAgo = new Date();
-  fifteenYearsAgo.setFullYear(fifteenYearsAgo.getFullYear() - 15);
-  await page.getByLabel("Date of birth").fill(fifteenYearsAgo.toISOString().slice(0, 10));
-  await page.locator('label[for="signup-agree"] > span').first().click();
+  // A date the browser-side check accepts, so the backend's own refusal is what is shown.
+  await page.getByLabel("Date of birth").fill("1990-01-01");
   await page.getByRole("button", { name: "Create account" }).click();
   // Shown next to the date-of-birth field (fieldForServerError routes "18 or older" there),
   // not a generic banner — and the page never navigates to onboarding.
@@ -273,10 +285,14 @@ test("sign in, forgot password, expired reset and session notice", async ({ page
   await page.waitForLoadState("networkidle");
   await dismissCookies(page);
   await noOverflow(page);
-  // Login card (Oct 2026): Mobile tab first; Email tab asks for the email, then the password.
+  // One entry (Oct 2026): Mobile tab first; the Email tab asks for the email, then signs in.
   await page.getByRole("tab", { name: /Email/ }).click();
   await page.getByLabel("Email address").fill("priya@example.com");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
+  // An existing account is emailed a code; the password is one tap away.
+  await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
+  expect(calls.some((c) => c.path.endsWith("/auth/email/signin/request-otp"))).toBe(true);
+  await page.getByRole("button", { name: "Use password instead" }).click();
   await page.getByLabel("Password").fill("long-enough");
   await page.getByRole("button", { name: "Show the characters" }).click();
   await expect(page.getByLabel("Password")).toHaveAttribute("type", "text");

@@ -19,8 +19,9 @@ export async function revealPasswordSignIn(page: Page) {
   }
 }
 
-/** The Email tab asks for the email first, then the password on the next step. Call after
- * filling Email and before filling Password. */
+/** The Email tab asks for the email first; Arena then emails a sign-in code and offers the
+ * password as an alternative. Call after filling Email and before filling Password. */
 export async function continueToPassword(page: Page) {
   await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Use password instead" }).click();
 }

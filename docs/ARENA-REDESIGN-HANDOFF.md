@@ -30,12 +30,11 @@ for now if the look is right, but they must be reported plainly, never hidden.
 
 | Page | Route | Status |
 |---|---|---|
-| Sign in | `/auth?mode=signin` | **Done, live.** |
-| Account recovery | `/auth?mode=recover` | **Done, live.** |
-| Welcome / entrance | `/auth` (no mode) | **On hold.** Needs a real looping forest video from Syam (Envato). Do not fake it with CSS zoom. Still the old B+ `WelcomeView`. |
-| Sign up (new) | `/auth?mode=signup&new=1` | **Built, on trial in production** (`login/SignupFlow.tsx`). Becomes the default once Syam has confirmed one real sign-up through it: then remove the `new=1` check in `AuthFlow.tsx`, rewrite the sign-up tests in `tests/local/entry-journey.local.ts` for the new steps, and retire `SignUpView` for people (keep it for `as=company`). |
-| Sign up (old) | `/auth?mode=signup` | Still the default: B+ `SignUpView`, then `/onboarding`. |
-| Personalize your feed, Home feed | | In Syam's sign-up mockup (screens 9 and 10) but **not built**. Need real suggestions data; no fake people. |
+| **One entry: sign in or join** | `/auth?mode=signin` (and `mode=signup`) | **Done, live.** One screen for everyone; see "One entry" below. |
+| Account recovery | `/auth?mode=recover` | **Done, live.** Reached from "Get help". |
+| Welcome / entrance | `/auth` (no mode) | **On hold.** Needs a real looping forest video from Syam (Envato). Do not fake it with CSS zoom. Still the old B+ `WelcomeView`; its two buttons both open the one-entry screen. |
+| Company sign-up | `/auth?mode=signup&as=company` | Old B+ `SignUpView`, unchanged. |
+| Personalize your feed, Home feed | | In one of Syam's mockups but **not built**. Need real suggestions data; no fake people. |
 | Forgot password by email | `/auth/forgot` | **Done, live** (`login/ForgotEmailScreen.tsx`). |
 | Set new password from the emailed link | `/auth/reset/[token]` | Not restyled. Still B+ `ResetPasswordView` in `PasswordRecovery.tsx`. Works. |
 | Everything after login | | Not started. Palette for the app interior is **undecided**; ask Syam before restyling any of it. |
@@ -66,41 +65,35 @@ it is CSS only (no GSAP/Framer on this route) and switches off for reduced motio
 
 ## Two tones
 
-- **Default (login, recovery):** warm, orange buttons.
-- **`tone="dusk"` on `LoginFrame` (sign-up):** Syam found the first sign-up mockup "too orange" and
-  supplied a cooler one. Dusk keeps orange for the logo, accent words, links and selected chips
+- **`tone="dusk"` (the default on `LoginFrame`, used everywhere now):** Syam found the orange look
+  "too orange" and supplied a cooler one. Dusk keeps orange for the logo, accent words, links and selected chips
   only; buttons are slate glass, the background is desaturated and cooled with a CSS filter (same
   image; no new artwork exists yet). All rules are at the end of `login.css` under
-  `.arena-login[data-tone="dusk"]`. Ask Syam whether login should move to dusk too.
+  `.arena-login[data-tone="dusk"]`.
+- **`tone="warm"`:** the earlier orange look, still available, used nowhere.
 
-## Sign-up flow as built (`SignupFlow.tsx`)
+## One entry (founder decision, 9 Oct 2026)
 
-start (Mobile or Email tab, Google) → OTP (mobile only) → name + password + date of birth →
-photo → location → interests → optional details (skills, about you) → review → welcome → `/home`.
+Syam dropped separate sign-up and sign-in ("we are making the process so complicated"). There is
+one screen, "Welcome back", with Mobile and Email tabs. The person enters a number or an email and
+Arena works out the rest. All of it is `LoginCard.tsx`.
 
-- Email path sends nothing until **Create account** on the review step: `signUp(...)`, then
-  `saveOnboarding(...)` (the same profile calls old onboarding used) and `updateMySkills`.
-- Mobile and Google paths create the account at verification, then save the rest at review.
-- **Date of birth is not in the mockup but is required**: arena-api refuses sign-up without it (18+).
-- Not built because arena-api has nowhere to store them: username, work status, industry.
-  Not built because they would be fake: sample avatars, the map graphic.
-- Company accounts still use the old `SignUpView` (`?mode=signup&as=company`).
+| Entered | Account exists | New person |
+|---|---|---|
+| Mobile | sign-in OTP → verify → home | sign-up OTP → verify creates the account → home |
+| Email | sign-in code emailed → verify → home, or "Use password instead" | one short form (name, password, date of birth) → `signUp` → home |
 
-## Sign-in flow as built
-
-1. **Mobile tab (default):** +91 number → `Send OTP` → six boxes → `Verify & continue`.
-2. **Email tab:** email → `Continue` → password step (email shown with `Change`, password,
-   `Keep me signed in`, `Forgot password?`) → `Sign in`.
-3. **Account not found:** arena-api answers sign-in with "No account found with this email"; the
-   card then returns to the email step in the "Account not found" state with `Create account` and
-   `Try a different email`. This can only appear after the password is submitted, because there is
-   no endpoint to check an email on its own.
-4. **Recovery:** choose → mobile number → OTP → "How can we help you?" → either the account's
-   email is shown, or a reset link is emailed.
-5. Authenticator (MFA) step still appears inside the card for accounts that use it.
-
-Auth calls are unchanged and come from `src/lib/data/auth.ts` / `src/lib/api/auth.ts`. After
-sign-in the `land()` function in `AuthFlow.tsx` routes by role exactly as before.
+- There is no "does this account exist" endpoint. **Asking arena-api for the sign-in code is the
+  check**: it answers "No account found ..." for a new person, and the card branches on that text
+  (`NO_ACCOUNT` regex). If the backend wording changes, update the regex.
+- New email people still fill three fields because arena-api's sign-up requires name, password and
+  date of birth (18+) and has no code-based email sign-up. Truly automatic creation needs a backend
+  change (an email sign-up OTP endpoint); do not fake it with generated passwords.
+- New mobile accounts are created with the name "Arena member" (arena-api requires a name at
+  verification); the existing in-app date-of-birth prompt covers their birthday.
+- Nobody is sent to `/onboarding` from this screen any more. The page still exists.
+- A multi-step sign-up (`SignupFlow.tsx`: photo, location, interests, details, review) was built
+  and then removed at Syam's request; it is in git history at commit `2b04d63` if wanted again.
 
 ## Known gaps (accepted by Syam for now; do not "fix" silently)
 

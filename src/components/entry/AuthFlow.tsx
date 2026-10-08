@@ -11,7 +11,6 @@ import { WelcomeView } from "./WelcomeView";
 import { SignUpView } from "./AuthForms";
 import { LoginScreen } from "@/components/login/LoginScreen";
 import { RecoveryScreen } from "@/components/login/RecoveryScreen";
-import { SignupFlow } from "@/components/login/SignupFlow";
 import { RoleChooser } from "./RoleChooser";
 
 type View = "welcome" | "signin" | "signup" | "role" | "recover";
@@ -43,7 +42,7 @@ export function AuthFlow() {
   const mode = params.get("mode");
   const view: View = mode === "signup" ? "signup" : mode === "signin" ? "signin" : mode === "role" ? "role" : mode === "recover" ? "recover" : "welcome";
   const direction = useDirection(view === "welcome" ? 0 : view === "signin" ? 1 : view === "role" ? 2 : view === "recover" ? 4 : 3);
-  const newSignup = params.get("new") === "1" && params.get("as") !== "company";
+  const company = params.get("as") === "company";
   const fromWelcome = useRef(false);
 
   const go = (next: View) => {
@@ -66,13 +65,13 @@ export function AuthFlow() {
     <div data-theme="bplus" className="min-h-svh overflow-x-hidden bg-background">
       <AnimatePresence mode="wait" initial={false} custom={direction}>
         <m.div key={view} custom={direction} variants={pageSlide} initial="enter" animate="center" exit="exit">
-          {view === "welcome" && <WelcomeView onJoin={() => go("signup")} onSignIn={() => go("signin")} />}
+          {view === "welcome" && <WelcomeView onJoin={() => go("signin")} onSignIn={() => go("signin")} />}
           {view === "role" && <RoleChooser onBack={back} onContinue={(c) => router.push(`${pathname}?mode=signup${c === "company" ? "&as=company" : ""}`, { scroll: false })} />}
-          {/* New sign-up (docs/ARENA-REDESIGN-HANDOFF.md) is on trial at ?mode=signup&new=1 until the
-              founder has confirmed a real sign-up through it; then it becomes the default. */}
-          {view === "signup" && !newSignup && <SignUpView onBack={back} onSignIn={() => go("signin")} land={land} initialAccount={params.get("as") === "company" ? "company_admin" : "talent"} />}
-          {view === "signup" && newSignup && <SignupFlow onBack={back} onSignIn={() => go("signin")} />}
-          {view === "signin" && <LoginScreen onBack={back} onSignUp={() => go("signup")} onRecover={() => go("recover")} land={land} notice={notice} />}
+          {/* One entry for people (founder decision, 9 Oct 2026): "Join Arena" and "Sign in" both open
+              the same screen, which works out whether the account exists. Company accounts keep
+              their own form. */}
+          {view === "signup" && company && <SignUpView onBack={back} onSignIn={() => go("signin")} land={land} initialAccount="company_admin" />}
+          {(view === "signin" || (view === "signup" && !company)) && <LoginScreen onBack={back} onRecover={() => go("recover")} land={land} notice={notice} />}
           {view === "recover" && <RecoveryScreen onExit={() => router.push(`${pathname}?mode=signin`, { scroll: false })} land={land} />}
         </m.div>
       </AnimatePresence>

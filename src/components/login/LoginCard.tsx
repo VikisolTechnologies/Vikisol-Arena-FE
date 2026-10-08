@@ -2,14 +2,16 @@
 
 import { useEffect, useRef, useState, type ClipboardEvent, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import Script from "next/script";
-import { ArrowRight, Check, ChevronDown, CircleAlert, Eye, EyeOff, Lock, Mail, Smartphone } from "lucide-react";
-import { authErrorMessage, signIn, signInWithGoogle, validateEmail, validatePassword, verifyMfa } from "@/lib/data/auth";
-import { requestPhoneSigninOtp, verifyPhoneSigninOtp, type SignInResult } from "@/lib/api/auth";
+import Link from "next/link";
+import { ArrowRight, Calendar, Check, ChevronDown, CircleAlert, Eye, EyeOff, Lock, Mail, Smartphone, User } from "lucide-react";
+import { authErrorMessage, fieldForServerError, signIn, signInWithGoogle, signUp, validateDateOfBirth, validateEmail, validateName, validateNewPassword, validatePassword, verifyMfa } from "@/lib/data/auth";
+import { requestEmailSigninOtp, requestPhoneSigninOtp, requestPhoneSignupOtp, verifyEmailSigninOtp, verifyPhoneSigninOtp, verifyPhoneSignupOtp, type SignInResult } from "@/lib/api/auth";
+import { isAdult } from "@/lib/geo";
 import type { Session } from "@/lib/types";
 import { LOGIN_GOOGLE, LOGIN_MOBILE_OTP } from "./flags";
 
 type Landing = (session: Pick<Session, "role">, fromSignup: boolean) => void;
-type Pane = "mobile" | "otp" | "email" | "password" | "mfa";
+type Pane = "mobile" | "otp" | "email" | "emailotp" | "password" | "create" | "mfa";
 type CtaState = "idle" | "loading" | "success";
 
 const SUCCESS_HOLD_MS = 380;
@@ -165,24 +167,41 @@ export function OtpBoxes({ value, onChange, invalid, label, describedBy }: { val
   );
 }
 
-export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing; notice?: string; onSignUp: () => void; onRecover: () => void }) {
+/** arena-api needs a name to create a phone account; the person sets their real one in their profile. */
+const NEW_PHONE_NAME = "Arena member";
+const NO_ACCOUNT = /no account found/i;
+
+/**
+ * One entry for everyone (founder decision, 9 Oct 2026): enter a mobile number or an email and
+ * Arena works out whether the account exists.
+ *
+ *  - Mobile, existing: sign-in OTP. Mobile, new: sign-up OTP; the account is created when the code
+ *    is verified.
+ *  - Email, existing: a sign-in code is emailed (or "Use password instead").
+ *  - Email, new: arena-api has no code-based sign-up for email and requires a name, a password and
+ *    a date of birth (18+), so one short form creates the account.
+ *
+ * There is no separate "check account" endpoint: asking arena-api for the sign-in code is the check
+ * (it answers "No account found ..." for a new person).
+ */
+export function LoginCard({ land, notice, onRecover }: { land: Landing; notice?: string; onRecover: () => void }) {
   const [pane, setPane] = useState<Pane>(LOGIN_MOBILE_OTP ? "mobile" : "email");
   const [cta, setCta] = useState<CtaState>("idle");
   const [error, setError] = useState("");
   const [socialNote, setSocialNote] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [phone, setPhone] = useState("");
-  const [phoneError, setPhoneError] = useState("");
+  const [newPhone, setNewPhone] = useState(false);
   const [code, setCode] = useState("");
   const [resendIn, setResendIn] = useState(0);
 
   const [email, setEmail] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [emailTouched, setEmailTouched] = useState(false);
-  const [notFound, setNotFound] = useState(false);
-  const [keepSignedIn, setKeepSignedIn] = useState(true);
-  const [passwordError, setPasswordError] = useState("");
+  const [name, setName] = useState("");
+  const [dob, setDob] = useState("");
 
   const [mfaToken, setMfaToken] = useState<string | null>(null);
 
@@ -193,8 +212,9 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
   const phoneOk = /^[6-9]\d{9}$/.test(digits);
   const emailProblem = !email.trim() ? "Enter your email address." : validateEmail(email) ? "Please enter a valid email address." : "";
   const emailError = emailTouched ? emailProblem : "";
-  const showTabs = LOGIN_MOBILE_OTP && pane !== "mfa" && pane !== "password";
-  const showSocial = pane === "mobile" || pane === "email" || pane === "password";
+  const showTabs = LOGIN_MOBILE_OTP && (pane === "mobile" || pane === "email");
+  const showSocial = pane === "mobile" || pane === "email";
+  const today = new Date().toISOString().slice(0, 10);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -205,6 +225,7 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
   const go = (next: Pane) => {
     setError("");
     setSocialNote("");
+    setFieldErrors({});
     setCode("");
     setCta("idle");
     setPane(next);
@@ -226,45 +247,20 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
   };
 
   const fail = (err: unknown) => {
-    const message = authErrorMessage(err);
-    // arena-api's own wording when the email has no account: show the "Account not found" state.
-    if (pane === "password" && /no account found/i.test(message)) {
-      setNotFound(true);
-      go("email");
-      return;
-    }
-    setError(message);
+    setError(authErrorMessage(err));
     setCta("idle");
   };
 
-  const submitEmail = (e: FormEvent) => {
-    e.preventDefault();
-    setEmailTouched(true);
-    if (emailProblem) {
-      document.getElementById("signin-email")?.focus();
-      return;
-    }
-    if (notFound) {
-      onSignUp();
-      return;
-    }
-    go("password");
-  };
-
-  const submitPassword = async (e: FormEvent) => {
-    e.preventDefault();
-    setError("");
-    const pErr = validatePassword(password);
-    setPasswordError(pErr);
-    if (pErr) {
-      document.getElementById("signin-password")?.focus();
-      return;
-    }
-    setCta("loading");
+  // ---- mobile ----
+  /** Existing number: sign-in code. New number: sign-up code. Same screen either way. */
+  const requestPhoneCode = async () => {
     try {
-      handle(await signIn(email.trim(), password, "talent"));
+      await requestPhoneSigninOtp(e164);
+      setNewPhone(false);
     } catch (err) {
-      fail(err);
+      if (!NO_ACCOUNT.test(authErrorMessage(err))) throw err;
+      await requestPhoneSignupOtp(e164);
+      setNewPhone(true);
     }
   };
 
@@ -272,32 +268,18 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
     e?.preventDefault();
     setError("");
     if (!phoneOk) {
-      setPhoneError("Please enter a valid mobile number");
+      setFieldErrors({ phone: "Please enter a valid mobile number" });
       document.getElementById("login-phone")?.focus();
       return;
     }
-    setPhoneError("");
+    setFieldErrors({});
     setCta("loading");
     try {
-      await requestPhoneSigninOtp(e164);
-      setCta("success");
-      window.setTimeout(() => {
-        go("otp");
-        setResendIn(RESEND_SECONDS);
-      }, 600);
-    } catch (err) {
-      fail(err);
-    }
-  };
-
-  const resend = async () => {
-    setError("");
-    setCode("");
-    try {
-      await requestPhoneSigninOtp(e164);
+      await requestPhoneCode();
+      go("otp");
       setResendIn(RESEND_SECONDS);
     } catch (err) {
-      setError(authErrorMessage(err));
+      fail(err);
     }
   };
 
@@ -310,9 +292,104 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
     setError("");
     setCta("loading");
     try {
-      handle(await verifyPhoneSigninOtp(e164, code));
+      if (newPhone) finish(await verifyPhoneSignupOtp(e164, code, NEW_PHONE_NAME));
+      else handle(await verifyPhoneSigninOtp(e164, code));
     } catch (err) {
       fail(err);
+    }
+  };
+
+  // ---- email ----
+  const submitEmail = async (e: FormEvent) => {
+    e.preventDefault();
+    setEmailTouched(true);
+    setError("");
+    if (emailProblem) {
+      document.getElementById("signin-email")?.focus();
+      return;
+    }
+    setCta("loading");
+    try {
+      await requestEmailSigninOtp(email.trim());
+      go("emailotp");
+      setResendIn(RESEND_SECONDS);
+    } catch (err) {
+      if (NO_ACCOUNT.test(authErrorMessage(err))) go("create");
+      else fail(err);
+    }
+  };
+
+  const submitEmailOtp = async (e: FormEvent) => {
+    e.preventDefault();
+    if (code.length !== 6) {
+      setError("Enter the 6-digit code we emailed you.");
+      return;
+    }
+    setError("");
+    setCta("loading");
+    try {
+      handle(await verifyEmailSigninOtp(email.trim(), code));
+    } catch (err) {
+      fail(err);
+    }
+  };
+
+  const resend = async () => {
+    setError("");
+    setCode("");
+    try {
+      if (pane === "emailotp") await requestEmailSigninOtp(email.trim());
+      else await requestPhoneCode();
+      setResendIn(RESEND_SECONDS);
+    } catch (err) {
+      setError(authErrorMessage(err));
+    }
+  };
+
+  const submitPassword = async (e: FormEvent) => {
+    e.preventDefault();
+    setError("");
+    const problem = validatePassword(password);
+    setFieldErrors({ password: problem });
+    if (problem) {
+      document.getElementById("signin-password")?.focus();
+      return;
+    }
+    setCta("loading");
+    try {
+      handle(await signIn(email.trim(), password, "talent"));
+    } catch (err) {
+      if (NO_ACCOUNT.test(authErrorMessage(err))) go("create");
+      else fail(err);
+    }
+  };
+
+  const submitCreate = async (e: FormEvent) => {
+    e.preventDefault();
+    setError("");
+    const problems: Record<string, string> = {
+      name: validateName(name),
+      password: validateNewPassword(password),
+      dob: validateDateOfBirth(dob) || (isAdult(dob) ? "" : "You must be 18 or older to join Arena."),
+    };
+    setFieldErrors(problems);
+    const first = (["name", "password", "dob"] as const).find((f) => problems[f]);
+    if (first) {
+      document.getElementById(first === "password" ? "signin-password" : `signup-${first}`)?.focus();
+      return;
+    }
+    setCta("loading");
+    try {
+      finish(await signUp(name.trim(), email.trim(), password, "talent", dob));
+    } catch (err) {
+      const message = authErrorMessage(err);
+      const field = fieldForServerError(message);
+      if (field && field !== "email") {
+        setFieldErrors({ [field]: message });
+        setCta("idle");
+      } else {
+        fail(err);
+      }
     }
   };
 
@@ -357,10 +434,55 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
   const maskedPhone = `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`;
   const mm = String(Math.floor(resendIn / 60)).padStart(2, "0");
   const ss = String(resendIn % 60).padStart(2, "0");
-  const notYet = (name: string) => () => setSocialNote(`${name} sign-in isn't available yet. Use your mobile number or email for now.`);
+  const notYet = (what: string) => () => setSocialNote(`${what} sign-in isn't available yet. Use your mobile number or email for now.`);
+  const clear = (field: string) => setFieldErrors((f) => (f[field] ? { ...f, [field]: "" } : f));
+
+  const resendRow = (
+    <button type="button" className="al-link" disabled={resendIn > 0} onClick={resend}>
+      {resendIn > 0 ? `Resend code in ${mm}:${ss}` : "Resend code"}
+    </button>
+  );
+
+  const passwordField = (autoComplete: "current-password" | "new-password", placeholder: string) => (
+    <>
+      <label htmlFor="signin-password" className="al-sr">
+        Password
+      </label>
+      <div className="al-field" data-state={fieldErrors.password ? "error" : undefined}>
+        <Lock aria-hidden="true" />
+        <input
+          id="signin-password"
+          type={showPassword ? "text" : "password"}
+          autoComplete={autoComplete}
+          placeholder={placeholder}
+          value={password}
+          aria-invalid={Boolean(fieldErrors.password) || undefined}
+          aria-describedby="signin-password-error"
+          onChange={(e) => {
+            setPassword(e.target.value);
+            clear("password");
+          }}
+        />
+        <button type="button" className="al-eye" aria-label={showPassword ? "Hide the characters" : "Show the characters"} aria-pressed={showPassword} onClick={() => setShowPassword((v) => !v)}>
+          {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+        </button>
+      </div>
+      <FieldError id="signin-password-error" message={fieldErrors.password ?? ""} />
+    </>
+  );
+
+  const emailRow = (
+    <div className="al-field al-field-static">
+      <Mail aria-hidden="true" />
+      <span className="al-static">{email.trim()}</span>
+      <button type="button" className="al-link al-change" onClick={() => go("email")}>
+        Change
+      </button>
+    </div>
+  );
 
   return (
-    <section className="al-card" aria-label="Sign in">
+    <section className="al-card" aria-label="Sign in or join">
       {notice && (
         <p className="al-notice" role="status">
           {notice}
@@ -368,7 +490,7 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
       )}
 
       {showTabs && (
-        <div className="al-tabs" role="tablist" aria-label="Sign-in method">
+        <div className="al-tabs" role="tablist" aria-label="Mobile or email">
           <button id="login-tab-mobile" type="button" role="tab" className="al-tab" aria-selected={tab === "mobile"} aria-controls="login-pane" tabIndex={tab === "mobile" ? 0 : -1} onClick={() => tab !== "mobile" && go("mobile")} onKeyDown={onTabKey}>
             <Smartphone aria-hidden="true" />
             <span>
@@ -390,12 +512,12 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
         {pane === "mobile" && (
           <>
             <h2 className="al-title">Enter your mobile number</h2>
-            <p className="al-desc">We&apos;ll send you a 6-digit OTP to sign in.</p>
+            <p className="al-desc">We&apos;ll send you a 6-digit OTP. New here? The same code creates your account.</p>
             <form className="al-form" method="post" noValidate onSubmit={sendOtp}>
               <label htmlFor="login-phone" className="al-sr">
                 Mobile number
               </label>
-              <div className="al-field" data-state={phoneError ? "error" : phoneOk ? "success" : undefined}>
+              <div className="al-field" data-state={fieldErrors.phone ? "error" : phoneOk ? "success" : undefined}>
                 <span className="al-cc">
                   <IndiaFlag />
                   <span>
@@ -410,16 +532,16 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
                   autoComplete="tel-national"
                   placeholder="98765 43210"
                   value={phone}
-                  aria-invalid={Boolean(phoneError) || undefined}
+                  aria-invalid={Boolean(fieldErrors.phone) || undefined}
                   aria-describedby="login-phone-error"
                   onChange={(e) => {
                     setPhone(formatPhone(e.target.value));
-                    if (phoneError) setPhoneError("");
+                    clear("phone");
                   }}
                 />
                 {phoneOk && <Check aria-hidden="true" style={{ margin: "0 14px 0 0", color: "var(--al-success)" }} />}
               </div>
-              <FieldError id="login-phone-error" message={phoneError} />
+              <FieldError id="login-phone-error" message={fieldErrors.phone ?? ""} />
               <FieldError id="login-form-error" message={error} />
               <Cta state={cta} busyLabel="Sending..." doneLabel="OTP sent">
                 Send OTP
@@ -430,8 +552,10 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
 
         {pane === "otp" && (
           <>
-            <h2 className="al-title">Verify your number</h2>
-            <p className="al-desc">We sent a 6-digit code to {maskedPhone}</p>
+            <h2 className="al-title al-title-lg">Verify your number</h2>
+            <p className="al-desc">
+              We sent a 6-digit code to {maskedPhone}.{newPhone ? " It will create your Arena account." : ""}
+            </p>
             <form className="al-form" method="post" noValidate onSubmit={submitOtp}>
               <OtpBoxes value={code} onChange={setCode} invalid={Boolean(error)} label="6-digit code" describedBy="login-form-error" />
               <FieldError id="login-form-error" message={error} />
@@ -439,9 +563,7 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
                 <button type="button" className="al-link" onClick={() => go("mobile")}>
                   Change number
                 </button>
-                <button type="button" className="al-link" disabled={resendIn > 0} onClick={resend}>
-                  {resendIn > 0 ? `Resend code in ${mm}:${ss}` : "Resend code"}
-                </button>
+                {resendRow}
               </div>
               <Cta state={cta} busyLabel="Verifying..." doneLabel="Verified">
                 Verify &amp; continue
@@ -452,13 +574,13 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
 
         {pane === "email" && (
           <>
-            <h2 className="al-title">{notFound ? "Account not found" : "Sign in with email"}</h2>
-            <p className="al-desc">Enter your email address to continue.</p>
+            <h2 className="al-title">Enter your email</h2>
+            <p className="al-desc">We&apos;ll find your account, or help you start one.</p>
             <form className="al-form" method="post" noValidate onSubmit={submitEmail}>
               <label htmlFor="signin-email" className="al-sr">
                 Email address
               </label>
-              <div className="al-field" data-state={emailError || notFound ? "error" : undefined}>
+              <div className="al-field" data-state={emailError ? "error" : undefined}>
                 <Mail aria-hidden="true" />
                 <input
                   id="signin-email"
@@ -469,49 +591,40 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
                   spellCheck={false}
                   placeholder="you@example.com"
                   value={email}
-                  aria-invalid={Boolean(emailError) || notFound || undefined}
+                  aria-invalid={Boolean(emailError) || undefined}
                   aria-describedby="signin-email-error"
                   onBlur={() => email && setEmailTouched(true)}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (notFound) setNotFound(false);
-                  }}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
-                {(emailError || notFound) && <CircleAlert className="al-bang" aria-hidden="true" />}
+                {emailError && <CircleAlert className="al-bang" aria-hidden="true" />}
               </div>
               <FieldError id="signin-email-error" message={emailError} />
-              {notFound && (
-                <p className="al-banner" role="alert">
-                  <CircleAlert aria-hidden="true" />
-                  We couldn&apos;t find an account with this email address.
-                </p>
-              )}
-              {notFound ? (
-                <>
-                  <Cta state="idle" busyLabel="" doneLabel="">
-                    Create account
-                  </Cta>
-                  <button
-                    type="button"
-                    className="al-ghost"
-                    onClick={() => {
-                      setNotFound(false);
-                      setEmail("");
-                      setEmailTouched(false);
-                      document.getElementById("signin-email")?.focus();
-                    }}
-                  >
-                    Try a different email
-                  </button>
-                </>
-              ) : (
-                <button type="submit" className="al-cta" data-state="idle" disabled={Boolean(emailError)}>
-                  Continue
-                  <i aria-hidden="true">
-                    <ArrowRight />
-                  </i>
+              <FieldError id="login-form-error" message={error} />
+              <button type="submit" className="al-cta" data-state={cta} disabled={Boolean(emailError) || busy} aria-busy={cta === "loading"}>
+                {cta === "loading" ? "Checking..." : "Continue"}
+                <i aria-hidden="true">{cta === "loading" ? <span className="al-spin" /> : <ArrowRight />}</i>
+              </button>
+            </form>
+          </>
+        )}
+
+        {pane === "emailotp" && (
+          <>
+            <h2 className="al-title al-title-lg">Check your email</h2>
+            <p className="al-desc">Enter the 6-digit code we sent to:</p>
+            <form className="al-form" method="post" noValidate onSubmit={submitEmailOtp}>
+              {emailRow}
+              <OtpBoxes value={code} onChange={setCode} invalid={Boolean(error)} label="6-digit code" describedBy="login-form-error" />
+              <FieldError id="login-form-error" message={error} />
+              <div className="al-row">
+                <button type="button" className="al-link" onClick={() => go("password")}>
+                  Use password instead
                 </button>
-              )}
+                {resendRow}
+              </div>
+              <Cta state={cta} busyLabel="Verifying..." doneLabel="Signed in">
+                Verify &amp; continue
+              </Cta>
             </form>
           </>
         )}
@@ -523,48 +636,22 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
             <form className="al-form" method="post" noValidate onSubmit={submitPassword}>
               {/* Lets password managers pair the saved password with this email. */}
               <input type="email" name="username" autoComplete="username" value={email.trim()} readOnly hidden />
-              <div className="al-field al-field-static">
-                <Mail aria-hidden="true" />
-                <span className="al-static">{email.trim()}</span>
-                <button type="button" className="al-link al-change" onClick={() => go("email")}>
-                  Change
-                </button>
-              </div>
-              <label htmlFor="signin-password" className="al-sr">
-                Password
-              </label>
-              <div className="al-field" data-state={passwordError ? "error" : undefined}>
-                <Lock aria-hidden="true" />
-                <input
-                  id="signin-password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  autoFocus
-                  placeholder="Enter your password"
-                  value={password}
-                  aria-invalid={Boolean(passwordError) || undefined}
-                  aria-describedby="signin-password-error"
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (passwordError) setPasswordError("");
-                  }}
-                />
-                <button type="button" className="al-eye" aria-label={showPassword ? "Hide the characters" : "Show the characters"} aria-pressed={showPassword} onClick={() => setShowPassword((v) => !v)}>
-                  {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
-                </button>
-              </div>
-              <FieldError id="signin-password-error" message={passwordError} />
+              {emailRow}
+              {passwordField("current-password", "Enter your password")}
               <div className="al-row">
-                <label className="al-check">
-                  <input type="checkbox" checked={keepSignedIn} onChange={(e) => setKeepSignedIn(e.target.checked)} />
-                  <span aria-hidden="true">
-                    <Check />
-                  </span>
-                  Keep me signed in
-                </label>
-                <button type="button" className="al-link" onClick={onRecover}>
-                  Forgot password?
+                <button
+                  type="button"
+                  className="al-link"
+                  onClick={() => {
+                    go("email");
+                    setEmailTouched(true);
+                  }}
+                >
+                  Email me a code instead
                 </button>
+                <Link href="/auth/forgot" className="al-link">
+                  Forgot password?
+                </Link>
               </div>
               <FieldError id="login-form-error" message={error} />
               <Cta state={cta} busyLabel="Signing in..." doneLabel="Signed in">
@@ -574,9 +661,78 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
           </>
         )}
 
+        {pane === "create" && (
+          <>
+            <h2 className="al-title al-title-lg">You&apos;re new here</h2>
+            <p className="al-desc">Three details and your Arena account is ready.</p>
+            <form className="al-form" method="post" noValidate onSubmit={submitCreate}>
+              <input type="email" name="username" autoComplete="username" value={email.trim()} readOnly hidden />
+              {emailRow}
+              <label htmlFor="signup-name" className="al-sr">
+                Full name
+              </label>
+              <div className="al-field" data-state={fieldErrors.name ? "error" : undefined}>
+                <User aria-hidden="true" />
+                <input
+                  id="signup-name"
+                  autoComplete="name"
+                  placeholder="Full name"
+                  value={name}
+                  aria-invalid={Boolean(fieldErrors.name) || undefined}
+                  aria-describedby="signup-name-error"
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    clear("name");
+                  }}
+                />
+              </div>
+              <FieldError id="signup-name-error" message={fieldErrors.name ?? ""} />
+              {passwordField("new-password", "Create a password")}
+              <label htmlFor="signup-dob" className="al-flabel">
+                Date of birth
+              </label>
+              <div className="al-field" data-state={fieldErrors.dob ? "error" : undefined}>
+                <Calendar aria-hidden="true" />
+                <input
+                  id="signup-dob"
+                  type="date"
+                  max={today}
+                  autoComplete="bday"
+                  value={dob}
+                  aria-invalid={Boolean(fieldErrors.dob) || undefined}
+                  aria-describedby="signup-dob-error signup-dob-hint"
+                  onChange={(e) => {
+                    setDob(e.target.value);
+                    clear("dob");
+                  }}
+                />
+              </div>
+              <FieldError id="signup-dob-error" message={fieldErrors.dob ?? ""} />
+              <p id="signup-dob-hint" className="al-hint">
+                Arena connects neighbors in person, so you need to be 18 or older.
+              </p>
+              <FieldError id="login-form-error" message={error} />
+              <Cta state={cta} busyLabel="Creating your account..." doneLabel="Welcome to Arena">
+                Create account
+              </Cta>
+              <p className="al-terms">
+                By creating an account, you agree to our{" "}
+                <Link href="/terms" target="_blank" rel="noopener noreferrer" className="al-link">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="al-link">
+                  Privacy Policy
+                </Link>
+                .
+              </p>
+            </form>
+          </>
+        )}
+
         {pane === "mfa" && (
           <>
-            <h2 className="al-title">Verification code</h2>
+            <h2 className="al-title al-title-lg">Verification code</h2>
             <p className="al-desc">Enter the 6-digit code from your authenticator app.</p>
             <form className="al-form" method="post" noValidate onSubmit={submitMfa}>
               <OtpBoxes value={code} onChange={setCode} invalid={Boolean(error)} label="6-digit code" describedBy="login-form-error" />
@@ -625,27 +781,14 @@ export function LoginCard({ land, notice, onSignUp, onRecover }: { land: Landing
         </>
       )}
 
-      {pane === "email" && (
+      {pane === "create" ? (
         <p className="al-help">
-          Forgot{" "}
-          <button type="button" className="al-link" onClick={onRecover}>
-            email
-          </button>{" "}
-          or{" "}
-          <button type="button" className="al-link" onClick={onRecover}>
-            password
-          </button>
-          ?
+          Hiring for a company?{" "}
+          <Link href="/auth?mode=signup&as=company" className="al-link">
+            Create a company account
+          </Link>
         </p>
-      )}
-      {pane === "password" && (
-        <p className="al-help">
-          <button type="button" className="al-link" onClick={onRecover}>
-            Forgot email?
-          </button>
-        </p>
-      )}
-      {(pane === "mobile" || pane === "otp" || pane === "mfa") && (
+      ) : (
         <p className="al-help">
           Having trouble signing in?{" "}
           <button type="button" className="al-link" onClick={onRecover}>

@@ -39,9 +39,9 @@ function Sprout() {
 const step = (i: number) => ({ "--i": i }) as CSSProperties;
 
 /** Background, back button, Skip, logo and footer shared by the sign-in and recovery screens. */
-export function LoginFrame({ onBack, skip = true, onSkip, compact = false, footer = true, tone, children }: { onBack?: () => void; skip?: boolean; onSkip?: () => void; compact?: boolean; footer?: boolean; tone?: "dusk"; children: ReactNode }) {
+export function LoginFrame({ onBack, skip = true, onSkip, compact = false, footer = true, tone = "dusk", children }: { onBack?: () => void; skip?: boolean; onSkip?: () => void; compact?: boolean; footer?: boolean; tone?: "dusk" | "warm"; children: ReactNode }) {
   return (
-    <div className={`arena-login ${playfair.variable}`} data-compact={compact || undefined} data-tone={tone}>
+    <div className={`arena-login ${playfair.variable}`} data-compact={compact || undefined} data-tone={tone === "dusk" ? "dusk" : undefined}>
       <LoginBackground />
       <main className="al-frame">
         <div className="al-nav al-in" style={step(0)}>
@@ -94,7 +94,7 @@ export function LoginFrame({ onBack, skip = true, onSkip, compact = false, foote
 }
 
 /** The sign-in screen (`/auth?mode=signin`), built to the approved "Welcome back" mockups. */
-export function LoginScreen({ onBack, onSignUp, onRecover, land, notice }: { onBack: () => void; onSignUp: () => void; onRecover: () => void; land: Landing; notice?: string }) {
+export function LoginScreen({ onBack, onRecover, land, notice }: { onBack: () => void; onRecover: () => void; land: Landing; notice?: string }) {
   return (
     <LoginFrame onBack={onBack}>
       <header className="al-head">
@@ -102,11 +102,11 @@ export function LoginScreen({ onBack, onSignUp, onRecover, land, notice }: { onB
           Welcome <em>back</em>
         </h1>
         <p className="al-sub al-in" style={step(2)}>
-          Good to see you again.
+          Sign in or join with your mobile number or email.
         </p>
       </header>
       <div className="al-in" style={step(3)}>
-        <LoginCard land={land} notice={notice} onSignUp={onSignUp} onRecover={onRecover} />
+        <LoginCard land={land} notice={notice} onRecover={onRecover} />
       </div>
     </LoginFrame>
   );
