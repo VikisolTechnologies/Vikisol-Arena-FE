@@ -11,6 +11,7 @@ import { WelcomeView } from "./WelcomeView";
 import { SignUpView } from "./AuthForms";
 import { LoginScreen } from "@/components/login/LoginScreen";
 import { RecoveryScreen } from "@/components/login/RecoveryScreen";
+import { SignupFlow } from "@/components/login/SignupFlow";
 import { RoleChooser } from "./RoleChooser";
 
 type View = "welcome" | "signin" | "signup" | "role" | "recover";
@@ -42,6 +43,7 @@ export function AuthFlow() {
   const mode = params.get("mode");
   const view: View = mode === "signup" ? "signup" : mode === "signin" ? "signin" : mode === "role" ? "role" : mode === "recover" ? "recover" : "welcome";
   const direction = useDirection(view === "welcome" ? 0 : view === "signin" ? 1 : view === "role" ? 2 : view === "recover" ? 4 : 3);
+  const newSignup = params.get("new") === "1" && params.get("as") !== "company";
   const fromWelcome = useRef(false);
 
   const go = (next: View) => {
@@ -66,7 +68,10 @@ export function AuthFlow() {
         <m.div key={view} custom={direction} variants={pageSlide} initial="enter" animate="center" exit="exit">
           {view === "welcome" && <WelcomeView onJoin={() => go("signup")} onSignIn={() => go("signin")} />}
           {view === "role" && <RoleChooser onBack={back} onContinue={(c) => router.push(`${pathname}?mode=signup${c === "company" ? "&as=company" : ""}`, { scroll: false })} />}
-          {view === "signup" && <SignUpView onBack={back} onSignIn={() => go("signin")} land={land} initialAccount={params.get("as") === "company" ? "company_admin" : "talent"} />}
+          {/* New sign-up (docs/ARENA-REDESIGN-HANDOFF.md) is on trial at ?mode=signup&new=1 until the
+              founder has confirmed a real sign-up through it; then it becomes the default. */}
+          {view === "signup" && !newSignup && <SignUpView onBack={back} onSignIn={() => go("signin")} land={land} initialAccount={params.get("as") === "company" ? "company_admin" : "talent"} />}
+          {view === "signup" && newSignup && <SignupFlow onBack={back} onSignIn={() => go("signin")} />}
           {view === "signin" && <LoginScreen onBack={back} onSignUp={() => go("signup")} onRecover={() => go("recover")} land={land} notice={notice} />}
           {view === "recover" && <RecoveryScreen onExit={() => router.push(`${pathname}?mode=signin`, { scroll: false })} land={land} />}
         </m.div>

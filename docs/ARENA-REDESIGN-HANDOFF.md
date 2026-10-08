@@ -33,7 +33,9 @@ for now if the look is right, but they must be reported plainly, never hidden.
 | Sign in | `/auth?mode=signin` | **Done, live.** |
 | Account recovery | `/auth?mode=recover` | **Done, live.** |
 | Welcome / entrance | `/auth` (no mode) | **On hold.** Needs a real looping forest video from Syam (Envato). Do not fake it with CSS zoom. Still the old B+ `WelcomeView`. |
-| Sign up | `/auth?mode=signup` | Not started. Still B+ `SignUpView`. Likely next. |
+| Sign up (new) | `/auth?mode=signup&new=1` | **Built, on trial in production** (`login/SignupFlow.tsx`). Becomes the default once Syam has confirmed one real sign-up through it: then remove the `new=1` check in `AuthFlow.tsx`, rewrite the sign-up tests in `tests/local/entry-journey.local.ts` for the new steps, and retire `SignUpView` for people (keep it for `as=company`). |
+| Sign up (old) | `/auth?mode=signup` | Still the default: B+ `SignUpView`, then `/onboarding`. |
+| Personalize your feed, Home feed | | In Syam's sign-up mockup (screens 9 and 10) but **not built**. Need real suggestions data; no fake people. |
 | Forgot password by email | `/auth/forgot` | **Done, live** (`login/ForgotEmailScreen.tsx`). |
 | Set new password from the emailed link | `/auth/reset/[token]` | Not restyled. Still B+ `ResetPasswordView` in `PasswordRecovery.tsx`. Works. |
 | Everything after login | | Not started. Palette for the app interior is **undecided**; ask Syam before restyling any of it. |
@@ -61,6 +63,28 @@ move these tokens into global CSS until Syam decides the app-wide palette.
 
 Class naming: everything is `al-*`. Entrance animation is the `.al-in` class with `--i` for order;
 it is CSS only (no GSAP/Framer on this route) and switches off for reduced motion.
+
+## Two tones
+
+- **Default (login, recovery):** warm, orange buttons.
+- **`tone="dusk"` on `LoginFrame` (sign-up):** Syam found the first sign-up mockup "too orange" and
+  supplied a cooler one. Dusk keeps orange for the logo, accent words, links and selected chips
+  only; buttons are slate glass, the background is desaturated and cooled with a CSS filter (same
+  image; no new artwork exists yet). All rules are at the end of `login.css` under
+  `.arena-login[data-tone="dusk"]`. Ask Syam whether login should move to dusk too.
+
+## Sign-up flow as built (`SignupFlow.tsx`)
+
+start (Mobile or Email tab, Google) → OTP (mobile only) → name + password + date of birth →
+photo → location → interests → optional details (skills, about you) → review → welcome → `/home`.
+
+- Email path sends nothing until **Create account** on the review step: `signUp(...)`, then
+  `saveOnboarding(...)` (the same profile calls old onboarding used) and `updateMySkills`.
+- Mobile and Google paths create the account at verification, then save the rest at review.
+- **Date of birth is not in the mockup but is required**: arena-api refuses sign-up without it (18+).
+- Not built because arena-api has nowhere to store them: username, work status, industry.
+  Not built because they would be fake: sample avatars, the map graphic.
+- Company accounts still use the old `SignUpView` (`?mode=signup&as=company`).
 
 ## Sign-in flow as built
 

@@ -39,16 +39,27 @@ function Sprout() {
 const step = (i: number) => ({ "--i": i }) as CSSProperties;
 
 /** Background, back button, Skip, logo and footer shared by the sign-in and recovery screens. */
-export function LoginFrame({ onBack, skip = true, compact = false, children }: { onBack: () => void; skip?: boolean; compact?: boolean; children: ReactNode }) {
+export function LoginFrame({ onBack, skip = true, onSkip, compact = false, footer = true, tone, children }: { onBack?: () => void; skip?: boolean; onSkip?: () => void; compact?: boolean; footer?: boolean; tone?: "dusk"; children: ReactNode }) {
   return (
-    <div className={`arena-login ${playfair.variable}`} data-compact={compact || undefined}>
+    <div className={`arena-login ${playfair.variable}`} data-compact={compact || undefined} data-tone={tone}>
       <LoginBackground />
       <main className="al-frame">
         <div className="al-nav al-in" style={step(0)}>
-          <button type="button" className="al-back" aria-label="Back" onClick={onBack}>
-            <ArrowLeft aria-hidden="true" />
-          </button>
-          {skip && (
+          {onBack ? (
+            <button type="button" className="al-back" aria-label="Back" onClick={onBack}>
+              <ArrowLeft aria-hidden="true" />
+            </button>
+          ) : (
+            <span />
+          )}
+          {onSkip && (
+            <button type="button" className="al-skip" onClick={onSkip}>
+              <span>
+                Skip <ArrowRight size={16} aria-hidden="true" />
+              </span>
+            </button>
+          )}
+          {skip && !onSkip && (
             <Link href="/home" className="al-skip" aria-label="Skip sign-in and look around">
               <span>
                 Skip <ArrowRight size={16} aria-hidden="true" />
@@ -66,7 +77,8 @@ export function LoginFrame({ onBack, skip = true, compact = false, children }: {
           </Link>
         </div>
         {children}
-        <footer className="al-foot al-in" style={step(4)}>
+{footer && (
+          <footer className="al-foot al-in" style={step(4)}>
           <Sprout />
           <p>
             Same neighbors
@@ -74,6 +86,7 @@ export function LoginFrame({ onBack, skip = true, compact = false, children }: {
             Bigger possibilities
           </p>
         </footer>
+        )}
         <CookieBannerSpacer />
       </main>
     </div>
