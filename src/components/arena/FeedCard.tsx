@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Briefcase, CalendarDays, Gift, HandHelping, Heart, MapPin, Megaphone, MessageCircle, Share2, Sparkles, Users } from "lucide-react";
+import { useRef, useState } from "react";
+import { Briefcase, CalendarDays, Gift, HandHelping, Heart, Link2, MapPin, Megaphone, MessageCircle, MoreHorizontal, Share2, SquareArrowOutUpRight, Sparkles, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/bplus/Avatar";
 import { DemoBadge } from "@/components/bplus/Primitives";
@@ -82,6 +82,18 @@ export function FeedCard({ item, km, priority }: { item: FeedItem; km: number | 
     }
   };
 
+  const menu = useRef<HTMLDetailsElement>(null);
+  const closeMenu = () => menu.current?.removeAttribute("open");
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(new URL(href, window.location.origin).toString());
+      setShared("Link copied");
+      window.setTimeout(() => setShared(""), 2500);
+    } catch {
+      /* clipboard not available */
+    }
+  };
+
   const share = async () => {
     const url = new URL(href, window.location.origin).toString();
     try {
@@ -109,6 +121,25 @@ export function FeedCard({ item, km, priority }: { item: FeedItem; km: number | 
         </div>
         {isDemo(item) && <DemoBadge />}
         {!showPhoto && chip}
+        {/* The "..." menu from the mockup. Report and block live on the post itself, next to the
+            context they need, so the menu takes you there. */}
+        <details className="relative shrink-0" ref={menu}>
+          <summary aria-label={`More options for ${title}`} className="grid size-11 cursor-pointer list-none place-items-center rounded-full text-paper-ink-muted outline-none hover:bg-paper-ink/5 focus-visible:outline-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
+            <MoreHorizontal className="size-5" strokeWidth={1.75} aria-hidden />
+          </summary>
+          <ul className="absolute right-0 top-11 z-10 w-52 overflow-hidden rounded-xl border border-paper-ink/15 bg-paper py-1 text-[15px] shadow-[0_8px_24px_rgba(30,23,20,0.18)]">
+            <li>
+              <button type="button" onClick={() => { void copyLink(); closeMenu(); }} className="flex min-h-11 w-full items-center gap-3 px-4 text-left outline-none hover:bg-paper-ink/5 focus-visible:bg-paper-ink/5">
+                <Link2 className="size-4" aria-hidden /> Copy link
+              </button>
+            </li>
+            <li>
+              <Link href={href} className="flex min-h-11 items-center gap-3 px-4 outline-none hover:bg-paper-ink/5 focus-visible:bg-paper-ink/5">
+                <SquareArrowOutUpRight className="size-4" aria-hidden /> Open post
+              </Link>
+            </li>
+          </ul>
+        </details>
       </div>
 
       {/* Phone: photo above the text. Desktop: text left, photo right (founder mockup). */}

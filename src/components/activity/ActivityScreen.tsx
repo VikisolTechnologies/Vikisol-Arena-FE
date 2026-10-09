@@ -1,5 +1,6 @@
 "use client";
 
+import { KindLabel } from "@/components/arena/FeedCard";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -176,6 +177,7 @@ export function ActivityScreen({ post: initial, sentOpen: sentInitially = false,
             </button>
           </div>
         </div>
+        <span className="absolute bottom-10 left-4"><KindLabel kind="activity" /></span>
       </div>
 
       <m.article initial="hidden" animate="shown" className="relative -mx-5 -mt-7 flex-1 rounded-t-[28px] bg-paper px-5 pb-6 pt-6 text-paper-ink">

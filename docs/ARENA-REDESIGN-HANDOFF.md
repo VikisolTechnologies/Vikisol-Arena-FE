@@ -88,8 +88,9 @@ it is CSS only (no GSAP/Framer on this route) and switches off for reduced motio
   kind label, cover, title, place, time, going, and Like / Comment / Share. Like uses the existing
   react/unreact calls; Share uses the device share sheet or copies the link.
 - **Right rail** uses only real data: count of posts within 5 km (links to `/map`), upcoming
-  activities, and the person's chats. The mockup's mini map with pins, attendee faces, the "..."
-  menu and "Suggested people" are not built (no data for them, or not asked yet).
+  activities, and the person's chats. The mockup's mini map with pins, attendee faces and
+  "Suggested people" are not built (no data for them). The "..." menu on cards has Copy link and
+  Open post; report and block stay on the post's own screen.
 - White text on Arena orange fails contrast at small sizes, so text-on-orange uses
   `bg-primary-on-paper` (the deeper orange). Icon-only orange buttons keep `bg-primary`.
 - Pre-existing failing tests, not caused by this work (they fail on the code from before it too):
