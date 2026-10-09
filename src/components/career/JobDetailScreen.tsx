@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { m } from "motion/react";
-import { ArrowLeft, Check, Circle, CircleCheck, Clock, IndianRupee, MapPin, Sparkles } from "lucide-react";
+import { ArrowLeft, Briefcase, Check, Circle, CircleCheck, Clock, IndianRupee, MapPin, Share2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { rise, vibrate } from "@/lib/motion";
 import { AppShell } from "@/components/bplus/AppShell";
@@ -30,6 +30,20 @@ export function JobDetailScreen({ id, specimen }: { id: string; specimen?: { job
   const [application, setApplication] = useState<Application | null>(null);
   const [tab, setTab] = useState<"about" | "people" | "reviews">("about");
   const [applyOpen, setApplyOpen] = useState(!!specimen?.applyOpen);
+  const [shared_, setShared] = useState("");
+  const share = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.share) await navigator.share({ title: job?.title ?? "A job on Arena", url });
+      else {
+        await navigator.clipboard.writeText(url);
+        setShared("Link copied");
+        window.setTimeout(() => setShared(""), 2500);
+      }
+    } catch {
+      /* the person closed the share sheet */
+    }
+  };
 
   useEffect(() => {
     if (specimen || !requireOnboarded(router)) return;
@@ -44,7 +58,7 @@ export function JobDetailScreen({ id, specimen }: { id: string; specimen?: { job
 
   if (job === undefined) {
     return (
-      <AppShell tone="light">
+      <AppShell>
         <div className="space-y-3 pt-3" aria-busy="true" aria-label="Loading the job">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-64 w-full" />
@@ -54,7 +68,7 @@ export function JobDetailScreen({ id, specimen }: { id: string; specimen?: { job
   }
   if (job === null) {
     return (
-      <AppShell tone="light">
+      <AppShell>
         <div className="pt-10"><StateCard kind="empty" title="This job isn't available any more" detail="It may have been filled or closed." action={<ButtonLink href="/jobs">See other jobs</ButtonLink>} /></div>
       </AppShell>
     );
@@ -67,36 +81,40 @@ export function JobDetailScreen({ id, specimen }: { id: string; specimen?: { job
   const shown = must.filter((s) => mine.has(s.toLowerCase()));
 
   return (
-    <AppShell tone="light">
-      <div className="-mx-5 -mt-[max(8px,env(safe-area-inset-top))] flex-1 px-5 pb-6 pt-[max(12px,env(safe-area-inset-top))]">
-        <button type="button" onClick={() => router.back()} aria-label="Back" className="-ml-2.5 grid size-11 place-items-center rounded-full hover:bg-paper-muted">
+    <AppShell>
+      {/* Founder mockup (Oct 2026): a dark header with the role and its facts, then the details
+          on a cream sheet, with the main action pinned under it. */}
+      <div className="flex items-center justify-between pt-1">
+        <button type="button" onClick={() => router.back()} aria-label="Back" className="-ml-2.5 grid size-11 place-items-center rounded-full outline-none hover:bg-foreground/8 focus-visible:outline-2 focus-visible:outline-primary">
           <ArrowLeft className="size-6" strokeWidth={1.75} aria-hidden />
         </button>
-        <m.div initial="hidden" animate="shown">
-          <m.h1 variants={rise} custom={0} className="mt-1 font-display-serif text-[30px] font-medium leading-tight">{job.title}</m.h1>
-          {/* Board: company card with Apply beside it. */}
-          <m.div variants={rise} custom={1} className="mt-4 rounded-tile bg-paper-muted p-3.5 ring-1 ring-paper-ink/10">
-            <div className="flex items-start gap-3">
-              <CompanyMark name={job.company} className="size-14 shrink-0 text-[20px]" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[17px] font-semibold">{job.company}</p>
-                <p className="flex items-center gap-1 text-[14px] text-paper-ink-muted"><MapPin className="size-3.5 shrink-0" aria-hidden /> <span className="truncate">{job.location}</span></p>
-                <p className="text-[14px] text-paper-ink-muted">{job.employmentType} · {job.remote ? "Remote" : "On-site"}</p>
-              </div>
-            </div>
-            <div className="mt-3">
-              {application ? (
-                <ButtonLink href={`/applications/${application.id}`} variant="outline" className="h-12 border-paper-ink/55 text-paper-ink">You applied — see status</ButtonLink>
-              ) : (
-                <Button onClick={() => setApplyOpen(true)} className="h-12">Apply</Button>
-              )}
-            </div>
-          </m.div>
+        <button type="button" onClick={share} className="-mr-2.5 inline-flex min-h-11 items-center gap-2 rounded-full px-3 text-[14px] font-medium outline-none hover:bg-foreground/8 focus-visible:outline-2 focus-visible:outline-primary">
+          <Share2 className="size-5" strokeWidth={1.75} aria-hidden />
+          <span aria-live="polite">{shared_ || "Share"}</span>
+        </button>
+      </div>
+      <m.div initial="hidden" animate="shown">
+        <m.span variants={rise} custom={0} className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-info-on-paper px-2.5 py-1 text-[13px] font-semibold text-white">
+          <Briefcase className="size-4" strokeWidth={2} aria-hidden />
+          Job
+        </m.span>
+        <m.h1 variants={rise} custom={0} className="mt-3 font-display-serif text-[30px] font-medium leading-tight">{job.title}</m.h1>
+        <m.div variants={rise} custom={1} className="mt-4 flex items-center gap-3">
+          <CompanyMark name={job.company} className="size-12 shrink-0 text-[18px]" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[17px] font-semibold">{job.company}</p>
+            <p className="truncate text-[14px] text-faint">{job.location} · Posted {job.postedDaysAgo === 0 ? "today" : `${job.postedDaysAgo} d ago`}</p>
+          </div>
         </m.div>
+        <m.ul variants={rise} custom={2} className="mt-4 flex flex-wrap gap-2 text-[14px]">
+          <li className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5"><Clock className="size-4 text-faint" aria-hidden />{job.employmentType}</li>
+          <li className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5"><MapPin className="size-4 text-faint" aria-hidden />{job.remote ? "Remote" : "On-site"}</li>
+          {job.salaryMax ? <li className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5"><IndianRupee className="size-4 text-faint" aria-hidden />{formatINRRange(job.salaryMin, job.salaryMax, "LPA")}</li> : null}
+        </m.ul>
+      </m.div>
 
-        <div className="mt-5">
-          <Pills label="Job" tone="orange" segmented onPaper options={[{ id: "about", label: "About" }, { id: "people", label: "People" }, { id: "reviews", label: "Reviews" }]} value={tab} onChange={setTab} />
-        </div>
+      <div className="-mx-5 mt-5 flex-1 rounded-t-[24px] bg-paper px-5 pb-6 pt-5 text-paper-ink lg:mx-0 lg:rounded-[24px]">
+        <Pills label="Job" tone="orange" segmented onPaper options={[{ id: "about", label: "About" }, { id: "people", label: "People" }, { id: "reviews", label: "Reviews" }]} value={tab} onChange={setTab} />
         {tab === "about" ? (
           <section className="mt-5" aria-label="About the role">
             <h2 className="text-[18px] font-semibold">About the role</h2>
@@ -142,6 +160,13 @@ export function JobDetailScreen({ id, specimen }: { id: string; specimen?: { job
             <h2 className="text-[18px] font-semibold">Reviews</h2>
             <p className="mt-2 rounded-tile bg-paper-muted p-4 text-[15px]">No reviews yet. Reviews come from people who applied or worked with {job.company} through Arena.</p>
           </section>
+        )}
+      </div>
+      <div className="sticky bottom-0 z-10 -mx-5 -mb-6 border-t border-line bg-background px-5 py-3 lg:mx-0">
+        {application ? (
+          <ButtonLink href={`/applications/${application.id}`} variant="outline" className="h-12">You applied — see status</ButtonLink>
+        ) : (
+          <Button onClick={() => setApplyOpen(true)} className="h-12">Apply now</Button>
         )}
       </div>
       <ApplySheet open={applyOpen} onClose={() => setApplyOpen(false)} job={job} profile={profile} onApplied={setApplication} />

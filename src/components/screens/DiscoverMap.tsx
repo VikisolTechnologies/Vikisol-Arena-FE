@@ -4,7 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, m } from "motion/react";
-import { Info, MapPin } from "lucide-react";
+import { CalendarDays, Info, MapPin, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { press, spring, staggerDelay } from "@/lib/motion";
 import { ButtonLink } from "@/components/bplus/Button";
@@ -14,6 +14,7 @@ import { getMyProfile } from "@/lib/data/profile";
 import { PlacePrompt } from "@/components/location/PlacePrompt";
 import { readEntryDraft, subscribeEntryDraft } from "@/lib/data/onboarding";
 import { Cover } from "@/components/covers/Cover";
+import { KindLabel } from "@/components/arena/FeedCard";
 
 // Live map (MapLibre GL + OpenFreeMap, no key). If WebGL or the tiles fail, the static
 // launch-zone image below takes over, then the drawn map outside it.
@@ -140,6 +141,11 @@ export function DiscoverMap() {
           <DrawnMap center={center} radiusKm={radiusKm} posts={shown} selected={selected} onSelect={setSelected} />
         )}
         {center && (
+          <p className="pointer-events-none absolute left-3 top-3 rounded-full bg-background/85 px-3 py-1.5 text-[14px] font-semibold text-foreground backdrop-blur" aria-hidden>
+            {radiusKm} km
+          </p>
+        )}
+        {center && (
           <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-end gap-2">
             <p className="pointer-events-auto flex flex-1 items-center gap-2 rounded-xl bg-background/85 px-3 py-2 text-[12px] leading-tight text-foreground backdrop-blur">
               <MapPin className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
@@ -175,16 +181,44 @@ export function DiscoverMap() {
       {posts && center && shown.length === 0 && !error && (
         <p className="mt-3 text-center text-[14px] text-faint">Nothing posted within {radiusKm} km yet.</p>
       )}
-      {shown.length > 0 && <p className="mt-3 text-center text-[14px] text-faint">Tap a pin to see what&apos;s there.</p>}
-      <ul className="mt-3 space-y-2" aria-label="Places in this distance" aria-live="polite">
-        {shown.map((p) => (
-          <li key={p.id}>
-            <Link href={`/feed/${p.id}`} className="block rounded-tile bg-paper px-4 py-3 text-paper-ink">
-              <span className="block text-[16px] font-semibold">{p.title || p.body.slice(0, 60)}</span>
-              <span className="text-[13px] text-paper-ink-muted">{[whenLabel(p.startsAt), p.locationText].filter(Boolean).join(" · ")}</span>
-            </Link>
-          </li>
-        ))}
+      {shown.length > 0 && (
+        <div className="mt-5 flex items-baseline justify-between">
+          <h2 className="text-[18px] font-semibold">Nearby ({radiusKm} km)</h2>
+          <p className="text-[13px] text-faint">Tap a pin to see what&apos;s there.</p>
+        </div>
+      )}
+      <ul className="mt-3 space-y-2.5" aria-label="Places in this distance" aria-live="polite">
+        {shown.map((p) => {
+          const km = center ? distanceKm(center, { lat: p.approxLat, lng: p.approxLng }) : null;
+          const when = whenLabel(p.startsAt);
+          return (
+            <li key={p.id}>
+              <Link href={`/feed/${p.id}`} className="flex gap-3 rounded-tile bg-paper p-3 text-paper-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                <Cover source={{ id: p.id, kind: p.intentType, media: p.mediaUrls[0], tags: p.tags, title: p.title, body: p.body, startsAt: p.startsAt }} className="size-[88px] shrink-0 rounded-xl" />
+                <span className="min-w-0 flex-1">
+                  <KindLabel kind={p.intentType} small />
+                  <span className="mt-1 block truncate text-[16px] font-semibold">{p.title || p.body.slice(0, 60)}</span>
+                  {when && (
+                    <span className="mt-0.5 flex items-center gap-1.5 text-[13px] text-paper-ink-muted">
+                      <CalendarDays className="size-3.5 shrink-0" aria-hidden />
+                      {when}
+                    </span>
+                  )}
+                  <span className="mt-0.5 flex items-center gap-1.5 text-[13px] text-paper-ink-muted">
+                    <MapPin className="size-3.5 shrink-0" aria-hidden />
+                    <span className="truncate">{[p.locationText, km != null ? `${Math.round(km * 10) / 10} km` : null].filter(Boolean).join(" · ") || "Nearby"}</span>
+                  </span>
+                  {p.spotsFilled ? (
+                    <span className="mt-0.5 flex items-center gap-1.5 text-[13px] text-paper-ink-muted">
+                      <Users className="size-3.5 shrink-0" aria-hidden />
+                      {p.spotsFilled} going
+                    </span>
+                  ) : null}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

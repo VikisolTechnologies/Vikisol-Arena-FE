@@ -70,9 +70,13 @@ test("inbox: rooms and chats newest first, filters and search", async ({ page })
   await expect(list.getByRole("link").first()).toContainText("Sunrise Run at Durgam Lake");
   await expect(list.getByRole("link").first().getByRole("img", { name: "Unread" })).toBeVisible();
   await noSeriousA11y(page);
-  await page.getByRole("radio", { name: "Needs" }).click();
+  // Messages are one-to-one chats; Groups are the chats that come with an activity or a need.
+  await page.getByRole("radio", { name: "Groups" }).click();
+  await expect(list.getByRole("link")).toHaveCount(2);
+  await expect(list.getByRole("link").nth(1)).toContainText("Help move a sofa");
+  await page.getByRole("radio", { name: "Messages" }).click();
   await expect(list.getByRole("link")).toHaveCount(1);
-  await expect(list.getByRole("link")).toContainText("Help move a sofa");
+  await expect(list.getByRole("link")).toContainText("Meera Iyer");
   await page.getByRole("radio", { name: "All" }).click();
   await page.getByRole("button", { name: "Search conversations" }).click();
   await page.getByRole("textbox", { name: "Search conversations" }).fill("meera");

@@ -20,12 +20,12 @@ import { Cover } from "@/components/covers/Cover";
 import { CompanyMark } from "@/components/career/CompanyMark";
 import { JennyOrb } from "@/components/jenny/JennyOrb";
 
+/** Founder mockup (Oct 2026): Messages are one-to-one chats, Groups are the chats that come
+ *  with an activity or a need. "All" stays first so nothing is hidden by default. */
 const FILTERS = [
   { id: "all", label: "All" },
-  { id: "activities", label: "Activities" },
-  { id: "needs", label: "Needs" },
-  { id: "jobs", label: "Jobs" },
-  { id: "direct", label: "Direct" },
+  { id: "messages", label: "Messages" },
+  { id: "groups", label: "Groups" },
 ] as const;
 type Filter = (typeof FILTERS)[number]["id"];
 
@@ -42,8 +42,7 @@ export function toThreads(rooms: Room[], conversations: Conversation[]): Thread[
 
 function matches(t: Thread, f: Filter) {
   if (f === "all") return true;
-  if (t.kind === "room") return (f === "activities" && t.room.postIntentType === "activity") || (f === "needs" && t.room.postIntentType === "ask");
-  return (f === "jobs" && t.kind === "job") || (f === "direct" && t.kind === "direct");
+  return f === "groups" ? t.kind === "room" : t.kind !== "room";
 }
 
 /** Board "Messages, trust…" #1 — one Inbox for rooms and direct chats. */
@@ -120,17 +119,17 @@ export function InboxScreen() {
         )}
       </AnimatePresence>
       <div className="mt-4">
-        <Pills label="Show" options={FILTERS} value={filter} onChange={setFilter} compact />
+        <Pills label="Show" options={FILTERS} value={filter} onChange={setFilter} segmented />
       </div>
 
-      <div className="mt-5 flex-1">
+      <div className="-mx-5 mt-5 flex-1 rounded-t-[24px] bg-paper px-5 pb-4 pt-2 text-paper-ink lg:mx-0 lg:rounded-[24px]">
         {/* Jenny is pinned above the conversations (board), not one of them. */}
-        {filter === "all" && !q && !error && <div className="border-b border-line"><JennyRow /></div>}
+        {filter === "all" && !q && !error && <div className="border-b border-paper-ink/10"><JennyRow /></div>}
         {error ? (
           <StateCard kind="error" title="Your inbox didn't load" detail="Check your connection and try again." action={<Button variant="outline" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>} />
         ) : loading ? (
           <div className="space-y-3" aria-busy="true" aria-label="Loading conversations">
-            {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[72px] w-full" />)}
+            {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="mt-3 h-[72px] w-full" />)}
           </div>
         ) : shown.length === 0 ? (
           q || filter !== "all" ? (
@@ -139,7 +138,7 @@ export function InboxScreen() {
             <StateCard kind="empty" title="No messages yet" detail="Start a conversation by joining an activity, responding to a need or saying hi to someone nearby." action={<ButtonLink href="/discover">Discover nearby</ButtonLink>} />
           )
         ) : (
-          <m.ul key={filter} initial="hidden" animate="shown" className="divide-y divide-line" aria-label="Conversations">
+          <m.ul key={filter} initial="hidden" animate="shown" className="divide-y divide-paper-ink/10" aria-label="Conversations">
             {shown.map((t, i) => (
               <m.li key={`${t.kind}-${t.id}`} variants={rise} custom={i}>
                 <ThreadRow thread={t} />
@@ -159,9 +158,9 @@ function JennyRow() {
       <JennyOrb size={56} online still />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[16px] font-semibold">Jenny</span>
-        <span className="block truncate text-[14px] text-faint">Ask her to find, plan or draft something</span>
+        <span className="block truncate text-[14px] text-paper-ink-muted">Ask her to find, plan or draft something</span>
       </span>
-      <span className="shrink-0 rounded-full bg-primary/15 px-2 py-0.5 text-[12px] font-semibold text-primary-soft">AI</span>
+      <span className="shrink-0 rounded-full bg-paper-ink px-2 py-0.5 text-[12px] font-semibold text-paper">AI</span>
     </Link>
   );
 }
@@ -202,10 +201,10 @@ function ThreadRow({ thread: t }: { thread: Thread }) {
       {thumb}
       <span className="min-w-0 flex-1">
         <span className={cn("block truncate text-[16px]", unread ? "font-bold" : "font-semibold")}>{title}</span>
-        <span className={cn("block truncate text-[14px]", unread ? "text-foreground" : "text-faint")}>{preview}</span>
+        <span className={cn("block truncate text-[14px]", unread ? "text-paper-ink" : "text-paper-ink-muted")}>{preview}</span>
       </span>
       <span className="flex shrink-0 flex-col items-end gap-1.5">
-        <span className="text-[12px] text-faint">{timeAgo(t.sortAt)}</span>
+        <span className="text-[12px] text-paper-ink-muted">{timeAgo(t.sortAt)}</span>
         {unread ? <span className="size-2.5 rounded-full bg-primary" aria-label="Unread" role="img" /> : <span className="size-2.5" aria-hidden />}
       </span>
     </Link>

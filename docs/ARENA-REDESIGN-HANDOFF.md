@@ -36,8 +36,10 @@ for now if the look is right, but they must be reported plainly, never hidden.
 | Company sign-up | `/auth?mode=signup&as=company` | Old B+ `SignUpView`, unchanged. |
 | **Feed (home)** | `/home` | **Done.** `components/arena/ArenaShell.tsx` (new app frame), `components/arena/FeedCard.tsx`, `components/screens/FeedScreen.tsx`. See "App shell and feed" below. |
 | Create | the (+) sheet | **Done.** `create/CreateSheet.tsx`: "Create on Arena" with six coloured tiles, each opening its existing flow. The mockup's inline title/description/Post form is not built (each kind has its own multi-step flow with validation). |
-| Chats | `/rooms` | Renamed from Inbox; content and filters unchanged (old B+ look). The mockup's Messages / Groups split is not built. |
-| Discover / Map, Post detail | `/discover`, `/map`, `/feed/[id]`, `/jobs/[id]` | **Not restyled** (old B+ look). They are in the new frame on desktop (below) but their content is unchanged. |
+| Chats | `/rooms` | **Done.** `inbox/InboxScreen.tsx`: segmented All / Messages / Groups (Messages = one-to-one chats, Groups = chats that come with an activity or need), cream list. The chat thread screens themselves are not restyled. |
+| Job detail | `/jobs/[id]` | **Done.** `career/JobDetailScreen.tsx`: dark header (Job label, title, company, fact pills), cream sheet with About / People / Reviews, Apply pinned underneath, Share. |
+| Discover map | `/discover?view=map`, `/map` | **Done (light touch).** `screens/DiscoverMap.tsx`: radius chip on the map and a "Nearby (N km)" list with thumbnails, type labels, time, place and going. Map, filters and slider logic unchanged. |
+| Discover list, activity / need / offer detail, chat threads | `/discover`, `/feed/[id]`, `/rooms/[id]`, `/messages/[id]` | **Not restyled** (old B+ look, in the new frame on desktop). |
 | Suggested people, Personalize your feed | | In mockups but **not built**: no suggestions endpoint, and no fake people. |
 | Forgot password by email | `/auth/forgot` | **Done, live** (`login/ForgotEmailScreen.tsx`). |
 | Set new password from the emailed link | `/auth/reset/[token]` | Not restyled. Still B+ `ResetPasswordView` in `PasswordRecovery.tsx`. Works. |

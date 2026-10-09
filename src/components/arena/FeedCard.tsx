@@ -23,6 +23,19 @@ const KIND: Record<string, { label: string; icon: typeof Sparkles; cls: string }
   company: { label: "Company", icon: Megaphone, cls: "bg-paper-ink text-paper" },
 };
 
+/** The coloured type label used on feed cards, the map list and detail screens. */
+export function KindLabel({ kind, small }: { kind: string; small?: boolean }) {
+  const k = KIND[kind];
+  if (!k) return null;
+  const IconCmp = k.icon;
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 rounded-lg font-semibold", small ? "px-2 py-0.5 text-[12px]" : "px-2.5 py-1 text-[13px]", k.cls)}>
+      <IconCmp className={small ? "size-3.5" : "size-4"} strokeWidth={2} aria-hidden />
+      {k.label}
+    </span>
+  );
+}
+
 function ago(iso: string, now = Date.now()) {
   const s = Math.max(0, (now - new Date(iso).getTime()) / 1000);
   if (!Number.isFinite(s)) return "";
@@ -39,8 +52,6 @@ const POSTS = new Set(["activity", "ask", "offer", "update", "company", "collab"
 export function FeedCard({ item, km, priority }: { item: FeedItem; km: number | null; priority?: boolean }) {
   const href = hrefFor(item);
   const author = item.authorCompanyName ?? item.authorName ?? "Arena member";
-  const kind = KIND[item.itemType];
-  const KindIcon = kind?.icon;
   const title = titleOf(item);
   const body = item.title?.trim() && item.body.trim() !== item.title.trim() ? item.body.trim() : "";
   const when = whenLabel(item.startsAt ?? undefined);
@@ -85,12 +96,7 @@ export function FeedCard({ item, km, priority }: { item: FeedItem; km: number | 
     }
   };
 
-  const chip = kind && KindIcon && (
-    <span className={cn("inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[13px] font-semibold", kind.cls)}>
-      <KindIcon className="size-4" strokeWidth={2} aria-hidden />
-      {kind.label}
-    </span>
-  );
+  const chip = <KindLabel kind={item.itemType} />;
   const action = "inline-flex min-h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl text-[14px] font-medium text-paper-ink-muted outline-none hover:bg-paper-ink/5 hover:text-paper-ink focus-visible:outline-2 focus-visible:outline-primary";
 
   return (
