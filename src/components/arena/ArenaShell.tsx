@@ -40,6 +40,100 @@ const SIDE: { href: string; label: string; icon: Icon; match: string[] }[] = [
 
 const isActive = (pathname: string, match: string[]) => match.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
+/** Unread chats for the signed-in person (0 for guests), shared by the top bar and both navs. */
+export function useUnreadChats() {
+  const guest = useGuest();
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    if (guest !== false) return;
+    let cancelled = false;
+    getMyRooms()
+      .then((rooms) => !cancelled && setUnread(rooms.filter((r) => r.unread).length))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [guest]);
+  return unread;
+}
+
+/** Desktop sidebar (from 1024px). */
+export function ArenaSidebar({ unread }: { unread: number }) {
+  const pathname = usePathname();
+  return (
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[var(--shell-side)] flex-col border-r border-line bg-surface px-4 py-5 text-foreground lg:flex">
+      <Link href="/home" className="px-2 text-[26px] text-foreground" aria-label="Arena home">
+        <ArenaLogo />
+      </Link>
+      <nav aria-label="Sections" className="mt-7">
+        <ul className="space-y-1">
+          {SIDE.map((s) => {
+            const on = isActive(pathname, s.match) && !(s.href === "/work" && pathname.startsWith("/work/saved"));
+            const IconCmp = s.icon;
+            return (
+              <li key={s.href}>
+                <Link href={s.href} aria-current={on ? "page" : undefined} className={cn("flex min-h-11 items-center gap-3 rounded-xl px-3 text-[15px] outline-none focus-visible:outline-2 focus-visible:outline-primary", on ? "bg-accent font-semibold text-primary-soft" : "text-foreground hover:bg-foreground/5")}>
+                  <IconCmp className="size-5" strokeWidth={on ? 2.2 : 1.75} aria-hidden />
+                  <span className="flex-1">{s.label}</span>
+                  {s.href === "/rooms" && unread > 0 && <span className="grid min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-bold leading-5 text-white">{unread}</span>}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </aside>
+  );
+}
+
+/** Top bar: logo and icons on a phone; search, icons and Create on desktop. `desktopOnly` is for
+ *  older screens that already have their own phone header. */
+export function ArenaTopBar({ unread, onCreate, desktopOnly = false }: { unread: number; onCreate: () => void; desktopOnly?: boolean }) {
+  const router = useRouter();
+  const guest = useGuest();
+  const name = useSessionName();
+  const [query, setQuery] = useState("");
+  const search = (e: FormEvent) => {
+    e.preventDefault();
+    router.push(query.trim() ? `/search?q=${encodeURIComponent(query.trim())}` : "/search");
+  };
+  const signIn = "/auth?mode=signin";
+  const iconButton = "relative grid size-11 place-items-center rounded-full text-foreground outline-none hover:bg-foreground/8 focus-visible:outline-2 focus-visible:outline-primary";
+  return (
+    <header className={cn("sticky top-0 z-20 border-b border-line bg-background/92 text-foreground backdrop-blur-xl", desktopOnly && "hidden lg:block")}>
+      <div className="mx-auto flex h-[var(--shell-top)] max-w-[1180px] items-center gap-2 px-4 pt-[env(safe-area-inset-top)] lg:px-6">
+        <Link href="/home" className="mr-auto text-[24px] text-foreground lg:hidden" aria-label="Arena home">
+          <ArenaLogo />
+        </Link>
+        <form role="search" onSubmit={search} className="hidden h-11 flex-1 items-center gap-3 rounded-full bg-foreground/6 px-4 lg:flex">
+          <Search className="size-5 text-faint" strokeWidth={1.75} aria-hidden />
+          <label htmlFor="shell-search" className="sr-only">
+            Quick search
+          </label>
+          <input id="shell-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search people, jobs, activities, skills..." className="h-full flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-faint" />
+        </form>
+        <Link href="/search" aria-label="Search" className={cn(iconButton, "lg:hidden")}>
+          <Search className="size-[22px]" strokeWidth={1.75} aria-hidden />
+        </Link>
+        <Link href={guest ? signIn : "/rooms"} aria-label={unread ? `Chats, ${unread} unread` : "Chats"} className={iconButton}>
+          <MessageCircle className="size-[22px]" strokeWidth={1.75} aria-hidden />
+          {unread > 0 && <span aria-hidden className="absolute right-1 top-1 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold leading-4 text-white">{unread}</span>}
+        </Link>
+        <Link href={guest ? signIn : "/notifications"} aria-label="Notifications" className={iconButton}>
+          <Bell className="size-[22px]" strokeWidth={1.75} aria-hidden />
+        </Link>
+        <Link href={guest ? signIn : "/identity"} aria-label={guest ? "Sign in" : "Your profile"} className="ml-1 grid size-11 place-items-center rounded-full outline-none focus-visible:outline-2 focus-visible:outline-primary">
+          {guest ? <UserRound className="size-[22px]" strokeWidth={1.75} aria-hidden /> : <Avatar name={name || "You"} className="size-9 text-[13px]" />}
+        </Link>
+        <button type="button" onClick={onCreate} aria-haspopup="dialog" className="ml-2 hidden h-11 items-center gap-2 rounded-full bg-primary-on-paper px-5 text-[15px] font-semibold text-white outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary lg:flex">
+          <Plus className="size-5" strokeWidth={2.4} aria-hidden />
+          Create
+        </button>
+      </div>
+    </header>
+  );
+}
+
 /**
  * The redesigned app frame. Phone: a top bar (logo, search, chats, notifications, you), the
  * content, and the bottom bar. From 1024px: a sidebar on the left, a search bar on top, and
@@ -47,14 +141,10 @@ const isActive = (pathname: string, match: string[]) => match.some((p) => pathna
  */
 export function ArenaShell({ children, aside }: { children: ReactNode; aside?: ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const offline = useOffline();
-  const guest = useGuest();
-  const name = useSessionName();
   const cookieBanner = useCookieConsentVisible();
+  const unread = useUnreadChats();
   const [createOpen, setCreateOpen] = useState(false);
-  const [unread, setUnread] = useState(0);
-  const [query, setQuery] = useState("");
   const closeCreate = useCallback(() => setCreateOpen(false), []);
 
   useEffect(() => {
@@ -69,43 +159,8 @@ export function ArenaShell({ children, aside }: { children: ReactNode; aside?: R
     return () => window.removeEventListener("arena-open-create", open);
   }, []);
 
-  useEffect(() => {
-    if (guest !== false) return;
-    let cancelled = false;
-    getMyRooms()
-      .then((rooms) => !cancelled && setUnread(rooms.filter((r) => r.unread).length))
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [guest]);
-
-  const search = (e: FormEvent) => {
-    e.preventDefault();
-    router.push(query.trim() ? `/search?q=${encodeURIComponent(query.trim())}` : "/search");
-  };
-
-  const signIn = "/auth?mode=signin";
-  const iconButton = "relative grid size-11 place-items-center rounded-full text-foreground outline-none hover:bg-foreground/8 focus-visible:outline-2 focus-visible:outline-primary";
-  const badge = unread > 0 && <span className="absolute right-1 top-1 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold leading-4 text-white">{unread}</span>;
-
-  const topActions = (
-    <>
-      <Link href={guest ? signIn : "/rooms"} aria-label={unread ? `Chats, ${unread} unread` : "Chats"} className={iconButton}>
-        <MessageCircle className="size-[22px]" strokeWidth={1.75} aria-hidden />
-        {badge}
-      </Link>
-      <Link href={guest ? signIn : "/notifications"} aria-label="Notifications" className={iconButton}>
-        <Bell className="size-[22px]" strokeWidth={1.75} aria-hidden />
-      </Link>
-      <Link href={guest ? signIn : "/identity"} aria-label={guest ? "Sign in" : "Your profile"} className="ml-1 grid size-11 place-items-center rounded-full outline-none focus-visible:outline-2 focus-visible:outline-primary">
-        {guest ? <UserRound className="size-[22px]" strokeWidth={1.75} aria-hidden /> : <Avatar name={name || "You"} className="size-9 text-[13px]" />}
-      </Link>
-    </>
-  );
-
   return (
-    <div data-theme="bplus" className="arena-shell w-full bg-background text-foreground">
+    <div data-theme="bplus" className="arena-frame arena-shell w-full bg-background text-foreground">
       {offline && (
         <p role="status" className="sticky top-0 z-40 flex items-center justify-center gap-2 bg-warning px-4 py-2 text-[13px] font-medium text-paper-ink">
           <CloudOff className="size-4" strokeWidth={2} aria-hidden />
@@ -113,54 +168,10 @@ export function ArenaShell({ children, aside }: { children: ReactNode; aside?: R
         </p>
       )}
 
-      {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[var(--shell-side)] flex-col border-r border-line bg-surface px-4 py-5 lg:flex">
-        <Link href="/home" className="px-2 text-[26px] text-foreground" aria-label="Arena home">
-          <ArenaLogo />
-        </Link>
-        <nav aria-label="Sections" className="mt-7">
-          <ul className="space-y-1">
-            {SIDE.map((s) => {
-              const on = isActive(pathname, s.match) && !(s.href === "/work" && pathname.startsWith("/work/saved"));
-              const IconCmp = s.icon;
-              return (
-                <li key={s.href}>
-                  <Link href={s.href} aria-current={on ? "page" : undefined} className={cn("flex min-h-11 items-center gap-3 rounded-xl px-3 text-[15px] outline-none focus-visible:outline-2 focus-visible:outline-primary", on ? "bg-accent font-semibold text-primary-soft" : "text-foreground hover:bg-foreground/5")}>
-                    <IconCmp className="size-5" strokeWidth={on ? 2.2 : 1.75} aria-hidden />
-                    <span className="flex-1">{s.label}</span>
-                    {s.href === "/rooms" && unread > 0 && <span className="grid min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-bold leading-5 text-white">{unread}</span>}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-      </aside>
+      <ArenaSidebar unread={unread} />
 
       <div className="lg:pl-[var(--shell-side)]">
-        {/* Top bar */}
-        <header className="sticky top-0 z-20 border-b border-line bg-background/92 backdrop-blur-xl">
-          <div className="mx-auto flex h-[var(--shell-top)] max-w-[1180px] items-center gap-2 px-4 pt-[env(safe-area-inset-top)] lg:px-6">
-            <Link href="/home" className="mr-auto text-[24px] text-foreground lg:hidden" aria-label="Arena home">
-              <ArenaLogo />
-            </Link>
-            <form role="search" onSubmit={search} className="hidden h-11 flex-1 items-center gap-3 rounded-full bg-foreground/6 px-4 lg:flex">
-              <Search className="size-5 text-faint" strokeWidth={1.75} aria-hidden />
-              <label htmlFor="shell-search" className="sr-only">
-                Search Arena
-              </label>
-              <input id="shell-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search people, jobs, activities, skills..." className="h-full flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-faint" />
-            </form>
-            <Link href="/search" aria-label="Search" className={cn(iconButton, "lg:hidden")}>
-              <Search className="size-[22px]" strokeWidth={1.75} aria-hidden />
-            </Link>
-            {topActions}
-            <button type="button" onClick={() => setCreateOpen(true)} aria-haspopup="dialog" className="ml-2 hidden h-11 items-center gap-2 rounded-full bg-primary-on-paper px-5 text-[15px] font-semibold text-white outline-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary lg:flex">
-              <Plus className="size-5" strokeWidth={2.4} aria-hidden />
-              Create
-            </button>
-          </div>
-        </header>
+        <ArenaTopBar unread={unread} onCreate={() => setCreateOpen(true)} />
 
         <div className="mx-auto flex w-full max-w-[1180px] gap-6 px-4 pb-[calc(var(--shell-bar)+28px+env(safe-area-inset-bottom))] pt-4 lg:px-6 lg:pb-10" style={cookieBanner ? { paddingBottom: "calc(var(--shell-bar) + 28px + var(--cookie-banner-h, 88px))" } : undefined}>
           <main className="mx-auto w-full min-w-0 max-w-[560px] lg:mx-0 lg:max-w-none lg:flex-1">

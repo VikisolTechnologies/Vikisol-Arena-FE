@@ -51,7 +51,7 @@ async function actionClearsContent(page: Page, label: string) {
         return r.bottom > br.top + 1 && r.top < br.bottom - 1 && r.right > br.left + 1 && r.left < br.right - 1;
       })
       .map((f) => (f.getAttribute("aria-label") || f.textContent || f.tagName).replace(/\s+/g, " ").trim().slice(0, 48));
-    const tab = document.querySelector("a[href='/home']");
+    const tab = document.querySelector("nav[aria-label='Primary'] a[href='/home']");
     const tabTop = tab ? tab.getBoundingClientRect().top : null;
     return { missing: false as const, overlaps, buttonBottom: br.bottom, tabTop };
   }, label);

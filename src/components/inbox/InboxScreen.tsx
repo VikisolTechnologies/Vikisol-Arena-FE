@@ -94,7 +94,7 @@ export function InboxScreen() {
   return (
     <AppShell>
       <header className="flex items-center justify-between pt-3">
-        <h1 className="font-display-serif text-[34px] font-medium leading-tight">Inbox</h1>
+        <h1 className="font-display-serif text-[34px] font-medium leading-tight">Chats</h1>
         <button
           type="button"
           onClick={() => {

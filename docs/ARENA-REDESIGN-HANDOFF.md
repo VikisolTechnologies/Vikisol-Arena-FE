@@ -35,7 +35,9 @@ for now if the look is right, but they must be reported plainly, never hidden.
 | Welcome / entrance | `/auth` (no mode) | **On hold.** Needs a real looping forest video from Syam (Envato). Do not fake it with CSS zoom. Still the old B+ `WelcomeView`; its two buttons both open the one-entry screen. |
 | Company sign-up | `/auth?mode=signup&as=company` | Old B+ `SignUpView`, unchanged. |
 | **Feed (home)** | `/home` | **Done.** `components/arena/ArenaShell.tsx` (new app frame), `components/arena/FeedCard.tsx`, `components/screens/FeedScreen.tsx`. See "App shell and feed" below. |
-| Discover / Map, Create post, Post detail, Chats & Groups | `/discover`, Create sheet, `/feed/[id]`, `/rooms` | In the same mockup as the feed (screens 2 to 5) but **not restyled yet**. They still use the old `bplus/AppShell`. Move each onto `ArenaShell` when its turn comes. |
+| Create | the (+) sheet | **Done.** `create/CreateSheet.tsx`: "Create on Arena" with six coloured tiles, each opening its existing flow. The mockup's inline title/description/Post form is not built (each kind has its own multi-step flow with validation). |
+| Chats | `/rooms` | Renamed from Inbox; content and filters unchanged (old B+ look). The mockup's Messages / Groups split is not built. |
+| Discover / Map, Post detail | `/discover`, `/map`, `/feed/[id]`, `/jobs/[id]` | **Not restyled** (old B+ look). They are in the new frame on desktop (below) but their content is unchanged. |
 | Suggested people, Personalize your feed | | In mockups but **not built**: no suggestions endpoint, and no fake people. |
 | Forgot password by email | `/auth/forgot` | **Done, live** (`login/ForgotEmailScreen.tsx`). |
 | Set new password from the emailed link | `/auth/reset/[token]` | Not restyled. Still B+ `ResetPasswordView` in `PasswordRecovery.tsx`. Works. |
@@ -74,8 +76,11 @@ it is CSS only (no GSAP/Framer on this route) and switches off for reduced motio
   `arena.css` that sets the same token values as `[data-tone="light"]`.
 - It uses the existing **B+ tokens** (`bg-paper`, `text-paper-ink`, `bg-primary` ...). It is not
   the login family's `al-*` styling and adds no palette.
-- The old `bplus/AppShell` is still used by every other page; only its tab list was changed so the
-  bottom bar matches (Work became Chats).
+- The old `bplus/AppShell` is still used by every other page (about 40). It now shares the frame:
+  the same bottom bar on a phone, and from 1024px the same sidebar and top bar (`ArenaSidebar`,
+  `ArenaTopBar` exported from `ArenaShell.tsx`). Those screens **stay graphite on desktop**: their
+  colours fail contrast on a cream page (tested), so only `ArenaShell` screens turn cream. Move a
+  screen from `AppShell` to `ArenaShell` when it is restyled, and check contrast when you do.
 - **Feed:** kind filter row (All, Activities, Jobs, Needs, Offers) and, behind the Filters button
   on the location bar, the where-and-when filter (Anywhere, Nearby, This week). Cards show author,
   kind label, cover, title, place, time, going, and Like / Comment / Share. Like uses the existing
@@ -85,8 +90,9 @@ it is CSS only (no GSAP/Framer on this route) and switches off for reduced motio
   menu and "Suggested people" are not built (no data for them, or not asked yet).
 - White text on Arena orange fails contrast at small sizes, so text-on-orange uses
   `bg-primary-on-paper` (the deeper orange). Icon-only orange buttons keep `bg-primary`.
-- Pre-existing failing test, not caused by this work: `core.local.ts` "Work, You and Jenny render
-  honest states".
+- Pre-existing failing tests, not caused by this work (they fail on the code from before it too):
+  `core.local.ts` "Work, You and Jenny render honest states", `projects.local.ts` "collaborative
+  project stays a draft", `business.local.ts` "desktop board: drag a card to Interview".
 
 ## Two tones
 

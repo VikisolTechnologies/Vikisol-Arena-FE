@@ -40,7 +40,7 @@ test("Create sheet: six options, Esc closes, focus returns to (+)", async ({ pag
   const plus = page.getByRole("button", { name: "Create" });
   await plus.click();
   const sheet = page.getByRole("dialog", { name: "Create" });
-  await expect(sheet.getByRole("heading", { name: "What do you want to make happen?" })).toBeVisible();
+  await expect(sheet.getByRole("heading", { name: "Create on Arena" })).toBeVisible();
   for (const option of ["Post a Need", "Make an Offer", "Create an Activity", "Start a Project", "Post a Job", "Ask Jenny"]) {
     await expect(sheet.getByRole("button", { name: new RegExp(option) })).toBeVisible();
   }

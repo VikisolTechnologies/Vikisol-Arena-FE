@@ -12,6 +12,8 @@ import { useOffline } from "@/hooks/use-arena-session";
 import { useCookieConsentVisible } from "@/hooks/use-cookie-consent-visible";
 import { PreviewBar } from "@/components/bplus/Primitives";
 import { LocationSession } from "@/components/location/LocationSession";
+import { ArenaSidebar, ArenaTopBar, useUnreadChats } from "@/components/arena/ArenaShell";
+import "@/components/arena/arena.css";
 
 const CreateSheet = dynamic(() => import("@/components/create/CreateSheet").then((mod) => mod.CreateSheet), { ssr: false });
 
@@ -36,6 +38,7 @@ export function AppShell({ children, tone }: { children: ReactNode; /** Full cre
   const pathname = usePathname();
   const offline = useOffline();
   const cookieBanner = useCookieConsentVisible();
+  const unread = useUnreadChats();
   const [createOpen, setCreateOpen] = useState(false);
   const closeCreate = useCallback(() => setCreateOpen(false), []);
 
@@ -64,7 +67,11 @@ export function AppShell({ children, tone }: { children: ReactNode; /** Full cre
   const active = TABS.find((t) => t.match.some((p) => pathname === p || pathname.startsWith(`${p}/`)))?.href;
 
   return (
-    <div data-theme="bplus" data-tone={tone} className="min-h-svh w-full bg-background text-foreground">
+    <div data-theme="bplus" data-tone={tone} className="arena-frame min-h-svh w-full bg-background text-foreground">
+      {/* From 1024px every screen sits in the same frame as the feed: sidebar and search bar. */}
+      <ArenaSidebar unread={unread} />
+      <div className="lg:pl-[var(--shell-side)]">
+        <ArenaTopBar unread={unread} onCreate={() => setCreateOpen(true)} desktopOnly />
       {offline && (
         <p role="status" className="sticky top-0 z-30 flex items-center justify-center gap-2 bg-warning px-4 py-2 text-[13px] font-medium text-paper-ink">
           <CloudOff className="size-4" strokeWidth={2} aria-hidden />
@@ -73,17 +80,18 @@ export function AppShell({ children, tone }: { children: ReactNode; /** Full cre
       )}
       <PreviewBar className="relative z-20 mx-auto max-w-[480px] bg-background pt-[max(6px,env(safe-area-inset-top))]" />
       <div
-        className="mx-auto flex w-full max-w-[480px] flex-col overflow-y-auto overscroll-y-contain px-5 pt-[max(8px,env(safe-area-inset-top))] pb-6"
-        style={{ height: `calc(100svh - ${BAR}px - env(safe-area-inset-bottom)${cookieBanner ? " - var(--cookie-banner-h, 88px)" : ""})`, scrollbarGutter: "stable" }}
+        className="arena-app-scroll mx-auto flex w-full max-w-[480px] flex-col overflow-y-auto overscroll-y-contain px-5 pt-[max(8px,env(safe-area-inset-top))] pb-6 lg:max-w-[560px]"
+        style={{ "--cb": cookieBanner ? "var(--cookie-banner-h, 88px)" : "0px", scrollbarGutter: "stable" } as React.CSSProperties}
       >
         <LocationSession />
         {children}
+      </div>
       </div>
 
       <nav
         data-tone="dark"
         aria-label="Primary"
-        className="fixed inset-x-0 z-40 mx-auto max-w-[480px] border-t border-line bg-background/92 text-foreground backdrop-blur-xl"
+        className="fixed inset-x-0 z-40 mx-auto max-w-[480px] border-t border-line bg-background/92 text-foreground backdrop-blur-xl lg:hidden"
         style={{ bottom: cookieBanner ? "var(--cookie-banner-h, 88px)" : 0, paddingBottom: cookieBanner ? 0 : "env(safe-area-inset-bottom)" }}
       >
         <ul className="grid grid-cols-5 items-end" style={{ height: BAR }}>

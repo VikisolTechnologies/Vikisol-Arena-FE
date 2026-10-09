@@ -1,7 +1,11 @@
 /* Arena app shell + feed (founder mockup, Oct 2026). Uses the B+ tokens; nothing here is a new
    palette. Phone and tablet stay on the graphite page with cream cards; from 1024px the page
    itself turns cream (the same values as [data-tone="light"]) with a sidebar and a right rail. */
-.arena-shell { --shell-bar: 72px; --shell-side: 232px; --shell-top: 64px; min-height: 100svh; }
+/* .arena-frame: sizes shared by every screen's frame. .arena-shell: screens redesigned for the
+   cream desktop page (the feed today). Older screens use only .arena-frame and stay graphite on
+   desktop, because their colours were not designed for a light page. */
+.arena-frame { --shell-bar: 72px; --shell-side: 232px; --shell-top: 64px; }
+.arena-shell { min-height: 100svh; }
 
 @media (min-width: 1024px) {
   [data-theme="bplus"].arena-shell {
@@ -25,3 +29,10 @@
 .arena-scroll-x { overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .arena-scroll-x::-webkit-scrollbar { display: none; }
 .arena-hero { background-image: linear-gradient(90deg, rgba(14, 10, 8, 0.9) 0%, rgba(14, 10, 8, 0.55) 45%, rgba(14, 10, 8, 0.15) 100%), url("/login/arena-login-poster.webp"); background-size: cover; background-position: center 38%; }
+
+/* Older screens (bplus AppShell) keep their own scrolling column; its height leaves room for the
+   phone bottom bar, or for the desktop top bar. --cb is the cookie banner's height when shown. */
+.arena-app-scroll { height: calc(100svh - 76px - env(safe-area-inset-bottom) - var(--cb, 0px)); }
+@media (min-width: 1024px) {
+  .arena-app-scroll { height: calc(100svh - var(--shell-top) - var(--cb, 0px)); }
+}
